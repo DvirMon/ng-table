@@ -1,8 +1,8 @@
 <div class="story-host">
   <p class="story-host__hint">
-    <code>aggregate</code> is a grouping declaration, keyed by declared column id like every
-    other <code>schema</code> concern — not a column option. Here <code>amount</code> carries a
-    sum, so every header at every depth shows one.
+    <code>aggregate</code> is a grouping declaration, keyed by declared column id like every other
+    <code>schema</code> concern — not a column option. Here <code>amount</code> carries a sum, so
+    every header at every depth shows one.
   </p>
 
   <ngp-grouping-aggregates-toolbar
@@ -19,14 +19,14 @@
   <p class="grouping-story__notice">
     Aggregates are post-filter by construction, because <code>filter</code> precedes
     <code>group</code> in the pipeline: a cluster only ever sees rows that survived filtering.
-    <code>grouping-selection</code> composes <code>withFiltering()</code> and has the control
-    that proves it.
+    <code>grouping-selection</code> composes <code>withFiltering()</code> and has the control that
+    proves it.
   </p>
 
   @if (isSummaryBroken()) {
     <p class="grouping-story__notice">
-      One row's <code>amount</code> is now a value <code>sumAmount</code> refuses. The totals
-      above it are blank and the table is still up: the wrap in
+      One row's <code>amount</code> is now a value <code>sumAmount</code> refuses. The totals above
+      it are blank and the table is still up: the wrap in
       <code>engine/grouping/render.ts</code> falls back to an undefined aggregate for that column
       alone, and reported it once for this evaluation, to the console. Every other column's
       aggregate is unaffected.

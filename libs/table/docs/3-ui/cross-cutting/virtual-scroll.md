@@ -17,7 +17,7 @@ Full native `<table>`, single `<thead>`/`<tbody>` — no table-splitting, no fle
 
 ## Decision & Rejected Alternatives
 
-**Rejected: NGP owning virtualization itself** (a directive the consumer applies instead of `*cdkVirtualFor`, so CDK is invisible). Virtualization is inherently insert/remove-DOM-as-you-scroll behavior — any directive that does that is a structural directive by definition, and `overview.md` locked *"every NGP Table directive is an attribute directive only... it never inserts or removes DOM itself"* specifically to keep iteration explicit in the consumer's template. Owning virtualization this way would be an architectural reversal, not a complexity tradeoff.
+**Rejected: NGP owning virtualization itself** (a directive the consumer applies instead of `*cdkVirtualFor`, so CDK is invisible). Virtualization is inherently insert/remove-DOM-as-you-scroll behavior — any directive that does that is a structural directive by definition, and `overview.md` locked _"every NGP Table directive is an attribute directive only... it never inserts or removes DOM itself"_ specifically to keep iteration explicit in the consumer's template. Owning virtualization this way would be an architectural reversal, not a complexity tradeoff.
 
 **Rejected: thin `ngpTableVirtualScroll` convenience wrapper** around CDK's viewport (auto-binding `itemSize`/`trackBy` from the store, consumer still writes `*cdkVirtualFor`). Viable and lower-risk than full ownership, but superseded once the decision was made to go with plain CDK directly — parked as unnecessary rather than wrong.
 
@@ -32,20 +32,21 @@ Full native `<table>`, single `<thead>`/`<tbody>` — no table-splitting, no fle
 ```html
 <table [ngpTable]="table" style="table-layout: fixed;">
   <thead>
-    <tr style="position: sticky; top: 0;">   <!-- header row carries no ngpTableRow — see core.md -->
+    <tr style="position: sticky; top: 0;">
+      <!-- header row carries no ngpTableRow — see core.md -->
       @for (col of visibleColumns(); track col.id) {
-        <th [ngpTableColumn]="col.id" ngpTableSort>…</th>
+      <th [ngpTableColumn]="col.id" ngpTableSort>…</th>
       }
     </tr>
   </thead>
   <cdk-virtual-scroll-viewport [itemSize]="40" style="height: 400px;">
     <tbody>
-      <tr [ngpTableRow]="renderRow"
-          *cdkVirtualFor="let renderRow of table.renderRows(); trackBy: trackRenderRow">
+      <tr
+        [ngpTableRow]="renderRow"
+        *cdkVirtualFor="let renderRow of table.renderRows(); trackBy: trackRenderRow"
+      >
         @for (col of visibleColumns(); track col.id) {
-          <td [ngpTableCell]="col.id">
-            {{ renderRow.data ? col.accessor(renderRow.data) : '' }}
-          </td>
+        <td [ngpTableCell]="col.id">{{ renderRow.data ? col.accessor(renderRow.data) : '' }}</td>
         }
       </tr>
     </tbody>
@@ -72,7 +73,7 @@ That id is still single-sourced — for `kind: 'row'` the render layer populates
 - **Store DI (`core.md`):** unaffected — wrapping body rows in a viewport doesn't change the injector tree.
 - **Directive stacking (`core.md`):** `ngpTableRow` on the `*cdkVirtualFor` `<tr>` — Angular permits a structural directive (CDK's) and attribute directives (NGP's) on the same element with no conflict; `ngpTableRow` doesn't know or care whether its host row exists because of `@for` or `*cdkVirtualFor`.
 - **`ngpTableColumn`/`ngpTableSort` (`columns.md`, `sort.md`):** entirely outside the viewport (they live in `<thead>`), unaffected by virtualization.
-- **No per-cell `aria-live` (`accessibility.md`):** this decision, made *before* virtual scroll was drilled, turned out to be a direct prerequisite — CDK recycles `<td>` DOM nodes as the user scrolls, which is exactly the scenario that decision was protecting against.
+- **No per-cell `aria-live` (`accessibility.md`):** this decision, made _before_ virtual scroll was drilled, turned out to be a direct prerequisite — CDK recycles `<td>` DOM nodes as the user scrolls, which is exactly the scenario that decision was protecting against.
 
 ---
 
@@ -85,8 +86,8 @@ Angular Material 21.1 has an open, acknowledged regression (`angular/components#
 ## Open Questions
 
 - [ ] **Must support detail panels** (`0-product/expansion.md` OQ-exp-8 part 4, E12/E42,
-  2026-10-01). A `withExpansion()` panel is consumer markup, not a `renderRows()` entry (E12,
-  ADR-0012), with variable height — the fixed-`itemSize` `*cdkVirtualFor` over `renderRows()` above
-  can neither size nor unmount one. Required: variable-height items, or a panel that takes a slot in
-  the virtual list without being a render row. Settled when this design is drilled.
+      2026-10-01). A `withExpansion()` panel is consumer markup, not a `renderRows()` entry (E12,
+      ADR-0012), with variable height — the fixed-`itemSize` `*cdkVirtualFor` over `renderRows()` above
+      can neither size nor unmount one. Required: variable-height items, or a panel that takes a slot in
+      the virtual list without being a render row. Settled when this design is drilled.
 - [ ] **Row height / `itemSize` value** — CDK requires a concrete pixel number; no decision yet exists in this architecture. Depends on the styling/tokens spec (`styling-tokens.md`), which hasn't been started. This is the one blocking dependency for this file to be considered fully closed.

@@ -11,7 +11,7 @@ synthesized at **render** time (`engine/grouping.ts` → `group:<path>`), never 
 Pulling that thread found a second, deeper thing. `withGrouping()` reads `withExpansion()`'s
 `expandedRows` directly (`with-grouping.ts:36-45`). Documented as deliberate (D11,
 `work/with-grouping/2-decisions.md:163`) but the stated reason is stage order: `'group'` runs
-before `'tree'`, so grouping must drop a collapsed header's descendants *while emitting them* —
+before `'tree'`, so grouping must drop a collapsed header's descendants _while emitting them_ —
 and that forces it to ask, at that moment, whether the header is collapsed.
 
 The real cause is a gap in the row model: **`RenderRow` (`api/types.ts:33`) carries `depth` but
@@ -24,7 +24,7 @@ artifacts) is unanimous against our shape: TanStack `CoreRow.parentId`/`getParen
 `RowNode.parent`, MUI X `GridTreeNode.parent` — all carry `depth` too, none prunes with it; all
 prune centrally (TanStack `expandRows()`, MUI X `visibleRowsLookupCreation`, AG Grid
 `rowsToDisplay`); all share one expansion state across grouping and tree — MUI X registers the
-*identical* `getVisibleRowsLookup` for row grouping and tree data.
+_identical_ `getVisibleRowsLookup` for row grouping and tree data.
 
 Two parts. **A** ships the user-facing fix. **B** removes the coupling. A's API survives B
 unchanged, so A does not need to wait.
@@ -57,7 +57,7 @@ where a synthetic group id is accepted by the generic expand API.
   - Omitted ⇒ today's behavior exactly.
   - Supplied ⇒ used verbatim. No `isExpandable` filter (a synthetic id has no `TRow` to test),
     no recursion into them.
-  - Both ⇒ union, so one call opens groups *and* nested rows. `newlyExpanded`/`everExpanded`/
+  - Both ⇒ union, so one call opens groups _and_ nested rows. `newlyExpanded`/`everExpanded`/
     `emitChanged` bookkeeping unchanged, applied over the union.
 - **Back-compat:** callers pass options first today (`expandAll({ emitEvent: false })`,
   `with-expansion.spec.ts:162`). Keep an overload pair rather than an `Array.isArray` branch —
@@ -79,7 +79,7 @@ where a synthetic group id is accepted by the generic expand API.
 ### A4. Docs + tests
 
 - `docs/1-state/features/expansion.md` — lines 76 and 83 already claim `expandAll()` covers
-  groups. Correct them to the real rule: the set is id-agnostic, but *discovery* is data-rows-
+  groups. Correct them to the real rule: the set is id-agnostic, but _discovery_ is data-rows-
   only; synthetic ids are passed in.
 - `docs/1-state/features/grouping.md` — document `groupIds` beside `rowsOf`.
 - `with-expansion.spec.ts` — explicit ids; union with discovered; `emitEvent: false` still
@@ -91,7 +91,7 @@ where a synthetic group id is accepted by the generic expand API.
 
 ## Part B — `RenderRow.parentId` + one engine-owned prune
 
-Moves hiding from *while emitting* to *after emitting*. The emit-time lookup disappears, and
+Moves hiding from _while emitting_ to _after emitting_. The emit-time lookup disappears, and
 with it the coupling.
 
 ### B0. ADR first
@@ -157,11 +157,11 @@ subs, with native sub-issue and blocked-by edges plus `issue-graph.md` in the wo
 `libs/shared/table/docs/1-state/work/grouping-expansion-coupling/`. `state.json` created here,
 `specPath` = `plan.md`.
 
-| # | Slice | Blocked by | Readiness |
-|---|---|---|---|
-| S1 | `expandAll()` takes explicit ids; `withGrouping()` publishes `groupIds` (Part A) | none | `needs:tasks` |
-| S2 | `RenderRow.parentId` + engine-owned prune stage; grouping still prunes (B0-B2) | none | `needs:spec` — ADR is its first task |
-| S3 | Grouping stops pruning; delete `readExpandedRows` (B3) | S2 | `needs:tasks` |
+| #   | Slice                                                                            | Blocked by | Readiness                            |
+| --- | -------------------------------------------------------------------------------- | ---------- | ------------------------------------ |
+| S1  | `expandAll()` takes explicit ids; `withGrouping()` publishes `groupIds` (Part A) | none       | `needs:tasks`                        |
+| S2  | `RenderRow.parentId` + engine-owned prune stage; grouping still prunes (B0-B2)   | none       | `needs:spec` — ADR is its first task |
+| S3  | Grouping stops pruning; delete `readExpandedRows` (B3)                           | S2         | `needs:tasks`                        |
 
 - S1 is in the epic, not standalone: it is the symptom that surfaced the coupling. It survives
   S2/S3 unchanged — **B does not subsume A.** `parentId` fixes the read side (who gets hidden);
@@ -188,7 +188,7 @@ every slice points at).
   template phase on a source error, so the first run proves nothing about templates).
 - `nx test shared-table`.
 - Storybook `grouping/collapsible`: "Expand all" opens every level, "Collapse all" still closes
-  them, and a grouped-plus-tree table opens headers *and* nested children in one click. After
+  them, and a grouped-plus-tree table opens headers _and_ nested children in one click. After
   Part B, same behavior with no code change to the story — that is B's acceptance test.
 
 All three are run manually; I do not run builds, tests, or servers.

@@ -32,7 +32,7 @@ mutation method.
 2. `engine/compose-table.spec.ts`
    - `composeTable(config, features)`'s `config` (`TableEngineConfig<Row>`) now requires
      `data`. Replace the module-level `const config: TableEngineConfig<Row> = { columns,
-     trackBy: 'id' };` pattern with a per-test signal so each test controls its own rows,
+trackBy: 'id' };` pattern with a per-test signal so each test controls its own rows,
      e.g. build a small `composeWithRows(rows, features)` helper that creates
      `const data = signal(rows);` and calls
      `composeTable({ columns, trackBy: 'id', data }, features)` — mirroring how
@@ -50,7 +50,7 @@ mutation method.
 3. `api/create-table.spec.ts`
    - Every `store.setData(rows)` call becomes seeding the `data` signal used to construct the
      store: either pass the rows straight into `signal(...)` at `createTable(signal(rows),
-     ...)`, or, if the test wants to change rows mid-test, call `data.set(rows)` on the same
+...)`, or, if the test wants to change rows mid-test, call `data.set(rows)` on the same
      signal reference passed into `createTable`.
    - `'auto-populates rows from the data signal via the internal effect'`: rename to describe
      the new mechanism (e.g. `'rows reflect the data signal directly, no internal effect'`)
@@ -104,6 +104,7 @@ mutation method.
 - [ ] `nx typecheck shared-design-system` passes clean
 
 ---
+
 ← [Step 1: Rework data ingress](step-1-rework-data-ingress.plan.md)
 
 Issue #11 ends here. Next issue: [#12 — row mutation free functions](../issue-12-row-mutations/step-1-expose-data-on-core.plan.md).

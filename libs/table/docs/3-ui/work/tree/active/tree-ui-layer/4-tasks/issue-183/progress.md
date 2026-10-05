@@ -19,10 +19,10 @@ Parallel-safe: [1, 2, 5] · Dependency: 2 → 3 · 1, 2 → 4
 
 ## Steps
 
-| Step | Title | Status |
-|---|---|---|
-| 1 | Tree-row hooks | ✅ done |
-| 2 | The tree toggle directive | ✅ done |
-| 3 | Toggle dev-mode checks | ✅ done |
-| 4 | Collapsible-grouping story host uses the tree pair | ✅ done |
-| 5 | Tree UI spec and pointer updates | ✅ done |
+| Step | Title                                              | Status  |
+| ---- | -------------------------------------------------- | ------- |
+| 1    | Tree-row hooks                                     | ✅ done |
+| 2    | The tree toggle directive                          | ✅ done |
+| 3    | Toggle dev-mode checks                             | ✅ done |
+| 4    | Collapsible-grouping story host uses the tree pair | ✅ done |
+| 5    | Tree UI spec and pointer updates                   | ✅ done |

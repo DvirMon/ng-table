@@ -1,10 +1,6 @@
 import type { ResourceRef, Signal } from '@angular/core';
 import { recorderOf } from '../schema/path-proxy';
-import type {
-  ColumnHandle,
-  ColumnMetaKey,
-  ColumnRuleContext,
-} from './types';
+import type { ColumnHandle, ColumnMetaKey, ColumnRuleContext } from './types';
 import type { ColumnDef } from '../api/types';
 
 /**
@@ -33,7 +29,7 @@ export function createColumnMetaKey<T>(): ColumnMetaKey<T> {
 export function metadata<TRow, K extends string, T>(
   path: ColumnHandle<TRow, K>,
   key: ColumnMetaKey<T>,
-  logic: NoInfer<T> | ((ctx: ColumnRuleContext<TRow>) => NoInfer<T>)
+  logic: NoInfer<T> | ((ctx: ColumnRuleContext<TRow>) => NoInfer<T>),
 ): void {
   const recorder = recorderOf(path);
   // `T` erases to `unknown` here — `key`/`logic` are read back together, still at their
@@ -62,7 +58,7 @@ export function metadataAsync<TRow, K extends string, TParams, TResult, T>(
     factory: (params: Signal<TParams | undefined>) => ResourceRef<TResult | undefined>;
     onSuccess: (result: TResult) => T;
     onError: (error: unknown) => T;
-  }
+  },
 ): void {
   const recorder = recorderOf(path);
   recorder.record({
@@ -84,7 +80,7 @@ export function metadataAsync<TRow, K extends string, TParams, TResult, T>(
  */
 export function readColumnMeta<TRow, T>(
   column: ColumnDef<TRow>,
-  key: ColumnMetaKey<T>
+  key: ColumnMetaKey<T>,
 ): T | undefined {
   return column.meta?.get(key) as T | undefined;
 }

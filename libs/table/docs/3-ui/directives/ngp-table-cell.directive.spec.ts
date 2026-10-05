@@ -5,7 +5,11 @@ import { NgpTableCellDirective } from '../../../directives/ngp-table-cell.direct
 
 @Component({
   imports: [NgpTableCellDirective],
-  template: `<table><tr><td ngpTableCell [ngpTableCellColIndex]="colIndex">Ada</td></tr></table>`,
+  template: `<table>
+    <tr>
+      <td ngpTableCell [ngpTableCellColIndex]="colIndex">Ada</td>
+    </tr>
+  </table>`,
 })
 class HostComponent {
   colIndex = 0;
@@ -13,7 +17,7 @@ class HostComponent {
 
 function getCellElement(fixture: ReturnType<typeof TestBed.createComponent>): HTMLElement {
   const nativeElement: unknown = fixture.debugElement.query(
-    (debugEl) => debugEl.injector.get(NgpTableCellDirective, null) !== null
+    (debugEl) => debugEl.injector.get(NgpTableCellDirective, null) !== null,
   ).nativeElement;
   if (!(nativeElement instanceof HTMLElement)) {
     throw new Error('Expected an HTMLElement');

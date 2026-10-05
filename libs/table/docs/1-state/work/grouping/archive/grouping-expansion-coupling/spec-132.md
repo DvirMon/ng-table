@@ -48,7 +48,7 @@ they can read rather than infer from depth.
 3. As a consumer, I want a collapsed group to hide its members, so that collapsing means what it says.
 4. As a consumer, I want a collapsed group nested inside another collapsed group to stay hidden, so that hiding composes down arbitrary depth.
 5. As a consumer, I want expanding a parent to reveal only its own children and not its collapsed grandchildren, so that each collapse state is independently honored.
-6. As a consumer, I want a page of a paginated grouped table to contain the page size in *visible* rows, so that collapsing a group does not silently produce short pages.
+6. As a consumer, I want a page of a paginated grouped table to contain the page size in _visible_ rows, so that collapsing a group does not silently produce short pages.
 7. As a consumer, I want `aria-rowindex` to count visible rows only, so that assistive technology reports the grid a sighted user sees.
 8. As a consumer, I want to read a render row's parent id, so that I can render indent guides, breadcrumbs, or a "scroll to parent" affordance without parsing a composite id.
 9. As a consumer, I want a top-level row's parent id to be absent rather than a sentinel value, so that "has no parent" is expressible in the type rather than by convention.
@@ -116,13 +116,13 @@ knowing when to call it. Here the feature owns the set, the engine owns knowing 
 
 Every other slot in the feature contract is single-occupancy — a second claimant throws at
 construction. This one is the exception: it collects contributors, and the pass hides a row if
-*any* contributed set collapses one of its ancestors.
+_any_ contributed set collapses one of its ancestors.
 
 The reason is a decision already taken in the expansion-split ADR, not a preference of this
 slice. That ADR splits expansion into a detail-panel feature and a tree feature, gives each its
 own independent open-id set — explicitly rejecting a shared one, on the grounds that a
 tree-expanded row and an open detail panel are semantically different states that must not
-collide — and *also* delegates group collapse to the panel feature. So after the split two
+collide — and _also_ delegates group collapse to the panel feature. So after the split two
 independent sets both legitimately hide descendants, and that ADR's own verification plan
 requires a table composing both features to construct without throwing. A single-claim slot would
 throw on exactly that case.

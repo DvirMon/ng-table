@@ -83,7 +83,7 @@ function makeGroupingColumns(): ColumnSet<
  *  for the migrated collapse cases below (`composed with withGrouping()`). */
 function findHeader(
   rows: readonly RenderRow<GroupingMockRow>[],
-  id: string
+  id: string,
 ): RenderRow<GroupingMockRow> | undefined {
   return rows.find((row) => row.kind === 'group' && row.id === id);
 }
@@ -91,7 +91,7 @@ function findHeader(
 /** `[kind, depth, id-if-a-row]` per render row. Brought over from
  *  `with-grouping/feature.spec.ts` for the either-order pair below. */
 function toShape<TRow extends { id: number }>(
-  rows: readonly { kind: string; depth: number; data: TRow | null }[]
+  rows: readonly { kind: string; depth: number; data: TRow | null }[],
 ): [string, number, number | undefined][] {
   return rows.map((row) => [row.kind, row.depth, row.data?.id]);
 }
@@ -122,7 +122,7 @@ const dropsC1 = createTableFeature((_store: Pick<TableStore<FlatRow>, 'rows'>) =
   stages: stageSchema<FlatRow>('pipeline', (s) =>
     stage(s.filter, {
       run: (rowsIn) => rowsIn.filter((row) => row.id !== 'c1'),
-    })
+    }),
   ),
 }));
 
@@ -132,8 +132,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     expect(store.tree().has('r1')).toBe(false);
@@ -150,8 +150,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     store.tree.toggle('r1');
@@ -166,8 +166,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     store.tree.expand();
@@ -185,8 +185,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     // c2 has no children — the default isExpandable would reject it. The synthetic id has no
@@ -204,8 +204,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     store.tree.toggle('r1');
@@ -221,8 +221,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     store.tree.expand(); // opens r1, c1
@@ -238,8 +238,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     store.tree.expand();
@@ -254,8 +254,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     store.tree.expand(['r1', 'c1']);
@@ -271,8 +271,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     const emitted: ExpansionChange[] = [];
@@ -288,8 +288,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     const emitted: ExpansionChange[] = [];
@@ -307,8 +307,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     store.tree.expand();
@@ -327,8 +327,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     store.tree.expand();
@@ -345,8 +345,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     const emitted: ExpansionChange[] = [];
@@ -373,8 +373,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     let completed = false;
@@ -391,8 +391,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     const ids = store.renderRows().map((row) => row.id);
@@ -404,8 +404,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     store.tree.toggle('r1');
@@ -424,8 +424,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     // Only r1 expanded — grandchild g1 (under c1) must not appear yet.
@@ -446,8 +446,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     store.tree.toggle('r1');
@@ -482,16 +482,14 @@ describe('withTree', () => {
       { id: 'a', name: 'A' },
       { id: 'b', name: 'B' },
     ];
-    const columns = createColumns(noData<NoParentRow>(), (col) => [
-      col('name'),
-    ]);
+    const columns = createColumns(noData<NoParentRow>(), (col) => [col('name')]);
 
     const store = inContext(() =>
       createTable(
         signal<NoParentRow[]>(flatRows),
         { trackBy: 'id', columns },
-        withTree({ parentId: (): RowId | null | undefined => undefined })
-      )
+        withTree({ parentId: (): RowId | null | undefined => undefined }),
+      ),
     );
 
     const renderRows = store.renderRows();
@@ -505,8 +503,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     store.tree.toggle('r1');
@@ -532,8 +530,8 @@ describe('withTree', () => {
       createTable(
         data,
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     // Write path 1: the raw data signal directly.
@@ -561,8 +559,8 @@ describe('withTree', () => {
       createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId })
-      )
+        withTree({ parentId: (row) => row.parentId }),
+      ),
     );
 
     expect(store.renderRows().map((row) => row.id)).toEqual(['r1', 'r2']);
@@ -577,7 +575,7 @@ describe('withTree', () => {
       const s = createTable(
         signal<FlatRow[]>(makeFlatRows()),
         { trackBy: 'id', columns: makeFlatColumns() },
-        withTree({ parentId: (row) => row.parentId, initial: ['r1'] })
+        withTree({ parentId: (row) => row.parentId, initial: ['r1'] }),
       );
       s.tree.changed.subscribe((change) => emitted.push(change));
       return s;
@@ -611,7 +609,10 @@ describe('withTree', () => {
       name: string;
       parentId?: string | null;
     }
-    function makeLinkColumns(): ColumnSet<LinkRow, readonly ColumnDecl<LinkRow, string, unknown>[]> {
+    function makeLinkColumns(): ColumnSet<
+      LinkRow,
+      readonly ColumnDecl<LinkRow, string, unknown>[]
+    > {
       return createColumns(noData<LinkRow>(), (col) => [col('name')]);
     }
 
@@ -622,8 +623,8 @@ describe('withTree', () => {
           createTable(
             signal<FlatRow[]>(makeFlatRows()),
             { trackBy: 'id', columns: makeFlatColumns() },
-            withTree({ parentId: (row) => row.parentId, initial: ['r1', 'c1'] })
-          )
+            withTree({ parentId: (row) => row.parentId, initial: ['r1', 'c1'] }),
+          ),
         );
 
         const renderRows = store.renderRows();
@@ -636,13 +637,7 @@ describe('withTree', () => {
           'r1',
           undefined,
         ]);
-        expect(renderRows.map((row) => row.hasChildren)).toEqual([
-          true,
-          true,
-          false,
-          false,
-          false,
-        ]);
+        expect(renderRows.map((row) => row.hasChildren)).toEqual([true, true, false, false, false]);
         expect(renderRows.map((row) => row.isExpanded)).toEqual([
           true,
           true,
@@ -661,8 +656,8 @@ describe('withTree', () => {
         createTable(
           signal<FlatRow[]>(makeFlatRows()),
           { trackBy: 'id', columns: makeFlatColumns() },
-          withTree({ parentId: (row) => row.parentId })
-        )
+          withTree({ parentId: (row) => row.parentId }),
+        ),
       );
 
       expect(store.renderRows().map((row) => row.id)).toEqual(['r1', 'r2']);
@@ -683,8 +678,8 @@ describe('withTree', () => {
           signal<FlatRow[]>(makeFlatRows()),
           { trackBy: 'id', columns: makeFlatColumns() },
           withTree({ parentId: (row) => row.parentId }),
-          withSorting()
-        )
+          withSorting(),
+        ),
       );
 
       store.tree.toggle('r1');
@@ -716,8 +711,8 @@ describe('withTree', () => {
             signal<RegionRow[]>(rows),
             { trackBy: 'id', columns },
             withGrouping({ initial: ['region'] }),
-            withTree({ parentId: (row) => row.parentId })
-          )
+            withTree({ parentId: (row) => row.parentId }),
+          ),
         );
 
         const usHeader = store
@@ -756,8 +751,8 @@ describe('withTree', () => {
         createTable(
           data,
           { trackBy: 'id', columns },
-          withTree({ parentId: (row) => row.parentId, isExpandable: (row) => row.id === 'lazy' })
-        )
+          withTree({ parentId: (row) => row.parentId, isExpandable: (row) => row.id === 'lazy' }),
+        ),
       );
 
       const before = store.renderRows();
@@ -786,8 +781,8 @@ describe('withTree', () => {
           withFiltering({
             schema: (path) => ({ name: contains(path.name) }),
             includeDescendants: false,
-          })
-        )
+          }),
+        ),
       );
 
       expect(store.renderRows().find((row) => row.id === 'r1')?.hasChildren).toBe(true);
@@ -805,8 +800,8 @@ describe('withTree', () => {
         createTable(
           signal<FlatRow[]>(makeFlatRows()),
           { trackBy: 'id', columns: makeFlatColumns() },
-          withTree({ parentId: (row) => row.parentId })
-        )
+          withTree({ parentId: (row) => row.parentId }),
+        ),
       );
 
       expect(store.tree.state()).toBe('none');
@@ -830,8 +825,8 @@ describe('withTree', () => {
             withFiltering({
               schema: (path) => ({ name: contains(path.name) }),
               includeDescendants: false,
-            })
-          )
+            }),
+          ),
         );
         store.filters.name().value.set('One');
         return store;
@@ -883,8 +878,8 @@ describe('withTree', () => {
           createTable(
             signal<LinkRow[]>(rows),
             { trackBy: 'id', columns: makeLinkColumns() },
-            withTree({ parentId: (row) => row.parentId })
-          )
+            withTree({ parentId: (row) => row.parentId }),
+          ),
         );
 
         store.tree.toggle('s1');
@@ -911,8 +906,8 @@ describe('withTree', () => {
           createTable(
             signal<LinkRow[]>(rows),
             { trackBy: 'id', columns: makeLinkColumns() },
-            withTree({ parentId: (row) => row.parentId })
-          )
+            withTree({ parentId: (row) => row.parentId }),
+          ),
         );
 
         store.tree.toggle('o1');
@@ -938,8 +933,8 @@ describe('withTree', () => {
           createTable(
             signal<LinkRow[]>(rows),
             { trackBy: 'id', columns: makeLinkColumns() },
-            withTree({ parentId: (row) => row.parentId })
-          )
+            withTree({ parentId: (row) => row.parentId }),
+          ),
         );
 
         store.tree.expand();
@@ -968,8 +963,8 @@ describe('withTree', () => {
                 }
                 return row.parentId;
               },
-            })
-          )
+            }),
+          ),
         );
 
         store.tree.toggle('t1');
@@ -996,8 +991,8 @@ describe('withTree', () => {
           createTable(
             data,
             { trackBy: 'id', columns: makeLinkColumns() },
-            withTree({ parentId: (row) => row.parentId })
-          )
+            withTree({ parentId: (row) => row.parentId }),
+          ),
         );
 
         store.renderRows();
@@ -1023,8 +1018,8 @@ describe('withTree', () => {
             createTable(
               signal<LinkRow[]>(rows),
               { trackBy: 'id', columns: makeLinkColumns() },
-              withTree({ parentId: (row) => row.parentId })
-            )
+              withTree({ parentId: (row) => row.parentId }),
+            ),
           );
 
           store.renderRows();
@@ -1053,18 +1048,20 @@ describe('withTree', () => {
       // `createTableFeature`'s inference — an untyped `() => ({...})` factory would otherwise
       // infer `RowOf<In>` as `unknown` and reject the `LinkTestRow`-typed stage below. `Pick`
       // to `rows` only, so this doesn't also pin the store's column-id union.
-      const recordsParentOf = createTableFeature((_store: Pick<TableStore<LinkTestRow>, 'rows'>) => ({
-        stages: stageSchema<LinkTestRow>('pipeline', (s) =>
-          stage(s.filter, {
-            run: (rowsIn, ctx) => {
-              rowsIn.forEach((row) => {
-                recorded.push([row.id, ctx.parentOf?.(row)]);
-              });
-              return rowsIn;
-            },
-          })
-        ),
-      }));
+      const recordsParentOf = createTableFeature(
+        (_store: Pick<TableStore<LinkTestRow>, 'rows'>) => ({
+          stages: stageSchema<LinkTestRow>('pipeline', (s) =>
+            stage(s.filter, {
+              run: (rowsIn, ctx) => {
+                rowsIn.forEach((row) => {
+                  recorded.push([row.id, ctx.parentOf?.(row)]);
+                });
+                return rowsIn;
+              },
+            }),
+          ),
+        }),
+      );
       const columns = createColumns(noData<LinkTestRow>(), (col) => [col('name')]);
       const parentId = (row: LinkTestRow): string | null | undefined => {
         if (row.id === 't1') {
@@ -1084,8 +1081,8 @@ describe('withTree', () => {
           signal<LinkTestRow[]>(rows),
           { trackBy: 'id', columns },
           recordsParentOf,
-          withTree({ parentId })
-        )
+          withTree({ parentId }),
+        ),
       );
 
       expect(() => store.rows()).not.toThrow();
@@ -1104,9 +1101,9 @@ describe('withTree', () => {
             signal<Row[]>(makeRows()),
             { trackBy: 'id', columns: makeColumns() },
             claimsTreeStage,
-            withTree({ parentId: () => null })
-          )
-        )
+            withTree({ parentId: () => null }),
+          ),
+        ),
       ).toThrow(/both provide the "tree" render stage/);
 
       expect(() =>
@@ -1115,9 +1112,9 @@ describe('withTree', () => {
             signal<Row[]>(makeRows()),
             { trackBy: 'id', columns: makeColumns() },
             contributesParentLink,
-            withTree({ parentId: () => null })
-          )
-        )
+            withTree({ parentId: () => null }),
+          ),
+        ),
       ).toThrow(/both provide the parent link/);
 
       expect(() =>
@@ -1126,9 +1123,9 @@ describe('withTree', () => {
             signal<Row[]>(makeRows()),
             { trackBy: 'id', columns: makeColumns() },
             contributesParentLink,
-            withTree()
-          )
-        )
+            withTree(),
+          ),
+        ),
       ).not.toThrow();
     });
 
@@ -1151,8 +1148,8 @@ describe('withTree', () => {
                 }
                 return row.parentId;
               },
-            })
-          )
+            }),
+          ),
         );
 
         expect(() => store.tree.state()).not.toThrow();
@@ -1174,19 +1171,19 @@ describe('withTree', () => {
             signal<FlatRow[]>(makeFlatRows()),
             { trackBy: 'id', columns: makeFlatColumns() },
             claimsTreeStage,
-            withTree()
-          )
-        )
+            withTree(),
+          ),
+        ),
       ).not.toThrow();
     });
 
-    it("collapse-only over the flat fixture: renderRows() is 1:1 with rows(), every row at depth 0 with hasChildren: false and isExpanded: undefined — no children nested, because no stage ran", () => {
+    it('collapse-only over the flat fixture: renderRows() is 1:1 with rows(), every row at depth 0 with hasChildren: false and isExpanded: undefined — no children nested, because no stage ran', () => {
       const store = inContext(() =>
         createTable(
           signal<FlatRow[]>(makeFlatRows()),
           { trackBy: 'id', columns: makeFlatColumns() },
-          withTree()
-        )
+          withTree(),
+        ),
       );
 
       const renderRows = store.renderRows();
@@ -1203,13 +1200,13 @@ describe('withTree', () => {
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeGroupingColumns() },
           withGrouping({ initial: ['region'] }),
-          withTree()
-        )
+          withTree(),
+        ),
       );
 
       const beforeExpand = store.renderRows();
       const usHeader = beforeExpand.find(
-        (row) => row.kind === 'group' && row.groupKey?.value === 'US'
+        (row) => row.kind === 'group' && row.groupKey?.value === 'US',
       );
       expect(usHeader).toBeDefined();
       // No contributor with an id in `expandedRows` — every member row stays hidden.
@@ -1226,8 +1223,8 @@ describe('withTree', () => {
         createTable(
           signal<FlatRow[]>(makeFlatRows()),
           { trackBy: 'id', columns: makeFlatColumns() },
-          withTree()
-        )
+          withTree(),
+        ),
       );
 
       const emitted: ExpansionChange[] = [];
@@ -1253,8 +1250,8 @@ describe('withTree', () => {
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeGroupingColumns() },
           withGrouping({ initial: ['region', 'category'] }),
-          withTree()
-        )
+          withTree(),
+        ),
       );
 
       // withTree() collapse-only contributes an empty open set — every header still renders
@@ -1269,7 +1266,7 @@ describe('withTree', () => {
           EU_HEADER_ID,
           EU_ELECTRONICS_HEADER_ID,
           EU_FURNITURE_HEADER_ID,
-        ].sort()
+        ].sort(),
       );
 
       store.tree.toggle(US_HEADER_ID);
@@ -1283,7 +1280,7 @@ describe('withTree', () => {
           EU_HEADER_ID,
           EU_ELECTRONICS_HEADER_ID,
           EU_FURNITURE_HEADER_ID,
-        ].sort()
+        ].sort(),
       );
     });
 
@@ -1293,8 +1290,8 @@ describe('withTree', () => {
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeGroupingColumns() },
           withGrouping({ initial: ['region', 'category'] }),
-          withTree()
-        )
+          withTree(),
+        ),
       );
 
       const rows = store.renderRows();
@@ -1308,8 +1305,8 @@ describe('withTree', () => {
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeGroupingColumns() },
           withGrouping({ initial: ['region'] }),
-          withTree()
-        )
+          withTree(),
+        ),
       );
 
       store.tree.toggle(US_HEADER_ID);
@@ -1321,7 +1318,7 @@ describe('withTree', () => {
       expect(usLeafIds.sort()).toEqual([1, 2, 3]);
       // EU was never toggled — still just its header, no leaves.
       expect(
-        rows.some((row) => row.kind === 'row' && (row.data as GroupingMockRow).region === 'EU')
+        rows.some((row) => row.kind === 'row' && (row.data as GroupingMockRow).region === 'EU'),
       ).toBe(false);
     });
 
@@ -1331,8 +1328,8 @@ describe('withTree', () => {
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeGroupingColumns() },
           withGrouping({ initial: ['region', 'category'] }),
-          withTree()
-        )
+          withTree(),
+        ),
       );
 
       store.tree.toggle(US_HEADER_ID);
@@ -1345,7 +1342,9 @@ describe('withTree', () => {
       // EU was never toggled — not even its own category headers appear.
       expect(findHeader(rows, EU_HEADER_ID)).toBeDefined();
       expect(
-        rows.some((row) => row.kind === 'group' && row.id.toString().startsWith(EU_HEADER_ID + '>'))
+        rows.some(
+          (row) => row.kind === 'group' && row.id.toString().startsWith(EU_HEADER_ID + '>'),
+        ),
       ).toBe(false);
     });
 
@@ -1355,8 +1354,8 @@ describe('withTree', () => {
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeGroupingColumns() },
           withGrouping({ initial: ['region'] }),
-          withTree()
-        )
+          withTree(),
+        ),
       );
       groupingFirst.tree.toggle(US_HEADER_ID);
       const groupingFirstShape = groupingFirst
@@ -1368,8 +1367,8 @@ describe('withTree', () => {
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeGroupingColumns() },
           withTree(),
-          withGrouping({ initial: ['region'] })
-        )
+          withGrouping({ initial: ['region'] }),
+        ),
       );
       treeFirst.tree.toggle(US_HEADER_ID);
       const treeFirstShape = treeFirst.renderRows().map((row) => [String(row.id), row.depth]);
@@ -1383,8 +1382,8 @@ describe('withTree', () => {
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeGroupingColumns() },
           withGrouping({ initial: ['region', 'category'] }),
-          withTree()
-        )
+          withTree(),
+        ),
       );
 
       const outerHeader = store
@@ -1395,7 +1394,7 @@ describe('withTree', () => {
 
       const rows = store.renderRows();
       const innerHeaders = rows.filter(
-        (row) => row.kind === 'group' && row.parentId === outerHeader.id
+        (row) => row.kind === 'group' && row.parentId === outerHeader.id,
       );
 
       // The outer header's own children (the category headers) are revealed once it opens...
@@ -1405,7 +1404,7 @@ describe('withTree', () => {
       // them stays hidden — the transitive hidden-accumulator case (ADR-0017 decision 8).
       const innerHeaderIds = innerHeaders.map((row) => row.id);
       const revealedUnderInner = rows.filter(
-        (row) => row.parentId !== undefined && innerHeaderIds.includes(row.parentId)
+        (row) => row.parentId !== undefined && innerHeaderIds.includes(row.parentId),
       );
       expect(revealedUnderInner).toHaveLength(0);
     });
@@ -1416,8 +1415,8 @@ describe('withTree', () => {
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeGroupingColumns() },
           withTree(),
-          withGrouping({ initial: ['region'] })
-        )
+          withGrouping({ initial: ['region'] }),
+        ),
       );
 
       const collapsed = store.renderRows();
@@ -1441,8 +1440,8 @@ describe('withTree', () => {
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeGroupingColumns() },
           withGrouping({ initial: ['region'] }),
-          withTree()
-        )
+          withTree(),
+        ),
       );
 
       const collapsed = store.renderRows();
@@ -1474,8 +1473,8 @@ describe('withTree', () => {
             { trackBy: mockGroupingTrackBy, columns: makeGroupingColumns() },
             withGrouping({ initial: ['region'] }),
             withTree(),
-            withSorting()
-          )
+            withSorting(),
+          ),
         );
       }
 
@@ -1520,8 +1519,8 @@ describe('withTree', () => {
             data,
             { trackBy: mockGroupingTrackBy, columns: makeGroupingColumns() },
             withGrouping({ initial: ['region'] }),
-            withTree()
-          )
+            withTree(),
+          ),
         );
 
         store.tree.toggle(US_HEADER_ID);
@@ -1542,8 +1541,8 @@ describe('withTree', () => {
         createTable(
           signal<FlatRow[]>(makeFlatRows()),
           { trackBy: 'id', columns: makeFlatColumns() },
-          withTree({ parentId: (row) => row.parentId })
-        )
+          withTree({ parentId: (row) => row.parentId }),
+        ),
       );
 
       expect(store.tree.state()).toBe('none');
@@ -1554,8 +1553,8 @@ describe('withTree', () => {
         createTable(
           signal<FlatRow[]>(makeFlatRows()),
           { trackBy: 'id', columns: makeFlatColumns() },
-          withTree({ parentId: (row) => row.parentId })
-        )
+          withTree({ parentId: (row) => row.parentId }),
+        ),
       );
 
       store.tree.toggle('r1');
@@ -1568,8 +1567,8 @@ describe('withTree', () => {
         createTable(
           signal<FlatRow[]>(makeFlatRows()),
           { trackBy: 'id', columns: makeFlatColumns() },
-          withTree({ parentId: (row) => row.parentId })
-        )
+          withTree({ parentId: (row) => row.parentId }),
+        ),
       );
 
       store.tree.expand();
@@ -1586,16 +1585,14 @@ describe('withTree', () => {
         { id: 'a', name: 'A' },
         { id: 'b', name: 'B' },
       ];
-      const columns = createColumns(noData<NoParentRow>(), (col) => [
-        col('name'),
-      ]);
+      const columns = createColumns(noData<NoParentRow>(), (col) => [col('name')]);
 
       const store = inContext(() =>
         createTable(
           signal<NoParentRow[]>(flatRows),
           { trackBy: 'id', columns },
-          withTree({ parentId: (): RowId | null | undefined => undefined })
-        )
+          withTree({ parentId: (): RowId | null | undefined => undefined }),
+        ),
       );
 
       expect(store.tree.state()).toBe('none');
@@ -1607,8 +1604,8 @@ describe('withTree', () => {
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeGroupingColumns() },
           withGrouping({ initial: ['region'] }),
-          withTree()
-        )
+          withTree(),
+        ),
       );
 
       store.tree.expand(store.groupIds());
@@ -1625,8 +1622,8 @@ describe('withTree', () => {
         createTable(
           data,
           { trackBy: 'id', columns: makeFlatColumns() },
-          withTree({ parentId: (row) => row.parentId })
-        )
+          withTree({ parentId: (row) => row.parentId }),
+        ),
       );
 
       store.tree.expand();
@@ -1651,8 +1648,8 @@ describe('withTree', () => {
             signal<FlatRow[]>(makeFlatRows()),
             { trackBy: 'id', columns: makeFlatColumns() },
             dropsC1,
-            withTree({ parentId: (row) => row.parentId })
-          )
+            withTree({ parentId: (row) => row.parentId }),
+          ),
         );
       }
 
@@ -1703,8 +1700,8 @@ describe('withTree', () => {
             isExpandable: (): boolean => {
               throw new Error('boom');
             },
-          })
-        )
+          }),
+        ),
       );
 
       const renderRows = store.renderRows();
@@ -1726,8 +1723,8 @@ describe('withTree', () => {
             isExpandable: (): boolean => {
               throw new Error('expandable-boom');
             },
-          })
-        )
+          }),
+        ),
       );
 
       store.renderRows();
@@ -1744,8 +1741,8 @@ describe('withTree', () => {
             parentId: (): RowId | null | undefined => {
               throw new Error('boom');
             },
-          })
-        )
+          }),
+        ),
       );
 
       store.renderRows();
@@ -1763,8 +1760,8 @@ describe('withTree', () => {
         createTable(
           signal<FlatRow[]>(makeFlatRows()),
           { trackBy: 'id', columns: makeFlatColumns() },
-          withTree({ parentId: (row) => row.parentId })
-        )
+          withTree({ parentId: (row) => row.parentId }),
+        ),
       );
     }
 
@@ -1809,8 +1806,8 @@ describe('withTree', () => {
           signal<FlatRow[]>(makeFlatRows()),
           { trackBy: 'id', columns: makeFlatColumns() },
           dropsC1,
-          withTree({ parentId: (row) => row.parentId })
-        )
+          withTree({ parentId: (row) => row.parentId }),
+        ),
       );
 
       expect(store.rows().map((row) => row.id)).not.toContain('c1');
@@ -1835,8 +1832,8 @@ describe('withTree', () => {
           createTable(
             signal<CycleRow[]>(rows),
             { trackBy: 'id', columns },
-            withTree({ parentId: (row) => row.parentId })
-          )
+            withTree({ parentId: (row) => row.parentId }),
+          ),
         );
 
         expect(store.tree.parentOf('a')).toBeNull();
@@ -1853,8 +1850,8 @@ describe('withTree', () => {
         createTable(
           signal<FlatRow[]>(makeFlatRows()),
           { trackBy: 'id', columns: makeFlatColumns() },
-          withTree()
-        )
+          withTree(),
+        ),
       );
 
       expect(store.tree.parentOf('c1')).toBeNull();
@@ -1867,8 +1864,8 @@ describe('withTree', () => {
         createTable(
           data,
           { trackBy: 'id', columns: makeFlatColumns() },
-          withTree({ parentId: (row) => row.parentId })
-        )
+          withTree({ parentId: (row) => row.parentId }),
+        ),
       );
 
       store.value.update(removeRow(['r1', ...store.tree.descendantsOf('r1')]));
@@ -1883,8 +1880,8 @@ describe('withTree', () => {
         createTable(
           data,
           { trackBy: 'id', columns: makeFlatColumns() },
-          withTree({ parentId: (row) => row.parentId })
-        )
+          withTree({ parentId: (row) => row.parentId }),
+        ),
       );
 
       store.value.update(removeRow('r1'));
@@ -1916,8 +1913,8 @@ describe('withTree', () => {
           signal<FlatRow[]>(makeFlatRows()),
           { trackBy: 'id', columns },
           withTree({ parentId: (row) => row.parentId }),
-          withFiltering({ schema: (path) => ({ name: contains(path.name) }) })
-        )
+          withFiltering({ schema: (path) => ({ name: contains(path.name) }) }),
+        ),
       );
 
       store.tree.expand(['r1', 'c1']);
@@ -1936,8 +1933,8 @@ describe('withTree', () => {
           signal<FlatRow[]>(makeFlatRows()),
           { trackBy: 'id', columns: makeFlatColumns() },
           withTree({ parentId: (row) => row.parentId }),
-          contributesC1
-        )
+          contributesC1,
+        ),
       );
 
       expect(store.renderRows().map((row) => row.id)).not.toContain('c1');
@@ -1950,7 +1947,7 @@ describe('withTree', () => {
     // `withTree()` first on purpose: a reveal reading `ctx.contextRows` in the factory body
     // (forbidden, D22) would see no slot.
     function setupFiltered(
-      config: Pick<WithTreeConfig<FlatRow>, 'revealContextRow' | 'initial'> = {}
+      config: Pick<WithTreeConfig<FlatRow>, 'revealContextRow' | 'initial'> = {},
     ) {
       // Unannotated so `path.name` keeps its literal id (ADR-0019).
       const columns = createColumns(noData<FlatRow>(), (col) => [col('name')]);
@@ -1959,8 +1956,8 @@ describe('withTree', () => {
           signal<FlatRow[]>(makeFlatRows()),
           { trackBy: 'id', columns },
           withTree({ parentId: (row) => row.parentId, ...config }),
-          withFiltering({ schema: (path) => ({ name: contains(path.name) }) })
-        )
+          withFiltering({ schema: (path) => ({ name: contains(path.name) }) }),
+        ),
       );
     }
 
@@ -2187,8 +2184,8 @@ describe('withTree', () => {
         createTable(
           signal<FlatRow[]>(makeFlatRows()),
           { trackBy: 'id', columns: makeFlatColumns() },
-          withTree({ parentId: (row) => row.parentId })
-        )
+          withTree({ parentId: (row) => row.parentId }),
+        ),
       );
 
       expectTypeOf<keyof typeof store>().toEqualTypeOf<
@@ -2198,9 +2195,9 @@ describe('withTree', () => {
       expectTypeOf(store.tree).toMatchTypeOf<TreeSlice>();
       expectTypeOf(store.tree()).toEqualTypeOf<ReadonlySet<RowId>>();
       expectTypeOf(store.tree.state()).toEqualTypeOf<'all' | 'some' | 'none'>();
-      expectTypeOf(store.tree.state).parameter(0).toEqualTypeOf<
-        { includeHidden?: boolean } | undefined
-      >();
+      expectTypeOf(store.tree.state)
+        .parameter(0)
+        .toEqualTypeOf<{ includeHidden?: boolean } | undefined>();
       expectTypeOf(store.tree.state({ includeHidden: true })).toEqualTypeOf<
         'all' | 'some' | 'none'
       >();
@@ -2216,9 +2213,9 @@ describe('withTree', () => {
           { trackBy: 'id', columns: makeFlatColumns() },
           withTree(
             { parentId: (row) => row.parentId },
-            withComputed((s) => ({ openTreeCount: computed(() => s.tree().size) }))
-          )
-        )
+            withComputed((s) => ({ openTreeCount: computed(() => s.tree().size) })),
+          ),
+        ),
       );
 
       expectTypeOf(store.openTreeCount).toEqualTypeOf<Signal<number>>();
@@ -2234,8 +2231,8 @@ describe('withTree', () => {
         createTable(
           signal<Row[]>(makeRows()),
           { trackBy: 'id', columns: makeColumns() },
-          withTree(withComputed((s) => ({ openTreeCount: computed(() => s.tree().size) })))
-        )
+          withTree(withComputed((s) => ({ openTreeCount: computed(() => s.tree().size) }))),
+        ),
       );
 
       expectTypeOf(store.openTreeCount).toEqualTypeOf<Signal<number>>();
@@ -2261,9 +2258,9 @@ describe('withTree', () => {
             withComputed((s) => {
               expectTypeOf(s.tree).toEqualTypeOf<TreeSlice>();
               return {};
-            })
-          )
-        )
+            }),
+          ),
+        ),
       );
 
       // Grouping first: the same read is a compile error — this slot's `In` doesn't carry
@@ -2279,10 +2276,10 @@ describe('withTree', () => {
               // this order (D25).
               expectTypeOf(s.tree).toEqualTypeOf<TreeSlice>();
               return {};
-            })
+            }),
           ),
-          withTree({ parentId: (row) => row.parentId })
-        )
+          withTree({ parentId: (row) => row.parentId }),
+        ),
       );
     });
 
@@ -2297,8 +2294,8 @@ describe('withTree', () => {
               expectTypeOf(row).toEqualTypeOf<FlatRow>();
               return row.parentId;
             },
-          })
-        )
+          }),
+        ),
       );
     });
 
@@ -2310,8 +2307,8 @@ describe('withTree', () => {
           signal<FlatRow[]>(makeFlatRows()),
           { trackBy: 'id', columns: makeFlatColumns() },
           // @ts-expect-error — parentId must return RowId | null | undefined, not {}.
-          withTree({ parentId: () => ({}) })
-        )
+          withTree({ parentId: () => ({}) }),
+        ),
       );
     });
 
@@ -2327,8 +2324,8 @@ describe('withTree', () => {
               expectTypeOf(row).toEqualTypeOf<FlatRow>();
               return true;
             },
-          })
-        )
+          }),
+        ),
       );
     });
 

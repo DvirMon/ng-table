@@ -3,17 +3,17 @@
 **Issue:** #117
 **Status:** 9 / 9 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | Shared `valueOf` resolver + `GroupingHandle` value-typing | ✅ done | — |
-| 2 | Grouping: `when` reads `ctx.valueOf` | ✅ done | — |
-| 3 | Sorting: `sortFn` comparator reads `ctx.valueOf` | ✅ done | — |
-| 4 | Filtering: rename `valueOf` → `criterionOf` | ✅ done | — |
-| 5 | Column rules: add `stateOf(path)` | ✅ done | — |
-| 6 | Construction check for resolver-referenced ids | ✅ done | — |
-| 7 | Runtime specs: grouping, sorting, column rules | ✅ done | — |
-| 8 | Cross-domain types-spec | ✅ done | — |
-| 9 | Docs, stories and fixtures migration | ✅ done | — |
+| Step | Title                                                     | Status  | PR  |
+| ---- | --------------------------------------------------------- | ------- | --- |
+| 1    | Shared `valueOf` resolver + `GroupingHandle` value-typing | ✅ done | —   |
+| 2    | Grouping: `when` reads `ctx.valueOf`                      | ✅ done | —   |
+| 3    | Sorting: `sortFn` comparator reads `ctx.valueOf`          | ✅ done | —   |
+| 4    | Filtering: rename `valueOf` → `criterionOf`               | ✅ done | —   |
+| 5    | Column rules: add `stateOf(path)`                         | ✅ done | —   |
+| 6    | Construction check for resolver-referenced ids            | ✅ done | —   |
+| 7    | Runtime specs: grouping, sorting, column rules            | ✅ done | —   |
+| 8    | Cross-domain types-spec                                   | ✅ done | —   |
+| 9    | Docs, stories and fixtures migration                      | ✅ done | —   |
 
 ## Execution graph
 
@@ -40,7 +40,7 @@ own upstream steps land.
   satisfying `runGroupingSchemaFn`'s new `TValues extends ColumnValueMap` constraint once Step 1
   retyped `GroupingPath`. Confirmed via `ngc -p tsconfig.spec.json` (14 errors). Fixed directly
   by the dispatcher (not a new step) — `MockColumnId` redefined as a `{ region, category,
-  amount }` value map, mirroring `with-sorting`'s `RowValues` pattern; all 13 call sites needed
+amount }` value map, mirroring `with-sorting`'s `RowValues` pattern; all 13 call sites needed
   no edit since they reference the type alias by name. `typecheck-spec` reconfirmed clean.
 - Step 2 also touched `engine/grouping/queries.ts` (not in its own Files list) —
   `admitClusters`'s new `columns` param has no default, so `collectGroupIds`/

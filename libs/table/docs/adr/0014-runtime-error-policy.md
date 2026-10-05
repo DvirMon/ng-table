@@ -11,13 +11,13 @@
 
 The library throws in six places today, and every one of them fires at construction:
 
-| Site | Trigger |
-|---|---|
-| `engine/slots.ts:28` | two features claiming one pipeline stage, render stage, or member key |
-| `engine/rows.ts:18` | a `trackBy` that names no field |
-| `engine/columns-schema/resolve.ts:25,50` | duplicate schema registration on one column |
-| `schema/column-schema.ts:51` | an unknown path on the columns proxy |
-| `api/features/with-selection.ts:90` | a duplicate member claim |
+| Site                                     | Trigger                                                               |
+| ---------------------------------------- | --------------------------------------------------------------------- |
+| `engine/slots.ts:28`                     | two features claiming one pipeline stage, render stage, or member key |
+| `engine/rows.ts:18`                      | a `trackBy` that names no field                                       |
+| `engine/columns-schema/resolve.ts:25,50` | duplicate schema registration on one column                           |
+| `schema/column-schema.ts:51`             | an unknown path on the columns proxy                                  |
+| `api/features/with-selection.ts:90`      | a duplicate member claim                                              |
 
 There is no `try`/`catch` anywhere in `engine/` or `api/`. The only `catch` blocks in `src/` are
 in story hosts — consumer code, not library code.
@@ -25,19 +25,19 @@ in story hosts — consumer code, not library code.
 That reads as a settled convention, and it was cited as one while grilling `createFilters()`. It
 is not. **Every throw above is a wiring error detected once, before any data flows.** The library
 has never taken a position on the other class, and the one runtime path it already has —
-`withSorting()`'s comparator — is unguarded by *omission*, not by decision. Nothing was recorded.
+`withSorting()`'s comparator — is unguarded by _omission_, not by decision. Nothing was recorded.
 
 ### The two classes do not share a trade
 
-|  | Construction-time | Runtime, per row |
-|---|---|---|
-| Examples | slot collision, duplicate member key, bad `trackBy`, duplicate filter on a path | a predicate throws on a cell, a criterion shape mismatch |
-| Fires | first render, every run, before data | row 4,318, in production, months after deploy |
-| Deterministic | yes | no — depends on that day's data |
-| Reaches the developer | always | only if dev fixtures contain the bad row |
-| Sane degraded behavior exists | **no** — two features on one key has no correct reading | **yes** — that filter does not apply |
+|                               | Construction-time                                                               | Runtime, per row                                         |
+| ----------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Examples                      | slot collision, duplicate member key, bad `trackBy`, duplicate filter on a path | a predicate throws on a cell, a criterion shape mismatch |
+| Fires                         | first render, every run, before data                                            | row 4,318, in production, months after deploy            |
+| Deterministic                 | yes                                                                             | no — depends on that day's data                          |
+| Reaches the developer         | always                                                                          | only if dev fixtures contain the bad row                 |
+| Sane degraded behavior exists | **no** — two features on one key has no correct reading                         | **yes** — that filter does not apply                     |
 
-Throwing is right for the left column *because* there is nothing else to do and it cannot ship
+Throwing is right for the left column _because_ there is nothing else to do and it cannot ship
 accidentally. Neither is true on the right.
 
 ### What a runtime throw actually costs
@@ -52,7 +52,7 @@ in one record in one column.
 
 [R27](../1-state/work/with-filtering/design-options-hybrid-api.md) makes this concrete: shipped
 matchers guard their own nulls, but `filter(path, predicate)` hands the
-consumer an unguarded cell by design, so that it stays possible to write a filter that *matches*
+consumer an unguarded cell by design, so that it stays possible to write a filter that _matches_
 nulls. Custom predicates are therefore the likeliest thing in the library to throw. The sharper
 source is the criterion side — R21 leaves persistence to the consumer as
 `JSON.parse(localStorage.getItem(…))`, so a snapshot written by an older schema revives with a
@@ -73,16 +73,16 @@ runtime        a consumer callback throws — filter predicate, accessor, sortFn
                  callback per evaluation with enough context to find it.
 ```
 
-Per-callback fallback, chosen so the failure is *visible* rather than *silent*:
+Per-callback fallback, chosen so the failure is _visible_ rather than _silent_:
 
-| Callback | Fallback when it throws | Why |
-|---|---|---|
-| filter predicate | that filter does not apply for this evaluation | showing unfiltered rows is obvious and recoverable; hiding rows is neither |
-| `sortFn` | that column's sort does not apply; row order falls back to input order | same reasoning — visibly unsorted beats silently mis-sorted |
-| `accessor` | the cell reads `undefined` | one cell degrades, not the row and not the table |
-| `aggregateFn` | that aggregate reads `undefined` | the group still renders |
-| `sortable`'s `enable` | the column is treated as sortable | still-sortable is the visible direction — a column that silently stopped responding to clicks is the harder failure to notice; see the 2026-09-25 amendment (#100) |
-| a derived signal (`withComputed()`) | **none — reported, then rethrown** | no fallback is distinguishable from a working derivation; see the 2026-09 amendment |
+| Callback                            | Fallback when it throws                                                | Why                                                                                                                                                                |
+| ----------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| filter predicate                    | that filter does not apply for this evaluation                         | showing unfiltered rows is obvious and recoverable; hiding rows is neither                                                                                         |
+| `sortFn`                            | that column's sort does not apply; row order falls back to input order | same reasoning — visibly unsorted beats silently mis-sorted                                                                                                        |
+| `accessor`                          | the cell reads `undefined`                                             | one cell degrades, not the row and not the table                                                                                                                   |
+| `aggregateFn`                       | that aggregate reads `undefined`                                       | the group still renders                                                                                                                                            |
+| `sortable`'s `enable`               | the column is treated as sortable                                      | still-sortable is the visible direction — a column that silently stopped responding to clicks is the harder failure to notice; see the 2026-09-25 amendment (#100) |
+| a derived signal (`withComputed()`) | **none — reported, then rethrown**                                     | no fallback is distinguishable from a working derivation; see the 2026-09 amendment                                                                                |
 
 Two properties of the reporting, both load-bearing:
 
@@ -101,7 +101,7 @@ of the hot loop: one wrap per filter, not one per row.
 
 ### Residue, documented deliberately
 
-A filter that failed still appears in `filters().active()`. `active()` describes which *criteria*
+A filter that failed still appears in `filters().active()`. `active()` describes which _criteria_
 are set (R14), not which evaluations succeeded. This is correct — the user did set that criterion
 — but it means `active()` can name a filter that did not narrow anything on the last pass. Specs
 that reference `active()` must say so.
@@ -113,7 +113,7 @@ separated: the existing sites are all wiring errors, so "consistency" was an arg
 convention that does not cover this case. Keeping it would mean one null in one production record
 blanks a screen — disproportionate to the fault, and undiagnosable from the symptom.
 
-**Catch per row, treat a throw as no-match.** Rejected on two counts: it silently *hides* rows,
+**Catch per row, treat a throw as no-match.** Rejected on two counts: it silently _hides_ rows,
 which is the unrecoverable direction of failure, and it puts a `try`/`catch` in the per-row loop
 for every filter on every evaluation.
 
@@ -121,7 +121,7 @@ for every filter on every evaluation.
 `undefined`, the previous value, a zero — makes a broken derivation indistinguishable from a
 working one, and the member's consumers (template bindings, other features' reads) carry the wrong
 value silently. Unlike the four degrading callbacks above, there is no reading the library can pick
-that is *visibly* wrong. Reported-then-rethrown instead; see the 2026-09 amendment.
+that is _visibly_ wrong. Reported-then-rethrown instead; see the 2026-09 amendment.
 
 **Throw in dev, degrade in production.** Rejected — dev and production would take different code
 paths through the pipeline, so the behavior under test is not the behavior shipped. Reporting
@@ -181,11 +181,11 @@ evaluation with no dedupe logic needed: the outer `computed` caches the error an
 every read until a dependency changes.
 
 **Why rethrow rather than degrade.** The four degrading callbacks each have a fallback that is
-*visibly* wrong and recoverable — unfiltered rows, unsorted order, an `undefined` cell. A derived
+_visibly_ wrong and recoverable — unfiltered rows, unsorted order, an `undefined` cell. A derived
 member has none. The library cannot know whether `undefined`, the previous value or a zero is a
 safe reading of a consumer's own derivation, and every choice is silently wrong at the exact moment
 the value matters. `classify-errors-construction-vs-runtime` puts it as "hiding data is the
-unrecoverable direction"; here the *fallback* is what hides, so the same reasoning lands on the
+unrecoverable direction"; here the _fallback_ is what hides, so the same reasoning lands on the
 opposite conclusion. Reporting and rethrowing keeps the failure loud.
 
 The rule above stands as written for this, the one runtime-class callback in the library that
@@ -193,18 +193,18 @@ does not degrade — it is not softened to "usually"; this is its single, justif
 
 ## Amendment (2026-09-24): construction checks are dev-only
 
-**This ADR never took a position on dev vs. production** — it argued *throw
-vs. degrade*. Whether a construction check still runs in a production build
+**This ADR never took a position on dev vs. production** — it argued _throw
+vs. degrade_. Whether a construction check still runs in a production build
 was never asked; its absence was read as a ruling. It was not one.
 
 **Construction-time checks are gated to dev builds and stripped from
 production.** They are developer errors: they fire on first render, every run,
 before any data, so a check has already done its job by the time an app ships.
 Wrapping them in `ngDevMode` matches Angular's own practice and matches this
-ADR's own reason for throwing — *"it cannot ship accidentally"* — which is a
+ADR's own reason for throwing — _"it cannot ship accidentally"_ — which is a
 statement about when the check fires, not about which build runs it.
 
-**Runtime reporting is untouched.** *"Always reported, not dev-only"* stands
+**Runtime reporting is untouched.** _"Always reported, not dev-only"_ stands
 exactly as written for every consumer callback. Nothing in the fallback table
 or the reporting rules changes.
 
@@ -215,7 +215,7 @@ own body, never at a call site: `assertUniqueColumnIds` (`engine/columns.ts`),
 same rule for the next check that gets added.
 
 **Why this is not the rejected "throw in dev, degrade in production"
-alternative.** That one is about *runtime* callbacks, and it was rejected
+alternative.** That one is about _runtime_ callbacks, and it was rejected
 because dev and production would take **different code paths through the
 pipeline** — the behavior under test would not be the behavior shipped. A
 construction check has no second path: it either runs and throws, or does not

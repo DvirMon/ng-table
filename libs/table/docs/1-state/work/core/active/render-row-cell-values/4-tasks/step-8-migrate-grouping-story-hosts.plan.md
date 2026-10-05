@@ -10,21 +10,21 @@
 
 ## Files
 
-| File | Action |
-|---|---|
-| `…/stories/grouping/grouping-static/grouping-static-story-host.component.html` | edit — lines 134, 148, 151, 154 |
-| `…/stories/grouping/grouping-crud/grouping-crud-story-host.component.html` | edit — lines 78, 124, 153, 156, 159 |
-| `…/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.html` | edit — lines 118, 145, 148, 151 |
-| `…/stories/grouping/grouping-selection/grouping-selection-story-host.component.html` | edit — lines 92, 119, 122, 125 |
-| `…/stories/grouping/grouping-regressions/grouping-regressions-story-host.component.html` | edit — lines 70, 84, 87, 90 |
-| `…/stories/grouping/grouping-async-rule/grouping-async-rule-story-host.component.html` | edit — lines 70, 73, 76 |
+| File                                                                                     | Action                              |
+| ---------------------------------------------------------------------------------------- | ----------------------------------- |
+| `…/stories/grouping/grouping-static/grouping-static-story-host.component.html`           | edit — lines 134, 148, 151, 154     |
+| `…/stories/grouping/grouping-crud/grouping-crud-story-host.component.html`               | edit — lines 78, 124, 153, 156, 159 |
+| `…/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.html` | edit — lines 118, 145, 148, 151     |
+| `…/stories/grouping/grouping-selection/grouping-selection-story-host.component.html`     | edit — lines 92, 119, 122, 125      |
+| `…/stories/grouping/grouping-regressions/grouping-regressions-story-host.component.html` | edit — lines 70, 84, 87, 90         |
+| `…/stories/grouping/grouping-async-rule/grouping-async-rule-story-host.component.html`   | edit — lines 70, 73, 76             |
 
 All paths are under `libs/table/src/`. Line numbers are from the tree as of 2026-09-19 — find the
 expressions, do not trust the numbers after any other step lands.
 
 ## Why This Step Exists
 
-#80's problem statement is a *consumer* problem: six story hosts call `column.accessor(rowData)`
+#80's problem statement is a _consumer_ problem: six story hosts call `column.accessor(rowData)`
 once per cell per change-detection pass. Shipping `cells` without moving them leaves the library's
 own worked examples teaching the pattern the library just replaced — and `docs/3-ui/stories.md`
 makes these hosts the reference for how a consumer writes a table.
@@ -42,28 +42,25 @@ Two substitutions, applied everywhere they appear.
 
 ```html
 <!-- before -->
-@switch (column.id) {
-  @case ('amount')   { {{ column.accessor(rowData) | dealAmount }} }
-  @case ('closedAt') { {{ column.accessor(rowData) | dealDate }} }
-  @default           { {{ column.accessor(rowData) }} }
-}
+@switch (column.id) { @case ('amount') { {{ column.accessor(rowData) | dealAmount }} } @case
+('closedAt') { {{ column.accessor(rowData) | dealDate }} } @default { {{ column.accessor(rowData) }}
+} }
 
 <!-- after -->
-@switch (column.id) {
-  @case ('amount')   { {{ row.cells[column.id] | dealAmount }} }
-  @case ('closedAt') { {{ row.cells[column.id] | dealDate }} }
-  @default           { {{ row.cells[column.id] }} }
-}
+@switch (column.id) { @case ('amount') { {{ row.cells[column.id] | dealAmount }} } @case
+('closedAt') { {{ row.cells[column.id] | dealDate }} } @default { {{ row.cells[column.id] }} } }
 ```
 
-The `@switch` on `column.id` stays — it picks the *pipe*, which is presentation and stays the
+The `@switch` on `column.id` stays — it picks the _pipe_, which is presentation and stays the
 consumer's (D6). Only the value expression changes.
 
 **Group-row aggregates** — inside the `kind: 'group'` branch:
 
 ```html
-{{ row.aggregates?.[column.id] | dealAmount }}   <!-- before -->
-{{ row.cells[column.id] | dealAmount }}          <!-- after -->
+{{ row.aggregates?.[column.id] | dealAmount }}
+<!-- before -->
+{{ row.cells[column.id] | dealAmount }}
+<!-- after -->
 ```
 
 `grouping-crud` line 78 uses a literal key, `row.aggregates?.['amount']`; it becomes
@@ -84,13 +81,13 @@ either outcome.
 ## Implementation Notes
 
 `row.cells[column.id]` is typed `unknown`, which is what the existing pipes already take —
-`grouping-story.pipes.ts:7-9` says so in its own comment: *"Each takes `unknown` because a cell
-reads through `ColumnDef.accessor`, whose return type is erased."* So `strictTemplates` is
+`grouping-story.pipes.ts:7-9` says so in its own comment: _"Each takes `unknown` because a cell
+reads through `ColumnDef.accessor`, whose return type is erased."_ So `strictTemplates` is
 satisfied without a cast, and no pipe signature changes.
 
 The group **header label** is untouched. It renders `row.groupKey.value` through a `@switch` on
-`row.groupKey?.columnId`, and that stays: `groupKey.columnId` names a *row field*, `cells` is keyed
-by *declared column id*, and the two vocabularies are deliberately separate (ADR-0021, D5's
+`row.groupKey?.columnId`, and that stays: `groupKey.columnId` names a _row field_, `cells` is keyed
+by _declared column id_, and the two vocabularies are deliberately separate (ADR-0021, D5's
 amendment). Do not "simplify" a `groupKey` expression into a `cells` lookup.
 
 There is no `.ts` change in any of the six hosts. If one seems to need it, the template edit went
@@ -135,4 +132,5 @@ wrong.
       template phase.
 
 ---
+
 ← [Step 7: Document `accessor` as the value contract](step-7-docs-accessor-contract.plan.md)

@@ -28,7 +28,7 @@ The product pass over row editing
 ([`docs/0-product/row-editing.md`](../../../../../0-product/row-editing.md)) found the worst failure
 mode in the table: a failed delete loses the row, permanently, with no recovery anywhere in the
 stack. G5 / [#20](https://github.com/DvirMon/ng-table/issues/20) deferred this on the grounds that a
-restore point holds a *value*, never an index, so `revertEdit` cannot re-insert. That premise
+restore point holds a _value_, never an index, so `revertEdit` cannot re-insert. That premise
 turned out to be narrower than it looked — closing delete specifically needed only a position on
 the snapshot, not the full inverse-operation representation O22 originally called for.
 
@@ -44,7 +44,7 @@ detached: boolean }`.
   ADR-0006's reconciliation must not prune it as an orphan.
 
 **This is the half of O22 the original decision log called unrepresentable.** It is
-representable; what O22 actually rejected was a *general* inverse-operation model covering
+representable; what O22 actually rejected was a _general_ inverse-operation model covering
 arbitrary operations. A position on the snapshot covers delete specifically without one. Move
 (`moveRow`) is still uncovered — see "Carried forward" below.
 
@@ -63,14 +63,14 @@ drops the restore point and removes the row. It replaces the `removeRow` + `endE
 **`ABSENT` is deleted, straight removal (OQ-B, resolved below).** Its only reader was
 `revertEdit`'s removal branch. Post-`{ insert }` (D42) it could only arise from `beginEdit` on an
 id not in `data` (misuse — `{ insert }` is the supported path) or `captureEdit` re-reading a
-since-removed row. Both become *capture no snapshot* — `state.snapshots` is left untouched rather
+since-removed row. Both become _capture no snapshot_ — `state.snapshots` is left untouched rather
 than written with a sentinel.
 
 **This partially reverses D28.** D28 derived add-cancel from edit-cancel through `ABSENT` so one
 verb covered both; that property is gone, and a Cancel handler now branches on whether the row was
 new (composed by the call site, not the library). Acceptable because D36/D42 already walked most
 of it back (an inserted row's snapshot is the row itself, not `ABSENT`, so `revertEdit` already
-*resets* rather than removes an added row), and "was this row here before I clicked?" is a fact
+_resets_ rather than removes an added row), and "was this row here before I clicked?" is a fact
 the call site knows for free.
 
 **`ABSENT`, `RowSnapshot`, `SnapshotMap` were public exports.** Removing `ABSENT` is a breaking
@@ -96,7 +96,7 @@ restore point are the ones most likely to silently lack one.
 one call, no prior `beginEdit`/`captureEdit`. `revertEdit(id)` alone undoes it.
 
 **Correctness detail found during implementation, not in the original brief:** when a restore
-point is *already* held (the row was open, or previously captured) at the moment `removeEdit`
+point is _already_ held (the row was open, or previously captured) at the moment `removeEdit`
 fires, that existing snapshot's `detached` flag is `false` — it was captured while the row was
 still present. `removeEdit` must flip it to `true` (keeping the original `row`/`at`), not leave it
 alone: otherwise D45's pruning exemption doesn't apply to it, and the very next ADR-0006
@@ -128,7 +128,7 @@ only avoidable part.
 
 **A consumer-supplied `at` was considered and rejected.** `RenderRow.sourceIndex` makes it
 tempting, but a consumer index is captured at render time; the guard cannot catch a stale one that
-now points at a *different* existing row — the table would delete the wrong row silently. The
+now points at a _different_ existing row — the table would delete the wrong row silently. The
 internal `indexById` is derived from the same `data()` the updater writes, so it is correct by
 construction.
 
@@ -171,26 +171,26 @@ with `afterNextRender`/an effect for the one real wrinkle — `revertEdit`'s `wr
 synchronous but Angular's DOM update is not, so a same-tick DOM lookup can race the reinsert.
 
 No code changes from this decision. `RowRestorePoint`/`revertEdit`'s reinsert branch (D45–D47)
-are unaffected — only the *observability* of "this specific write was a reinsert" was declined as
+are unaffected — only the _observability_ of "this specific write was a reinsert" was declined as
 new public API.
 
 ## Carried forward — not closed by this effort
 
-**Move.** A `RowRestorePoint` fixes a row's position *at capture time*; nothing here adds a verb
+**Move.** A `RowRestorePoint` fixes a row's position _at capture time_; nothing here adds a verb
 that reorders rows or represents undoing a reorder. That still needs the inverse-operation
 representation O22 originally called for. G5 narrows from "delete and move" to "move only."
 
-**Bulk/batch arity** (D32) and the undo *affordance* (§3.2 of the product doc — where Undo lives,
+**Bulk/batch arity** (D32) and the undo _affordance_ (§3.2 of the product doc — where Undo lives,
 keyboard binding, the sorted-case scroll-and-flash) are explicitly out of scope: the state layer's
-job was making undo *possible*, which `pending()` plus `removeEdit`/`revertEdit` now do.
+job was making undo _possible_, which `pending()` plus `removeEdit`/`revertEdit` now do.
 
 ## Downstream doc updates this effort owes
 
-| Doc | Change |
-|---|---|
-| `features/row-editing.md` | v2.1 — new/changed verb tables, `RowRestorePoint` type box, delete-rollback flow, `ABSENT` removal noted as breaking |
-| `work/row-editing/active/with-row-editing/5-gaps.md` | G5 narrowed to move-only; O22 delete half closed |
-| ~~`docs/0-product/row-editing.md`~~ | **Do not edit — owned by the product pass, already updated there 2026-08-27.** §3.1/§3.2, D-2 and OQ-5 already reflect delete rollback being unblocked. Editing it from this effort would clobber the OQ-1…OQ-7 resolutions recorded in the same file. |
+| Doc                                                  | Change                                                                                                                                                                                                                                                 |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `features/row-editing.md`                            | v2.1 — new/changed verb tables, `RowRestorePoint` type box, delete-rollback flow, `ABSENT` removal noted as breaking                                                                                                                                   |
+| `work/row-editing/active/with-row-editing/5-gaps.md` | G5 narrowed to move-only; O22 delete half closed                                                                                                                                                                                                       |
+| ~~`docs/0-product/row-editing.md`~~                  | **Do not edit — owned by the product pass, already updated there 2026-08-27.** §3.1/§3.2, D-2 and OQ-5 already reflect delete rollback being unblocked. Editing it from this effort would clobber the OQ-1…OQ-7 resolutions recorded in the same file. |
 
 ### Added 2026-08-27 by the product pass — two corrections in `features/row-editing.md`
 
@@ -206,7 +206,7 @@ against a problem they do not have.
 
 **2. §5's "known sharp edge, left to the consumer" understates what the library offers.** It says a
 rejected save firing `revertEdit` on a row the user has re-entered cannot be resolved by the
-library. True as to *policy*, but the consumer can guard it with state already exposed:
+library. True as to _policy_, but the consumer can guard it with state already exposed:
 
 ```ts
 onFocus(id) {
@@ -223,8 +223,8 @@ always-overwrite semantics (D40) are why the guard is needed.
 
 ## Story updates this effort owes
 
-| Story | Change |
-|---|---|
-| `gated-edit/` | `discardEdit()` handler collapses from 3 calls to the single new `discardEdit(id)` verb |
-| `live-optimistic/` | new Delete affordance — `removeEdit`/`releaseEdit`/`revertEdit` against a simulated DELETE request, the first story to demonstrate delete rollback |
+| Story              | Change                                                                                                                                                                                                                     |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gated-edit/`      | `discardEdit()` handler collapses from 3 calls to the single new `discardEdit(id)` verb                                                                                                                                    |
+| `live-optimistic/` | new Delete affordance — `removeEdit`/`releaseEdit`/`revertEdit` against a simulated DELETE request, the first story to demonstrate delete rollback                                                                         |
 | `live-optimistic/` | **also** — `onEnterRow` currently calls `captureEdit` unguarded, so the story ships the hazard described in correction 2 above. Add the `pending()` guard; it is one `if`, and this story is the reference consumers copy. |

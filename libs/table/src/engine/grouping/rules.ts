@@ -20,25 +20,21 @@ export function isGroupingRule<TRow>(rule: AnyGroupingRule<TRow>): rule is Group
 }
 
 export function isGroupingAsyncRule<TRow>(
-  rule: AnyGroupingRule<TRow>
+  rule: AnyGroupingRule<TRow>,
 ): rule is GroupingAsyncRule<TRow> {
   return rule.kind === 'grouping-async';
 }
 
-export function isGroupOrderRule<TRow>(
-  rule: AnyGroupingRule<TRow>
-): rule is GroupOrderRule<TRow> {
+export function isGroupOrderRule<TRow>(rule: AnyGroupingRule<TRow>): rule is GroupOrderRule<TRow> {
   return rule.kind === 'group-order';
 }
 
-export function isGroupKeyRule<TRow>(
-  rule: AnyGroupingRule<TRow>
-): rule is GroupKeyRule<TRow> {
+export function isGroupKeyRule<TRow>(rule: AnyGroupingRule<TRow>): rule is GroupKeyRule<TRow> {
   return rule.kind === 'grouping-key';
 }
 
 export function isGroupAggregateRule<TRow>(
-  rule: AnyGroupingRule<TRow>
+  rule: AnyGroupingRule<TRow>,
 ): rule is GroupAggregateRule<TRow> {
   return rule.kind === 'grouping-aggregate';
 }
@@ -57,12 +53,12 @@ function reportGroupingRuleError(columnId: string): void {
   // runtime-degradation logging abstraction to reuse in this codebase yet.
   console.error(
     `[withGrouping] a grouping rule's 'enable' predicate threw for column "${columnId}". Excluding ` +
-      'that level from this evaluation instead of grouping by it.'
+      'that level from this evaluation instead of grouping by it.',
   );
 }
 
 export function buildGroupingRuleEntries<TRow>(
-  rules: readonly GroupingRule<TRow>[]
+  rules: readonly GroupingRule<TRow>[],
 ): GroupingRuleEntry[] {
   return rules.map((rule) => ({
     columnId: rule.columnId,
@@ -83,7 +79,7 @@ export function buildGroupingRuleEntries<TRow>(
  * settle, and is `undefined` (abstain) before first resolution.
  */
 export function buildAsyncGroupingRuleEntry<TRow>(
-  rule: GroupingAsyncRule<TRow>
+  rule: GroupingAsyncRule<TRow>,
 ): GroupingRuleEntry {
   const params = computed(() => rule.params());
   const resource = rule.factory(params);
@@ -114,7 +110,7 @@ export function buildAsyncGroupingRuleEntry<TRow>(
  */
 export function maskGroupingLevels(
   levels: readonly string[],
-  entries: readonly GroupingRuleEntry[]
+  entries: readonly GroupingRuleEntry[],
 ): string[] {
   const results = new Map<string, boolean>();
   for (const entry of entries) {
@@ -131,7 +127,7 @@ export function maskGroupingLevels(
  * write wins for a duplicate `columnId` (undocumented edge case, not validated).
  */
 export function collectGroupPredicates<TRow>(
-  rules: readonly AnyGroupingRule<TRow>[]
+  rules: readonly AnyGroupingRule<TRow>[],
 ): Map<string, GroupWhen<TRow>> {
   const predicates = new Map<string, GroupWhen<TRow>>();
   for (const rule of rules) {
@@ -149,7 +145,7 @@ export function collectGroupPredicates<TRow>(
  * duplicate `columnId` (undocumented edge case, not validated).
  */
 export function collectGroupOrder<TRow>(
-  rules: readonly AnyGroupingRule<TRow>[]
+  rules: readonly AnyGroupingRule<TRow>[],
 ): Map<string, GroupOrder<TRow>> {
   const comparators = new Map<string, GroupOrder<TRow>>();
   for (const rule of rules) {
@@ -168,7 +164,7 @@ export function collectGroupOrder<TRow>(
  * duplicate `columnId` (same undocumented edge case as the two collectors above).
  */
 export function collectGroupKeys<TRow>(
-  rules: readonly AnyGroupingRule<TRow>[]
+  rules: readonly AnyGroupingRule<TRow>[],
 ): Map<string, (fieldValue: unknown) => unknown> {
   const extractors = new Map<string, (fieldValue: unknown) => unknown>();
   for (const rule of rules) {
@@ -185,7 +181,7 @@ export function collectGroupKeys<TRow>(
  * `columnId` (same undocumented edge case as the collectors above).
  */
 export function collectAggregates<TRow>(
-  rules: readonly AnyGroupingRule<TRow>[]
+  rules: readonly AnyGroupingRule<TRow>[],
 ): Map<string, (rows: TRow[]) => unknown> {
   const aggregates = new Map<string, (rows: TRow[]) => unknown>();
   for (const rule of rules) {

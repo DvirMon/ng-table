@@ -23,7 +23,7 @@ sequences the work; this file records what was decided and why, including one de
   Old fold — a resolved rule set **replaced** `initial` outright:
 
   ```ts
-  grouping = rulesGroupingRule?.() ?? baseGrouping();   // ['region'] + rule on category → ['category']
+  grouping = rulesGroupingRule?.() ?? baseGrouping(); // ['region'] + rule on category → ['category']
   ```
 
   New fold — rules mask the declared array:
@@ -62,7 +62,7 @@ sequences the work; this file records what was decided and why, including one de
 - **D4 (2026-09-17) — a pending rule abstains the whole set, and abstain passes the declared
   levels through unmasked.**
 
-  `undefined` from any entry means *hold what is declared*, not *group by nothing*. A table
+  `undefined` from any entry means _hold what is declared_, not _group by nothing_. A table
   therefore holds its levels while a rule resolves rather than flashing flat. Whole-set abstain
   (not per-level) is carried over unchanged from the old fold.
 
@@ -100,14 +100,13 @@ sequences the work; this file records what was decided and why, including one de
   docs as a consequence.
 
   **Counter-arguments on record, all judged non-blocking:**
-
-  - *The value fact now exists twice* — `accessor` for the cell, `extractValue` for the group, with
+  - _The value fact now exists twice_ — `accessor` for the cell, `extractValue` for the group, with
     nothing checking they agree. A group header can disagree with the column beneath it. This is
     the real cost of D7 and is accepted knowingly.
-  - *Derived values have no name in row-key space* — a `fullName` column meaning `first + ' ' +
-    last` cannot be named by any `keyof TRow`. Answered by `extractValue`: name any contributing field
+  - _Derived values have no name in row-key space_ — a `fullName` column meaning `first + ' ' +
+last` cannot be named by any `keyof TRow`. Answered by `extractValue`: name any contributing field
     and extract. The path segment is then partly decorative, which is accepted.
-  - *Performance* — not a factor. Both designs do one extraction call per row per level; the
+  - _Performance_ — not a factor. Both designs do one extraction call per row per level; the
     column-keyed `Map.get(columnId)` is hoistable out of the loop either way. Allocation is a
     wash. The only real cost would be defensive key normalization, which the contract above
     forbids.
@@ -137,12 +136,12 @@ sequences the work; this file records what was decided and why, including one de
   **Declared vs applied.** `grouping()` cannot both feed clustering and depend on admission, so
   the value splits in two:
 
-  | | source | consumers |
-  |---|---|---|
-  | **declared** | `maskGroupingLevels(baseGrouping(), ruleEntries)` | `stages.group`, `renderStages.group`, `groupIds`, `rowsOf` |
-  | **applied** | levels with at least one admitted cluster, read off the tree `clusterRows` already builds | `grouping()` read, `groupingLevels`, `isGroupedBy` |
+  |              | source                                                                                    | consumers                                                  |
+  | ------------ | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+  | **declared** | `maskGroupingLevels(baseGrouping(), ruleEntries)`                                         | `stages.group`, `renderStages.group`, `groupIds`, `rowsOf` |
+  | **applied**  | levels with at least one admitted cluster, read off the tree `clusterRows` already builds | `grouping()` read, `groupingLevels`, `isGroupedBy`         |
 
-  No cycle: applied is derived *from* the clustered tree, downstream of declared.
+  No cycle: applied is derived _from_ the clustered tree, downstream of declared.
 
   **A level is applied when at least one cluster at its depth is admitted.** `when` is judged per
   cluster, so partial admission is normal — some clusters grouped, some dissolved to flat. Only
@@ -160,7 +159,7 @@ sequences the work; this file records what was decided and why, including one de
 
   Counter-argument on record, accepted: `when` is data-dependent, so `grouping()` now changes as
   rows change, and a chip bound to `isGroupedBy` can toggle on its own. Judged correct rather
-  than surprising — under D5 `grouping()` *means* "levels currently in effect", and intent lives
+  than surprising — under D5 `grouping()` _means_ "levels currently in effect", and intent lives
   in `initial` plus the writable, not in the read.
 
 - **D8 (2026-09-19) — no per-rule `order` field; `initial` is the only statement of nesting.**
@@ -186,9 +185,9 @@ sequences the work; this file records what was decided and why, including one de
   ```ts
   initial: [{ key: 'closedAt', label: 'Closed' }, 'region'];
 
-  applyGrouping(path.region, { enable, when });   // activation
+  applyGrouping(path.region, { enable, when }); // activation
   applyGroupKey(path.closedAt, (d) => monthOf(d)); // key derivation
-  applyGroupOrder(path.region, cmp);               // sibling order
+  applyGroupOrder(path.region, cmp); // sibling order
   ```
 
   `applyGroupKey` takes its extractor positionally, like `applyGroupOrder` — `K` comes off the
@@ -205,7 +204,7 @@ sequences the work; this file records what was decided and why, including one de
   `initial`, so nothing new has to round-trip.
 
   **`extractValue` stays keyed by row field, not by `initial` entry.** `grouping.update(g => [...g,
-  'owner'])` can add a level never declared in `initial`; because `applyGroupKey` records against
+'owner'])` can add a level never declared in `initial`; because `applyGroupKey` records against
   the field, that level still finds its extractor. Putting extraction on the `initial` entry would
   have left runtime-added levels keying raw.
 
@@ -213,7 +212,6 @@ sequences the work; this file records what was decided and why, including one de
   column's `label` → raw key. The rule is no longer a label source.
 
   **Consequences:**
-
   - New rule kind `'grouping-key'` in `AnyGroupingRule`; `collectExtractValue` reads that kind
     instead of scanning `GroupingRule`s.
   - `extractValue` and `label` come off both `GroupingRule` and `GroupingAsyncRule`. An async
@@ -236,11 +234,11 @@ sequences the work; this file records what was decided and why, including one de
 
   Three distinct things are named across this feature, and two of them share the word `key`:
 
-  | | what it is | named today |
-  |---|---|---|
+  |                    | what it is                             | named today                         |
+  | ------------------ | -------------------------------------- | ----------------------------------- |
   | declared column id | consumer-chosen, arbitrary (`'total'`) | `ColumnsPath<TRow, TId>` (ADR-0019) |
-  | row field name | `Extract<keyof TRow, string>` | `GroupingPath<TRow>` (D7) |
-  | the grouped value | `'north'` | `ClusterSummary.key` |
+  | row field name     | `Extract<keyof TRow, string>`          | `GroupingPath<TRow>` (D7)           |
+  | the grouped value  | `'north'`                              | `ClusterSummary.key`                |
 
   `GroupingLevel.key` is typed `ColumnId<TRow> = Extract<keyof TRow, string> | (string & {})` —
   named for the column-id space, autocompleting the field space, accepting either. Meanwhile
@@ -255,7 +253,6 @@ sequences the work; this file records what was decided and why, including one de
   `ColumnId<TRow>` moves the lie rather than fixing it — the name would promise declared-column-id
   space while the type keeps autocompleting row fields. It is honest only once the keying moves,
   so it lands as part of that change:
-
   - `initial` and `GroupingPath` re-key from `Extract<keyof TRow, string>` to the declared `TId`
     space — ADR-0019's keying, which
     [ADR-0024](../../../../../adr/0024-single-value-source-accessor.md) names as "the keying this
@@ -295,8 +292,8 @@ sequences the work; this file records what was decided and why, including one de
   a feature's rules must sit with the feature. `with-sorting.ts:105-113` reads `column.sortFn` and
   `readSortNulls(column)` three lines apart in one function, so leaving `nulls` in `columnsSchema`
   splits one feature's config across two homes — the exact shape (a) rejects. The earlier
-  "unaffected" reading came from ADR-0021's capability test, which says what *may* live on the
-  column surface, not what *should*.
+  "unaffected" reading came from ADR-0021's capability test, which says what _may_ live on the
+  column surface, not what _should_.
 
   So the mechanism has five per-feature entries, not four. The count was never the rule.
   `columnsSchema` is left with `applyVisible` / `applyVisibleAsync` and the raw `metadata()`
@@ -314,19 +311,21 @@ sequences the work; this file records what was decided and why, including one de
   forms:
 
   ```ts
-  schema: (path) => { applyGrouping(path.region, { enable }); }          // void — columns, grouping
-  schema: (path) => ({ status: equals(path.status) })                    // returning — filtering
+  schema: (path) => {
+    applyGrouping(path.region, { enable });
+  }; // void — columns, grouping
+  schema: (path) => ({ status: equals(path.status) }); // returning — filtering
   ```
 
-  **"Resolved before data" means declaration only.** Every rule — `when` included — is *recorded*
+  **"Resolved before data" means declaration only.** Every rule — `when` included — is _recorded_
   before any row exists; what is recorded is the function reference, not its result. Evaluation is
   not uniform:
 
-  | callback | needs data | evaluated |
-  |---|---|---|
-  | `enable` | no | wire phase, in a `computed()` (`rules.ts:62`) |
-  | async rule | no — external fetch | own clock; pending ⇒ abstain (`rules.ts:84`) |
-  | `when` | **yes** | run phase, per cluster — `collectGroupPredicates` only *collects* it |
+  | callback   | needs data          | evaluated                                                            |
+  | ---------- | ------------------- | -------------------------------------------------------------------- |
+  | `enable`   | no                  | wire phase, in a `computed()` (`rules.ts:62`)                        |
+  | async rule | no — external fetch | own clock; pending ⇒ abstain (`rules.ts:84`)                         |
+  | `when`     | **yes**             | run phase, per cluster — `collectGroupPredicates` only _collects_ it |
 
   This is ADR-0018's `when`/`enable` split restated as timing. A predicate needing early resolution
   is expressed as `enable`; `when` is not made to resolve sooner.
@@ -343,7 +342,7 @@ sequences the work; this file records what was decided and why, including one de
   access for plain model fields. The resolver is additive, for the carrier-column case that has no
   spelling today — not a migration of existing `when` bodies.
 
-  A resolver never changes *when* a rule runs. It is callable only inside `when`, so it is nested in
+  A resolver never changes _when_ a rule runs. It is callable only inside `when`, so it is nested in
   the latest phase, not parallel to it and not earlier.
 
   **Placement: a context object, never a member of `ClusterSummary`.** `valueOf` is the language's
@@ -392,7 +391,7 @@ sequences the work; this file records what was decided and why, including one de
 ## Known stale, not yet fixed
 
 - **`grouping-async-rule` story is now a no-op demo.** It declares `initial: ['region',
-  'category']` and an async rule for `'rep'`. Under D1/D3 that rule can never add `rep`, so the
+'category']` and an async rule for `'rep'`. Under D1/D3 that rule can never add `rep`, so the
   story compiles, renders, and demonstrates nothing. Its own doc comment still claims the rule
   "replaces the level set outright". Either declare `rep` in `initial` and let the rule gate it,
   or rewrite the story around gating. No test catches this.
@@ -416,7 +415,7 @@ sequences the work; this file records what was decided and why, including one de
   landing on `undefined`. `collectValueOf` then registered `Object.prototype.valueOf` itself as
   that column's extractor, and `readGroupFieldValue` called it as a bare function —
   `Object.prototype.valueOf.call(undefined, raw)` in strict mode — throwing `TypeError: Cannot
-  convert undefined or null to object` for *any* grouped column with a rule attached, whether or
+convert undefined or null to object` for _any_ grouped column with a rule attached, whether or
   not that rule ever declared an extractor. Caught by `with-grouping.spec.ts`'s "a throwing
   enable predicate" test. Renamed throughout (`GroupingRule`/`GroupingAsyncRule.extractValue`,
   `applyGrouping`/`applyGroupingAsync`'s opts, `collectExtractValue`,
@@ -430,4 +429,4 @@ sequences the work; this file records what was decided and why, including one de
   D7's actual, accepted contract is the opposite (phantom-cluster, never dropped — see above).
   Rewritten 2026-09-19 to assert the phantom nesting; the second also flips
   `isGroupedBy('ghost')` from `false` to `true`, since the field genuinely produces a rendered
-  header and D5 now defines `isGroupedBy` against the *applied* levels, not a column-only view.
+  header and D5 now defines `isGroupedBy` against the _applied_ levels, not a column-only view.

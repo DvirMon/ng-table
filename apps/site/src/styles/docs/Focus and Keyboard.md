@@ -5,26 +5,26 @@ atomic: —
 spec: specs/foundations/Focus and Keyboard.md
 frame: null
 owns:
-  - "Document tab order and the landmark structure it follows"
-  - "The skip link"
-  - "Focus-visible policy and where the ring is suppressed"
-  - "Focus handling across route changes, overlays, and the mobile drawer"
+  - 'Document tab order and the landmark structure it follows'
+  - 'The skip link'
+  - 'Focus-visible policy and where the ring is suppressed'
+  - 'Focus handling across route changes, overlays, and the mobile drawer'
 does_not_own:
   - "The focus ring's color or width — see foundations/Color.md"
   - "Any component's internal key handling — each component spec owns its own"
-  - "Scroll-spy — see layout/TOC Column.md"
+  - 'Scroll-spy — see layout/TOC Column.md'
 depends_on:
-  - "layout/Page Structure Overview.md (region order)"
-  - "Routing and Page State.md (route-change focus)"
-  - "Search.md (overlay focus trap)"
-  - "layout/Sidebar Navigation.md (drawer)"
+  - 'layout/Page Structure Overview.md (region order)'
+  - 'Routing and Page State.md (route-change focus)'
+  - 'Search.md (overlay focus trap)'
+  - 'layout/Sidebar Navigation.md (drawer)'
 states:
-  - "keyboard focus visible"
-  - "pointer focus (ring suppressed)"
-  - "focus trapped (overlay open)"
+  - 'keyboard focus visible'
+  - 'pointer focus (ring suppressed)'
+  - 'focus trapped (overlay open)'
 a11y:
-  - "Single skip link, first in tab order, visible on focus"
-  - "One focus ring token everywhere; never removed without a replacement"
+  - 'Single skip link, first in tab order, visible on focus'
+  - 'One focus ring token everywhere; never removed without a replacement'
 tokens: [--ngpt-focus-ring, --ngpt-sys-layout-scroll-offset]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---

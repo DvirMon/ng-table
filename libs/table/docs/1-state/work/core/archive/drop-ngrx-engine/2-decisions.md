@@ -22,16 +22,16 @@ Yes. ADR-0003.
 
 ## Additional decisions taken during planning
 
-| Decision | Choice |
-|---|---|
-| Engine API shape | Clean-slate, not a 1:1 ngrx mirror |
-| Composition mechanism | Features **declare** `{ members, stages, renderRows, onInit, onDestroy }`; the engine wires them. Not shared-object mutation |
-| Composition directions | Both kept — `core` (feature-to-core) and `composed` (feature-to-feature, untyped, unused today) |
-| Engine scope | Table-specific, not a general-purpose signal store |
-| `<TRow>` repetition fix | Deferred to a follow-up |
-| `features: (ctx) => [...]` | Deferred — see ADR-0003, "Deferred" |
+| Decision                   | Choice                                                                                                                       |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Engine API shape           | Clean-slate, not a 1:1 ngrx mirror                                                                                           |
+| Composition mechanism      | Features **declare** `{ members, stages, renderRows, onInit, onDestroy }`; the engine wires them. Not shared-object mutation |
+| Composition directions     | Both kept — `core` (feature-to-core) and `composed` (feature-to-feature, untyped, unused today)                              |
+| Engine scope               | Table-specific, not a general-purpose signal store                                                                           |
+| `<TRow>` repetition fix    | Deferred to a follow-up                                                                                                      |
+| `features: (ctx) => [...]` | Deferred — see ADR-0003, "Deferred"                                                                                          |
 
-The `(ctx) => [...]` shape was the closest call. It is now *possible* (the phantom-placeholder
+The `(ctx) => [...]` shape was the closest call. It is now _possible_ (the phantom-placeholder
 blocker recorded in `1-state/architecture.md` dissolved with the class-based engine), and its
 gains are DX plus one real correctness win — a mismatched `withExpansion<Person>()` on a
 `Department` table currently compiles. It was declined because it half-closes the
@@ -56,13 +56,13 @@ required for tree-shaking was mistaken — the array was required by ngrx's comp
 
 ## Definition of done — result
 
-| Criterion | Result |
-|---|---|
-| No `@ngrx/signals` import under `src/ui/table/` | ✅ (remaining mentions are historical prose in comments/docs) |
-| `@ngrx/signals` removed from `package.json` | ✅ |
-| `npx tsc -p apps/demo/tsconfig.app.json --noEmit` clean | ✅ |
-| Existing specs pass unmodified | ✅ 61 passing, zero spec edits; 73 total with `table.engine.spec.ts` added |
-| Demo apps unchanged | ✅ `git diff apps/demo` empty |
+| Criterion                                               | Result                                                                     |
+| ------------------------------------------------------- | -------------------------------------------------------------------------- |
+| No `@ngrx/signals` import under `src/ui/table/`         | ✅ (remaining mentions are historical prose in comments/docs)              |
+| `@ngrx/signals` removed from `package.json`             | ✅                                                                         |
+| `npx tsc -p apps/demo/tsconfig.app.json --noEmit` clean | ✅                                                                         |
+| Existing specs pass unmodified                          | ✅ 61 passing, zero spec edits; 73 total with `table.engine.spec.ts` added |
+| Demo apps unchanged                                     | ✅ `git diff apps/demo` empty                                              |
 
 `npx nx build demo` fails, but on a **pre-existing, unrelated** misconfiguration: the
 `shared-design-system` library declares `"projectType": "library"` while its build target uses

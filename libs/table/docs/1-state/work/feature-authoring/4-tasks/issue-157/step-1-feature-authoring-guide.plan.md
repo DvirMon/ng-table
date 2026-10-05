@@ -6,6 +6,7 @@ depends_on: []
 files:
   - libs/table/docs/1-state/feature-authoring.md (new)
 ---
+
 # Step 1 — The feature-authoring guide
 
 Writes a new guide for an in-house feature author: the
@@ -50,7 +51,9 @@ Register the new key so `s.pin` is a legal handle:
 
 ```ts
 declare module '@ngp/table' {
-  interface RenderStageRegistry { pin: true }
+  interface RenderStageRegistry {
+    pin: true;
+  }
 }
 ```
 
@@ -123,4 +126,5 @@ pinned nodes to the top, `onRowsRemoved` pruning with
       `src/index.ts`.
 
 ---
+
 [Step 2: Amend ADR-0011: adding a stage is not reordering](step-2-amend-adr-0011.plan.md) →

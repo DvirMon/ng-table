@@ -8,15 +8,15 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
-| `libs/table/src/stories/selection/filtering-selection/filtering-selection.filters.ts` | `:1-21` | rewrite — hoisted schema `const` |
-| `libs/table/src/stories/selection/filtering-selection/filtering-selection-story-host.component.ts` | `:32-46` | edit — model into the table, field order |
-| `libs/table/src/stories/composition/derived-state/derived-state-story-host.component.ts` | `:3`, `:31-50` | edit — inline schema, `table.filters` |
-| `libs/table/src/stories/grouping/fixtures/schema.ts` | `:1-3`, `:75-84` | edit — `createDealFilters()` → `dealFilters` `const` |
-| `libs/table/src/stories/grouping/fixtures/utils.ts` | `:1-2`, `:41-49` | edit — helper signatures follow the schema |
-| `libs/table/src/stories/grouping/grouping-selection/grouping-selection-story-host.component.ts` | `:12-20`, `:39-45`, `:57` | edit — model into the table |
-| `libs/table/src/stories/filtering/predicate-filtering/` | all 6 files | **delete** |
+| File                                                                                               | Line                      | Action                                               |
+| -------------------------------------------------------------------------------------------------- | ------------------------- | ---------------------------------------------------- |
+| `libs/table/src/stories/selection/filtering-selection/filtering-selection.filters.ts`              | `:1-21`                   | rewrite — hoisted schema `const`                     |
+| `libs/table/src/stories/selection/filtering-selection/filtering-selection-story-host.component.ts` | `:32-46`                  | edit — model into the table, field order             |
+| `libs/table/src/stories/composition/derived-state/derived-state-story-host.component.ts`           | `:3`, `:31-50`            | edit — inline schema, `table.filters`                |
+| `libs/table/src/stories/grouping/fixtures/schema.ts`                                               | `:1-3`, `:75-84`          | edit — `createDealFilters()` → `dealFilters` `const` |
+| `libs/table/src/stories/grouping/fixtures/utils.ts`                                                | `:1-2`, `:41-49`          | edit — helper signatures follow the schema           |
+| `libs/table/src/stories/grouping/grouping-selection/grouping-selection-story-host.component.ts`    | `:12-20`, `:39-45`, `:57` | edit — model into the table                          |
+| `libs/table/src/stories/filtering/predicate-filtering/`                                            | all 6 files               | **delete**                                           |
 
 ## Why This Step Exists
 
@@ -32,8 +32,8 @@ Two of these are **not in issue `#91`'s call-site list** and were found by grep:
 - The issue's "`selection-filtering/`" is really `stories/selection/filtering-selection/`.
 
 **The deletion.** `predicate-filtering/` exists to demonstrate `predicates`, which R54 deletes with
-nothing replacing it. The story's own JSDoc states its claim as *"`predicates` is a thunk the filter
-stage calls once per pass"* — a sentence about an API that will not exist. Decided: delete, rather
+nothing replacing it. The story's own JSDoc states its claim as _"`predicates` is a thunk the filter
+stage calls once per pass"_ — a sentence about an API that will not exist. Decided: delete, rather
 than rewrite it as R54's narrow-the-rows-signal scope pattern.
 
 ## What To Do
@@ -78,13 +78,13 @@ protected readonly table = createTable(
 
 **Watch the derive blocks.** `withSelection`'s nested `withComputed` reads `store.renderRows()`, and
 the trailing one reads `store.hiddenSelected()`. Adding a member-contributing `withFiltering`
-*before* `withSelection` changes what `In` is for every later argument. That is the story's whole
+_before_ `withSelection` changes what `In` is for every later argument. That is the story's whole
 subject, so if the inferred member set shifts, it is a finding, not a nuisance — report it rather
 than papering over it with a cast.
 
 ### C. `grouping` fixtures + `grouping-selection`
 
-1. `grouping/fixtures/schema.ts`: `createDealFilters()` → 
+1. `grouping/fixtures/schema.ts`: `createDealFilters()` →
 
    ```ts
    /** One text criterion over `rep`, used only by `grouping-selection/` — enough to move a
@@ -92,9 +92,9 @@ than papering over it with a cast.
    export const dealFilters = (path: FiltersPath<DealRow>) => ({ rep: contains(path.rep) });
    ```
 
-   Drop the `rowOf` import and the two JSDoc paragraphs that no longer hold: *"Must be called from
-   an injection context"* (`buildFilterModel` needs none — see `create-filters.spec.ts:44-46`) and
-   *"Return type is deliberately inferred"* (still true, but for the `StateOf` reason now, not the
+   Drop the `rowOf` import and the two JSDoc paragraphs that no longer hold: _"Must be called from
+   an injection context"_ (`buildFilterModel` needs none — see `create-filters.spec.ts:44-46`) and
+   _"Return type is deliberately inferred"_ (still true, but for the `StateOf` reason now, not the
    `ReturnType<typeof …>` one).
 
 2. `grouping/fixtures/utils.ts`: `readRepCriterion` and `repFilterNode` take
@@ -132,7 +132,7 @@ to rediscover it.
   step touches `grouping/fixtures/` and `grouping-selection/` only — no overlap, but rebase before
   starting rather than after.
 - `grouping-selection` composes `withGrouping` → `withSelection` → `withFiltering` in that order.
-  `PIPELINE_ORDER` decides stage order, not argument order, so this is safe — but the *member* type
+  `PIPELINE_ORDER` decides stage order, not argument order, so this is safe — but the _member_ type
   fold does follow argument order, so `filters` lands last in the composed store. Do not reorder the
   arguments to "fix" anything; if a member is missing, that is the finding.
 - Deleting a story folder can break Storybook's story index silently. Grep for the story id, not
@@ -160,4 +160,5 @@ to rediscover it.
       readout still counts pipeline rows, not render rows.
 
 ---
+
 ← [Step 8: Server-filtering host](step-8-server-filtering-host.plan.md) | [Step 10: Specs](step-10-specs.plan.md) →

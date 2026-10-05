@@ -1,14 +1,14 @@
 <div class="toc__label">On this page</div>
 <div class="toc__list">
   @for (heading of headings(); track heading.id) {
-    <a
-      class="toc__item"
-      [href]="'#' + heading.id"
-      [attr.data-nested]="heading.level === 3 ? '' : null"
-      [attr.data-active]="heading.id === activeId() ? '' : null"
-      [attr.aria-current]="heading.id === activeId() ? 'location' : null"
-    >
-      {{ heading.text }}
-    </a>
+  <a
+    class="toc__item"
+    [href]="'#' + heading.id"
+    [attr.data-nested]="heading.level === 3 ? '' : null"
+    [attr.data-active]="heading.id === activeId() ? '' : null"
+    [attr.aria-current]="heading.id === activeId() ? 'location' : null"
+  >
+    {{ heading.text }}
+  </a>
   }
 </div>

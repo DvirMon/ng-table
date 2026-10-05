@@ -42,19 +42,13 @@
       title="Clear the query"
       (click)="clearQuery()"
     >
-      <ng-icon
-        name="lucideX"
-        size="16px"
-        color="currentColor"
-        aria-hidden="true"
-      />
+      <ng-icon name="lucideX" size="16px" color="currentColor" aria-hidden="true" />
     </button>
     }
   </div>
 
   <div id="search-results-list" class="search-results">
-    @if (hasQuery()) { @if (hasResults()) { @for (group of resultGroups(); track
-    group.label) {
+    @if (hasQuery()) { @if (hasResults()) { @for (group of resultGroups(); track group.label) {
     <div class="search-group-label">{{ group.label }}</div>
     <ul class="search-row-list" role="listbox">
       @for (result of group.results; track result.id; let i = $index) {
@@ -77,19 +71,13 @@
         class="search-empty-state__icon"
         aria-hidden="true"
       />
-      <p class="search-empty-state__title">
-        No results for &ldquo;{{ query() }}&rdquo;
-      </p>
+      <p class="search-empty-state__title">No results for &ldquo;{{ query() }}&rdquo;</p>
       <p class="search-empty-state__hint">Try a shorter or different query.</p>
       @if (suggestions.length > 0) {
       <p class="search-empty-state__suggest-label">Try searching for:</p>
       <div class="search-empty-state__suggestions">
         @for (suggestion of suggestions; track suggestion) {
-        <button
-          ngptPillButton
-          type="button"
-          (click)="selectSuggestion(suggestion)"
-        >
+        <button ngptPillButton type="button" (click)="selectSuggestion(suggestion)">
           {{ suggestion }}
         </button>
         }
@@ -120,33 +108,17 @@
 
   <div class="search-footer">
     <kbd ngptKbd
-      ><ng-icon
-        name="lucideArrowDown"
-        size="15px"
-        color="currentColor"
-        aria-hidden="true" /></kbd
+      ><ng-icon name="lucideArrowDown" size="15px" color="currentColor" aria-hidden="true" /></kbd
     ><kbd ngptKbd
-      ><ng-icon
-        name="lucideArrowUp"
-        size="15px"
-        color="currentColor"
-        aria-hidden="true"
+      ><ng-icon name="lucideArrowUp" size="15px" color="currentColor" aria-hidden="true"
     /></kbd>
     navigate
     <kbd ngptKbd
-      ><ng-icon
-        name="lucideCornerDownLeft"
-        size="15px"
-        color="currentColor"
-        aria-hidden="true"
+      ><ng-icon name="lucideCornerDownLeft" size="15px" color="currentColor" aria-hidden="true"
     /></kbd>
     select
     <kbd ngptKbd
-      ><ng-icon
-        name="lucideX"
-        size="15px"
-        color="currentColor"
-        aria-hidden="true"
+      ><ng-icon name="lucideX" size="15px" color="currentColor" aria-hidden="true"
     /></kbd>
     close
   </div>

@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — sortClusters() + wiring into clusterRows/buildGroupRenderRows"
+title: 'Step 2 — sortClusters() + wiring into clusterRows/buildGroupRenderRows'
 type: task-step
 issue: 58
 ---
@@ -50,7 +50,7 @@ function reportGroupOrderError(): void {
   // runtime-degradation logging abstraction to reuse in this codebase yet.
   console.error(
     '[withGrouping] groupOrder threw while ordering group siblings. Falling back to stable ' +
-      'first-occurrence order for the affected level(s) in this evaluation.'
+      'first-occurrence order for the affected level(s) in this evaluation.',
   );
 }
 
@@ -67,7 +67,7 @@ export function sortClusters<T, TRow>(
   nodes: ClusterNode<T>[],
   groupOrder: ((a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number) | undefined,
   toRows: (items: T[]) => TRow[],
-  reported: { done: boolean }
+  reported: { done: boolean },
 ): ClusterNode<T>[] {
   if (!groupOrder) {
     return nodes;
@@ -102,7 +102,7 @@ export function clusterRows<TRow>(
   rows: TRow[],
   grouping: readonly string[],
   columns: ColumnDef<TRow>[],
-  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number
+  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number,
 ): TRow[] {
   const levels = resolveGroupingLevels(grouping, columns);
   if (levels.length === 0) {
@@ -110,7 +110,7 @@ export function clusterRows<TRow>(
   }
   const columnById = new Map(columns.map((c) => [c.id, c]));
   const nodes = buildClusters(rows, levels, (row, columnId) =>
-    columnById.get(columnId)!.accessor(row)
+    columnById.get(columnId)!.accessor(row),
   );
   const ordered = sortClusters(nodes, groupOrder, (items) => items, { done: false });
   return flattenLeaves(ordered);
@@ -122,7 +122,7 @@ export function buildGroupRenderRows<TRow>(
   rows: Omit<RenderRow<TRow>, 'index'>[],
   grouping: readonly string[],
   columns: ColumnDef<TRow>[],
-  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number
+  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number,
 ): Omit<RenderRow<TRow>, 'index'>[] {
   const levels = resolveGroupingLevels(grouping, columns);
   if (levels.length === 0) {
@@ -133,7 +133,7 @@ export function buildGroupRenderRows<TRow>(
     if (!isRowData(item.data)) {
       throw new Error(
         "[withGrouping] buildGroupRenderRows received a row with null data — the 'group' render " +
-          "stage must run first in RENDER_ORDER, before anything can synthesize a null-data row."
+          'stage must run first in RENDER_ORDER, before anything can synthesize a null-data row.',
       );
     }
     return columnById.get(columnId)!.accessor(item.data);
@@ -142,7 +142,7 @@ export function buildGroupRenderRows<TRow>(
     nodes,
     groupOrder,
     (items) => items.map((item) => item.data).filter(isRowData),
-    { done: false }
+    { done: false },
   );
   return emitGroupRows(ordered, 0, '', columns);
 }
@@ -153,7 +153,7 @@ export function buildGroupRenderRows<TRow>(
 ## Implementation Notes
 
 - **Do not sort inside `buildClusters`.** Its doc comment ("`Map` preserves insertion order...do
-  not swap for a plain object or a sort") is about the *default*, groupOrder-omitted path — keep
+  not swap for a plain object or a sort") is about the _default_, groupOrder-omitted path — keep
   that function untouched and do the ordering as a separate post-pass, exactly like this step does.
   This also keeps `sortClusters` independently testable against a plain `ClusterNode[]` fixture.
 - **`{ done: boolean }` fresh per call, not module-level.** `clusterRows` and `buildGroupRenderRows`
@@ -196,4 +196,5 @@ export function buildGroupRenderRows<TRow>(
 - [ ] `tsc --noEmit` passes.
 
 ---
+
 ← [Step 1: GroupKey / GroupSummary types](step-1-group-summary-types.plan.md) | [Step 3: groupOrder on WithGroupingConfig](step-3-with-grouping-config.plan.md) →

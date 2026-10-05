@@ -49,7 +49,7 @@ export interface BeginEditOptions<TRow> {
  */
 export function beginEdit<TRow>(
   id: RowId,
-  options: BeginEditOptions<TRow> = {}
+  options: BeginEditOptions<TRow> = {},
 ): EditingUpdater<TRow> {
   return (state, { data, trackBy, writeData, indexById }) => {
     if (state.open.has(id)) {
@@ -87,7 +87,9 @@ export function beginEdit<TRow>(
     const snapshot: RowRestorePoint<TRow> = { row: data[foundAt], at: foundAt, op: 'update' };
     return {
       ...state,
-      snapshots: state.snapshots.has(id) ? state.snapshots : withSnapshot(state.snapshots, id, snapshot),
+      snapshots: state.snapshots.has(id)
+        ? state.snapshots
+        : withSnapshot(state.snapshots, id, snapshot),
       open: withOpen(state.open, id),
     };
   };
@@ -102,7 +104,11 @@ export function beginEdit<TRow>(
  * entry whose id already exists in `data` is skipped (same no-op-on-miss rule as the single-row
  * form); the rest of the batch still writes.
  */
-export function createRow<TRow>(id: RowId, row: NoInfer<TRow>, opts?: { at?: number }): EditingUpdater<TRow>;
+export function createRow<TRow>(
+  id: RowId,
+  row: NoInfer<TRow>,
+  opts?: { at?: number },
+): EditingUpdater<TRow>;
 export function createRow<TRow>(
   rows: { id: RowId; row: NoInfer<TRow> }[],
   opts?: { at?: number },
@@ -120,7 +126,9 @@ export function createRow<TRow>(
   const opts = rowOrOpts as { at?: number } | undefined;
 
   return (state, { data, trackBy, writeData, indexById }) => {
-    const fresh = entries.filter((entry) => findRow(data, trackBy, entry.id, indexById) === undefined);
+    const fresh = entries.filter(
+      (entry) => findRow(data, trackBy, entry.id, indexById) === undefined,
+    );
     if (fresh.length === 0) {
       return state;
     }
@@ -136,7 +144,11 @@ export function createRow<TRow>(
     let unconfirmed = state.unconfirmed;
     for (const entry of fresh) {
       const insertedAt = resolveIndex(nextData, entry.id, { trackBy, indexById });
-      snapshots = withSnapshot(snapshots, entry.id, { row: entry.row, at: insertedAt, op: 'create' });
+      snapshots = withSnapshot(snapshots, entry.id, {
+        row: entry.row,
+        at: insertedAt,
+        op: 'create',
+      });
       open = withOpen(open, entry.id);
       unconfirmed = withUnconfirmed(unconfirmed, entry.id);
     }

@@ -1,5 +1,5 @@
 ---
-title: "Step 5 — server-filtering/: filters that produce the data"
+title: 'Step 5 — server-filtering/: filters that produce the data'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: C
@@ -59,7 +59,7 @@ is not the recommended server shape. Say this in the doc-comment.
    so "the server's number, not an approximation from one page" is visible rather than asserted.
 5. **Late default must not stomp a typed value** — the amount filter declares
    `source: () => serverDefaultRange()`; a `latencyMs` arg plus a **Deliver server default now**
-   button lets a person type into the box *before* the default lands and watch `dirty()` block the
+   button lets a person type into the box _before_ the default lands and watch `dirty()` block the
    overwrite (R19). Invisible unless raced on purpose, which is why it needs a story.
 6. **Three states, visibly distinct** — loading, no-matches (`active()` non-empty + `total === 0`),
    and request-failed are three different blocks, never one empty table. `ux §7`: all four peers
@@ -105,4 +105,5 @@ Code tabs: `HTML`, `TS`, `CSS`, `filtering/fixtures/filters.ts`, `filtering/fixt
 - [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
+
 ← [Step 4: client-filtering/](step-4-client-filtering-story.plan.md) | [Step 6: selection-filtering/](step-6-selection-filtering-story.plan.md) →

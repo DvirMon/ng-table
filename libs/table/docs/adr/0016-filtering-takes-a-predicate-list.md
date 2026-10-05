@@ -14,7 +14,7 @@ point of view, is one function (row → survives?). So `withFiltering()` now tak
 expression the consumer writes:
 
 ```ts
-withFiltering({ predicates: () => [this.filters().matcher()] })
+withFiltering({ predicates: () => [this.filters().matcher()] });
 ```
 
 Either side is usable without the other — already the shipped reality in server mode, where the
@@ -37,8 +37,8 @@ reported once, by its index, per [ADR-0014](0014-runtime-error-policy.md).
 
 - **Source-breaking.** `filters` is gone from `WithFilteringConfig`, `predicates` is required —
   any call passing a filter set, or neither input, stops compiling. `withFiltering({ manual: true
-  })` alone no longer compiles; the server-mode-symmetry call is now `withFiltering({ predicates:
-  () => [], manual: true })`.
+})` alone no longer compiles; the server-mode-symmetry call is now `withFiltering({ predicates:
+() => [], manual: true })`.
 - `matcher(): (row: TRow) => boolean` puts `TRow` in the type body (previously phantom on
   `Filters<TRow, TState>`), so a filter set built for an unrelated row type is now a compile
   error instead of a silently empty table. This behavior survived the successor redesign
@@ -60,7 +60,7 @@ Concretely: `predicates: () => readonly ((row: TRow) => boolean)[]` is gone from
 `WithFilteringConfig`, replaced by `schema: (path: FiltersPath<TRow>) => S`. Server mode still
 composes `withFiltering()` — now with `manual: true` — instead of composing nothing. The
 **raw-predicate escape hatch this ADR enabled has no replacement** (R54): a predicate with no
-criterion is a *scope*, not a filter, and a scope is expressed by narrowing the rows signal
+criterion is a _scope_, not a filter, and a scope is expressed by narrowing the rows signal
 passed into `createTable()` — `filter` runs first in `PIPELINE_ORDER`, so the pipeline output is
 identical either way. This ADR's per-term error-degradation reasoning (one throwing term reported
 once, by key, dropped for the rest of the evaluation) carried forward unchanged into the

@@ -8,6 +8,7 @@ files:
   - libs/table/src/api/features/with-grouping/feature.spec.ts
   - libs/table/src/engine/grouping/pipeline.ts
 ---
+
 # Step 5 — Rename stale order-array mentions in source comments
 
 Renames three source comments that still say `PIPELINE_ORDER`
@@ -41,4 +42,5 @@ comments, comment text only:
 - [ ] `grep -rn PIPELINE_ORDER libs/table/src` finds nothing.
 
 ---
+
 ← [Step 4: Register the effort and link the guide](step-4-register-guide.plan.md)

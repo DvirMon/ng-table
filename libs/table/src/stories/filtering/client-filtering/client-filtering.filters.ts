@@ -1,5 +1,11 @@
 import { signal } from '@angular/core';
-import { anyOf, contains, filter, inDateRange, inRange } from '../../../api/features/with-filtering/rules';
+import {
+  anyOf,
+  contains,
+  filter,
+  inDateRange,
+  inRange,
+} from '../../../api/features/with-filtering/rules';
 import type { FiltersPath } from '../../../api/features/with-filtering/types';
 import type { ColumnValues } from '../../../api/types';
 import type { StateOf } from '../../../engine/filters/types';
@@ -32,7 +38,7 @@ function matchesTagCriterionUnlessBroken(cell: string[], criterion: TagCriterion
  * annotation is the point — it fixes `S` so `ClientCriteria` below derives from this function
  * rather than restating its shape. */
 export const clientInvoiceFilters = (
-  path: FiltersPath<InvoiceRow, ColumnValues<InvoiceRow, typeof clientColumns.columns>>
+  path: FiltersPath<InvoiceRow, ColumnValues<InvoiceRow, typeof clientColumns.columns>>,
 ) => ({
   status: filter(path.status, matchesStatus, { emptyValue: '' }),
   customer: contains(path.customer),

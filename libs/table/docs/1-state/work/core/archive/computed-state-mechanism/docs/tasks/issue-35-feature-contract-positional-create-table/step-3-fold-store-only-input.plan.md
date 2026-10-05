@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — compose-table.ts: fold hands each consumer feature the store only; base store gains indexById"
+title: 'Step 3 — compose-table.ts: fold hands each consumer feature the store only; base store gains indexById'
 type: task-step
 issue: 69
 ---
@@ -7,7 +7,7 @@ issue: 69
 # Step 3 — `compose-table.ts`: fold hands each consumer feature the store only; base store gains `indexById`
 
 **PR scope:** Engine fold only. `composeTable(config, features, internalFeatures)`'s outer
-shape is unchanged; what changes is how each consumer feature is *called* and what the base
+shape is unchanged; what changes is how each consumer feature is _called_ and what the base
 store carries. `create-table.ts` is untouched here (Step 4).
 
 **Task type:** code
@@ -106,4 +106,5 @@ the engine handle.
       from Step 1.
 
 ---
+
 ← [Step 2: tools/generate-overloads.ts](step-2-generate-overloads-script.plan.md) | [Step 4: create-table.ts — positional signature, config.injector, delete table-schema.ts](step-4-positional-create-table.plan.md) →

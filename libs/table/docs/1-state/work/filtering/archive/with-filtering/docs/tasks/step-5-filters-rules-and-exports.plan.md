@@ -1,5 +1,5 @@
 ---
-title: "Step 5 — Rules + public exports"
+title: 'Step 5 — Rules + public exports'
 type: task-step
 issue: 61
 ---
@@ -37,7 +37,7 @@ module — here, `rules.ts` imports `assertFilterPathIsCurrent` from `create-fil
    ```ts
    export function equals<TRow, K extends Extract<keyof TRow, string>>(
      path: FilterHandle<TRow, K>,
-     options?: FilterOptions<TRow[K]>
+     options?: FilterOptions<TRow[K]>,
    ): void {
      const recorder = assertFilterPathIsCurrent(path);
      recorder.record({
@@ -81,7 +81,7 @@ module — here, `rules.ts` imports `assertFilterPathIsCurrent` from `create-fil
 4. `applyWhen(path, condition, schema)` — conditional activation (R15, taken directly from Signal
    Forms). `condition` receives a `{ valueOf }`-shaped context reading other filters' current
    values (per the `filters.md` example: `condition: ({ valueOf }) => valueOf(path.category) !==
-   null`). The inner `schema`'s rules only apply (are included in `active()`/evaluated) when
+null`). The inner `schema`'s rules only apply (are included in `active()`/evaluated) when
    `condition` is true. Wire this as a `kind: 'conditional'` record wrapping the inner rule(s) plus
    the condition callback — `create-filters.ts` (Step 4) needs to check the condition before
    including a conditional filter's criterion in `active()` or evaluating it.
@@ -91,8 +91,8 @@ module — here, `rules.ts` imports `assertFilterPathIsCurrent` from `create-fil
 
 ## Implementation Notes
 
-- Rules keep the bare verb (`equals`, `contains`) because they *do* something (register a filter);
-  matchers keep the boolean-guard prefix (`isEqual`, `isContaining`) because they *return*
+- Rules keep the bare verb (`equals`, `contains`) because they _do_ something (register a filter);
+  matchers keep the boolean-guard prefix (`isEqual`, `isContaining`) because they _return_
   something (R30) — this is a real repo convention
   (`~/.claude/rules/declarative-naming.md`'s boolean-prefix rule extended to this predicate/action
   split), not incidental naming.
@@ -102,10 +102,23 @@ module — here, `rules.ts` imports `assertFilterPathIsCurrent` from `create-fil
   export { createFilters } from './api/create-filters';
   export type { Filters, FilterNode, FilterOptions } from './api/filters.types';
   export {
-    equals, contains, inRange, inDateRange, hasAny, hasNone, filter, anyOf, applyWhen,
+    equals,
+    contains,
+    inRange,
+    inDateRange,
+    hasAny,
+    hasNone,
+    filter,
+    anyOf,
+    applyWhen,
   } from './api/filters/rules';
   export {
-    isEqual, isContaining, isInRange, isInDateRange, hasAnyOf, hasNoneOf,
+    isEqual,
+    isContaining,
+    isInRange,
+    isInDateRange,
+    hasAnyOf,
+    hasNoneOf,
   } from './api/filters/matchers';
   ```
 
@@ -122,7 +135,7 @@ module — here, `rules.ts` imports `assertFilterPathIsCurrent` from `create-fil
 
 ## Non-Goals
 
-- No runtime evaluation loop — rules only *declare*, they never run a predicate against real row
+- No runtime evaluation loop — rules only _declare_, they never run a predicate against real row
   data (that happens in Step 4's safe-evaluate guard, called later by issue #28).
 
 ## Acceptance Checks
@@ -136,4 +149,5 @@ module — here, `rules.ts` imports `assertFilterPathIsCurrent` from `create-fil
 - [ ] `tsc --noEmit` passes with no new errors
 
 ---
+
 ← [Step 4: createFilters() core](step-4-create-filters-core.plan.md) | [Step 6: createFilters() spec](step-6-create-filters-spec.plan.md) →

@@ -7,6 +7,7 @@ files:
   - libs/table/docs/1-state/architecture.md
   - libs/table/CLAUDE.md
 ---
+
 # Step 4 — Register the effort and link the guide
 
 Links the new feature-authoring guide from `architecture.md`
@@ -52,4 +53,5 @@ bullet, the `#154` reference may drop, keeping `(ADR-0020)`.
 - [ ] `npm run llms:check` clean.
 
 ---
+
 ← [Step 3: Amend ADR-0004: anchors and registries replace the order array](step-3-amend-adr-0004.plan.md) | [Step 5: Rename stale order-array mentions in source comments](step-5-stale-order-comments.plan.md) →

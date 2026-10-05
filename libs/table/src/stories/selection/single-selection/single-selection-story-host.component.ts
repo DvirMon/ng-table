@@ -29,7 +29,7 @@ export class SingleSelectionStoryHostComponent {
   protected readonly table = createTable(
     this.data,
     singleSelectionConfig,
-    withSelection({ enableMultiRowSelection: false })
+    withSelection({ enableMultiRowSelection: false }),
   );
 
   /** The error text from the last rejected write, rendered on canvas so the throw half of D14
@@ -57,7 +57,7 @@ export class SingleSelectionStoryHostComponent {
       this.table.select(SAVED_CONFLICTING_SELECTION_IDS);
     } catch (error: unknown) {
       this.conflictMessage.set(
-        error instanceof Error ? error.message : `withSelection() rejected the write: ${error}`
+        error instanceof Error ? error.message : `withSelection() rejected the write: ${error}`,
       );
     }
   }

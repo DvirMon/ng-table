@@ -74,4 +74,5 @@ fact the architecture got wrong.
 - [ ] The architecture's R8 sentence matches the code.
 
 ---
+
 ← [Step 4: G76 split specs](step-4-g76-split-specs.plan.md)

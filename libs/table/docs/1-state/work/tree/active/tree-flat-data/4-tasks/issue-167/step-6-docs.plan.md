@@ -12,6 +12,7 @@ files:
   - libs/table/docs/1-state/row-mutations.md
   - libs/table/docs/1-state/work/tree/active/tree-flat-data/2-spec.md
 ---
+
 # Step 6 — Docs: flat-data tree contract
 
 This step updates the tree feature's docs to describe the
@@ -54,4 +55,5 @@ Decisions: [D1](../../1-decisions.md), [D3](../../1-decisions.md), [D4](../../1-
       user to run — do not run it.
 
 ---
+
 ← [Step 5: Remove childrenAccessor](step-5-remove-children-accessor.plan.md)

@@ -48,14 +48,14 @@ land before, after, or alongside Steps 2 and 3.
 export function assertDeclarationsAreKnown(
   declaredIds: Iterable<string>,
   knownIds: Iterable<string>,
-  label: string
+  label: string,
 ): void {
   const known = new Set(knownIds);
   for (const declaredId of declaredIds) {
     if (!known.has(declaredId)) {
       throw new Error(
         `[${label}] Unknown column id "${declaredId}" — no column with ` +
-          'this id exists in the `columns` array.'
+          'this id exists in the `columns` array.',
       );
     }
   }
@@ -73,12 +73,12 @@ Its body becomes the two projections plus the call:
 ```ts
 function assertRuleColumnIdsAreKnown<TRow, TId extends string>(
   rules: readonly ColumnRule<TRow>[],
-  columns: ColumnDefInput<TRow, TId>[]
+  columns: ColumnDefInput<TRow, TId>[],
 ): void {
   assertDeclarationsAreKnown(
     rules.map((rule) => rule.columnId),
     columns.map((column) => column.id),
-    'columnsSchema'
+    'columnsSchema',
   );
 }
 ```
@@ -139,4 +139,5 @@ with the `VISIBLE` exemption), not a declared-identifier check.
 - [ ] `nx run shared-table:typecheck-spec` clean.
 
 ---
+
 ← [Step 3: Shared recording runner](step-3-shared-recording-runner.plan.md) | [Step 5: Spec the shared check](step-5-validate-spec.plan.md) →

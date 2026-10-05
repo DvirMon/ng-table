@@ -150,8 +150,8 @@ Shape settled in D2, D7, D9, D14, D16, D18:
 
 ```ts
 interface WithSelectionConfig<TRow> {
-  enableRowSelection?: boolean | ((row: TRow) => boolean);        // default true
-  enableMultiRowSelection?: boolean | ((row: TRow) => boolean);   // default true
+  enableRowSelection?: boolean | ((row: TRow) => boolean); // default true
+  enableMultiRowSelection?: boolean | ((row: TRow) => boolean); // default true
   initialSelection?: RowId[];
 }
 
@@ -161,7 +161,7 @@ interface SelectionChange {
 }
 
 interface SelectionWriteOptions {
-  emitEvent?: boolean;                                            // default true
+  emitEvent?: boolean; // default true
 }
 
 interface SelectionMembers {
@@ -210,6 +210,7 @@ interface SelectionMembers {
   [state-persistence.md](../../../../state-persistence.md) takes selection into its scope, as `restore()`
   is library-owned; D19 keeps it out for now. Residual harm, accepted: `[...selectedRows()]` passed
   straight into a bulk request can carry an id the server no longer has.
+
 - **Row selectability ships as a write-path gate (D58).** `enableRowSelection` answers a
   different question than D8: D8 governs ids with no row behind them, `enableRowSelection`
   governs rows that resolve and answer `false`. Scope, all settled by unanimous competitive
@@ -225,7 +226,7 @@ interface SelectionMembers {
     what D8 already refuses.
 - **Selection is read from a signal, never stamped onto rows (D5).** No feature-contributed render
   row field, no render stage claimed. Deliberately different from expansion, which stamps its state
-  because it changes *which rows exist*; selection does not.
+  because it changes _which rows exist_; selection does not.
 - **Tri-state ships as a helper taking the id set (D7).** The caller supplies the denominator, so
   the feature never picks one, but the none/some/all logic is written once. This is what makes a
   header directive possible — it takes the id set as an input rather than inferring one.
@@ -234,7 +235,7 @@ interface SelectionMembers {
   writes emit once, not per id; a write that changes nothing emits nothing. Duplicate ids within a
   call collapse and appear once (D15).
 - **Reconciliation is silent (D11).** Removal reconciliation prunes the set with no exemption, and
-  suppresses the emission. The precise invariant: every *write verb* emits exactly once;
+  suppresses the emission. The precise invariant: every _write verb_ emits exactly once;
   reconciliation is not a write verb. One user action must not produce two notifications.
 - **Ids are flat; no cascade (D13).** Selecting a row selects one id. No children accessor, no
   dependency on expansion, no indeterminate parent state. Rests on row data being a flat array.
@@ -327,8 +328,8 @@ ones.
   permitted by D8 but is not the same as selecting its members; whether expanding a group id to its
   members is library API or consumer code is undecided.
 - **Parent/child cascade** (D13). Does not arise under flat row data.
-- **A cause discriminator on the change payload** (D10). AG Grid's idea of announcing *why* selection
-  changed rather than *what* changed is recorded but not adopted.
+- **A cause discriminator on the change payload** (D10). AG Grid's idea of announcing _why_ selection
+  changed rather than _what_ changed is recorded but not adopted.
 - **A shared cross-feature change-event type** (D10). The delta type stays selection-local until a
   third id-set-owning feature gives evidence the shape generalizes.
 
@@ -345,7 +346,7 @@ replace case. AG Grid and TanStack ship no delta at all.
 **Two pre-existing findings surfaced during design, neither this work's to fix.** The row index map
 is built from top-level rows only, so removal reconciliation can only ever announce top-level ids —
 inert under flat data, latent for any future feature storing nested ids. And the expansion feature's
-default children accessor and tree render stage only do anything when data is *not* flat, which
+default children accessor and tree render stage only do anything when data is _not_ flat, which
 contradicts the flat-data invariant this spec rests on; the proposed split of expansion into a
 detail-panel feature plus a tree feature is where that likely resolves.
 

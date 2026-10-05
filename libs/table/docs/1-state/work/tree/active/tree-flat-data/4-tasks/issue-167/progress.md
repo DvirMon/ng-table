@@ -17,11 +17,11 @@ Parallel-safe: [3, 4] after 2 · Dependency: 1 → 2 → 4 → 5 → 6
 
 ## Steps
 
-| Step | Title | Status |
-|---|---|---|
-| 1 | tree-links: resolve parent links, degrade broken ones | ✅ done |
-| 2 | `withTree({ parentId })` nests flat rows | ✅ done |
-| 3 | tree reads: `parentOf` / `descendantsOf`, and `removeRow(id[])` | ✅ done |
-| 4 | Move the grouping story fixture to flat rows | ✅ done |
-| 5 | Remove `childrenAccessor` | ✅ done |
-| 6 | Docs: flat-data tree contract | ✅ done |
+| Step | Title                                                           | Status  |
+| ---- | --------------------------------------------------------------- | ------- |
+| 1    | tree-links: resolve parent links, degrade broken ones           | ✅ done |
+| 2    | `withTree({ parentId })` nests flat rows                        | ✅ done |
+| 3    | tree reads: `parentOf` / `descendantsOf`, and `removeRow(id[])` | ✅ done |
+| 4    | Move the grouping story fixture to flat rows                    | ✅ done |
+| 5    | Remove `childrenAccessor`                                       | ✅ done |
+| 6    | Docs: flat-data tree contract                                   | ✅ done |

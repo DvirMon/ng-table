@@ -4,18 +4,18 @@
 
 ## Answer
 
-Each library uses a different mechanism. **None of them composes *host bindings* without
+Each library uses a different mechanism. **None of them composes _host bindings_ without
 inheritance, `hostDirectives` or DOM-writing effects.**
 
 - **CDK** inherits from a selectorless abstract `@Directive` that carries its own `host:`
   bindings [S9][S11]. It uses `hostDirectives` nowhere [S15].
-- **`@angular/aria`** composes *logic*, as plain undecorated classes (`ListExpansion` shared by
+- **`@angular/aria`** composes _logic_, as plain undecorated classes (`ListExpansion` shared by
   accordion, tree and tabs) [S17][S18][S19][S20]. The host bindings are not shared: each
   directive writes its own `host:` block reading `_pattern.*` [S16][S21].
 - **ng-primitives** composes a function (`ngpCollapsibleTrigger`) that both the collapsible and
   accordion triggers call [S2][S1]. That function writes the DOM through effects [S6].
 
-Our core *is* four host bindings and no logic, so only CDK's mechanism shares what we need to
+Our core _is_ four host bindings and no logic, so only CDK's mechanism shares what we need to
 share. **I agree with the prior discovery: use a selectorless abstract base class.** One change:
 unlike CDK, keep the base out of `index.ts`.
 
@@ -44,6 +44,7 @@ unlike CDK, keep the base out of `index.ts`.
 ## Evidence
 
 **ng-primitives 0.130.3: functions called inside class directives**
+
 - `NgpAccordionTrigger` adds no bindings of its own. Its primitive is
   `ngpCollapsibleTrigger({ id })` [S1].
 - The source comments say: "The accordion trigger is the shared collapsible trigger" [S1].
@@ -77,6 +78,7 @@ unlike CDK, keep the base out of `index.ts`.
     in the package `exports` map. It is public API with an "internal" name. [S10][S8]
 
 **Angular CDK 22.1.7: abstract base classes with decorator `host`**
+
 - `CdkMenuTriggerBase` is a selectorless `@Directive` with
   `host: { '[attr.aria-controls]', '[attr.data-cdk-menu-stack-id]' }` [S9].
 - `CdkMenuTrigger` and `CdkContextMenuTrigger` both `extends CdkMenuTriggerBase` [S11][S12].
@@ -106,6 +108,7 @@ unlike CDK, keep the base out of `index.ts`.
   - Negative result: no shared trigger core. [S23]
 
 **`@angular/aria` 22.2.1: plain pattern classes, host bindings per directive**
+
 - `AccordionTriggerPattern` and `AccordionGroupPattern` are plain ES classes with no Angular
   decorator [S17].
 - The group composes `new ListFocus`, `new ListNavigation` and `new ListExpansion` [S17].
@@ -117,7 +120,7 @@ unlike CDK, keep the base out of `index.ts`.
   `TabListPattern` (`new ListExpansion({ ...inputs, multiExpandable: () => false })`) [S20].
 - **`ListExpansion` is internal.** `private.mjs` imports `_expansion-chunk.mjs` only for its
   side effects and never re-exports it [S21].
-- The `*Pattern` classes *are* public, re-exported through the `@angular/aria/private` entry
+- The `*Pattern` classes _are_ public, re-exported through the `@angular/aria/private` entry
   point [S21][S22].
 - The directive builds its pattern in `ngOnInit` with
   `new AccordionTriggerPattern({ ...this, element, accordionGroup, accordionPanelId })`.
@@ -138,36 +141,36 @@ unlike CDK, keep the base out of `index.ts`.
 
 ## Comparison
 
-| | ng-primitives@0.130.3 | CDK@22.1.7 | @angular/aria@22.2.1 |
-|---|---|---|---|
-| What is shared | a setup function per primitive [S1][S2] | an abstract `@Directive` base [S9][S14] | a plain behaviour class, inside a plain pattern class [S17][S18] |
-| Shares host bindings? | yes, as effects [S6] | yes, as decorator `host` [S9][S14] | **no**, each directive has its own `host:` [S16][S24] |
-| Bindings reach DOM via | `afterRenderEffect` + `setAttribute` [S6] | decorator `host`, merged by inheritance [S11] | decorator `host` reading `_pattern.*` [S16] |
-| `hostDirectives` used | yes, for exit animation and focus trap only [S10] | no, 0 matches [S15] | yes, deferred content only [S16][S24] |
-| Shared piece visibility | public (`ngpCollapsibleTrigger` exported) [S3] | public base, a documented extension point [S11][S13] | `ListExpansion` internal [S21]; patterns public via `/private` [S21]; host directive `ɵɵ`-exported [S16] |
-| Feature supplies state by | DI token from an ancestor (`provideCollapsibleState`) [S1] | overriding methods (`trigger()`, `isOpen()`) [S11][S14] | inputs object (`{ ...this }`) given to the pattern [S16] |
+|                           | ng-primitives@0.130.3                                      | CDK@22.1.7                                              | @angular/aria@22.2.1                                                                                     |
+| ------------------------- | ---------------------------------------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| What is shared            | a setup function per primitive [S1][S2]                    | an abstract `@Directive` base [S9][S14]                 | a plain behaviour class, inside a plain pattern class [S17][S18]                                         |
+| Shares host bindings?     | yes, as effects [S6]                                       | yes, as decorator `host` [S9][S14]                      | **no**, each directive has its own `host:` [S16][S24]                                                    |
+| Bindings reach DOM via    | `afterRenderEffect` + `setAttribute` [S6]                  | decorator `host`, merged by inheritance [S11]           | decorator `host` reading `_pattern.*` [S16]                                                              |
+| `hostDirectives` used     | yes, for exit animation and focus trap only [S10]          | no, 0 matches [S15]                                     | yes, deferred content only [S16][S24]                                                                    |
+| Shared piece visibility   | public (`ngpCollapsibleTrigger` exported) [S3]             | public base, a documented extension point [S11][S13]    | `ListExpansion` internal [S21]; patterns public via `/private` [S21]; host directive `ɵɵ`-exported [S16] |
+| Feature supplies state by | DI token from an ancestor (`provideCollapsibleState`) [S1] | overriding methods (`trigger()`, `isOpen()`) [S11][S14] | inputs object (`{ ...this }`) given to the pattern [S16]                                                 |
 
 **Our constraints applied to each mechanism**
 
-| Constraint | Base class (CDK) | Plain class plus per-directive `host` (aria) | Function + effects (ng-primitives) | `hostDirectives` (aria `ɵɵ`) |
-|---|---|---|---|---|
-| No `effect()` DOM write | yes [S9] | yes [S16] | **no** [S6] | yes [S16] |
-| One writer per attribute | one directive. A subclass can override silently, and CDK does so on purpose [S12] | one directive | not detectable: effect writes bypass binding precedence [S6] | two directives on one element |
-| Single public barrel, core internal | yes, if left out of `index.ts` (CDK chose to export it [S11]) | yes: the class is plain, not a directive [S21] | yes (plain function) | needs a `ɵ` export under ng-packagr (prior discovery, R13/R16 there) [S16] |
-| Shares *our* four bindings | yes | **no**, the bindings are copied into both directives | yes | yes |
+| Constraint                          | Base class (CDK)                                                                  | Plain class plus per-directive `host` (aria)         | Function + effects (ng-primitives)                           | `hostDirectives` (aria `ɵɵ`)                                               |
+| ----------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| No `effect()` DOM write             | yes [S9]                                                                          | yes [S16]                                            | **no** [S6]                                                  | yes [S16]                                                                  |
+| One writer per attribute            | one directive. A subclass can override silently, and CDK does so on purpose [S12] | one directive                                        | not detectable: effect writes bypass binding precedence [S6] | two directives on one element                                              |
+| Single public barrel, core internal | yes, if left out of `index.ts` (CDK chose to export it [S11])                     | yes: the class is plain, not a directive [S21]       | yes (plain function)                                         | needs a `ɵ` export under ng-packagr (prior discovery, R13/R16 there) [S16] |
+| Shares _our_ four bindings          | yes                                                                               | **no**, the bindings are copied into both directives | yes                                                          | yes                                                                        |
 
 ## Synthesis
 
 - **"Composition" means two different things in this survey.**
-  - aria composes *behaviour* (focus, navigation, expansion): stateful logic with many
+  - aria composes _behaviour_ (focus, navigation, expansion): stateful logic with many
     methods [S17][S18].
-  - It never composes *bindings*. Every directive writes its own `host:` block [S16][S24].
+  - It never composes _bindings_. Every directive writes its own `host:` block [S16][S24].
   - Our core is the opposite case: four bindings and no logic. Copying aria leaves a pattern
     object holding `isOpen` and `toggle` that the feature already owns, and still repeats
     the four `host:` entries in both directives. That adds a layer and shares nothing.
 - **ng-primitives is the only library that composes bindings without inheritance**, and it can
   do so only because its bindings are effects [S6]. The comment "without relying on
-  HostDirectives" [S7] shows it chose functions to *avoid* `hostDirectives`, not to avoid
+  HostDirectives" [S7] shows it chose functions to _avoid_ `hostDirectives`, not to avoid
   inheritance. The repo's ban on effect DOM writes rules this out.
 - **CDK is the direct precedent for our shape.** `CdkMenuItemSelectable` is a selectorless
   abstract base whose whole contribution is two host bindings and one field, with two thin
@@ -235,30 +238,30 @@ unlike CDK, keep the base out of `index.ts`.
 
 ## Sources
 
-| | Source | Version | Verified |
-|---|---|---|---|
-| S1 | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-accordion.mjs lines 111-146 (`ngpAccordionItem`), 194-200 (`ngpAccordionTrigger`), 182 (providers) | 0.130.3 | yes, local Read of the installed bundle; changed the finding: the feature supplies `open`/`onOpenChange` to the core through state, not through the trigger |
-| S2 | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-collapsible.mjs lines 135-156 (`ngpCollapsibleTrigger`) | 0.130.3 | yes, local Read |
-| S3 | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-collapsible.mjs line 312 (export list) | 0.130.3 | yes, local Read; the shared core is public |
-| S4 | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-pagination.mjs lines 54-68 | 0.130.3 | yes, local Read |
-| S5 | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-menu.mjs line 880 | 0.130.3 | yes, grep hit only |
-| S6 | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-state.mjs lines 133-178 (`createPrimitive`), 216-238 (`attrBinding`), 281-298 (`dataBinding`), 299-313 (`listener`), 382-392 (`isomorphicEffect`) | 0.130.3 | yes, local Read |
-| S7 | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-interactions.mjs lines 454-489 | 0.130.3 | yes, local Read; the "without relying on HostDirectives" comment reframes why ng-primitives uses functions |
-| S8 | https://unpkg.com/ng-primitives@0.130.3/package.json lines 162-169 (`./interactions`, `./internal` exports) | 0.130.3 | yes, local Read |
-| S9 | https://unpkg.com/@angular/cdk@22.1.7/fesm2022/menu.mjs lines 264-362 (`CdkMenuTriggerBase`) | 22.1.7 | yes, local Read |
-| S10 | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-dialog.mjs lines 5, 342, 778; ng-primitives-popover.mjs line 528; ng-primitives-internal.mjs lines 49-75 | 0.130.3 | yes, local Read and grep; changed the finding: ng-primitives does use `hostDirectives`, against the "functions only" reading |
-| S11 | https://unpkg.com/@angular/cdk@22.1.7/fesm2022/menu.mjs lines 566-595 (`CdkMenuTrigger`), 772-777 and 1036-1041 (`_setType` copies), 802-842 (host), 2100 (export list) | 22.1.7 | yes, local Read |
-| S12 | https://unpkg.com/@angular/cdk@22.1.7/fesm2022/menu.mjs lines 1867-1878, 1991-2024 (`CdkContextMenuTrigger`) | 22.1.7 | yes, local Read; found the deliberate override of a base binding |
-| S13 | https://unpkg.com/@angular/cdk@22.1.7/types/menu.d.ts lines 296-300, 714-723 | 22.1.7 | yes, local Read |
-| S14 | https://unpkg.com/@angular/cdk@22.1.7/fesm2022/menu.mjs lines 1658-1856 (`CdkMenuItemSelectable`, `CdkMenuItemRadio`, `CdkMenuItemCheckbox`) | 22.1.7 | yes, local Read; the closest shape match to our core |
-| S15 | node_modules/@angular/cdk/fesm2022/*.mjs, grep `hostDirectives` (0) and `usesInheritance: true` (22) | 22.1.7 | yes, grep count |
-| S16 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/accordion.mjs (`AccordionTrigger` `ngOnInit`, host; `AccordionPanel` `hostDirectives`; export line) | 22.2.1 | yes, WebFetch verbatim request; confirms the `_pattern`-in-`ngOnInit` detail the prior discovery left unverified; no lines |
-| S17 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/_accordion-chunk.mjs (imports, `AccordionTriggerPattern`, `AccordionGroupPattern` constructor) | 22.2.1 | yes, WebFetch verbatim; no lines |
-| S18 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/_expansion-chunk.mjs (`ListExpansion`, whole file) | 22.2.1 | yes, WebFetch verbatim of the whole file |
-| S19 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/_tree-chunk.mjs (`TreePattern` constructor) | 22.2.1 | yes, WebFetch verbatim; import list probably truncated |
-| S20 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/_tabs-chunk.mjs (imports, `new ListExpansion`) | 22.2.1 | yes, WebFetch verbatim |
-| S21 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/private.mjs (re-export lines) | 22.2.1 | yes, WebFetch verbatim; changed the finding: the shared behaviour is not exported, only the patterns are |
-| S22 | https://registry.npmjs.org/@angular/aria/latest | 22.2.1 | yes, fetched; `exports` includes `./private` |
-| S23 | https://unpkg.com/@angular/cdk@22.1.7/fesm2022/accordion.mjs lines 80-235, 275 | 22.1.7 | yes, local grep; no `host:` block, `exportAs` only |
-| S24 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/tree.mjs (`TreeItem` host, `TreeItemGroup` `hostDirectives`, export line) | 22.2.1 | yes, WebFetch verbatim; no lines |
-| S25 | https://unpkg.com/@angular/aria@22.2.1/types/accordion.d.ts (imports, `_pattern` field, `AccordionPanel` `ɵdir`) | 22.2.1 | yes, WebFetch verbatim; no lines |
+|     | Source                                                                                                                                                                                                           | Version | Verified                                                                                                                                                    |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S1  | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-accordion.mjs lines 111-146 (`ngpAccordionItem`), 194-200 (`ngpAccordionTrigger`), 182 (providers)                                                | 0.130.3 | yes, local Read of the installed bundle; changed the finding: the feature supplies `open`/`onOpenChange` to the core through state, not through the trigger |
+| S2  | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-collapsible.mjs lines 135-156 (`ngpCollapsibleTrigger`)                                                                                           | 0.130.3 | yes, local Read                                                                                                                                             |
+| S3  | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-collapsible.mjs line 312 (export list)                                                                                                            | 0.130.3 | yes, local Read; the shared core is public                                                                                                                  |
+| S4  | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-pagination.mjs lines 54-68                                                                                                                        | 0.130.3 | yes, local Read                                                                                                                                             |
+| S5  | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-menu.mjs line 880                                                                                                                                 | 0.130.3 | yes, grep hit only                                                                                                                                          |
+| S6  | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-state.mjs lines 133-178 (`createPrimitive`), 216-238 (`attrBinding`), 281-298 (`dataBinding`), 299-313 (`listener`), 382-392 (`isomorphicEffect`) | 0.130.3 | yes, local Read                                                                                                                                             |
+| S7  | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-interactions.mjs lines 454-489                                                                                                                    | 0.130.3 | yes, local Read; the "without relying on HostDirectives" comment reframes why ng-primitives uses functions                                                  |
+| S8  | https://unpkg.com/ng-primitives@0.130.3/package.json lines 162-169 (`./interactions`, `./internal` exports)                                                                                                      | 0.130.3 | yes, local Read                                                                                                                                             |
+| S9  | https://unpkg.com/@angular/cdk@22.1.7/fesm2022/menu.mjs lines 264-362 (`CdkMenuTriggerBase`)                                                                                                                     | 22.1.7  | yes, local Read                                                                                                                                             |
+| S10 | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-dialog.mjs lines 5, 342, 778; ng-primitives-popover.mjs line 528; ng-primitives-internal.mjs lines 49-75                                          | 0.130.3 | yes, local Read and grep; changed the finding: ng-primitives does use `hostDirectives`, against the "functions only" reading                                |
+| S11 | https://unpkg.com/@angular/cdk@22.1.7/fesm2022/menu.mjs lines 566-595 (`CdkMenuTrigger`), 772-777 and 1036-1041 (`_setType` copies), 802-842 (host), 2100 (export list)                                          | 22.1.7  | yes, local Read                                                                                                                                             |
+| S12 | https://unpkg.com/@angular/cdk@22.1.7/fesm2022/menu.mjs lines 1867-1878, 1991-2024 (`CdkContextMenuTrigger`)                                                                                                     | 22.1.7  | yes, local Read; found the deliberate override of a base binding                                                                                            |
+| S13 | https://unpkg.com/@angular/cdk@22.1.7/types/menu.d.ts lines 296-300, 714-723                                                                                                                                     | 22.1.7  | yes, local Read                                                                                                                                             |
+| S14 | https://unpkg.com/@angular/cdk@22.1.7/fesm2022/menu.mjs lines 1658-1856 (`CdkMenuItemSelectable`, `CdkMenuItemRadio`, `CdkMenuItemCheckbox`)                                                                     | 22.1.7  | yes, local Read; the closest shape match to our core                                                                                                        |
+| S15 | node_modules/@angular/cdk/fesm2022/\*.mjs, grep `hostDirectives` (0) and `usesInheritance: true` (22)                                                                                                            | 22.1.7  | yes, grep count                                                                                                                                             |
+| S16 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/accordion.mjs (`AccordionTrigger` `ngOnInit`, host; `AccordionPanel` `hostDirectives`; export line)                                                              | 22.2.1  | yes, WebFetch verbatim request; confirms the `_pattern`-in-`ngOnInit` detail the prior discovery left unverified; no lines                                  |
+| S17 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/_accordion-chunk.mjs (imports, `AccordionTriggerPattern`, `AccordionGroupPattern` constructor)                                                                   | 22.2.1  | yes, WebFetch verbatim; no lines                                                                                                                            |
+| S18 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/_expansion-chunk.mjs (`ListExpansion`, whole file)                                                                                                               | 22.2.1  | yes, WebFetch verbatim of the whole file                                                                                                                    |
+| S19 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/_tree-chunk.mjs (`TreePattern` constructor)                                                                                                                      | 22.2.1  | yes, WebFetch verbatim; import list probably truncated                                                                                                      |
+| S20 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/_tabs-chunk.mjs (imports, `new ListExpansion`)                                                                                                                   | 22.2.1  | yes, WebFetch verbatim                                                                                                                                      |
+| S21 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/private.mjs (re-export lines)                                                                                                                                    | 22.2.1  | yes, WebFetch verbatim; changed the finding: the shared behaviour is not exported, only the patterns are                                                    |
+| S22 | https://registry.npmjs.org/@angular/aria/latest                                                                                                                                                                  | 22.2.1  | yes, fetched; `exports` includes `./private`                                                                                                                |
+| S23 | https://unpkg.com/@angular/cdk@22.1.7/fesm2022/accordion.mjs lines 80-235, 275                                                                                                                                   | 22.1.7  | yes, local grep; no `host:` block, `exportAs` only                                                                                                          |
+| S24 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/tree.mjs (`TreeItem` host, `TreeItemGroup` `hostDirectives`, export line)                                                                                        | 22.2.1  | yes, WebFetch verbatim; no lines                                                                                                                            |
+| S25 | https://unpkg.com/@angular/aria@22.2.1/types/accordion.d.ts (imports, `_pattern` field, `AccordionPanel` `ɵdir`)                                                                                                 | 22.2.1  | yes, WebFetch verbatim; no lines                                                                                                                            |

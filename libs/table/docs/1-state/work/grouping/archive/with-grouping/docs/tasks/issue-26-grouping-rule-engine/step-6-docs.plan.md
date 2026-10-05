@@ -1,5 +1,5 @@
 ---
-title: "Step 6 — documentation updates this work owes"
+title: 'Step 6 — documentation updates this work owes'
 type: task-step
 issue: 60
 ---
@@ -77,4 +77,5 @@ Spec: `../../../3-spec.md`, "Documentation updates this work owes" section.
       matches expectations before the real run).
 
 ---
+
 ← [Step 5: Tests](step-5-tests.plan.md)

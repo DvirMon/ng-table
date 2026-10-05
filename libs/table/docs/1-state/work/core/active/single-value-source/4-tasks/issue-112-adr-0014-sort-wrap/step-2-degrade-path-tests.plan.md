@@ -52,7 +52,7 @@ Cases to cover:
 
 3. **A throwing `sortFn` does not propagate; the affected pair's
    order falls back to input order.** A column with `sortFn: () => {
-   throw new Error('boom'); }` — assert `toggleSort` does not throw
+throw new Error('boom'); }` — assert `toggleSort` does not throw
    and `store.rows()` comes back in the original input order for that
    column (the guard returns `0` for every comparison, so the stable
    sort preserves it).
@@ -66,7 +66,7 @@ Cases to cover:
 5. **Accessor errors and comparator errors report independently.** A
    column whose `accessor` throws for a `sortFn`-bearing column would
    never reach the comparator (short-circuited by `isEmpty`), so this
-   case instead uses two *different* columns in one multi-sort
+   case instead uses two _different_ columns in one multi-sort
    (`multi: true`) — one with a throwing `accessor`, one with a
    throwing `sortFn` — and asserts `errorSpy` was called exactly
    twice, once per column, distinguishing the two messages if useful.
@@ -81,7 +81,7 @@ style) are enough for most of these.
   per-case column overrides via the existing `overrides` parameter
   rather than a new fixture builder.
 - Wrap every case that spies on `console.error` in `try { ... } finally
-  { errorSpy.mockRestore(); }`, matching the existing style in this
+{ errorSpy.mockRestore(); }`, matching the existing style in this
   file's other tests and in `cells.spec.ts`.
 
 ## Risks / Watchouts
@@ -105,4 +105,5 @@ style) are enough for most of these.
 - [ ] `nx run shared-table:typecheck-spec` clean.
 
 ---
+
 ← [Step 1: Guard sortRows per ADR-0014](step-1-guard-sort-rows.plan.md) | [Step 3: Name the fallback, close SO24](step-3-docs-and-decisions-log.plan.md) →

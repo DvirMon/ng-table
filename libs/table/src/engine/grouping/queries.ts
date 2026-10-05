@@ -54,10 +54,7 @@ export function rowsBeneathGroup<TRow>(
 // `emitGroupRows`, which only descends into an expanded node's children. Reuses
 // `buildGroupPath`/`toGroupId` so the id format can never drift from what a header actually
 // renders.
-function collectClusterGroupIds<T>(
-  nodes: ClusterNode<T>[],
-  parentPath: string,
-): RowId[] {
+function collectClusterGroupIds<T>(nodes: ClusterNode<T>[], parentPath: string): RowId[] {
   return nodes.flatMap((node) => {
     if (!node.admitted) return [];
     const path = buildGroupPath(parentPath, node.columnId, node.value);
@@ -89,14 +86,9 @@ export function collectGroupIds<TRow>(
     opts?.knownIds ?? new Set(columns.map((column) => column.id)),
     opts?.label ?? 'withGrouping',
   );
-  const ordered = sortClusters(
-    admitted,
-    opts?.groupOrderByColumn,
-    (items) => items,
-    {
-      done: false,
-    },
-  );
+  const ordered = sortClusters(admitted, opts?.groupOrderByColumn, (items) => items, {
+    done: false,
+  });
   return collectClusterGroupIds(ordered, '');
 }
 
@@ -137,9 +129,7 @@ export function collectAppliedLevels<TRow>(
       break;
     }
     applied.push(level);
-    frontier = frontier
-      .filter((node) => node.admitted)
-      .flatMap((node) => node.children);
+    frontier = frontier.filter((node) => node.admitted).flatMap((node) => node.children);
   }
   return applied;
 }

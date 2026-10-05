@@ -26,8 +26,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection()
-      )
+        withSelection(),
+      ),
     );
 
     expect(store.selectedRows().has(1)).toBe(false);
@@ -48,8 +48,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection()
-      )
+        withSelection(),
+      ),
     );
 
     store.select([1, 2, 1]);
@@ -64,8 +64,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection()
-      )
+        withSelection(),
+      ),
     );
 
     store.select([1, 2]);
@@ -78,8 +78,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection({ enableMultiRowSelection: false })
-      )
+        withSelection({ enableMultiRowSelection: false }),
+      ),
     );
 
     store.toggle(1);
@@ -94,8 +94,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection({ enableMultiRowSelection: false })
-      )
+        withSelection({ enableMultiRowSelection: false }),
+      ),
     );
 
     store.select([1]);
@@ -110,8 +110,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection({ enableMultiRowSelection: false })
-      )
+        withSelection({ enableMultiRowSelection: false }),
+      ),
     );
 
     expect(() => store.select([1, 2])).toThrow();
@@ -123,8 +123,8 @@ describe('withSelection', () => {
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
         // Row 1 forbids co-selection; rows 2 and 3 allow it.
-        withSelection({ enableMultiRowSelection: (row) => row.id !== 1 })
-      )
+        withSelection({ enableMultiRowSelection: (row) => row.id !== 1 }),
+      ),
     );
 
     store.select([2, 3]);
@@ -139,8 +139,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection({ enableRowSelection: (row) => row.id !== 1 })
-      )
+        withSelection({ enableRowSelection: (row) => row.id !== 1 }),
+      ),
     );
 
     store.toggle(1);
@@ -152,8 +152,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection({ enableRowSelection: (row) => row.id !== 1 })
-      )
+        withSelection({ enableRowSelection: (row) => row.id !== 1 }),
+      ),
     );
 
     store.select([1, 2]);
@@ -166,8 +166,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection({ enableRowSelection: (row) => selectableIds.has(row.id) })
-      )
+        withSelection({ enableRowSelection: (row) => selectableIds.has(row.id) }),
+      ),
     );
 
     store.toggle(1);
@@ -187,8 +187,8 @@ describe('withSelection', () => {
         withSelection({
           initialSelection: [1, 2],
           enableRowSelection: (row) => row.id !== 1,
-        })
-      )
+        }),
+      ),
     );
 
     expect([...store.selectedRows()]).toEqual([2]);
@@ -199,8 +199,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection({ enableRowSelection: () => false })
-      )
+        withSelection({ enableRowSelection: () => false }),
+      ),
     );
 
     store.toggle(999);
@@ -212,8 +212,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection({ enableRowSelection: (row) => row.id !== 1 })
-      )
+        withSelection({ enableRowSelection: (row) => row.id !== 1 }),
+      ),
     );
 
     const emissions: SelectionChange[] = [];
@@ -228,8 +228,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection()
-      )
+        withSelection(),
+      ),
     );
 
     store.toggle(999);
@@ -241,8 +241,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection()
-      )
+        withSelection(),
+      ),
     );
 
     expect(store.selectionStateOf([1, 2])).toBe('none');
@@ -263,8 +263,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection({ enableRowSelection: (row) => row.id !== 1 })
-      )
+        withSelection({ enableRowSelection: (row) => row.id !== 1 }),
+      ),
     );
 
     expect(store.isSelectable(1)).toBe(false);
@@ -277,8 +277,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection({ enableRowSelection: (row) => row.id !== 1 })
-      )
+        withSelection({ enableRowSelection: (row) => row.id !== 1 }),
+      ),
     );
 
     const ids = [1, 2, 3];
@@ -293,8 +293,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection()
-      )
+        withSelection(),
+      ),
     );
 
     const emissions: SelectionChange[] = [];
@@ -318,8 +318,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection()
-      )
+        withSelection(),
+      ),
     );
 
     const emissions: SelectionChange[] = [];
@@ -340,8 +340,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection({ initialSelection: [1, 2] })
-      )
+        withSelection({ initialSelection: [1, 2] }),
+      ),
     );
 
     const emissions: SelectionChange[] = [];
@@ -354,11 +354,7 @@ describe('withSelection', () => {
   it('removing a selected row from data prunes its id from selectedRows and emits nothing', () => {
     const data = signal([...mockRows]);
     const store = inContext(() =>
-      createTable(
-        data,
-        { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection()
-      )
+      createTable(data, { trackBy: mockTrackBy, columns: makeColumns() }, withSelection()),
     );
 
     store.select([1, 2]);
@@ -379,8 +375,8 @@ describe('withSelection', () => {
       createTable(
         signal([...mockRows]),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection()
-      )
+        withSelection(),
+      ),
     );
 
     store.select([1, 2]);
@@ -403,8 +399,8 @@ describe('withSelection', () => {
         data,
         { trackBy: mockTrackBy, columns: makeColumns() },
         withSelection(),
-        withSorting()
-      )
+        withSorting(),
+      ),
     );
 
     store.select([1, 2]);
@@ -423,8 +419,8 @@ describe('withSelection', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection()
-      )
+        withSelection(),
+      ),
     );
 
     let completed = false;
@@ -457,9 +453,9 @@ describe('withSelection', () => {
             return {
               hiddenSelected: computed(() => s.selectedRows().size - s.rows().length),
             };
-          })
-        )
-      )
+          }),
+        ),
+      ),
     );
 
     expectTypeOf(store.hiddenSelected).toEqualTypeOf<Signal<number>>();
@@ -480,8 +476,8 @@ describe('withSelection', () => {
         createTable(
           signal<MockRow[]>(mockRows),
           { trackBy: mockTrackBy, columns: makeColumns() },
-          withSelection()
-        )
+          withSelection(),
+        ),
       );
 
       expectTypeOf<keyof typeof store>().toEqualTypeOf<
@@ -495,8 +491,8 @@ describe('withSelection', () => {
         createTable(
           signal<MockRow[]>(mockRows),
           { trackBy: mockTrackBy, columns: makeColumns() },
-          withSelection(withComputed((s) => ({ count: computed(() => s.selectedRows().size) })))
-        )
+          withSelection(withComputed((s) => ({ count: computed(() => s.selectedRows().size) }))),
+        ),
       );
 
       expectTypeOf(store.count).toEqualTypeOf<Signal<number>>();

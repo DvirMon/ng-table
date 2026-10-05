@@ -3,7 +3,7 @@
 **Status:** accepted — decided 2026-09-17.
 **Related:** [ADR-0017](0017-engine-owned-descendant-prune.md) (prune stage that admission applies to), [issue #86](https://github.com/DvirMon/ng-table/issues/86). Research: `docs/1-state/work/grouping/archive/column-group-index/2-decisions.md`.
 
-`when` is the default naming for any dynamically-toggled conditional on a feature's rule — whether driven by row/cluster data or external component state (signal, resource, toggle). On grouping rules, `enable?: () => boolean | undefined` is the narrow exception: level *activation* (external-state driven, pre-clustering), paired with `when: (cluster) => boolean` for *admission* (data-driven, post-clustering). The two orthogonal predicates on one rule object cannot share a name because they fire at different pipeline moments with different failure semantics. `GroupingAsyncRule` has no `enable` — its activation is already `onSuccess`/`onError`.
+`when` is the default naming for any dynamically-toggled conditional on a feature's rule — whether driven by row/cluster data or external component state (signal, resource, toggle). On grouping rules, `enable?: () => boolean | undefined` is the narrow exception: level _activation_ (external-state driven, pre-clustering), paired with `when: (cluster) => boolean` for _admission_ (data-driven, post-clustering). The two orthogonal predicates on one rule object cannot share a name because they fire at different pipeline moments with different failure semantics. `GroupingAsyncRule` has no `enable` — its activation is already `onSuccess`/`onError`.
 
 `enable` is optional, not required: a rule carrying only `when` (no activation opinion) omits `enable` entirely rather than passing a no-op lambda. Present-and-returning-`undefined` still abstains the whole rule set — omission and "pending" are deliberately different signals.
 
@@ -11,7 +11,7 @@ Table-wide `WithGroupingConfig.groupWhen` renames to `when` (unifies with per-co
 
 ## Alternatives considered
 
-- **Collapse into one arity-dispatched field.** Activation runs *before* any cluster tree exists (it determines level order); admission runs *after* clustering, per resulting cluster. No single call site serves both, so this isn't an ergonomics fix.
+- **Collapse into one arity-dispatched field.** Activation runs _before_ any cluster tree exists (it determines level order); admission runs _after_ clustering, per resulting cluster. No single call site serves both, so this isn't an ergonomics fix.
 - **Keep `groupWhen` as admission, rename only the column one.** The `groupWhen` substring keeps the confusion alive — the two fields would still read as interchangeable despite being unrelated in cardinality (once-per-column vs. once-per-cluster) and timing (pre- vs. post-clustering).
 - **Different names at different scopes.** Admission is one concept at two scopes by design — they AND-combine. Naming them differently would break that symmetry.
 

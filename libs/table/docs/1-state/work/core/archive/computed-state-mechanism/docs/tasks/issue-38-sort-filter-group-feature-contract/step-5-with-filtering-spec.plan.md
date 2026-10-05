@@ -1,5 +1,5 @@
 ---
-title: "Step 5 — with-filtering.spec.ts: positional form, {} contribution asserted, trailing block"
+title: 'Step 5 — with-filtering.spec.ts: positional form, {} contribution asserted, trailing block'
 type: task-step
 issue: 72
 ---
@@ -68,4 +68,5 @@ Same as Step 4 (spec "Testing Decisions", issue #38 acceptance). This file addit
 - [ ] Runtime green (`vitest run …/with-filtering.spec.ts`) — the user runs it.
 
 ---
+
 ← [Step 4: with-sorting.spec.ts](step-4-with-sorting-spec.plan.md) | [Step 6: with-grouping.spec.ts — either-order expansion, pipeline-order permutation](step-6-with-grouping-spec.plan.md) →

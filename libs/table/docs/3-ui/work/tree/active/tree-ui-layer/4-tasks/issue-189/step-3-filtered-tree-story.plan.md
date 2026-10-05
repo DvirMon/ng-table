@@ -11,6 +11,7 @@ files:
   - libs/table/src/stories/tree/tree-filtering/tree-filtering.filters.ts (new)
   - libs/table/src/stories/tree/tree-filtering/tree-filtering.stories.ts (new)
 ---
+
 # Step 3 — Filtered tree story
 
 Adds the `Filtered` story: a name filter over the tree, with context rows and a row count.
@@ -24,8 +25,12 @@ Host shape, hints and coverage table: see [story-plan.md](story-plan.md) §3 "Fi
 Layout reference: `filtering/client-filtering/`.
 
 ```ts
-createTable(TREE_ROWS_MOCK, treeConfig,
-  withFiltering({ schema: treeFilters }), withTree({ parentId: (row) => row.parentId }));
+createTable(
+  TREE_ROWS_MOCK,
+  treeConfig,
+  withFiltering({ schema: treeFilters }),
+  withTree({ parentId: (row) => row.parentId }),
+);
 ```
 
 - `tree-filtering.filters.ts`: `name: contains(path.name)`, annotated
@@ -42,6 +47,7 @@ createTable(TREE_ROWS_MOCK, treeConfig,
 - Export `Filtered`.
 
 ## Watch out
+
 - Default reveal only. Pass no `revealContextRow` and no `includeDescendants`.
 - The toggle name is `'Children of ' + row.data.name`, with no level.
 - The toggle sits on every row in the `name` cell, keyed by `column.id === 'name'`.
@@ -51,12 +57,14 @@ createTable(TREE_ROWS_MOCK, treeConfig,
 - The row count must not change when a revealed parent is closed.
 
 ## Out of scope
+
 - `withExpansion()`.
 - Expand all and Collapse all in this toolbar.
 - Sorting and selection.
 - Broken-link or cycle rows.
 
 ## Done when
+
 - [ ] Typing "review" keeps each match's ancestors and shows them open.
 - [ ] Context rows are dimmed; matches are not.
 - [ ] Clearing the filter restores the open set from before filtering.
@@ -64,4 +72,5 @@ createTable(TREE_ROWS_MOCK, treeConfig,
 - [ ] The story files contain no `revealContextRow`, `includeDescendants` or `withExpansion`.
 
 ---
+
 ← [Step 2: Basic tree story](step-2-basic-tree-story.plan.md) | [Step 4: Whole-row click story](step-4-whole-row-click-story.plan.md) →

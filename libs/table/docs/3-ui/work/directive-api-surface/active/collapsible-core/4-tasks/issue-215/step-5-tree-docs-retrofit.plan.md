@@ -7,6 +7,7 @@ files:
   - libs/table/docs/3-ui/directives/tree.md
   - libs/table/docs/0-product/tree.md
 ---
+
 # Step 5 — Tree docs retrofit
 
 Updates the tree directive and product docs to the new toggle behavior and removes the nameless-toggle warning.
@@ -45,4 +46,5 @@ In `libs/table/docs/0-product/tree.md`:
 - [ ] `npm run llms:check` is clean.
 
 ---
+
 ← [Step 4: Stories drop the manual button type](step-4-stories-drop-manual-type.plan.md)

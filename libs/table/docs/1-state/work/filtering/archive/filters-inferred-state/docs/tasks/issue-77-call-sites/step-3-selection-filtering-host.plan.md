@@ -8,10 +8,10 @@
 
 ## Files
 
-| File | Action |
-|---|---|
-| `libs/shared/table/src/stories/filtering/selection-filtering/selection-filtering-story-host.component.ts` | edit — array schema, row carrier |
-| `libs/shared/table/src/stories/filtering/fixtures/types.ts` | edit — delete `SelectionInvoiceFilterState` |
+| File                                                                                                      | Action                                      |
+| --------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `libs/shared/table/src/stories/filtering/selection-filtering/selection-filtering-story-host.component.ts` | edit — array schema, row carrier            |
+| `libs/shared/table/src/stories/filtering/fixtures/types.ts`                                               | edit — delete `SelectionInvoiceFilterState` |
 
 Three filters, no group, no gate, no guard function. The purely mechanical one of the five.
 
@@ -43,7 +43,7 @@ move rows in and out of view. It still declares the previous signature, so it do
 
 2. Drop the `SelectionInvoiceFilterState` import; keep `InvoiceRow`.
 3. Delete `SelectionInvoiceFilterState` from `filtering/fixtures/types.ts`.
-4. The comment above the declaration ("The subset this story filters by …") describes *why* the set
+4. The comment above the declaration ("The subset this story filters by …") describes _why_ the set
    is small, not the signature. Leave it.
 
 ## Implementation Notes
@@ -79,4 +79,5 @@ move rows in and out of view. It still declares the previous signature, so it do
 - [ ] `nx run shared-table:typecheck` reports no error in either file this step touched
 
 ---
+
 ← [Step 2: The client filtering host](step-2-client-filtering-host.plan.md) | [Step 4: The server filtering host — the `rowOf()` reference](step-4-server-filtering-host.plan.md) →

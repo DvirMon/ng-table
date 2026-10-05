@@ -20,5 +20,5 @@ export const sortEditRowsSchema = schema<SortEditRow[]>((path) =>
     // `<input>` binding only supports `string` or `number | null`, not a nullable string
     // (angular/angular#65839).
     debounce(row.dueDate, 'blur');
-  })
+  }),
 );

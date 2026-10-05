@@ -8,7 +8,14 @@ import type { StageContext } from './types';
 export interface RenderNode<TRow>
   extends Omit<
     RenderRow<TRow>,
-    'depth' | 'index' | 'isExpanded' | 'sourceIndex' | 'parentId' | 'cells' | 'hasChildren' | 'isContextRow'
+    | 'depth'
+    | 'index'
+    | 'isExpanded'
+    | 'sourceIndex'
+    | 'parentId'
+    | 'cells'
+    | 'hasChildren'
+    | 'isContextRow'
   > {
   /** Overrides the walk's `children.length > 0` derivation — set `true` for a lazy row
    *  whose children haven't loaded yet, so its toggle still renders. See ADR-0023. */
@@ -32,7 +39,7 @@ export type RenderStage = keyof RenderStageRegistry & string;
 
 export type RenderNodeTransform<TRow> = (
   nodes: readonly RenderNode<TRow>[],
-  ctx: StageContext<TRow>
+  ctx: StageContext<TRow>,
 ) => readonly RenderNode<TRow>[];
 
 /**
@@ -44,10 +51,10 @@ export type RenderNodeTransform<TRow> = (
  */
 export function mapNodes<TRow>(
   nodes: readonly RenderNode<TRow>[],
-  fn: (node: RenderNode<TRow>) => RenderNode<TRow>
+  fn: (node: RenderNode<TRow>) => RenderNode<TRow>,
 ): readonly RenderNode<TRow>[] {
   return nodes.map((node) =>
-    fn(node.children.length === 0 ? node : { ...node, children: mapNodes(node.children, fn) })
+    fn(node.children.length === 0 ? node : { ...node, children: mapNodes(node.children, fn) }),
   );
 }
 
@@ -62,7 +69,7 @@ interface StageOutputScan {
 // the containment check.
 function scanStageOutput<TRow>(
   nodes: readonly RenderNode<TRow>[],
-  inputIds: ReadonlySet<RowId> | null
+  inputIds: ReadonlySet<RowId> | null,
 ): StageOutputScan {
   const ids = new Set<RowId>();
   let firstDuplicateId: RowId | undefined;
@@ -94,7 +101,7 @@ function scanStageOutput<TRow>(
 // thrown on and always passed through unchanged.
 function reportStageOutput(
   stage: ResolvedStage<unknown>,
-  { firstDuplicateId, firstInventedId }: StageOutputScan
+  { firstDuplicateId, firstInventedId }: StageOutputScan,
 ): void {
   const subject = `[createTable] render stage "${stage.name}" (${stage.label}) emitted`;
   const hasDuplicate = firstDuplicateId !== undefined;
@@ -104,7 +111,7 @@ function reportStageOutput(
   }
   if (hasInvented) {
     console.error(
-      `${subject} row id "${firstInventedId}" that was not in its input — output passed through.`
+      `${subject} row id "${firstInventedId}" that was not in its input — output passed through.`,
     );
   }
 }
@@ -119,7 +126,7 @@ function reportStageOutput(
 export function runRenderStages<TRow>(
   nodes: readonly RenderNode<TRow>[],
   stages: readonly ResolvedStage<RenderNodeTransform<TRow>>[],
-  ctx: StageContext<TRow>
+  ctx: StageContext<TRow>,
 ): readonly RenderNode<TRow>[] {
   const hasNoStages = stages.length === 0;
   if (hasNoStages) return nodes;

@@ -57,4 +57,5 @@ type parameter's constraint.
 - [ ] `nx run shared-table:typecheck` clean, **run twice**.
 
 ---
+
 ← [Step 2: `TableConfig` takes a `ColumnSet` only](step-2-narrow-config-to-set.plan.md) | [Step 4: Array-rejection proofs](step-4-array-rejection-proofs.plan.md) →

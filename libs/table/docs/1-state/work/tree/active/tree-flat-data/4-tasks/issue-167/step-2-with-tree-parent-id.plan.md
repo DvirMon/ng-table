@@ -8,6 +8,7 @@ files:
   - libs/table/src/api/features/with-tree.spec.ts
   - libs/table/src/table.mock.ts
 ---
+
 # Step 2 — `withTree({ parentId })` nests flat rows
 
 This step adds a `parentId` accessor to `withTree()` and nests
@@ -27,6 +28,7 @@ Decisions: [D1](../../1-decisions.md), [D4](../../1-decisions.md), [D9](../../1-
 
   `null` and `undefined` both mean root. `childrenAccessor`
   stays for now; existing nested tests are untouched.
+
 - With `parentId` set, contribute `parentLink` as a total
   function: a throw or an `undefined` return both map to
   `null`. This contribution never reports.
@@ -55,8 +57,7 @@ Decisions: [D1](../../1-decisions.md), [D4](../../1-decisions.md), [D9](../../1-
 Usage:
 
 ```ts
-createTable(rows, { trackBy: 'id', columns },
-  withTree({ parentId: (row) => row.parentId }));
+createTable(rows, { trackBy: 'id', columns }, withTree({ parentId: (row) => row.parentId }));
 ```
 
 ## Watch out
@@ -78,4 +79,5 @@ createTable(rows, { trackBy: 'id', columns },
 - [ ] Seams A through O in `step-2-with-tree-parent-id.test-plan.md` pass.
 
 ---
+
 ← [Step 1: tree-links: resolve parent links, degrade broken ones](step-1-tree-links.plan.md) | [Step 3: tree reads — parentOf / descendantsOf, and removeRow(id[])](step-3-tree-reads.plan.md) →

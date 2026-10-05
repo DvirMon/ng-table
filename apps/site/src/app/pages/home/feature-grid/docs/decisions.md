@@ -12,7 +12,7 @@ disagreement found; this component renders the six-cell grid and nothing above i
 ## Plain `<h3>`/`<p>`, not the `ngpt-prose` component
 
 Spec text: "Each cell is a `prose` H3 and one paragraph at body-medium." Read this as
-*prose-scale* typography (title-medium for H3, body-medium for the paragraph — the same values
+_prose-scale_ typography (title-medium for H3, body-medium for the paragraph — the same values
 `Content Prose.md` assigns to H3/body), not as literally wrapping each cell in `<ngpt-prose>`.
 `ngpt-prose` owns heading anchor links (`#`, revealed on hover, scroll-margin-top for the docs
 TOC) — machinery for the sidebar/TOC content column that Home explicitly drops. Pulling it in
@@ -63,12 +63,12 @@ declared signature.
 
 ## Old vs. new shape
 
-| | Before | After |
-|---|---|---|
-| Selector | `ngpt-home-feature-grid` (element) | `div[ngptHomeFeatureGrid]` |
-| Inputs | `features: input<readonly FeatureCell[]>()` (+ a `cells` computed normalizing `undefined` → `[]`) | none |
-| DOM | `@for` built six `<article><h3><p>` cells from the array | the consumer authors each cell |
-| Class body | input + computed | empty |
+|            | Before                                                                                            | After                          |
+| ---------- | ------------------------------------------------------------------------------------------------- | ------------------------------ |
+| Selector   | `ngpt-home-feature-grid` (element)                                                                | `div[ngptHomeFeatureGrid]`     |
+| Inputs     | `features: input<readonly FeatureCell[]>()` (+ a `cells` computed normalizing `undefined` → `[]`) | none                           |
+| DOM        | `@for` built six `<article><h3><p>` cells from the array                                          | the consumer authors each cell |
+| Class body | input + computed                                                                                  | empty                          |
 
 ## Why
 
@@ -94,15 +94,15 @@ buys nothing. If a cell ever gains a box, `article[ngptHomeFeatureCell]` is the 
 ## Reaching the cells' typography: `:host ::ng-deep`, scoped
 
 The `<h3>`/`<p>` rules are the whole reason this needs thought. Under emulated encapsulation
-projected nodes carry the *consumer's* encapsulation id, so a plain `:host h3` compiles to
+projected nodes carry the _consumer's_ encapsulation id, so a plain `:host h3` compiles to
 `[_nghost-x] h3[_ngcontent-x]` and never matches — ADR-0005 records the same mechanic as the reason
 `prose` needs `ViewEncapsulation.None`. There is no `::slotted` without shadow DOM. Three options:
 
-| Option | Verdict |
-|---|---|
-| `ViewEncapsulation.None` (the `prose` route) | Rejected — `CONVENTIONS.md` #9 reserves it for `prose` explicitly ("No other component needs this"), and it would need a host *class* for scoping since None emits no `_nghost` attribute |
-| A primitive per element (`h3[…Title]`, `p[…Text]`, plus the cell) | Rejected — three or four attribute components so that a page-local block can set two fonts is more ceremony than it earns, and it forces every cell's author to remember four attributes |
-| `:host ::ng-deep h3` / `p` | **Chosen** |
+| Option                                                            | Verdict                                                                                                                                                                                   |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ViewEncapsulation.None` (the `prose` route)                      | Rejected — `CONVENTIONS.md` #9 reserves it for `prose` explicitly ("No other component needs this"), and it would need a host _class_ for scoping since None emits no `_nghost` attribute |
+| A primitive per element (`h3[…Title]`, `p[…Text]`, plus the cell) | Rejected — three or four attribute components so that a page-local block can set two fonts is more ceremony than it earns, and it forces every cell's author to remember four attributes  |
+| `:host ::ng-deep h3` / `p`                                        | **Chosen**                                                                                                                                                                                |
 
 `:host ::ng-deep` compiles to `[_nghost-x] h3`, so the rules stay scoped to this grid's own
 instances — never bare `::ng-deep`, never global. This is the css-styling skill's sanctioned
@@ -142,7 +142,7 @@ in Angular, and there is no reason to introduce deprecated API into a codebase w
 
 Switched to `ViewEncapsulation.None` with every rule scoped under a `.ngpt-home-feature-grid` host
 class. This is not a new exception: it is the identical mechanism `prose` already uses, for the
-identical reason — projected nodes carry the *declaring* component's encapsulation id, so no
+identical reason — projected nodes carry the _declaring_ component's encapsulation id, so no
 encapsulated selector from this component can ever reach them. CONVENTIONS.md #9 has been widened
 from "prose is the one exception" to "styling projected content requires it; scope every rule under
 a host class", which is what both components actually do.
@@ -154,7 +154,7 @@ force the consumer to annotate markup that reads perfectly well as plain HTML.
 ## Reversed again: directive-per-part, `ViewEncapsulation.None` dropped
 
 Re-litigated after a research pass (`docs/encapsulation-research.md`) confirmed `None` disables
-scoping for the *entire* stylesheet, not just the projected-content rules — `CONVENTIONS.md` #9's
+scoping for the _entire_ stylesheet, not just the projected-content rules — `CONVENTIONS.md` #9's
 host-class scoping is a hand-enforced convention, not compiler-enforced, so it can silently drift
 per file. Given this app is trying to avoid `None` for DS components generally, the "more ceremony"
 objection above was re-weighed against that leak risk and lost.

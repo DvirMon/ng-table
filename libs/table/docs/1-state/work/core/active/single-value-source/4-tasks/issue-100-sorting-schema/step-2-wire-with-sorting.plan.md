@@ -110,4 +110,5 @@ plus the example from #100's body using the three declarators.
       construction with the `withSorting` label (Step 4 tests it).
 
 ---
+
 ← [Step 1: The sorting schema module](step-1-sorting-schema-module.plan.md) | [Step 3: Delete the old surface](step-3-delete-old-surface.plan.md) →

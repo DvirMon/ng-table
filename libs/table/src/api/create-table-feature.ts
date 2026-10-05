@@ -26,11 +26,11 @@ type NormalizeDerived<D> = IsAny<D> extends true ? {} : D;
  * concern — the fold's `SlotRegistry` is the single collision authority.
  */
 export function createTableFeature<In extends Shape, Out extends object>(
-  factory: (input: In, ctx: StageContext<RowOf<In>>) => TableFeatureSpec<RowOf<In>, Out>
+  factory: (input: In, ctx: StageContext<RowOf<In>>) => TableFeatureSpec<RowOf<In>, Out>,
 ): Feature<In, Out>;
 export function createTableFeature<In extends Shape, Out extends object, D extends DerivedDict>(
   factory: (input: In, ctx: StageContext<RowOf<In>>) => TableFeatureSpec<RowOf<In>, Out>,
-  derive: Feature<In & Out, D>
+  derive: Feature<In & Out, D>,
 ): Feature<In, Out & NormalizeDerived<D>>;
 // Implementation signature only — deliberately untyped. The two overloads above are the real
 // contract; a generic implementation signature here would need `factory`'s `Out` to already
@@ -38,7 +38,7 @@ export function createTableFeature<In extends Shape, Out extends object, D exten
 // give it (D is opaque to the compiler at this point, not resolved to `{}`).
 export function createTableFeature(
   factory: (input: any, ctx: StageContext<unknown>) => TableFeatureSpec<any, any>,
-  derive?: (input: any, ctx: StageContext<unknown>) => TableFeatureSpec<any, any>
+  derive?: (input: any, ctx: StageContext<unknown>) => TableFeatureSpec<any, any>,
 ): Feature<any, any> {
   if (!derive) {
     return factory;
@@ -76,16 +76,16 @@ const PIPELINE_BEHAVIOR_KEYS = [
  */
 function mergeDerivedSpec<TRow, Out extends object, D extends DerivedDict>(
   spec: TableFeatureSpec<TRow, Out>,
-  derivedSpec: TableFeatureSpec<TRow, D>
+  derivedSpec: TableFeatureSpec<TRow, D>,
 ): TableFeatureSpec<TRow, Out & D> {
   const declaredPipelineKeys = PIPELINE_BEHAVIOR_KEYS.filter(
-    (key) => derivedSpec[key] !== undefined
+    (key) => derivedSpec[key] !== undefined,
   );
   const hasDeclaredPipelineBehavior = declaredPipelineKeys.length > 0;
   if (hasDeclaredPipelineBehavior) {
     throw new Error(
       `[createTable] a trailing derive block may only contribute members, but it declared ` +
-        `${declaredPipelineKeys.join(', ')}.`
+        `${declaredPipelineKeys.join(', ')}.`,
     );
   }
 
@@ -109,7 +109,10 @@ function mergeDerivedSpec<TRow, Out extends object, D extends DerivedDict>(
  * already-merged key — invisible to `claimMember` — so this throws with the same wording,
  * naming both sides, to keep the registry the single collision authority.
  */
-function mergeMembers<A extends object, B extends object>(a: A | undefined, b: B | undefined): A & B;
+function mergeMembers<A extends object, B extends object>(
+  a: A | undefined,
+  b: B | undefined,
+): A & B;
 function mergeMembers(a: object | undefined, b: object | undefined): object {
   const merged: Record<string, unknown> = {};
   if (a) {
@@ -123,7 +126,7 @@ function mergeMembers(a: object | undefined, b: object | undefined): object {
       if (isDuplicateMember) {
         throw new Error(
           `[createTable] the feature and its derive block both provide the "${key}" store member. ` +
-            'Only one feature may provide each member.'
+            'Only one feature may provide each member.',
         );
       }
       merged[key] = value;
@@ -136,7 +139,7 @@ function mergeMembers(a: object | undefined, b: object | undefined): object {
  * only one is. `setup`/`onDestroy`/`onRowsRemoved` all chain this way, feature first. */
 function chainCallbacks<Args extends unknown[]>(
   first: ((...args: Args) => void) | undefined,
-  second: ((...args: Args) => void) | undefined
+  second: ((...args: Args) => void) | undefined,
 ): ((...args: Args) => void) | undefined {
   if (!first) {
     return second;

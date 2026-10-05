@@ -15,7 +15,7 @@ be closed before this slice starts).
   `describe('construction checks')`, `:166`)
 - `libs/table/src/columns-schema/metadata.spec.ts` (edit —
   delete `describe('resolveColumnsConfig — duplicate metadata
-  registration')`, `:91-117`)
+registration')`, `:91-117`)
 - `libs/table/src/columns-schema/schema.spec.ts` (edit —
   delete `describe('resolveColumnsConfig')`, `:100-135`)
 
@@ -47,8 +47,8 @@ Ownership (per `spec-files-assert-own-domain-only`):
    - same `ColumnMetaKey` on two different columns → no
      throw, `rules` length 2;
    - two keys on one column → no throw, `rules` length 2.
-   Name them the way `:207` names its exemption
-   (`does not throw when …`).
+     Name them the way `:207` names its exemption
+     (`does not throw when …`).
 2. Delete the `resolveColumnsConfig` describe block in
    `metadata.spec.ts`, and its import if nothing else reads it.
 3. Delete the `resolveColumnsConfig` describe block in
@@ -79,4 +79,5 @@ Ownership (per `spec-files-assert-own-domain-only`):
 - [ ] `nx run shared-table:typecheck-spec` clean.
 
 ---
+
 [Step 2: `TableConfig` takes a `ColumnSet` only](step-2-narrow-config-to-set.plan.md) →

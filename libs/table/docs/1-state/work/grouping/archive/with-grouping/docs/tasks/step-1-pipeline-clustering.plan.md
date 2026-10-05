@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — Pipeline clustering engine + shared types"
+title: 'Step 1 — Pipeline clustering engine + shared types'
 type: task-step
 issue: 6
 ---
@@ -63,7 +63,7 @@ import type { ColumnDef } from '../api/types';
 export interface ClusterNode<T> {
   readonly columnId: string;
   readonly value: unknown;
-  readonly items: T[];              // every leaf under this node, at any depth
+  readonly items: T[]; // every leaf under this node, at any depth
   readonly children: ClusterNode<T>[]; // empty ⇒ this node is the deepest clustered level
 }
 
@@ -80,7 +80,7 @@ function toGroupKey(value: unknown): string {
  * rest." Construction-time validation (a bad `initialGrouping` id) is Step 4's job, not this. */
 export function resolveGroupingLevels<TRow>(
   grouping: readonly string[],
-  columns: ColumnDef<TRow>[]
+  columns: ColumnDef<TRow>[],
 ): string[] {
   const knownIds = new Set(columns.map((c) => c.id));
   return grouping.filter((id) => knownIds.has(id));
@@ -95,7 +95,7 @@ export function resolveGroupingLevels<TRow>(
 export function buildClusters<T>(
   items: T[],
   levels: readonly string[],
-  accessor: (item: T, columnId: string) => unknown
+  accessor: (item: T, columnId: string) => unknown,
 ): ClusterNode<T>[] {
   const [columnId, ...rest] = levels;
   if (columnId === undefined) {
@@ -122,7 +122,7 @@ export function buildClusters<T>(
 
 function flattenLeaves<T>(nodes: ClusterNode<T>[]): T[] {
   return nodes.flatMap((node) =>
-    node.children.length > 0 ? flattenLeaves(node.children) : node.items
+    node.children.length > 0 ? flattenLeaves(node.children) : node.items,
   );
 }
 
@@ -134,7 +134,7 @@ function flattenLeaves<T>(nodes: ClusterNode<T>[]): T[] {
 export function clusterRows<TRow>(
   rows: TRow[],
   grouping: readonly string[],
-  columns: ColumnDef<TRow>[]
+  columns: ColumnDef<TRow>[],
 ): TRow[] {
   const levels = resolveGroupingLevels(grouping, columns);
   if (levels.length === 0) {
@@ -142,7 +142,7 @@ export function clusterRows<TRow>(
   }
   const columnById = new Map(columns.map((c) => [c.id, c]));
   const nodes = buildClusters(rows, levels, (row, columnId) =>
-    columnById.get(columnId)!.accessor(row)
+    columnById.get(columnId)!.accessor(row),
   );
   return flattenLeaves(nodes);
 }
@@ -151,6 +151,7 @@ export function clusterRows<TRow>(
 ### 3. `engine/grouping.spec.ts` — plain `vitest`, no `TestBed`
 
 Cover:
+
 - `clusterRows` with 1 level: same-key rows land contiguous, first-occurrence order preserved,
   order within each cluster otherwise unchanged.
 - `clusterRows` with 2+ levels: leaf clusters contiguous at every depth (e.g. region → category:
@@ -181,10 +182,10 @@ Cover:
 ## Risks / Watchouts
 
 - The empty-levels base case (`columnId === undefined` → `return []`) only means "no more
-  nesting for this branch" when reached *inside* recursion (a node's `children`). At the
+  nesting for this branch" when reached _inside_ recursion (a node's `children`). At the
   top-level entry point it would silently drop every row if `buildClusters` were called directly
   with an empty `levels` array — this is why `clusterRows` pre-filters with
-  `resolveGroupingLevels` and short-circuits to `return rows` *before* calling `buildClusters`,
+  `resolveGroupingLevels` and short-circuits to `return rows` _before_ calling `buildClusters`,
   rather than filtering unknown ids one level at a time inside the recursion. Keep that
   structure; don't "simplify" it by moving the unknown-id check into `buildClusters` itself.
 
@@ -203,4 +204,5 @@ Cover:
 - [ ] `engine/grouping.spec.ts` passes under plain `vitest`, no `TestBed`.
 
 ---
+
 [Step 2: Render-stage group headers + aggregates](step-2-render-stage-aggregates.plan.md) →

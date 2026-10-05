@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — multi-selection/: the selection baseline"
+title: 'Step 2 — multi-selection/: the selection baseline'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: C
@@ -37,13 +37,13 @@ stale-id failure (D8) and §5.1's silent prune.
 ## What To Do
 
 1. `createTable(data, multiSelectionConfig, withSelection({ enableRowSelection: (row) =>
-   !row.locked }))`, data from `SELECTION_ROWS_MOCK`.
+!row.locked }))`, data from `SELECTION_ROWS_MOCK`.
 2. **Per-row native `<input type="checkbox">`** in a leading column — the convergent default.
    `[checked]="table.selectedRows().has(row.id)"`, `(change)` → `table.toggle(row.id)`. Native, so
    §4.1's Space gesture comes free; the doc-comment scopes it to Space only (roving focus, arrow
    nav and Tab containment stay on the undrilled selection directive, node H).
 3. **Header tri-state checkbox, both directions, one control** — tick → `table.select(selectAllIds(
-   table))`; untick → `clearSelection()`. No peer ships a separate Clear button; clearing is
+table))`; untick → `clearSelection()`. No peer ships a separate Clear button; clearing is
    universally the header checkbox's second state. `checked`/`indeterminate` come from a host
    `computed(() => table.selectionStateOf(selectAllIds(table)))`, and the doc-comment names the
    honest gap: the library ships no derived "all visible selected" signal (S1/OQ-1) — this host
@@ -59,7 +59,7 @@ stale-id failure (D8) and §5.1's silent prune.
    from the tab order) plus the shipped visible locked-row style. "Select all" visibly skips them.
 7. **Lock this row** — patches `locked: true` on an already-selected row; the mark **stays**
    (D58/D60), unlike AG Grid, the only peer that auto-deselects.
-8. **…but an explicit clear still removes it** — clearing while a locked row is selected *does* drop
+8. **…but an explicit clear still removes it** — clearing while a locked row is selected _does_ drop
    its mark, because `deselect`/`clearSelection` are ungated by design (D58). Both halves on one
    screen is the point (PrimeNG needed a second multi-year issue for exactly this asymmetry).
 9. **Restore a saved selection** → `select(SAVED_SELECTION_IDS, { emitEvent: false })`, where `s99`
@@ -80,7 +80,7 @@ No MSW handlers. Code tabs: `HTML`, `TS`, `CSS`, `selection/fixtures/schema.ts`.
 ## Implementation Notes
 
 - Read `docs/3-ui/stories.md` first.
-- No checkbox directive exists — hand-wiring the native input *is* the missing D5 binding recipe
+- No checkbox directive exists — hand-wiring the native input _is_ the missing D5 binding recipe
   rendered rather than described, and it is the conventional affordance, not an invented one.
 - The event log is feature surface here, not app chrome: it is the only way D9's single delta and
   D11's silence are observable.
@@ -109,4 +109,5 @@ No MSW handlers. Code tabs: `HTML`, `TS`, `CSS`, `selection/fixtures/schema.ts`.
 - [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
+
 ← [Step 1: selection fixtures — schema.ts](step-1-selection-fixtures-schema.plan.md) | [Step 3: single-selection/](step-3-single-selection-story.plan.md) →

@@ -47,9 +47,9 @@ Covers X-G1 in five parts.
    library's position — the opposite of D16.
 3. **Tri-state** group checkbox derived from `rowsOf(group)` ∩ `selectedRows()` (P10b: conventional
    wherever a cascade exists).
-4. **Collapsed + filtered agreement** — tick a *collapsed* group while a filter is active. `rowsOf()`
+4. **Collapsed + filtered agreement** — tick a _collapsed_ group while a filter is active. `rowsOf()`
    is collapse-independent and post-filter, so the header count and the selection agree by
-   construction. This is ag-grid #11209 *not* happening; say so in the doc-comment.
+   construction. This is ag-grid #11209 _not_ happening; say so in the doc-comment.
 5. **Selection counts rows, never headers** — a "N of M selected" readout. §6's "a group is a view,
    not a record" made visible (TanStack #5700 is the failure).
 6. **Ungroup button** — no group id was ever in `selectedRows`, so there is nothing to prune and no
@@ -91,4 +91,5 @@ Covers X-G1 in five parts.
 - [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
+
 ← [Step 5: grouping-collapsible/](step-5-grouping-collapsible-story.plan.md) | [Step 7: async grouping rule](step-7-async-grouping-rule.plan.md) →

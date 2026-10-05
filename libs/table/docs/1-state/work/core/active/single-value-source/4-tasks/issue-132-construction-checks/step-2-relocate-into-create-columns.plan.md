@@ -146,4 +146,5 @@ import if nothing uses them anymore.
 - [ ] `nx run shared-table:typecheck` clean, **run twice**.
 
 ---
+
 ← [Step 1: Split the shared body](step-1-split-shared-body.plan.md) | [Step 3: Construction-check specs](step-3-construction-check-specs.plan.md) →

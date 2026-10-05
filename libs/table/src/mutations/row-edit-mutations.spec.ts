@@ -8,7 +8,12 @@ import { beginEdit, clearEdit, createRow, endEdit } from './row-edit-mutations';
 import { releaseEdit, revertEdit } from './optimistic-mutations';
 import { removeRow } from './row-mutations';
 import type { RowId } from '../api/types';
-import { createMockTableStoreWithEditing, mockRows, mockTrackBy, type MockRow } from '../table.mock';
+import {
+  createMockTableStoreWithEditing,
+  mockRows,
+  mockTrackBy,
+  type MockRow,
+} from '../table.mock';
 
 type Person = MockRow;
 
@@ -28,7 +33,7 @@ function ctx(data: Person[] = rows) {
 function state(
   snapshots: [number, RowRestorePoint<Person>][] = [],
   open: number[] = [],
-  unconfirmed: number[] = []
+  unconfirmed: number[] = [],
 ): EditingState<Person> {
   return { snapshots: new Map(snapshots), open: new Set(open), unconfirmed: new Set(unconfirmed) };
 }
@@ -60,7 +65,7 @@ describe('beginEdit', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
     const result = beginEdit<Person>(2)(
       opened,
-      ctx([{ id: 2, name: 'Bea-typing' }, ...rows.slice(1)])
+      ctx([{ id: 2, name: 'Bea-typing' }, ...rows.slice(1)]),
     );
     expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1));
   });
@@ -71,7 +76,7 @@ describe('beginEdit', () => {
 
     const result = beginEdit<Person>(2)(
       saved,
-      ctx([{ id: 2, name: 'optimistic' }, ...rows.slice(1)])
+      ctx([{ id: 2, name: 'optimistic' }, ...rows.slice(1)]),
     );
 
     expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1));
@@ -90,13 +95,18 @@ describe('beginEdit({ insert })', () => {
 
   function writingCtx(data: Person[] = rows) {
     written = undefined;
-    return { data, trackBy, writeData: (next: Person[]) => void (written = next), indexById: indexById(data) };
+    return {
+      data,
+      trackBy,
+      writeData: (next: Person[]) => void (written = next),
+      indexById: indexById(data),
+    };
   }
 
   it('writes the row into data and opens it in one updater (D35/D42)', () => {
     const result = beginEdit<Person>(99, { insert: { id: 99, name: '' }, at: 0 })(
       state(),
-      writingCtx()
+      writingCtx(),
     );
 
     expect(written?.[0]).toEqual({ id: 99, name: '' });
@@ -126,7 +136,7 @@ describe('beginEdit({ insert })', () => {
     const before = state([[2, restorePoint({ id: 2, name: 'Bea' }, 1)]], []);
     const result = beginEdit<Person>(2, { insert: { id: 2, name: 'duplicate' } })(
       before,
-      writingCtx()
+      writingCtx(),
     );
 
     expect(written).toBeUndefined();
@@ -139,7 +149,12 @@ describe('createRow (array form, D32)', () => {
 
   function writingCtx(data: Person[] = rows) {
     written = undefined;
-    return { data, trackBy, writeData: (next: Person[]) => void (written = next), indexById: indexById(data) };
+    return {
+      data,
+      trackBy,
+      writeData: (next: Person[]) => void (written = next),
+      indexById: indexById(data),
+    };
   }
 
   it('opens every entry in one write — one data splice, one { snapshots, open }', () => {
@@ -176,7 +191,10 @@ describe('createRow (array form, D32)', () => {
 
   it('is a no-op (no write at all) when every entry collides', () => {
     const before = state();
-    const result = createRow<Person>([{ id: 2, row: { id: 2, name: 'dup' } }])(before, writingCtx());
+    const result = createRow<Person>([{ id: 2, row: { id: 2, name: 'dup' } }])(
+      before,
+      writingCtx(),
+    );
 
     expect(written).toBeUndefined();
     expect(result).toBe(before);

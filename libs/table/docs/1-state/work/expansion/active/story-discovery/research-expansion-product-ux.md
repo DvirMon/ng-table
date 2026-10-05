@@ -55,34 +55,34 @@
 
 ### F1. Where detail opens
 
-| Product | Opens as | Opened by | List visible and usable? | Plan | Source |
-|---|---|---|---|---|---|
-| Notion | **Side peek** by default for Table, Board, List and Timeline. Center peek or full page can be set per view. | Click a page/row | Yes: "The rest of the database view continues to be interactive on the left." | No gate found | [notion-views](https://www.notion.com/help/views-filters-and-sorts) |
-| Notion | Side peek default since 2022-07-20 | — | "keep your database items visible and interactive" | — | [notion-rel-2022](https://www.notion.com/releases/2022-07-20) |
-| Jira (List, global search) | **Preview panel on the right**, resizable. Full-screen icon. Modal option. | "select the work item" | Implied (resizable side panel). Not stated. | No gate found | [jira-preview-doc](https://support.atlassian.com/jira-software-cloud/docs/preview-work-items-in-jira-search-and-the-list-view/) |
-| Jira (List) | Modal as a second mode. The choice persists within the session. | — | — | — | [JRACLOUD-96809](https://jira.atlassian.com/browse/JRACLOUD-96809) |
-| Jira (backlog) | "work item detail view" | "Select a work item" | Not stated | — | [jira-backlog-doc](https://support.atlassian.com/jira-software-cloud/docs/use-your-scrum-backlog/) |
-| Airtable (grid) | **Expanded record** (not described as a panel on the pages read; see Unverified) | Click a cell, then Space | "use Esc to return to table" | No gate found | [airtable-grid](https://support.airtable.com/docs/airtable-grid-view) |
-| Linear | **Peek**: a Quicklook-style preview of the focused issue | Space (toggle), or hold Space | Yes: ↑/↓ moves through the list while peek updates | "available on many issue and project views" | [linear-peek](https://linear.app/docs/peek.md) |
-| GitHub Projects (table) | **Item side panel**, which can be deep-linked by URL | Space ("Open selected item") | Not stated | No gate found | [gh-shortcuts](https://docs.github.com/en/get-started/accessibility/keyboard-shortcuts) |
-| GitHub Projects | Deep link opens "the item side-panel" (2023-01-05) | URL | — | — | [gh-changelog-2023](https://github.blog/changelog/2023-01-05-github-issues-january-5th-update/) |
-| Smartsheet (table view) | **Right panel** with details, conversations and attachments | **Double-click the row number** | Not stated | **Pro, Business, Enterprise, Advanced Work Management** | [ss-table-view](https://www.smartsheet.com/content-center/expanded-row-details-attachments-and-conversations-table-view-now-generally) |
-| Smartsheet (grid) | "**Edit Row** dialog" | Ctrl+E / Cmd+E | Dialog (list blocked, inferred) | "Smartsheet" | [ss-shortcuts](https://help.smartsheet.com/articles/522200-keyboard-shortcuts) |
-| monday.com | Sliding window on the right. Replaced a centered pop-up in about April 2025. | Click the item name | "can no longer see both the item columns and card updates" | Not found | [monday-community](https://community.monday.com/t/item-card-layout-change-is-terrible/112766) (user post) |
-| monday.com | Item view with the Updates section in the right panel | "click the item's name" | — | — | [guideflow-monday](https://www.guideflow.com/tutorial/how-to-post-a-new-update-to-an-item-in-mondaycom) (**secondary, third-party**) |
-| ClickUp | Modal pop-up replaced (Nov 2024, "With the chat update") | — | The modal let you "still see the List below it, quickly click out, then click another task" | — | [clickup-fb-modal](https://feedback.clickup.com/feature-requests/p/bring-back-modal-pop-up-as-a-task-view) |
+| Product                    | Opens as                                                                                                    | Opened by                       | List visible and usable?                                                                    | Plan                                                    | Source                                                                                                                                 |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Notion                     | **Side peek** by default for Table, Board, List and Timeline. Center peek or full page can be set per view. | Click a page/row                | Yes: "The rest of the database view continues to be interactive on the left."               | No gate found                                           | [notion-views](https://www.notion.com/help/views-filters-and-sorts)                                                                    |
+| Notion                     | Side peek default since 2022-07-20                                                                          | —                               | "keep your database items visible and interactive"                                          | —                                                       | [notion-rel-2022](https://www.notion.com/releases/2022-07-20)                                                                          |
+| Jira (List, global search) | **Preview panel on the right**, resizable. Full-screen icon. Modal option.                                  | "select the work item"          | Implied (resizable side panel). Not stated.                                                 | No gate found                                           | [jira-preview-doc](https://support.atlassian.com/jira-software-cloud/docs/preview-work-items-in-jira-search-and-the-list-view/)        |
+| Jira (List)                | Modal as a second mode. The choice persists within the session.                                             | —                               | —                                                                                           | —                                                       | [JRACLOUD-96809](https://jira.atlassian.com/browse/JRACLOUD-96809)                                                                     |
+| Jira (backlog)             | "work item detail view"                                                                                     | "Select a work item"            | Not stated                                                                                  | —                                                       | [jira-backlog-doc](https://support.atlassian.com/jira-software-cloud/docs/use-your-scrum-backlog/)                                     |
+| Airtable (grid)            | **Expanded record** (not described as a panel on the pages read; see Unverified)                            | Click a cell, then Space        | "use Esc to return to table"                                                                | No gate found                                           | [airtable-grid](https://support.airtable.com/docs/airtable-grid-view)                                                                  |
+| Linear                     | **Peek**: a Quicklook-style preview of the focused issue                                                    | Space (toggle), or hold Space   | Yes: ↑/↓ moves through the list while peek updates                                          | "available on many issue and project views"             | [linear-peek](https://linear.app/docs/peek.md)                                                                                         |
+| GitHub Projects (table)    | **Item side panel**, which can be deep-linked by URL                                                        | Space ("Open selected item")    | Not stated                                                                                  | No gate found                                           | [gh-shortcuts](https://docs.github.com/en/get-started/accessibility/keyboard-shortcuts)                                                |
+| GitHub Projects            | Deep link opens "the item side-panel" (2023-01-05)                                                          | URL                             | —                                                                                           | —                                                       | [gh-changelog-2023](https://github.blog/changelog/2023-01-05-github-issues-january-5th-update/)                                        |
+| Smartsheet (table view)    | **Right panel** with details, conversations and attachments                                                 | **Double-click the row number** | Not stated                                                                                  | **Pro, Business, Enterprise, Advanced Work Management** | [ss-table-view](https://www.smartsheet.com/content-center/expanded-row-details-attachments-and-conversations-table-view-now-generally) |
+| Smartsheet (grid)          | "**Edit Row** dialog"                                                                                       | Ctrl+E / Cmd+E                  | Dialog (list blocked, inferred)                                                             | "Smartsheet"                                            | [ss-shortcuts](https://help.smartsheet.com/articles/522200-keyboard-shortcuts)                                                         |
+| monday.com                 | Sliding window on the right. Replaced a centered pop-up in about April 2025.                                | Click the item name             | "can no longer see both the item columns and card updates"                                  | Not found                                               | [monday-community](https://community.monday.com/t/item-card-layout-change-is-terrible/112766) (user post)                              |
+| monday.com                 | Item view with the Updates section in the right panel                                                       | "click the item's name"         | —                                                                                           | —                                                       | [guideflow-monday](https://www.guideflow.com/tutorial/how-to-post-a-new-update-to-an-item-in-mondaycom) (**secondary, third-party**)   |
+| ClickUp                    | Modal pop-up replaced (Nov 2024, "With the chat update")                                                    | —                               | The modal let you "still see the List below it, quickly click out, then click another task" | —                                                       | [clickup-fb-modal](https://feedback.clickup.com/feature-requests/p/bring-back-modal-pop-up-as-a-task-view)                             |
 
 ### F2. Keyboard
 
-| Product | Open | Close | Next / previous while open | Source |
-|---|---|---|---|---|
-| Airtable | Space (record). Shift+Space (cell). | Esc | Ctrl/Cmd+Shift+`<` / `>` (also `,` / `.`) | [airtable-kbd](https://support.airtable.com/docs/airtable-keyboard-shortcuts) |
-| Linear | Space (toggle), hold Space (temporary) | Esc, or Space again | ↑ / ↓ | [linear-peek](https://linear.app/docs/peek.md) |
-| Linear | Shortcut changed from Alt to Space on 2019-09-24 | — | — | [linear-changelog-2019](https://linear.app/changelog/2019-09-23-improved-peek) |
-| GitHub Projects | Space | Not documented | Arrow keys move focus (grid navigation) | [gh-shortcuts](https://docs.github.com/en/get-started/accessibility/keyboard-shortcuts) |
-| Jira | Not documented | Not documented | ↑ / ↓ | [jira-preview-doc](https://support.atlassian.com/jira-software-cloud/docs/preview-work-items-in-jira-search-and-the-list-view/) |
-| Notion | No database-specific opener documented | Not documented | Ctrl+Shift+K / J (Mac), Ctrl+K / J (Win) "while in database peek view" | [notion-kbd](https://www.notion.com/help/keyboard-shortcuts) |
-| Smartsheet (grid) | Ctrl/Cmd+E (Edit Row dialog) | — | — | [ss-shortcuts](https://help.smartsheet.com/articles/522200-keyboard-shortcuts) |
+| Product           | Open                                             | Close               | Next / previous while open                                             | Source                                                                                                                          |
+| ----------------- | ------------------------------------------------ | ------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Airtable          | Space (record). Shift+Space (cell).              | Esc                 | Ctrl/Cmd+Shift+`<` / `>` (also `,` / `.`)                              | [airtable-kbd](https://support.airtable.com/docs/airtable-keyboard-shortcuts)                                                   |
+| Linear            | Space (toggle), hold Space (temporary)           | Esc, or Space again | ↑ / ↓                                                                  | [linear-peek](https://linear.app/docs/peek.md)                                                                                  |
+| Linear            | Shortcut changed from Alt to Space on 2019-09-24 | —                   | —                                                                      | [linear-changelog-2019](https://linear.app/changelog/2019-09-23-improved-peek)                                                  |
+| GitHub Projects   | Space                                            | Not documented      | Arrow keys move focus (grid navigation)                                | [gh-shortcuts](https://docs.github.com/en/get-started/accessibility/keyboard-shortcuts)                                         |
+| Jira              | Not documented                                   | Not documented      | ↑ / ↓                                                                  | [jira-preview-doc](https://support.atlassian.com/jira-software-cloud/docs/preview-work-items-in-jira-search-and-the-list-view/) |
+| Notion            | No database-specific opener documented           | Not documented      | Ctrl+Shift+K / J (Mac), Ctrl+K / J (Win) "while in database peek view" | [notion-kbd](https://www.notion.com/help/keyboard-shortcuts)                                                                    |
+| Smartsheet (grid) | Ctrl/Cmd+E (Edit Row dialog)                     | —                   | —                                                                      | [ss-shortcuts](https://help.smartsheet.com/articles/522200-keyboard-shortcuts)                                                  |
 
 ### F3. Several open at once
 
@@ -121,16 +121,17 @@
 
 ### F6. Pain: who complained, and about what
 
-| Source | Opened | State (read 2026-09-30) | What was said |
-|---|---|---|---|
-| [JRACLOUD-96809](https://jira.atlassian.com/browse/JRACLOUD-96809) | 2025-11-26 | Suggestion, **In Progress**. 221 votes, 157 watchers. | Panel "can feel cramped, especially on smaller screens". Atlassian, 2026-06-17: "We removed something that mattered to your daily workflows". GA 2026-09-15. They offered a modal plus navigation arrows instead of an admin toggle. |
-| [monday-community](https://community.monday.com/t/item-card-layout-change-is-terrible/112766) | about April 2025 (screenshot date 2025-04-07) | 1 upvote, 5 replies | "you can no longer see both the item columns and card updates at the same time" (user). |
-| [clickup-fb-modal](https://feedback.clickup.com/feature-requests/p/bring-back-modal-pop-up-as-a-task-view) | 2024-11-11 | 4 voters, no staff reply | "I'd like to see the modal pop-up for tasks brought back". A comment on 2024-11-14 says the modal let you "still see the List below it, quickly click out, then click another task". |
-| [airtable-announce-2022](https://community.airtable.com/announcements-6/improvements-to-expand-and-edit-records-1436) | 2022-01-26 (staff post) | 115 replies, mostly negative | Expanded-record redesign. A reply says it produced "900 questions and complaints" from five team members. |
+| Source                                                                                                                | Opened                                        | State (read 2026-09-30)                               | What was said                                                                                                                                                                                                                        |
+| --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [JRACLOUD-96809](https://jira.atlassian.com/browse/JRACLOUD-96809)                                                    | 2025-11-26                                    | Suggestion, **In Progress**. 221 votes, 157 watchers. | Panel "can feel cramped, especially on smaller screens". Atlassian, 2026-06-17: "We removed something that mattered to your daily workflows". GA 2026-09-15. They offered a modal plus navigation arrows instead of an admin toggle. |
+| [monday-community](https://community.monday.com/t/item-card-layout-change-is-terrible/112766)                         | about April 2025 (screenshot date 2025-04-07) | 1 upvote, 5 replies                                   | "you can no longer see both the item columns and card updates at the same time" (user).                                                                                                                                              |
+| [clickup-fb-modal](https://feedback.clickup.com/feature-requests/p/bring-back-modal-pop-up-as-a-task-view)            | 2024-11-11                                    | 4 voters, no staff reply                              | "I'd like to see the modal pop-up for tasks brought back". A comment on 2024-11-14 says the modal let you "still see the List below it, quickly click out, then click another task".                                                 |
+| [airtable-announce-2022](https://community.airtable.com/announcements-6/improvements-to-expand-and-edit-records-1436) | 2022-01-26 (staff post)                       | 115 replies, mostly negative                          | Expanded-record redesign. A reply says it produced "900 questions and complaints" from five team members.                                                                                                                            |
 
 ## Synthesis: where they disagree
 
 **Surface (panel, modal, peek or inline).**
+
 - Split: side panel (Notion, Jira, monday.com, GitHub, Smartsheet table view) versus modal
   (Airtable, Smartsheet grid).
 - **Three vendors stopped choosing and let the person decide:** Notion per view, Jira per
@@ -142,6 +143,7 @@
   open at a time, and stepping through rows.
 
 **Keyboard.**
+
 - Space to open is the majority (Airtable, Linear, GitHub). Smartsheet uses Ctrl/Cmd+E.
   Notion documents no database-specific opener.
 - Everyone who documents it agrees on Esc to close and on next/previous while open.
@@ -150,23 +152,27 @@
 - Plain arrows only work where the panel does not take focus from the list.
 
 **One open versus many.**
+
 - There is no disagreement: nobody documents more than one open. That silence is one data
   point about convention, not proof that multiple-open is wrong.
 - Note for an inline panel: inline layout makes several open panels physically possible,
   which a side panel does not. Whether to allow it is a decision this survey cannot borrow.
 
 **Survival across filter.**
+
 - Only Airtable speaks. It keeps the open row visible until the person moves away, and
   shows a message saying so.
 - The complaint that thread records is the failure to avoid: the row vanished silently
   after an edit, and the person read it as data loss.
 
 **Plan gating.**
+
 - Only Smartsheet gates this: the table-view right panel requires Pro and up. In the same
   product, grid view's Edit Row dialog is ungated.
 - No other vendor gates row detail. Detail-on-demand is baseline, not a paid feature.
 
 **Everyday expectation to lean on.**
+
 - Opening a row's detail must not lose your place in the list.
 - Space opens, Esc closes, arrows step to the next row.
 - Only one row's detail is open at a time.
@@ -207,24 +213,24 @@
 
 ## Sources
 
-| Id | URL | Read | Page date |
-|---|---|---|---|
-| notion-views | https://www.notion.com/help/views-filters-and-sorts | 2026-09-30 | none shown |
-| notion-rel-2022 | https://www.notion.com/releases/2022-07-20 | 2026-09-30 | 2022-07-20 |
-| notion-kbd | https://www.notion.com/help/keyboard-shortcuts | 2026-09-30 | none shown |
-| jira-preview-doc | https://support.atlassian.com/jira-software-cloud/docs/preview-work-items-in-jira-search-and-the-list-view/ | 2026-09-30 | footer 2026 only |
-| jira-backlog-doc | https://support.atlassian.com/jira-software-cloud/docs/use-your-scrum-backlog/ | 2026-09-30 | none shown |
-| JRACLOUD-96809 | https://jira.atlassian.com/browse/JRACLOUD-96809 | 2026-09-30 | created 2025-11-26 |
-| airtable-grid | https://support.airtable.com/docs/airtable-grid-view | 2026-09-30 | "1 month ago" |
-| airtable-kbd | https://support.airtable.com/docs/airtable-keyboard-shortcuts | 2026-09-30 | "1 month ago" |
-| airtable-community-filter | https://community.airtable.com/t5/base-design/no-matter-what-i-type-it-disappears/m-p/83116 | 2026-09-30 | 2020-11-12 |
-| airtable-announce-2022 | https://community.airtable.com/announcements-6/improvements-to-expand-and-edit-records-1436 | 2026-09-30 | 2022-01-26 |
-| linear-peek | https://linear.app/docs/peek.md | 2026-09-30 | none shown |
-| linear-changelog-2019 | https://linear.app/changelog/2019-09-23-improved-peek | 2026-09-30 | 2019-09-24 |
-| gh-shortcuts | https://docs.github.com/en/get-started/accessibility/keyboard-shortcuts | 2026-09-30 | none shown |
-| gh-changelog-2023 | https://github.blog/changelog/2023-01-05-github-issues-january-5th-update/ | 2026-09-30 | 2023-01-05 |
-| ss-table-view | https://www.smartsheet.com/content-center/expanded-row-details-attachments-and-conversations-table-view-now-generally | 2026-09-30 | 2025-05-28 |
-| ss-shortcuts | https://help.smartsheet.com/articles/522200-keyboard-shortcuts | 2026-09-30 | none shown |
-| monday-community | https://community.monday.com/t/item-card-layout-change-is-terrible/112766 | 2026-09-30 | about 2025-04 |
-| guideflow-monday | https://www.guideflow.com/tutorial/how-to-post-a-new-update-to-an-item-in-mondaycom | 2026-09-30 | none shown (secondary) |
-| clickup-fb-modal | https://feedback.clickup.com/feature-requests/p/bring-back-modal-pop-up-as-a-task-view | 2026-09-30 | 2024-11-11 |
+| Id                        | URL                                                                                                                   | Read       | Page date              |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------- | ---------------------- |
+| notion-views              | https://www.notion.com/help/views-filters-and-sorts                                                                   | 2026-09-30 | none shown             |
+| notion-rel-2022           | https://www.notion.com/releases/2022-07-20                                                                            | 2026-09-30 | 2022-07-20             |
+| notion-kbd                | https://www.notion.com/help/keyboard-shortcuts                                                                        | 2026-09-30 | none shown             |
+| jira-preview-doc          | https://support.atlassian.com/jira-software-cloud/docs/preview-work-items-in-jira-search-and-the-list-view/           | 2026-09-30 | footer 2026 only       |
+| jira-backlog-doc          | https://support.atlassian.com/jira-software-cloud/docs/use-your-scrum-backlog/                                        | 2026-09-30 | none shown             |
+| JRACLOUD-96809            | https://jira.atlassian.com/browse/JRACLOUD-96809                                                                      | 2026-09-30 | created 2025-11-26     |
+| airtable-grid             | https://support.airtable.com/docs/airtable-grid-view                                                                  | 2026-09-30 | "1 month ago"          |
+| airtable-kbd              | https://support.airtable.com/docs/airtable-keyboard-shortcuts                                                         | 2026-09-30 | "1 month ago"          |
+| airtable-community-filter | https://community.airtable.com/t5/base-design/no-matter-what-i-type-it-disappears/m-p/83116                           | 2026-09-30 | 2020-11-12             |
+| airtable-announce-2022    | https://community.airtable.com/announcements-6/improvements-to-expand-and-edit-records-1436                           | 2026-09-30 | 2022-01-26             |
+| linear-peek               | https://linear.app/docs/peek.md                                                                                       | 2026-09-30 | none shown             |
+| linear-changelog-2019     | https://linear.app/changelog/2019-09-23-improved-peek                                                                 | 2026-09-30 | 2019-09-24             |
+| gh-shortcuts              | https://docs.github.com/en/get-started/accessibility/keyboard-shortcuts                                               | 2026-09-30 | none shown             |
+| gh-changelog-2023         | https://github.blog/changelog/2023-01-05-github-issues-january-5th-update/                                            | 2026-09-30 | 2023-01-05             |
+| ss-table-view             | https://www.smartsheet.com/content-center/expanded-row-details-attachments-and-conversations-table-view-now-generally | 2026-09-30 | 2025-05-28             |
+| ss-shortcuts              | https://help.smartsheet.com/articles/522200-keyboard-shortcuts                                                        | 2026-09-30 | none shown             |
+| monday-community          | https://community.monday.com/t/item-card-layout-change-is-terrible/112766                                             | 2026-09-30 | about 2025-04          |
+| guideflow-monday          | https://www.guideflow.com/tutorial/how-to-post-a-new-update-to-an-item-in-mondaycom                                   | 2026-09-30 | none shown (secondary) |
+| clickup-fb-modal          | https://feedback.clickup.com/feature-requests/p/bring-back-modal-pop-up-as-a-task-view                                | 2026-09-30 | 2024-11-11             |

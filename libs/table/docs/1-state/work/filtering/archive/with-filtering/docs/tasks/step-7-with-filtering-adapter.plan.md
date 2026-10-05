@@ -1,5 +1,5 @@
 ---
-title: "Step 7 — withFiltering() client adapter, retire imperative surface"
+title: 'Step 7 — withFiltering() client adapter, retire imperative surface'
 type: task-step
 issue: 62
 ---
@@ -37,6 +37,7 @@ state worth shipping alone.
 ## What To Do
 
 **`api/types.ts`:**
+
 - Delete the `FilterRule` interface.
 - Delete `ColumnDef.filterFn` and `ColumnDef.enableFiltering`.
 
@@ -132,4 +133,5 @@ export function withFiltering<TRow = unknown>(
 - [ ] Package compiles (`tsc`) with no reference to the deleted type surface remaining
 
 ---
+
 ← [Step 6: createFilters() spec](step-6-create-filters-spec.plan.md) | [Step 8: withFiltering() spec](step-8-with-filtering-spec.plan.md) →

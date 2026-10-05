@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — filtering/fixtures/filters.ts: createFilters() factories, one per story"
+title: 'Step 1 — filtering/fixtures/filters.ts: createFilters() factories, one per story'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: A (part)
@@ -48,7 +48,7 @@ Export one factory per story, each returning a `createFilters<InvoiceRow>(…)` 
      `id` (numeric) — the typed matchers must visibly return `false` on the non-string cells where a
      stringify-and-substring quick filter throws (`pain T3`);
    - a **compound** criterion on `tags`: one `filter(path.tags, (cell, { include, exclude }) =>
-     hasAnyOf(cell, include) && hasNoneOf(cell, exclude))` fed by two multi-selects into a single
+hasAnyOf(cell, include) && hasNoneOf(cell, exclude))` fed by two multi-selects into a single
      criterion — R5/R6's documented workaround made copy-pasteable;
    - a criterion carrying a `source: () => …` default, so Step 5's late-default race (R19) has a
      shape to reuse.
@@ -86,4 +86,5 @@ Export one factory per story, each returning a `createFilters<InvoiceRow>(…)` 
 - [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
+
 [Step 2: filtering fixtures — schema.ts](step-2-filtering-fixtures-schema.plan.md) →

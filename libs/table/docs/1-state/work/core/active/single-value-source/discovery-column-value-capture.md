@@ -27,7 +27,7 @@ literal before it widens (`const` type parameter). Two of the three survived scr
 
 **Nobody solved partial type-argument inference.** microsoft/TypeScript#26242 is open with no
 milestone after eight years and names currying as the workaround. TanStack curries
-(`createColumnHelper<Person>()`) and *widened* it at the v9 rewrite; tRPC curries via a builder
+(`createColumnHelper<Person>()`) and _widened_ it at the v9 rewrite; tRPC curries via a builder
 class and its docs give no rationale.
 
 ## Why any of this matters
@@ -48,17 +48,17 @@ accessor's `string`, not the row's `{ name; email }`.
 
 Recorded so none of these is re-proposed.
 
-| Option | Why it died |
-|---|---|
-| `createColumns<TRow>()([...])` — curried | Maintainer rejected the `()()` ergonomics outright |
-| `as const satisfies readonly ColumnDefInput<TRow>[]` as the **required** spelling | Works mechanically (const assertions are transparent to contextual typing, `78139-78141`/`78176`, so `(row)` needs no annotation). Rejected on DX: "I cannot expect the user to always remember to put `as const satisfies`." Failure is silent |
-| `const TCols` on `createTable` with columns hoisted | `isValidConstAssertionArgument` has no `Identifier` in its whitelist (`82512-82541`) — `const` is inert on a variable reference. Inline-only |
-| One-call helper constrained `ColumnDefInput<any, string>[]` | Contextual `any` bypasses the TS7006 emitter (`83061-83075`) — an unannotated accessor silently becomes `row: any` |
-| Same with `unknown` | Dead both ways: an annotated accessor fails the constraint under `strictFunctionTypes`, because `accessor` is property-position, not a method (`69157`, `69187`) |
-| `TRow` present only in `TCols`' constraint | No inference site → `TRow = unknown` (`73929`, `73949-73951`) → the constraint then rejects the **valid** call |
-| Ids as `readonly (keyof TRow & string)[]` | Survives more than expected — `satisfies` alone preserves the literals (no `as const`), and `(keyof TRow & string) \| (string & {})` even admits carrier ids, since the check is a *kind* check, not a membership check. Dies on presentation config: a bare id array has no room for `label`/`visible`/`order`, and the only non-duplicating sibling is a record keyed by that same list — at which point the list is redundant |
-| Brand / required phantom on the return | Works. Costs ~426 `createTable(` sites across 57 files for what the outcome guard gives free |
-| Full Drizzle inversion (`{ amount: number() }`) | Makes the consumer restate `amount: number` when `DealRow['amount']` already says it. Drizzle needs it because it has no row model; a table has one |
+| Option                                                                            | Why it died                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `createColumns<TRow>()([...])` — curried                                          | Maintainer rejected the `()()` ergonomics outright                                                                                                                                                                                                                                                                                                                                                                               |
+| `as const satisfies readonly ColumnDefInput<TRow>[]` as the **required** spelling | Works mechanically (const assertions are transparent to contextual typing, `78139-78141`/`78176`, so `(row)` needs no annotation). Rejected on DX: "I cannot expect the user to always remember to put `as const satisfies`." Failure is silent                                                                                                                                                                                  |
+| `const TCols` on `createTable` with columns hoisted                               | `isValidConstAssertionArgument` has no `Identifier` in its whitelist (`82512-82541`) — `const` is inert on a variable reference. Inline-only                                                                                                                                                                                                                                                                                     |
+| One-call helper constrained `ColumnDefInput<any, string>[]`                       | Contextual `any` bypasses the TS7006 emitter (`83061-83075`) — an unannotated accessor silently becomes `row: any`                                                                                                                                                                                                                                                                                                               |
+| Same with `unknown`                                                               | Dead both ways: an annotated accessor fails the constraint under `strictFunctionTypes`, because `accessor` is property-position, not a method (`69157`, `69187`)                                                                                                                                                                                                                                                                 |
+| `TRow` present only in `TCols`' constraint                                        | No inference site → `TRow = unknown` (`73929`, `73949-73951`) → the constraint then rejects the **valid** call                                                                                                                                                                                                                                                                                                                   |
+| Ids as `readonly (keyof TRow & string)[]`                                         | Survives more than expected — `satisfies` alone preserves the literals (no `as const`), and `(keyof TRow & string) \| (string & {})` even admits carrier ids, since the check is a _kind_ check, not a membership check. Dies on presentation config: a bare id array has no room for `label`/`visible`/`order`, and the only non-duplicating sibling is a record keyed by that same list — at which point the list is redundant |
+| Brand / required phantom on the return                                            | Works. Costs ~426 `createTable(` sites across 57 files for what the outcome guard gives free                                                                                                                                                                                                                                                                                                                                     |
+| Full Drizzle inversion (`{ amount: number() }`)                                   | Makes the consumer restate `amount: number` when `DealRow['amount']` already says it. Drizzle needs it because it has no row model; a table has one                                                                                                                                                                                                                                                                              |
 
 ## What survived
 
@@ -68,7 +68,7 @@ Recorded so none of these is re-proposed.
 const dealColumns = {
   region: { label: 'Region' },
   amount: { label: 'Amount' },
-  owner:  { label: 'Owner' },
+  owner: { label: 'Owner' },
 };
 
 createTable(deals, {
@@ -81,7 +81,7 @@ createTable(deals, {
 ```
 
 Property names are not types. There is no widening path over them anywhere in the checker
-(`78821`), and index signatures are stamped on only by a *computed* key (`78915-78920`), never by
+(`78821`), and index signatures are stamped on only by a _computed_ key (`78915-78920`), never by
 a contextual `Record<string, X>`. The capture cannot be forgotten because there is nothing to call.
 
 - `(path) => S` is **already** assignable to `(path) => void` — a `void` target return type
@@ -96,22 +96,21 @@ a contextual `Record<string, X>`. The capture cannot be forgotten because there 
   overloads.
 - **Cost:** ordering becomes key insertion order, needing a construction throw for array-index ids
   (`'1'`, `'2024'` jump to the front per ECMAScript own-key ordering).
-- Three residual ways to lose the capture, all *explicit acts* rather than omissions: a
+- Three residual ways to lose the capture, all _explicit acts_ rather than omissions: a
   `Record<string, …>` variable annotation, a return-type annotation, a computed key.
 
 ### Option B — one-call `createColumns` + an outcome guard
 
 ```ts
-export function createColumns<
-  TRow,
-  const TCols extends readonly ColumnDefInput<TRow, string>[],
->(columns: TCols & readonly ColumnDefInput<TRow, string>[]): TCols {
+export function createColumns<TRow, const TCols extends readonly ColumnDefInput<TRow, string>[]>(
+  columns: TCols & readonly ColumnDefInput<TRow, string>[],
+): TCols {
   return columns;
 }
 ```
 
 `TRow` in the **parameter type** is the fix. Inference into an intersection target walks into
-`ColumnDefInput<TRow, …>` for `TRow` contravariantly *and* infers the whole tuple into `TCols`
+`ColumnDefInput<TRow, …>` for `TRow` contravariantly _and_ infers the whole tuple into `TCols`
 (`73590-73605`), with `const` still firing because `isConstTypeVariable` sees through the
 intersection (`63429-63432`) and `primitiveConstraint` suppresses literal widening
 (`73898-73902`).
@@ -149,7 +148,7 @@ fires on first compile, no correct degraded reading.
 ## The limit neither option clears
 
 R2 — "a missed capture must not be silent" — cannot be enforced at `createColumns` itself. Nothing
-in TypeScript lets a function observe that it was *not* called, so the diagnostic necessarily
+in TypeScript lets a function observe that it was _not_ called, so the diagnostic necessarily
 surfaces one call later. A required brand would move the message to the exact `columns:` property;
 that is the only thing it buys, at ~426 call sites.
 

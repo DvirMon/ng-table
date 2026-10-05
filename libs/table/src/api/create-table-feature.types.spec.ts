@@ -28,7 +28,7 @@ describe('createTableFeature — ctx parameter', () => {
         (_input, ctx) => {
           expectTypeOf(ctx).toEqualTypeOf<StageContext<Row>>();
           return {};
-        }
+        },
       );
     });
   });

@@ -24,7 +24,7 @@ Step 2 removes the four mutation methods from `TableStore`, the stub object must
 ## What To Do
 
 - In `createMockTableStore()`'s returned object, delete the four lines: `setColumns: () =>
-  undefined`, `updateColumns: () => undefined`, `reorderColumns: () => undefined`,
+undefined`, `updateColumns: () => undefined`, `reorderColumns: () => undefined`,
   `toggleColumnVisibility: () => undefined`.
 - Leave `columns: signal<ColumnDef<unknown>[]>([])` as-is — `signal()` already returns a
   `WritableSignal`, so this line needs no edit.
@@ -52,4 +52,5 @@ Step 2 removes the four mutation methods from `TableStore`, the stub object must
 - Directive specs using the mock still pass unchanged.
 
 ---
+
 ← [Step 4: `with-columns-schema` wiring update](step-4-columns-schema-wiring.plan.md) | [Step 6: demo app caller update](step-6-demo-caller.plan.md) →

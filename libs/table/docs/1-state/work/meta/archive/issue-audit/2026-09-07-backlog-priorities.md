@@ -18,17 +18,17 @@ work in the repo.
 
 ## Did the re-doc invalidate anything?
 
-| Issue | Effect of the re-doc | Verdict |
-|---|---|---|
-| #16 | Its last open AC is now **moot** — see below | **Close** |
-| #17 | Narrowed, not invalidated — both ACs still stand | Keep |
-| #20, #6, #7, #8 | Untouched by either commit | Keep |
+| Issue           | Effect of the re-doc                             | Verdict   |
+| --------------- | ------------------------------------------------ | --------- |
+| #16             | Its last open AC is now **moot** — see below     | **Close** |
+| #17             | Narrowed, not invalidated — both ACs still stand | Keep      |
+| #20, #6, #7, #8 | Untouched by either commit                       | Keep      |
 
 ### #16 — close it
 
 The one outstanding criterion was a doc line: record the `onRowsRemoved` convention in
-`architecture.md`'s open-questions list *"so a future `withSelection()` is written with the
-hook rather than inheriting the bug."*
+`architecture.md`'s open-questions list _"so a future `withSelection()` is written with the
+hook rather than inheriting the bug."_
 
 `withSelection()` has now been written, and it was written with the hook.
 `work/with-selection/3-spec.md` carries it as a settled decision:
@@ -49,13 +49,13 @@ did not. Close it.
 Worth stating precisely, because `expansion.md` grew 99 lines and none of them were these:
 
 - **Removal behavior is still undocumented in `expansion.md`.** ADR-0006 appears twice in
-  that file: once in the render-layer paragraph (unrelated) and once inside the *stale
-  restored ids* open question. Neither documents "an id leaves `expandedRows` when its row
+  that file: once in the render-layer paragraph (unrelated) and once inside the _stale
+  restored ids_ open question. Neither documents "an id leaves `expandedRows` when its row
   leaves `data`."
 - **The re-add regression test still does not exist.** `with-expansion.spec.ts` covers
   remove; it does not cover remove-then-re-add-the-same-id.
 
-One clarification the re-doc *does* provide: **stale restored ids are a different problem
+One clarification the re-doc _does_ provide: **stale restored ids are a different problem
 from removal reconciliation**, and #17 should not absorb them. Removal prunes ids that
 arrive as removals; stale restored ids never arrive at all, because they were never in
 `data` to begin with. That is its own decision (below), not part of this issue.
@@ -69,10 +69,10 @@ arrive as removals; stale restored ids never arrive at all, because they were ne
 `work/with-selection/state.json` has `"issues": false`. The spec is `status: ready`,
 D1–D19 settled, public surface fixed, testing decisions written.
 
-Why it ranks first, in the spec's own words: it is *"the single largest baseline gap in the
-state layer: all four competitors ship selection in core."* And it is load-bearing for work
+Why it ranks first, in the spec's own words: it is _"the single largest baseline gap in the
+state layer: all four competitors ship selection in core."_ And it is load-bearing for work
 already deferred — `row-mutations.md:196` lists bulk `removeRow(id[])` / `patchRow(id[], partial)`
-as blocked on exactly one thing: *"needs a selection source; `withSelection()` does not exist."*
+as blocked on exactly one thing: _"needs a selection source; `withSelection()` does not exist."_
 
 It is also cheap by state-layer standards: one plugin file plus its spec, exported from the
 barrel, **no engine changes** (per the spec's Module section).

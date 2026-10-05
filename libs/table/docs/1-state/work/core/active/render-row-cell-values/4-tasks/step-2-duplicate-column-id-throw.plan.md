@@ -11,8 +11,8 @@ step edits.
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                               | Action                                                                    |
+| ---------------------------------- | ------------------------------------------------------------------------- |
 | `libs/table/src/engine/columns.ts` | edit — `declare const ngDevMode`, uniqueness check in `resolveColumnDefs` |
 
 ## Why This Step Exists
@@ -54,7 +54,7 @@ function assertUniqueColumnIds<TRow>(defs: ColumnDefInput<TRow>[]): void {
   for (const def of defs) {
     if (seen.has(def.id)) {
       throw new Error(
-        `[createTable] Duplicate column id provided: "${def.id}" — ensure all column ids are unique.`
+        `[createTable] Duplicate column id provided: "${def.id}" — ensure all column ids are unique.`,
       );
     }
     seen.add(def.id);
@@ -126,7 +126,7 @@ site read as one line (`extract-encapsulated-logic`).
       `[createTable] Duplicate column id provided: "<id>" — ensure all column ids are unique.`
 - [ ] The guard is `typeof ngDevMode === 'undefined' || ngDevMode` — the check still runs when
       the symbol is absent.
-- [ ] Two columns with distinct ids and the *same* `accessor` resolve without throwing.
+- [ ] Two columns with distinct ids and the _same_ `accessor` resolve without throwing.
 - [ ] `ngDevMode` is declared module-scoped in `engine/columns.ts`; no ambient/global `.d.ts`
       added, `tsconfig.lib.json` untouched.
 - [ ] `engine/columns.ts` still imports nothing from `@angular/core` at runtime.
@@ -135,4 +135,5 @@ site read as one line (`extract-encapsulated-logic`).
       re-run each after fixing any `.ts` error, since `ngc` aborts before the template phase.
 
 ---
+
 ← [Step 1: ADR-0022](step-1-adr-cell-value-surface.plan.md) | [Step 3: `RenderRow.cells`](step-3-render-row-cells.plan.md) →

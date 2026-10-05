@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — single-selection/: the single-select path"
+title: 'Step 3 — single-selection/: the single-select path'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: D
@@ -38,7 +38,7 @@ Covers §1.1, §1.7, §2.1, §3.3 (twice), §4.1.
 1. `createTable(data, singleSelectionConfig, withSelection({ enableMultiRowSelection: false }))`.
 2. **`<input type="radio" name="row-selection">` per row, not a checkbox** — MRT swaps the control
    automatically under single-select, PrimeNG ships `p-table-radio-button` as its variant. The radio
-   group *is* the replace semantics: ticking a second row visibly unticks the first, with no code
+   group _is_ the replace semantics: ticking a second row visibly unticks the first, with no code
    saying so. D14's rule and the control agree.
 3. **Conflicting bulk write (D14)** — "Restore a 2-id saved selection" →
    `select(SAVED_CONFLICTING_SELECTION_IDS)` (both ids exist in the fixture). Under `ngDevMode` this
@@ -52,7 +52,7 @@ Covers §1.1, §1.7, §2.1, §3.3 (twice), §4.1.
    header control in that mode.
 6. Same row-binding recipe as Step 2 (`[class.is-selected]` + `[attr.aria-selected]` off
    `selectedRows()`; never a `RenderRow` field — D5).
-7. §4.1 comes free: a radio group gives Space *and* arrow-key roving focus natively — the browser's
+7. §4.1 comes free: a radio group gives Space _and_ arrow-key roving focus natively — the browser's
    own model, and the closest thing to PrimeNG's arrow navigation reachable without a directive.
 
 **`.stories.ts` + `.mdx`.** Title `Table / Selection / Single`. Single `Default`. No MSW. Code tabs:
@@ -83,4 +83,5 @@ Covers §1.1, §1.7, §2.1, §3.3 (twice), §4.1.
 - [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
+
 ← [Step 2: multi-selection/](step-2-multi-selection-story.plan.md) | [Step 4: coverage marks + doc drift](step-4-selection-docs.plan.md) →

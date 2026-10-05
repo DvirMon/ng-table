@@ -76,4 +76,5 @@ It just carries no rules.
 - [ ] `nx run shared-table:typecheck-spec` clean.
 
 ---
+
 ← [Step 3: Move specs off `columnsSchema`](step-3-move-specs-off-columns-schema.plan.md) | [Step 5: Carriage proofs](step-5-carriage-proofs.plan.md) →

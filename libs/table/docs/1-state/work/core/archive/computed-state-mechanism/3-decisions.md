@@ -80,7 +80,7 @@ re-litigating the graph.
 
 - **D3 (2026-09-12) — the explicit-generic trap is closed by overloads, not by documentation.**
   `withSelection<Invoice>({ computed })` would otherwise type-check while dropping every derived
-  member from the store type (runtime keeps them; the consumer's *read* takes the blame, in another
+  member from the store type (runtime keeps them; the consumer's _read_ takes the blame, in another
   file). Two overloads, with **no default on `D`** in the derive form, move the error to the
   declaration: `TS2353: 'computed' does not exist in type 'WithSelectionConfig<Invoice>'`, pointing
   at the offending key. `withSelection()`, `withSelection({ computed })` and the legacy
@@ -95,7 +95,7 @@ re-litigating the graph.
   own doc comment promises pagination/virtualization may override it (ADR-0005).
   Verified severity: today the collision is not merely silent, it is a **type lie** — the colliding
   declarations intersect into an overloaded call signature
-  (`(() => Invoice[]) & { [SIGNAL] } & (() => string[])`), overload resolution picks the *first*, so
+  (`(() => Invoice[]) & { [SIGNAL] } & (() => string[])`), overload resolution picks the _first_, so
   `table.rows()` types as `Invoice[]` while runtime returns the shadowing feature's `string[]`. No
   error at the declaration or the call.
   Prior art checked and **rejected as a model**: `@ngrx/signals` 22.0.1 warns instead of throwing,
@@ -108,7 +108,7 @@ re-litigating the graph.
 
 - **D5 (2026-09-12) — the surface is `composeFeatures(...)` only; the per-feature `computed` config
   block is dropped, and D1's deferral of cross-feature derivation is reversed.** Features are passed
-  as *arguments* to a helper instead of elements of an array literal, which restores NgRx-style
+  as _arguments_ to a helper instead of elements of an array literal, which restores NgRx-style
   accumulation: the derive block sees core plus **every** feature handed to the helper, fully typed
   and inferred, with no explicit type arguments. Verified with four features —
   `TableStore<Invoice> & SelectionMembers & { sort } & { expandedRows } & GroupingMembers<Invoice>`.
@@ -118,7 +118,7 @@ re-litigating the graph.
 
 - **D6 (2026-09-12) — no arity ceiling, and the derive is a named object block.** The ceiling in
   `@ngrx/signals` (#4314, 15 features) comes from per-arity overloads, which they need because each
-  slot gets a *different* accumulated view. Ours is always last and wants the whole-tuple
+  slot gets a _different_ accumulated view. Ours is always last and wants the whole-tuple
   intersection, so one variadic signature covers every length:
   `composeFeatures<const Fs, D>(...args: [...Fs, DeriveBlock<Fs, D>])` with
   `UnionToIntersection<MembersOf<Fs[number]>>`. **Two signatures total** — one with the block, one
@@ -133,11 +133,11 @@ re-litigating the graph.
   `work/drop-ngrx-engine/2-decisions.md:39-40` and `architecture.md:201` — both shapes import
   features top-level. What breaks tree-shaking is a registry/namespace object (`f.expansion()`,
   `architecture.md:193`), which this is not. `composeFeatures` also leaves the `composed` seam
-  untouched: its arguments are feature *functions*, not specs, so `composeTable` still calls them
+  untouched: its arguments are feature _functions_, not specs, so `composeTable` still calls them
   during the fold and the returned tuple is identical to the array literal.
 
 - **D7 (2026-09-12) — the derive block returns signals only.** `DerivedDict =
-  Record<string, Signal<unknown>>`. Every returned member is a memoized graph leaf, which keeps the
+Record<string, Signal<unknown>>`. Every returned member is a memoized graph leaf, which keeps the
   ADR-0014 guard total (it can wrap everything the block produces) and keeps the key name `computed`
   honest. Parameterized selectors (`selectionStateOf(ids)`, a future `groupDescendantIds(id)`) stay
   **feature members**, where the one that exists already lives — the block composes them, it does not
@@ -150,7 +150,7 @@ re-litigating the graph.
   object exists (`{ ...core, ...composed, renderRows, totalRowCount }`), then claims each returned
   key through `SlotRegistry` and assigns them onto that same object, before `setup` hooks run.
   Rationale: the block's parameter type is `TableStore<TRow> & AllMembers<Fs>`, and `TableStore`
-  includes `renderRows` and `totalRowCount` — both built *after* the fold — so a block running
+  includes `renderRows` and `totalRowCount` — both built _after_ the fold — so a block running
   during the fold could not honour its own type. Running it post-fold makes everything it reads
   concrete, which also **retires `2-design.md` §5's lazy view entirely**: no getters, no
   slot-filled-later, and no "eager read returns `undefined`" hazard. A `setup` hook can read derived
@@ -213,9 +213,9 @@ re-litigating the graph.
     `TableStore<NoInfer<Invoice>> & SelectionMembers`, with `row.total` type-checking).
   - `composeFeatures(f1, f2, { computed })` — only when a derivation genuinely **spans features**
     (the group-tick case). Sees core + every feature passed.
-  Consequently **D3 is revived** (the two-overload guard against `withSelection<Invoice>({ computed })`
-  silently dropping members) and **D2 stays withdrawn** (no currying — the per-feature form needs
-  none). D1's deferral remains reversed; D10's one-block rule now applies per `composeFeatures` call.
+    Consequently **D3 is revived** (the two-overload guard against `withSelection<Invoice>({ computed })`
+    silently dropping members) and **D2 stays withdrawn** (no currying — the per-feature form needs
+    none). D1's deferral remains reversed; D10's one-block rule now applies per `composeFeatures` call.
 
 - **D14 (2026-09-12) — `composeFeatures` requires an explicit `<TRow>` on every feature inside it.**
   Not cosmetic; load-bearing, and two routes to avoid it were tried and failed:
@@ -225,11 +225,11 @@ re-litigating the graph.
   callback token from `createTable`, (5) fixed-arity parameter slots instead of a variadic rest —
   plus the variants with `NoInfer` on the helper constraint and with the `TRow = unknown` default
   removed.
-  Diagnosis: `TRow` *does* reach the helper (the target type is correctly
+  Diagnosis: `TRow` _does_ reach the helper (the target type is correctly
   `TableFeature<NoInfer<Invoice>, any>` in every case). What fails is the **inner call** — a bare
   `withSelection()` one level down is not contextually typed from it and resolves to
   `TableFeature<unknown, ...>`, which contravariance on `core` then rejects. The array form works
-  precisely because the feature call sits *directly* in `features:`, where the element's contextual
+  precisely because the feature call sits _directly_ in `features:`, where the element's contextual
   type comes from the same call that infers `TRow` from `data`; one call deeper, that link is gone.
   This is a real ergonomic cost of the cross-feature surface and a reason the per-feature block is
   the default (D13). Anyone revisiting should attack the inner-call inference, not the helper's
@@ -259,7 +259,7 @@ re-litigating the graph.
      (`withComputed<TRow, Acc, D>(fn): DeriveSpec<TRow, Acc, D>`), so TS unifies `Acc` from the
      contextual parameter type and only then types the callback. This mirrors ngrx's `Input`
      appearing in `SignalStoreFeature<Input, Output>`.
-  Cost of taking it: the per-arity ceiling returns (D6's variadic form has none).
+     Cost of taking it: the per-arity ceiling returns (D6's variadic form has none).
 
 - **D16 (2026-09-12) — explicit `<TRow>` on features cannot be removed inside any helper, and the
   reason is structural.** Verified in the working NgRx port too: dropping the generic from the
@@ -268,24 +268,27 @@ re-litigating the graph.
   **NgRx has no equivalent problem because their features carry no row type at all** — the row type
   lives in state (`withState({ books: [] as Book[] })`), so `withEntities()`/`withComputed()` have
   nothing to pin. Ours must: `withSelection`'s core slice is `Pick<TableCore<TRow>, 'rows' |
-  'trackBy'>` and `canMultiSelect(row)` needs the row type. Only a feature sitting **directly** in
+'trackBy'>` and `canMultiSelect(row)` needs the row type. Only a feature sitting **directly** in
   `features:` can infer `TRow`, because that is the same call that infers it from `data`.
   **Consequent trade, to be settled before spec:** composable `withComputed(...)` + explicit
-  generics + an arity ceiling, *or* the plain array + inline object literal + no generics. Both are
+  generics + an arity ceiling, _or_ the plain array + inline object literal + no generics. Both are
   verified working; they cannot be combined.
 
-- **D17 (2026-09-12) — `withComputed()` composes *inside a feature*, with no generics. This is the
+- **D17 (2026-09-12) — `withComputed()` composes _inside a feature_, with no generics. This is the
   best available shape and it supersedes D13's inline literal.** Verified
   (`probe-feature-withcomputed.ts.txt`):
 
   ```ts
   features: [
-    withSelection(withComputed((store) => ({
-      hiddenSelected: computed(() => store.selectedRows().size - store.rows().length),
-    }))),
+    withSelection(
+      withComputed((store) => ({
+        hiddenSelected: computed(() => store.selectedRows().size - store.rows().length),
+      })),
+    ),
     withGrouping(),
-  ]
+  ];
   ```
+
   `store` resolves to `TableStore<NoInfer<Invoice>> & SelectionMembers` and `hiddenSelected` lands as
   `Signal<number>` — with `withSelection` called **bare**, no `<Invoice>`.
   Why it works where the same wrapper failed inside `composeFeatures` (D15): the nested call's
@@ -320,7 +323,7 @@ re-litigating the graph.
     `computed: (store) => ({...})` typed over `TableStore<TRow> & ComposedFeatureMembers<Fs>`
     (`probe-pu-helper.ts.txt`, case A) — cross-feature derivation with every feature called bare.
   - **Works even better, still array position:** replacing `TableFeature<TRow, Members>` with a
-    *row-agnostic* feature value — `FeatureDef<Kind, TRow(phantom), Derived>` whose `create` is
+    _row-agnostic_ feature value — `FeatureDef<Kind, TRow(phantom), Derived>` whose `create` is
     `<T>(core: TableCore<T>) => spec`, plus a type-level `FeatureMembersMap<TRow>` keyed by kind
     (`probe-q7-final.ts.txt`). Under it, with **no generics anywhere**: row-typed feature config
     (`sel({ canMultiSelect: (row) => row.total > 0 })` gives `row: Invoice`), per-feature
@@ -329,7 +332,7 @@ re-litigating the graph.
     (uncomposed member, bad row field, selection-scoped derive cannot see grouping).
   - **Fails, every functional form** (`probe-q8-functional.ts.txt`): features as rest arguments to
     `createTable`; rest arguments with a trailing derive; `composeFeatures(...)` nested in the
-    config. All three compose *members* correctly, and all three lose the **row type at the inner
+    config. All three compose _members_ correctly, and all three lose the **row type at the inner
     call** — `row` degrades to `never` (rest args) or silently to `any` (nested helper), and a
     per-feature `withComputed` sees `TableStore<unknown>`.
   - Also failed: `computed: withComputed(fn)` in the config key (`Signal<any>`); curried
@@ -337,46 +340,52 @@ re-litigating the graph.
     its contextual return type — the last two die on `TableCore` **invariance**
     (`columns: WritableView<ColumnDef<TRow>[]>`), so a bare feature's `TableFeature<unknown, …>` is
     rejected outright.
-  **Root cause, now stated once:** only a call sitting *directly* in `features:` shares the
-  inference site that fixes `TRow` from `data`. Any wrapper — array-to-arguments or otherwise —
-  puts one call between them, and the row type is gone. Members survive that hop; the row type
-  never does.
-  **Decision (user, 2026-09-12):** the functional surface is dropped rather than bought with
-  explicit `<TRow>` per feature. `composeFeatures` is off the table; D5/D6/D13's helper half and
-  D15/D16's NgRx port are closed. What remains for the spec is the array plus the two derive
-  placements verified above.
-  Two secondary findings worth keeping, both from `probe-q6-anyslot.ts.txt`:
-  `any` in a constraint's derived slot infers `D = any` and `UnionToIntersection<… | any>` collapses
-  the **whole store** to `any` (silent) — guard with `IsAny<D> extends true ? {} : D`; and an
-  omitted optional `computed:` infers its type parameter as its *constraint*, leaking
-  `& Record<string, Signal<unknown>>` onto the store — guard the same way.
+    **Root cause, now stated once:** only a call sitting _directly_ in `features:` shares the
+    inference site that fixes `TRow` from `data`. Any wrapper — array-to-arguments or otherwise —
+    puts one call between them, and the row type is gone. Members survive that hop; the row type
+    never does.
+    **Decision (user, 2026-09-12):** the functional surface is dropped rather than bought with
+    explicit `<TRow>` per feature. `composeFeatures` is off the table; D5/D6/D13's helper half and
+    D15/D16's NgRx port are closed. What remains for the spec is the array plus the two derive
+    placements verified above.
+    Two secondary findings worth keeping, both from `probe-q6-anyslot.ts.txt`:
+    `any` in a constraint's derived slot infers `D = any` and `UnionToIntersection<… | any>` collapses
+    the **whole store** to `any` (silent) — guard with `IsAny<D> extends true ? {} : D`; and an
+    omitted optional `computed:` infers its type parameter as its _constraint_, leaking
+    `& Record<string, Signal<unknown>>` onto the store — guard the same way.
 
 - **D20 (2026-09-12) — a full port of NgRx SignalStore's architecture removes the generics in the
   functional form; the blocker was never arguments-vs-array.** Verified, `probe-q9-ngrxarch.ts.txt`.
   The mechanism NgRx actually relies on is that **features carry no row type at all** — the row
   lives in state (`withState({ books: [] as Book[] })`) and each slot recovers it from the
   accumulated input. Port that and ours behave identically:
+
   ```ts
-  createTable(data, () => ({ trackBy: 'id', columns }),
-    withSelection({ canMultiSelect: (row) => row.total > 0 }),  // row: Invoice
+  createTable(
+    data,
+    () => ({ trackBy: 'id', columns }),
+    withSelection({ canMultiSelect: (row) => row.total > 0 }), // row: Invoice
     withGrouping(),
-    withComputed((store) => ({ tick: computed(() => store.selectedRows().size + store.grouping().length) })),
+    withComputed((store) => ({
+      tick: computed(() => store.selectedRows().size + store.grouping().length),
+    })),
   ); // TableStore<Invoice> & SelectionMembers & GroupingMembers<Invoice> & { tick: Signal<number> }
   ```
+
   Feature signature becomes `Feature<In extends Shape, Out>` with the row read back as
   `RowOf<In> = In extends { rows: Signal<readonly (infer R)[]> } ? R : never`; per-arity overloads
   type slot N against `TableStore<TRow> & O1 & … & O(N-1)`. Bare calls throughout, row-typed config
   included. Ordering is enforced correctly as a negative: a `withComputed` in slot 1 cannot see
   slot 3's members. D15/D16's earlier "port" kept `TableFeature<TRow, Members>` in argument
   position — our contract relocated, not their architecture — which is why it needed explicit
-  `<TRow>` and why D16's diagnosis (*"NgRx has no equivalent problem because their features carry
-  no row type"*) was the answer all along rather than an aside.
+  `<TRow>` and why D16's diagnosis (_"NgRx has no equivalent problem because their features carry
+  no row type"_) was the answer all along rather than an aside.
 
 - **D21 (2026-09-12, user) — the NgRx-shaped positional surface is chosen.** Three costs were put
   to the user; two accepted, one accepted as the only real limit:
   - **Ordering becomes semantic** (slot N sees only preceding slots), retiring today's order-free
-    fold and the reason D37/A2 gave for `createEditingStore()`. Accepted — *"I do not think I need
-    ordering in the features."*
+    fold and the reason D37/A2 gave for `createEditingStore()`. Accepted — _"I do not think I need
+    ordering in the features."_
   - **Call-site churn** — every `createTable` call and every `with-*()` file changes shape.
     Accepted.
   - **Arity ceiling** — the one limitation acknowledged as real. It is a type-level artifact only
@@ -384,16 +393,16 @@ re-litigating the graph.
     by DI: an injection token has a single declared type, so `inject(TABLE_FEATURES)` yields
     `TableFeature<any, any>[]` and every derived member degrades to `any`; recovering the types
     means naming them explicitly, which is the cost this whole session removed. DI stays scoped to
-    feature *config*, not composition.
-  Escape hatch, NgRx's own (`signalStoreFeature`): nest a group of features into one composite that
-  accumulates internally and consumes a single slot, so N slots × groups is unbounded and still
-  fully typed. To spec: the overload count (default 15 — 14 features plus one `withComputed`), the
-  composite helper, and the error a consumer sees past the ceiling
-  (`No overload matches this call`).
-  Recorded against the goal the user stated for the library — *"composable as fuck"* — so the
-  ceiling is the one trade to revisit first if it ever bites.
+    feature _config_, not composition.
+    Escape hatch, NgRx's own (`signalStoreFeature`): nest a group of features into one composite that
+    accumulates internally and consumes a single slot, so N slots × groups is unbounded and still
+    fully typed. To spec: the overload count (default 15 — 14 features plus one `withComputed`), the
+    composite helper, and the error a consumer sees past the ceiling
+    (`No overload matches this call`).
+    Recorded against the goal the user stated for the library — _"composable as fuck"_ — so the
+    ceiling is the one trade to revisit first if it ever bites.
 
-- **D22 (2026-09-12) — under D21's architecture a derive block *is* a feature; one type serves both
+- **D22 (2026-09-12) — under D21's architecture a derive block _is_ a feature; one type serves both
   placements, and the nesting escape hatch type-checks.** Verified, `probe-r2-onetype.ts.txt`:
   - **Feature-scoped derive** (the original ask) — `withSelection(withComputed((store) => …))` with
     `store: TableStore<Invoice> & SelectionMembers`, contributing `hiddenSelected` to the composed
@@ -402,30 +411,30 @@ re-litigating the graph.
     slot, and the following `withComputed` slot still sees
     `TableStore<Invoice> & SelectionMembers & GroupingMembers<Invoice>`. This is the ceiling
     workaround from D21, now type-verified rather than assumed.
-  The simplification that makes it work: `withComputed` returns `Feature<In, D>` — the same type a
-  feature returns — so the in-feature parameter is `Feature<In & SelectionMembers, D>` and no
-  separate `DeriveSpec` carrier exists. Retires D7/D8's `DeriveSpec`, D10's "one derive block per
-  table" (blocks are features; `SlotRegistry` member claiming already governs duplicates) and D6's
-  "must be an object literal, never a bare callback" (the ambiguity was specific to the array).
-  Counter-evidence kept: returning `DeriveSpec<In, D> & Feature<In, D>` (an intersection) **breaks**
-  slot inference — the composite's output degrades to `Shape` and the derived member to
-  `Signal<any>` (`probe-r1-featurederive.ts.txt`). One return type, not an intersection.
+    The simplification that makes it work: `withComputed` returns `Feature<In, D>` — the same type a
+    feature returns — so the in-feature parameter is `Feature<In & SelectionMembers, D>` and no
+    separate `DeriveSpec` carrier exists. Retires D7/D8's `DeriveSpec`, D10's "one derive block per
+    table" (blocks are features; `SlotRegistry` member claiming already governs duplicates) and D6's
+    "must be an object literal, never a bare callback" (the ambiguity was specific to the array).
+    Counter-evidence kept: returning `DeriveSpec<In, D> & Feature<In, D>` (an intersection) **breaks**
+    slot inference — the composite's output degrades to `Shape` and the derived member to
+    `Signal<any>` (`probe-r1-featurederive.ts.txt`). One return type, not an intersection.
 
 ## Owed to other documents (updated after D21)
 
-- `ADR-0003` / `docs/1-state/architecture.md` §"Rejected: inferring TRow into with-*() calls" — the
+- `ADR-0003` / `docs/1-state/architecture.md` §"Rejected: inferring TRow into with-\*() calls" — the
   rejection is overturned; record the mechanism (features carry no row type; `RowOf<In>`).
 - `api/types.ts` — `AnyTableFeature`'s doc comment states consumers must repeat `<TRow>` on every
   feature call. False under D20; rewrite with the ADR link.
 - `CLAUDE.md` — the feature-plugin pattern section and the `features: [...]` composition example
   both change shape, as does "Array order does NOT set execution order" (D21 makes argument order
-  semantic for *member visibility*; pipeline order stays fixed).
+  semantic for _member visibility_; pipeline order stays fixed).
 - D37/A2's rationale for `createEditingStore()` (order-free sharing) is no longer load-bearing —
   note it, do not rip it out.
 - ADR-0014 (derived-member evaluation error, D9), ADR-0007 (core-key claiming, D4),
   `state-persistence.md` (derived state excluded from snapshots — the row is still **owed**, the
   doc says nothing today) — unchanged by D21.
-- `CLAUDE.md` §"Feature plugin pattern" states *"No feature uses [`composed`]"* — false, grouping
+- `CLAUDE.md` §"Feature plugin pattern" states _"No feature uses [`composed`]"_ — false, grouping
   reads `expandedRows` through it (D25). Rewrite alongside the composition example.
 - `CLAUDE.md` — migration before/after table (spec story 28; review finding 10).
 - ADR-0005 — one sentence on how a feature legitimately claims the `totalRowCount` override
@@ -441,17 +450,18 @@ re-litigating the graph.
   and `withColumns(columns, schema?)` is an ordinary slot typed by `RowOf<In>`. Confirmed in one
   call: the schema callback receives the real `ColumnsPath<Invoice>` proxy, `canMultiSelect`'s row is
   `Invoice`, `withGrouping({ initial: ['status'] })` and `withSorting({ initial: [{ columnId:
-  'total' }] })` autocomplete against `ColumnId<Invoice>`, both derive placements resolve, and
+'total' }] })` autocomplete against `ColumnId<Invoice>`, both derive placements resolve, and
   `trackBy: 'nope'` is rejected (`'"nope"' is not assignable to TrackByConfig<Invoice>`).
   Two notes for the spec: a slot contributing no members should return `Feature<In, {}>` — typing it
   `object` leaves a cosmetic `& object` in the store type; and `composeTable` must recognise the root
-  slot *before* the fold, since `trackBy` and the data signal are needed to build core.
+  slot _before_ the fold, since `trackBy` and the data signal are needed to build core.
 
 - **D24 (2026-09-12) — the final call shape: `createTable(data, config, ...features)`.** Data is
   passed directly, required config stays a plain object, and `with*` names are reserved for optional
-  features only — the user's rule: *"I want to make the `with` specific for features that are
-  optional. The rows and columns are required for the table."* Verified end to end,
+  features only — the user's rule: _"I want to make the `with` specific for features that are
+  optional. The rows and columns are required for the table."_ Verified end to end,
   `probe-r4-directdata.ts.txt`:
+
   ```ts
   createTable(
     this.data,
@@ -461,6 +471,7 @@ re-litigating the graph.
     withComputed((store) => ({ tick: ... })),
   )
   ```
+
   Checked in one call: `TRow` infers from `data` alone; the schema callback receives the real
   `ColumnsPath<Invoice>` proxy; row-typed feature config, both derive placements, and the full
   accumulated store type all resolve with no explicit generics; `createTable(data, config)` with no
@@ -500,7 +511,7 @@ re-litigating the graph.
   repo-side script under `tools/` whose committed output is checked for drift.
 - **D28 (2026-09-12) — the read-only derive input is a type-level projection.** Spec story 16
   promised a compile error on write with no type behind it (review finding 4). The block receives
-  the input with every write view's `.update` stripped by a mapped type; mutating *methods*
+  the input with every write view's `.update` stripped by a mapped type; mutating _methods_
   features contribute stay visible (statically indistinguishable from queries) and not calling them
   is documented convention. The evaluation-error wrapper and the `isSignal()` check live inside
   `withComputed()`, never in the fold — a fold-level check would reject method members (review

@@ -4,10 +4,12 @@ Step: [step-3-tree-toggle-dev-checks.plan.md](step-3-tree-toggle-dev-checks.plan
 Spec file: `libs/table/src/directives/ngp-table-tree-toggle.directive.spec.ts` (extends the step-2 file)
 
 ## Stubs (red phase)
+
 - None. `NgpTableTreeToggleDirective` already exists from step 2.
   Red fails on missing behaviour: no throw and no `console.warn`.
 
 Harness notes:
+
 - Reuse step 2's real `createTable(...)` + `ngpTable` host. Add
   a variant without `withTree()`.
 - Name sources are host-template variants on the `<button>`.
@@ -21,6 +23,7 @@ Harness notes:
 ## Seams — in red-green order
 
 ### A. Table without `withTree()` → first render throws, naming both parties
+
 - Test: `it('throws on first render when the table has no withTree()')`
 - Asserts: `expect(() => setup({ tree: false })).toThrow(/ngpTableTreeToggle[\s\S]*withTree\(\)/)`.
   `setup` runs `createComponent` + `detectChanges`. The regex
@@ -32,6 +35,7 @@ Harness notes:
 - Order reason: independent. The base guard.
 
 ### C. Two nameless toggles → exactly two warnings
+
 - Test: `it('warns once per toggle whose button has no accessible name')`
 - Asserts: host with two collapsed root parents (both toggles
   enabled, no leaves rendered) and a button with no
@@ -43,6 +47,7 @@ Harness notes:
 - Order reason: independent. The base case for D7.
 
 ### D. Re-rendering an already-checked toggle → no second warning
+
 - Test: `it('does not warn again when an existing toggle re-renders')`
 - Asserts: same nameless host. Click parent P (children appear),
   record the `console.warn` call count, click P again. The count
@@ -53,6 +58,7 @@ Harness notes:
 - Order reason: builds on C.
 
 ### E. A named button, or a disabled leaf → no warning
+
 - Test: `it.each(['aria-label', 'aria-labelledby', 'interpolated text', 'disabled leaf toggle'])('does not warn when %s')`
 - Asserts: `console.warn` is not called after first render for
   each variant. The text variant is interpolated
@@ -69,9 +75,11 @@ Harness notes:
   check.
 
 ## Types phase (written in red, proven by green's typecheck)
+
 None — no public type surface in this step.
 
 ## Not tested
+
 - Production stripping of both checks, and the toggle being
   inert in prod (spec, Not tested).
 - Exact wording of the throw and the warning. A and C pin only

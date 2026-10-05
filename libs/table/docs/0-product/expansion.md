@@ -29,7 +29,7 @@ use a mouse. Engineering derives API from this document, not the reverse.
 > to it, not rewrite it — coverage marks here are updated from the product side as capabilities
 > land.
 
-> **Scope is the detail panel only.** Rows that reveal *more rows* (a tree, collapsible groups)
+> **Scope is the detail panel only.** Rows that reveal _more rows_ (a tree, collapsible groups)
 > are [`tree.md`](tree.md)'s, per [ADR-0012](../adr/0012-split-expansion-into-panel-and-tree.md).
 > Opening a panel never adds, hides or reorders rows.
 
@@ -42,10 +42,10 @@ produces them:
 1. Every row that has more to show offers one obvious control that opens it — and rows with
    nothing to show don't pretend.
 2. I can open and close it from the keyboard, and a screen reader tells me whether it's open.
-3. The panel stays attached to *its* row — sorting, filtering or refreshing never moves it to
+3. The panel stays attached to _its_ row — sorting, filtering or refreshing never moves it to
    another row, or leaves it open and empty.
 4. What I did inside a panel (a tab I picked, text I typed) is still there when I reopen it.
-5. When the panel's content is slow or fails, I see that *in the panel*, and the rest of the table
+5. When the panel's content is slow or fails, I see that _in the panel_, and the rest of the table
    keeps working.
 6. I can open several to compare, or close all of them at once.
 
@@ -53,7 +53,7 @@ produces them:
 product surveyed (Notion, Jira, Linear, Airtable, GitHub Projects, monday.com, Smartsheet) opens
 row detail in a right-side panel or a modal; none opens it inline under the row
 ([`research-expansion-product-ux.md`](../1-state/work/expansion/active/story-discovery/research-expansion-product-ux.md)
-F1). Every *table library* surveyed opens it inline
+F1). Every _table library_ surveyed opens it inline
 ([`research-expansion-ux-capabilities.md`](../1-state/work/expansion/active/story-discovery/research-expansion-ux-capabilities.md)).
 A side panel is app layout outside the table, but the current state already supports it:
 `withExpansion()` used single-open (**OQ-exp-7**, resolved; story 1.6). This doc covers the inline
@@ -63,11 +63,11 @@ while detail is open is core keyboard navigation (**OQ-exp-9**, resolved; §7.1)
 
 ## Coverage marks
 
-| Mark | Meaning |
-|---|---|
-| ✅ **covered** | Demonstrable today in `src/stories/` or a demo app, with the failure path included |
+| Mark                  | Meaning                                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| ✅ **covered**        | Demonstrable today in `src/stories/` or a demo app, with the failure path included                                             |
 | 🟡 **partly covered** | The mechanism exists but the person's experience of it does not — no affordance, no message, no recipe, or the happy path only |
-| ❌ **not covered** | Nothing on screen anywhere; or structurally impossible with what ships |
+| ❌ **not covered**    | Nothing on screen anywhere; or structurally impossible with what ships                                                         |
 
 **No story composes `withExpansion()`.** All 26 story hosts were read
 ([`research-expansion-internal-coverage.md`](../1-state/work/expansion/active/story-discovery/research-expansion-internal-coverage.md)
@@ -111,7 +111,7 @@ Ordered by how badly the person is hurt if it is missing.
 
 **Failure behavior**
 
-- The panel is for *this* row only — it never shows another row's content (see 2.1 for the
+- The panel is for _this_ row only — it never shows another row's content (see 2.1 for the
   sort/refresh variant).
 
 **Coverage:** nothing on screen. `table.expansion.toggle(id)` and the open set are shipped
@@ -134,7 +134,7 @@ story.**
 - The button — not the row — carries `aria-expanded`, and `aria-controls` pointing at the
   panel's detail row; its accessible name says what it opens
   ("Show details for order 1042").
-- After opening, the next Tab stop is the first focusable thing *inside the panel*, before the next
+- After opening, the next Tab stop is the first focusable thing _inside the panel_, before the next
   row's controls.
 - A closed panel's content is not focusable and not read out (hidden and `inert`), even if it stays
   in the page.
@@ -181,7 +181,7 @@ row (`@if (row.notes)`); expand-all passes filtered ids —
 Peers ship a per-row predicate (`isRowMaster`, a null-returning `getDetailPanelContent`,
 `getRowCanExpand`); here the consumer's own filter does that job. Also: the stale UI spec defaults
 "disabled" to `!row.hasChildren`, which is `false` on every flat row — built as written, it
-disables *every* toggle (§8.2 U2).
+disables _every_ toggle (§8.2 U2).
 
 ## 1.4 — Keep several open to compare them — ❌ not covered
 
@@ -231,7 +231,7 @@ set) and `collapse()` with no ids closes everything (`with-expansion.spec.ts:71-
 "all open?" member; the consumer derives `expansion().size === rows().length`. When some rows
 have no detail (1.3), expand-all passes the consumer's filtered ids and the label compares against
 the consumer's own eligible count instead of `rows().length` (OQ-exp-4). No library ships an
-expand-all *button* — it is an API or a recipe in all five — and it keeps being requested
+expand-all _button_ — it is an API or a recipe in all five — and it keeps being requested
 (`mui/mui-x#6041`, open).
 
 ## 1.6 — See one row's detail beside the list without losing my place — ❌ not covered
@@ -281,7 +281,7 @@ reported 2017–2025 across all four open-source libraries; Angular Material's v
 since 2018 (`angular/components#13431`).
 
 **Coverage:** nothing on screen. Given for free: the open set is keyed by row id, and only row
-*removal* from `data` prunes it — a sort or filter never writes to it (research internal-coverage
+_removal_ from `data` prunes it — a sort or filter never writes to it (research internal-coverage
 §C).
 
 **Design status — correct by construction, never shown.** This is also the expansion half of
@@ -300,11 +300,11 @@ library cannot have it.
 
 **Failure behavior**
 
-- A refetch that returns new row *objects* with the same ids must not close every panel (Angular
+- A refetch that returns new row _objects_ with the same ids must not close every panel (Angular
   Material's example keys by object reference and does exactly this).
 
 **Coverage:** nothing on screen. Id-keying gives the first criterion. The second is half-met:
-removal prunes the open set (ADR-0012 D4) — but E4 deliberately keeps *restored* stale ids, so a
+removal prunes the open set (ADR-0012 D4) — but E4 deliberately keeps _restored_ stale ids, so a
 row restored from a saved snapshot that reappears later does come back open. That is decided, and
 consistent; it just needs to be visible to be judged.
 
@@ -341,7 +341,7 @@ unmount-on-close blocks exit animation (`TanStack/table#1203`).
 ## 3.1 — A slow or failing panel says so in the panel, and nothing else breaks — ❌ not covered
 
 > As someone who opened a customer's order history on a bad connection, I want to see it's loading,
-> and if it fails, a message and a Retry *inside that panel* — not an empty box, and not an error
+> and if it fails, a message and a Retry _inside that panel_ — not an empty box, and not an error
 > that blanks the whole table.
 
 **Acceptance criteria**
@@ -396,7 +396,7 @@ sound and matches Angular Material's example. Animation is a steady request else
 - The table's first paint shows the chosen panels open, with no flash of closed.
 - Their content loads per 3.1.
 
-**Coverage:** nothing on screen. `initial` is shipped: it seeds the open set *and* `everExpanded`,
+**Coverage:** nothing on screen. `initial` is shipped: it seeds the open set _and_ `everExpanded`,
 and emits nothing (`with-expansion.spec.ts:289-306`).
 
 **Design status — shipped, never shown.** Restoring a saved view is the persistence feature's
@@ -410,7 +410,7 @@ and emits nothing (`with-expansion.spec.ts:289-306`).
 story already lives in another feature's doc, it is **linked, not restated**, and that doc keeps its
 coverage mark.
 
-## Owned by grouping *(built)*
+## Owned by grouping _(built)_
 
 **E-G1** at [`grouping.md`](grouping.md) §5 — collapsing a group hides its rows' open detail panels,
 and reopening the group restores them. **Marked ✅, but the evidence is a tree chevron, not a
@@ -419,7 +419,7 @@ undemonstrated and the mark should drop to ❌ until a story composes both (§8.
 should hold: a collapsed group removes its rows from `renderRows()`, and a panel is consumer markup
 under its row, so it goes with it; the open set is untouched, so reopening restores it.
 
-## Owned by filtering *(built)*
+## Owned by filtering _(built)_
 
 **1.1** at [`filtering.md`](filtering.md) — filtering never changes what's expanded on the rows that
 remain. Given for free (2.1 above); no story composes `withFiltering()` + `withExpansion()`.
@@ -501,19 +501,19 @@ OQ-exp-8 part 1 (2026-10-01), default panels unmount on close; only opt-in kept 
 **OQ-exp-8 — Panel mount lifetime and virtualization — resolved 2026-10-01 (#195).** Summary: E40
 unmount by default + per-row keep; E39 `release()`; E41 a11y directives (#199); part 4 keeps E12
 and moves virtualization to the virtual-scroll spec as a requirement (E42). Detail per part below.
-*Current behavior:* `everExpanded` is never pruned (ADR-0006 exemption); a panel stays mounted
+_Current behavior:_ `everExpanded` is never pruned (ADR-0006 exemption); a panel stays mounted
 once opened (E7); a panel is not a render row (E12).
-*Costs:* expand-all then collapse-all never frees DOM or memory; 1,000 panels mount at once with
+_Costs:_ expand-all then collapse-all never frees DOM or memory; 1,000 panels mount at once with
 no virtualization; the planned CDK virtual scroll (`3-ui/cross-cutting/virtual-scroll.md`, fixed
 `itemSize` over `renderRows()`) can neither size nor unmount a panel. A closed panel stays mounted
 and only visually hidden, so its focusable content stays in the Tab order and the accessibility
 tree unless it gets `inert`/`hidden` — whether that is needed, and who owns it (consumer recipe or
 library directive), follows from this decision (moved here from OQ-exp-6).
-*Peer answer:* AG Grid makes the panel a full-width row, so its virtualizer unmounts off-screen
+_Peer answer:_ AG Grid makes the panel a full-width row, so its virtualizer unmounts off-screen
 panels.
-*Decisions potentially revisited:* E7, E12, ADR-0006's `everExpanded` exemption.
-*Part 1 — decided 2026-10-01: the default recipe unmounts a panel on close; staying mounted is an
-opt-in recipe, chosen per row.* E7 (2026-08-07) kept panels mounted only because "collapse
+_Decisions potentially revisited:_ E7, E12, ADR-0006's `everExpanded` exemption.
+_Part 1 — decided 2026-10-01: the default recipe unmounts a panel on close; staying mounted is an
+opt-in recipe, chosen per row._ E7 (2026-08-07) kept panels mounted only because "collapse
 animation fights teardown"; it never weighed Angular's `animate.leave`, which keeps the element
 until its leave animation ends, then removes it — already used for the same job in
 `3-ui/directives/row-animation.md:221-244`. Default: gate on `expansion().has(id)` with
@@ -521,17 +521,17 @@ until its leave animation ends, then removes it — already used for the same jo
 Opt-in: `@if (expansion().has(id) || (keepMounted(row) && everExpanded().has(id)))` with a
 consumer predicate; a kept panel needs `[inert]="!isOpen"`. For panels with expensive inner state
 (peer: AG Grid's `keepDetailRows`). The library does nothing — the gate is consumer template code.
-*Part 2 — decided 2026-10-01: add `table.expansion.release(ids?: readonly RowId[]): void` (E39).*
+_Part 2 — decided 2026-10-01: add `table.expansion.release(ids?: readonly RowId[]): void` (E39)._
 Removes the ids from `everExpanded` (no ids = clear); never touches the open set, so an open panel
 stays open; emits nothing on `changed` — nothing opened or closed. Why: `everExpanded` is
 grow-only library state, so a consumer cannot free a kept panel per row — the helper-or-recipe bar
 (`1-state/architecture.md`). Collapse-all then `release()` frees every kept panel. The ADR-0006
 exemption is unchanged: row removal still doesn't prune `everExpanded`; `release()` is the
 explicit consumer control. Name: `release` — `unmount` rejected (the library does no DOM work),
-`forget` the other candidate. *Still owes, in [#200](https://github.com/DvirMon/ng-table/issues/200):* a spec via `/to-spec`; an ADR-0006 amendment ("an
+`forget` the other candidate. _Still owes, in [#200](https://github.com/DvirMon/ng-table/issues/200):_ a spec via `/to-spec`; an ADR-0006 amendment ("an
 additive ledger by design" now has one explicit remover); an `index.ts` export check; decisions-log
 row E39 (added).
-*Part 3 — decided 2026-10-01: the library ships panel a11y directives (E41);* details settle in the
+_Part 3 — decided 2026-10-01: the library ships panel a11y directives (E41);_ details settle in the
 UI spec rewrite. A **toggle directive** on the consumer's `<button>` binds `aria-expanded` and
 `aria-controls` (the panel's id); the native button keeps Enter/Space — OQ-exp-2's APG disclosure,
 now in the library. A **panel-content directive** owns the panel `id`; sets `inert` while not open,
@@ -542,13 +542,13 @@ next Tab enters the panel, which follows the row in DOM order. Why `inert`: a st
 attribute, Baseline since 2023, meant for "content that is offscreen or hidden"; unlike
 `display:none`/`hidden` it doesn't cut the collapse animation, unlike `aria-hidden` it leaves the
 Tab order ([MDN](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/inert)).
-*Part 4 — decided 2026-10-01: keep E12; virtualization moves to the virtual-scroll spec (E42).*
+_Part 4 — decided 2026-10-01: keep E12; virtualization moves to the virtual-scroll spec (E42)._
 A panel stays consumer markup, not a render row. Reversing E12 would reopen ADR-0012's
 `expandedRows` collision fix, and a fixed-`itemSize` design still couldn't size variable-height
 panels. Virtual scroll is only drafted, so the requirement waits there: **must support detail
 panels** — variable-height items, or a panel taking a virtual-list slot without being a render row
 (`1-state/features/virtual-scroll.md`, `3-ui/cross-cutting/virtual-scroll.md`).
-*Sequencing:* #190's 2.3 becomes the opt-in demo; 3.1 refetches on reopen under the default.
+_Sequencing:_ #190's 2.3 becomes the opt-in demo; 3.1 refetches on reopen under the default.
 
 **OQ-exp-7 — Is a side "peek" panel in scope? — resolved 2026-09-30: supported by the current
 state, not a non-goal.** The UI stays consumer-owned (drawer, split view, modal beside the table).
@@ -563,7 +563,7 @@ Row-to-row stepping is keyboard navigation, owned by the core row/table directiv
 ([ADR-0029](../adr/0029-directives-own-accessibility.md) category 5) — not a consumer helper, not an
 expansion option. Rule: next visible data row, skip group headers, stop at the end. Features plug
 in: the panel follows the focused row in single-open; the tree adds →/←. A new cross-feature
-keyboard-navigation capability with its own issue, [#201](https://github.com/DvirMon/ng-table/issues/201). See §7.1. *Sequencing:* does
+keyboard-navigation capability with its own issue, [#201](https://github.com/DvirMon/ng-table/issues/201). See §7.1. _Sequencing:_ does
 not block #190.
 
 ---
@@ -576,35 +576,35 @@ The stories above name no layers. Each gap below is tagged by who does the work.
 
 Owned by `1-state/features/expansion.md` and `1-state/work/expansion/`.
 
-| # | Gap | Story | Note |
-|---|---|---|---|
-| S2 | ~~No per-row eligibility~~ | 1.3, 1.5 | Not a gap — **OQ-exp-4** resolved consumer-owned; recipe, no state |
-| S3 | `onRowsRemoved` pruning writes the open set without emitting on `changed` | 2.2 | Undocumented. Invisible to a person; a consumer mirroring `changed` drifts |
-| S4 | `ExpansionSlice` not exported from `index.ts` | — | Not user-facing; a consumer can't name the slice type |
-| S5 | Broken links to selection decisions in `features/expansion.md` | — | Doc-only fix |
+| #   | Gap                                                                       | Story    | Note                                                                       |
+| --- | ------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------- |
+| S2  | ~~No per-row eligibility~~                                                | 1.3, 1.5 | Not a gap — **OQ-exp-4** resolved consumer-owned; recipe, no state         |
+| S3  | `onRowsRemoved` pruning writes the open set without emitting on `changed` | 2.2      | Undocumented. Invisible to a person; a consumer mirroring `changed` drifts |
+| S4  | `ExpansionSlice` not exported from `index.ts`                             | —        | Not user-facing; a consumer can't name the slice type                      |
+| S5  | Broken links to selection decisions in `features/expansion.md`            | —        | Doc-only fix                                                               |
 
 ## 6.2 UI-layer gaps
 
 Owned by `3-ui/directives/expansion.md` and the story plan
 ([`../3-ui/work/expansion-stories/`](../3-ui/work/expansion-stories/)).
 
-| # | Gap | Story | Note |
-|---|---|---|---|
-| U1 | No story composes `withExpansion()` | all of §1–§3 | Tracked as #190 |
-| U2 | ~~UI spec is two generations stale~~ | 1.1–1.3, 3.2 | Resolved: [`3-ui/directives/expansion.md`](../3-ui/directives/expansion.md) rewritten for the two panel directives (#213, D12). The old spec would have disabled every toggle, put `aria-expanded` on the `<tr>` and called a `store()` method that doesn't exist |
-| U3 | No toggle directive / keyboard / `aria-expanded` on a button | 1.1, 1.2 | **Library UI gap:** the toggle directive (`aria-expanded` + `aria-controls`, APG disclosure per **OQ-exp-2**) ships from the library — **OQ-exp-8** part 3, E41 — built in **#199**. Specced in [`ngpTablePanelToggle`](../3-ui/directives/expansion.md#ngptablepaneltoggle) |
-| U4 | No slide helper; `inert` on collapsed content not wired | 1.2, 2.3, 3.2 | CSS half resolved: no stylesheet, slide is a recipe (**OQ-exp-6**, [Recipes](../3-ui/directives/expansion.md#recipes)). a11y half is a **library UI gap**: the panel-content directive owns `id`, `inert` while not open (incl. mid-leave) and focus return — **OQ-exp-8** part 3, E41 — built in **#199**. Specced in [`ngpTablePanel`](../3-ui/directives/expansion.md#ngptablepanel) |
-| U5 | No panel loading/error recipe | 3.1 | **OQ-exp-5** resolved — recipe, shown in `lazy-panel/` |
-| U6 | Row-reorder animation not re-measured when a panel opens | 3.2 | Unverified (U1 in the internal research) |
-| U7 | `3-ui/architecture.md`, `3-ui/stories.md`, `sorting.md`, `grouping.md` call `grouping-collapsible/` a `withExpansion()` story | — | Doc-only fix |
+| #   | Gap                                                                                                                           | Story         | Note                                                                                                                                                                                                                                                                                                                                                                                    |
+| --- | ----------------------------------------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| U1  | No story composes `withExpansion()`                                                                                           | all of §1–§3  | Tracked as #190                                                                                                                                                                                                                                                                                                                                                                         |
+| U2  | ~~UI spec is two generations stale~~                                                                                          | 1.1–1.3, 3.2  | Resolved: [`3-ui/directives/expansion.md`](../3-ui/directives/expansion.md) rewritten for the two panel directives (#213, D12). The old spec would have disabled every toggle, put `aria-expanded` on the `<tr>` and called a `store()` method that doesn't exist                                                                                                                       |
+| U3  | No toggle directive / keyboard / `aria-expanded` on a button                                                                  | 1.1, 1.2      | **Library UI gap:** the toggle directive (`aria-expanded` + `aria-controls`, APG disclosure per **OQ-exp-2**) ships from the library — **OQ-exp-8** part 3, E41 — built in **#199**. Specced in [`ngpTablePanelToggle`](../3-ui/directives/expansion.md#ngptablepaneltoggle)                                                                                                            |
+| U4  | No slide helper; `inert` on collapsed content not wired                                                                       | 1.2, 2.3, 3.2 | CSS half resolved: no stylesheet, slide is a recipe (**OQ-exp-6**, [Recipes](../3-ui/directives/expansion.md#recipes)). a11y half is a **library UI gap**: the panel-content directive owns `id`, `inert` while not open (incl. mid-leave) and focus return — **OQ-exp-8** part 3, E41 — built in **#199**. Specced in [`ngpTablePanel`](../3-ui/directives/expansion.md#ngptablepanel) |
+| U5  | No panel loading/error recipe                                                                                                 | 3.1           | **OQ-exp-5** resolved — recipe, shown in `lazy-panel/`                                                                                                                                                                                                                                                                                                                                  |
+| U6  | Row-reorder animation not re-measured when a panel opens                                                                      | 3.2           | Unverified (U1 in the internal research)                                                                                                                                                                                                                                                                                                                                                |
+| U7  | `3-ui/architecture.md`, `3-ui/stories.md`, `sorting.md`, `grouping.md` call `grouping-collapsible/` a `withExpansion()` story | —             | Doc-only fix                                                                                                                                                                                                                                                                                                                                                                            |
 
 ## 6.3 Gaps needing both layers
 
-| Gap | State owes | UI owes |
-|---|---|---|
-| Expand-all that labels itself (1.5) | Eligibility (S2), so "all open?" can be counted right | The button and its label |
-| Panel under collapsed group (E-G1) | nothing — holds by construction | A story composing `withTree()`/grouping + `withExpansion()` |
-| Panel mount lifetime + virtualization (OQ-exp-8, resolved) | E40 unmount default + per-row keep; E39 `release()` | E41 a11y directives (#199); E12 kept, virtual-scroll must support panels (E42) |
+| Gap                                                        | State owes                                            | UI owes                                                                        |
+| ---------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Expand-all that labels itself (1.5)                        | Eligibility (S2), so "all open?" can be counted right | The button and its label                                                       |
+| Panel under collapsed group (E-G1)                         | nothing — holds by construction                       | A story composing `withTree()`/grouping + `withExpansion()`                    |
+| Panel mount lifetime + virtualization (OQ-exp-8, resolved) | E40 unmount default + per-row keep; E39 `release()`   | E41 a11y directives (#199); E12 kept, virtual-scroll must support panels (E42) |
 
 ## 6.4 Confirmed right — do not re-litigate
 

@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — with-grouping.ts: withGrouping<In>(configOrSchemaFn?, derive?), composed seam replaced by a lazy guarded store read"
+title: 'Step 3 — with-grouping.ts: withGrouping<In>(configOrSchemaFn?, derive?), composed seam replaced by a lazy guarded store read'
 type: task-step
 issue: 72
 ---
@@ -71,11 +71,11 @@ check, not at factory time"; column ids autocomplete from the row type (story 6)
 
    ```ts
    export function withGrouping<In extends GroupingInput<In>>(
-     configOrSchemaFn?: WithGroupingConfig<RowOf<In>> | GroupingSchemaFn<RowOf<In>>
+     configOrSchemaFn?: WithGroupingConfig<RowOf<In>> | GroupingSchemaFn<RowOf<In>>,
    ): Feature<In, GroupingMembers<RowOf<In>>>;
    export function withGrouping<In extends GroupingInput<In>, D extends DerivedDict>(
      configOrSchemaFn: WithGroupingConfig<RowOf<In>> | GroupingSchemaFn<RowOf<In>> | undefined,
-     derive: Feature<NoInfer<In> & GroupingMembers<RowOf<In>>, D>
+     derive: Feature<NoInfer<In> & GroupingMembers<RowOf<In>>, D>,
    ): Feature<In, GroupingMembers<RowOf<In>> & D>;
    ```
 
@@ -84,14 +84,15 @@ check, not at factory time"; column ids autocomplete from the row type (story 6)
    ```ts
    export function withGrouping(
      configOrSchemaFn: WithGroupingConfig<any> | GroupingSchemaFn<any> = {},
-     derive?: Feature<any, any>
+     derive?: Feature<any, any>,
    ): Feature<any, any> {
      const config: WithGroupingConfig<any> =
        typeof configOrSchemaFn === 'function'
          ? { rules: [...runColumnsSchemaFn<any, AnyGroupingRule<any>>(configOrSchemaFn)] }
          : configOrSchemaFn;
-     const factory = <In extends GroupingInput<In>>(input: In): TableFeatureSpec<RowOf<In>, GroupingMembers<RowOf<In>>> =>
-       buildGroupingSpec(input, config);
+     const factory = <In extends GroupingInput<In>>(
+       input: In,
+     ): TableFeatureSpec<RowOf<In>, GroupingMembers<RowOf<In>>> => buildGroupingSpec(input, config);
      const feature: Feature<any, any> = derive
        ? createTableFeature(factory, derive)
        : createTableFeature(factory);
@@ -139,4 +140,5 @@ check, not at factory time"; column ids autocomplete from the row type (story 6)
       `with-grouping.ts`.
 
 ---
+
 ← [Step 2: with-filtering.ts](step-2-with-filtering.plan.md) | [Step 4: with-sorting.spec.ts — positional form, type assertions](step-4-with-sorting-spec.plan.md) →

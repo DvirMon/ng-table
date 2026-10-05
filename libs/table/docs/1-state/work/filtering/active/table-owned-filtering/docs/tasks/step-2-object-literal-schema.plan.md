@@ -8,18 +8,18 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
-| `libs/table/src/filters/types.ts` | `:5-7` | delete — `EnforceLiteralKey` |
-| `libs/table/src/filters/types.ts` | `:12-27` | edit — `FilterOptions` loses `as`/`TAs` |
-| `libs/table/src/filters/types.ts` | `:152-165` | edit — `FilterRule` loses `TKey`/`__key` |
-| `libs/table/src/filters/types.ts` | `:181-231` | replace — `Flatten`/`FlattenItem`/`IsAny` deleted, `StateOf` rewritten |
-| `libs/table/src/filters/rules.ts` | `:38-42` | delete — `RuleKey` |
-| `libs/table/src/filters/rules.ts` | `:86-303` | edit — every rule drops `TAs`, `as`, and its own `key` |
-| `libs/table/src/filters/rules.ts` | `:283-303` | edit — `anyOf` loses its positional `key` parameter |
-| `libs/table/src/filters/create-filters.ts` | `:42-68` | replace — `flattenRules` → `Object.entries` walk |
-| `libs/table/src/filters/create-filters.ts` | `:108-118` | edit — the not-an-array throw names the object form |
-| `libs/table/src/filters/validate.ts` | `:14-40` | edit — the duplicate-key and empty-key throws are deleted |
+| File                                       | Line       | Action                                                                 |
+| ------------------------------------------ | ---------- | ---------------------------------------------------------------------- |
+| `libs/table/src/filters/types.ts`          | `:5-7`     | delete — `EnforceLiteralKey`                                           |
+| `libs/table/src/filters/types.ts`          | `:12-27`   | edit — `FilterOptions` loses `as`/`TAs`                                |
+| `libs/table/src/filters/types.ts`          | `:152-165` | edit — `FilterRule` loses `TKey`/`__key`                               |
+| `libs/table/src/filters/types.ts`          | `:181-231` | replace — `Flatten`/`FlattenItem`/`IsAny` deleted, `StateOf` rewritten |
+| `libs/table/src/filters/rules.ts`          | `:38-42`   | delete — `RuleKey`                                                     |
+| `libs/table/src/filters/rules.ts`          | `:86-303`  | edit — every rule drops `TAs`, `as`, and its own `key`                 |
+| `libs/table/src/filters/rules.ts`          | `:283-303` | edit — `anyOf` loses its positional `key` parameter                    |
+| `libs/table/src/filters/create-filters.ts` | `:42-68`   | replace — `flattenRules` → `Object.entries` walk                       |
+| `libs/table/src/filters/create-filters.ts` | `:108-118` | edit — the not-an-array throw names the object form                    |
+| `libs/table/src/filters/validate.ts`       | `:14-40`   | edit — the duplicate-key and empty-key throws are deleted              |
 
 ## Why This Step Exists
 
@@ -43,6 +43,7 @@ two distinct keys may still name the same row path, and that is still a wiring e
 
    Delete `Flatten`, `FlattenItem`, the local `IsAny`, and the comment block above the old
    `StateOf` about why its constraint was `readonly unknown[]`.
+
 2. Delete `EnforceLiteralKey`, and `as`/`TAs` from `FilterOptions`. Its parameters become
    `FilterOptions<TSource = unknown, TRow = unknown>`.
 3. `FilterRule` drops its `TKey` parameter and the `__key` phantom:
@@ -67,6 +68,7 @@ two distinct keys may still name the same row path, and that is still a wiring e
    The schema function must return its rules as an object literal. A body that calls rules as
    statements declares nothing — return an object: (path) => ({ status: equals(path.status) })
    ```
+
 8. In `validate.ts`, delete the `!record.key` throw and the `seenKeys` duplicate-key throw. Keep
    the empty-`anyOf` throw and the duplicate-path throw. Reword the duplicate-path message: it
    currently tells the caller to use `as`, which no longer exists — it should say two keys may not
@@ -86,7 +88,7 @@ two distinct keys may still name the same row path, and that is still a wiring e
 ## Risks / Watchouts
 
 - **`anyOf`'s inference is fragile by design.** `C` is inferred from a bare
-  `readonly [unknown, ...unknown[]]` and the homogeneity check is applied as an *intersection*,
+  `readonly [unknown, ...unknown[]]` and the homogeneity check is applied as an _intersection_,
   never as the constraint. Removing the key parameter must not tempt a "tidier" constraint — that
   contextually types the children and the criterion borrow collapses to `unknown`.
 - **Key stamping order.** `Object.entries` preserves insertion order for string keys, which is what
@@ -112,4 +114,5 @@ two distinct keys may still name the same row path, and that is still a wiring e
 - [ ] Repeating a key in the schema object is a compile error, not a runtime throw.
 
 ---
+
 ← [Step 1: `when` in `FilterOptions`](step-1-when-in-filter-options.plan.md) | [Step 3: `withFiltering` owns the model](step-3-with-filtering-owns-model.plan.md) →

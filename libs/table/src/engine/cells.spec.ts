@@ -13,7 +13,7 @@ interface Row {
 function makeColumn(id: string, accessor: (row: Row) => unknown): ColumnDef<Row> {
   const [column] = resolveColumnDefs(
     [...createColumns(noData<Row>(), (col) => [col(id, { accessor })]).columns],
-    'cells.spec'
+    'cells.spec',
   );
   return column;
 }

@@ -23,9 +23,7 @@ interface Row {
   age: number;
 }
 
-const columns = [
-  ...createColumns(noData<Row>(), (col) => [col('name'), col('age')]).columns,
-];
+const columns = [...createColumns(noData<Row>(), (col) => [col('name'), col('age')]).columns];
 
 /**
  * Casts a `Row`-typed claim-rule array down to `AnyTableFeature`'s erased `RowOf<any>`
@@ -35,7 +33,7 @@ const columns = [
  * on its own and needs no cast.
  */
 function asStages(
-  rules: readonly StageRule<RowTransform<Row>>[]
+  rules: readonly StageRule<RowTransform<Row>>[],
 ): readonly StageRule<RowTransform<unknown>>[] {
   return rules as unknown as readonly StageRule<RowTransform<unknown>>[];
 }
@@ -63,7 +61,7 @@ function makeRows(): Row[] {
 function composeWithRows(
   rows: Row[],
   features: readonly AnyTableFeature[],
-  internalFeatures: readonly AnyTableFeature[] = []
+  internalFeatures: readonly AnyTableFeature[] = [],
 ): Record<string, unknown> {
   const data = signal(rows);
   const config: TableEngineConfig<Row> = { columns, trackBy: 'id', data };
@@ -72,34 +70,26 @@ function composeWithRows(
   // itself crosses to call `AnyTableFeature`-typed values (ADR-0003).
   const internal = internalFeatures as unknown as readonly InternalFeature<Row>[];
   return TestBed.runInInjectionContext(
-    () =>
-      composeTable(config, features, internal) as unknown as Record<
-        string,
-        unknown
-      >
+    () => composeTable(config, features, internal) as unknown as Record<string, unknown>,
   );
 }
 
 function compose(
   features: readonly AnyTableFeature[],
-  internalFeatures: readonly AnyTableFeature[] = []
+  internalFeatures: readonly AnyTableFeature[] = [],
 ): Record<string, unknown> {
   return composeWithRows([], features, internalFeatures);
 }
 
 /** Records a stage transform that tags each row's name, so fold order is observable. */
-function taggingStage(
-  anchor: 'filter' | 'group' | 'sort',
-  tag: string
-): AnyTableFeature {
+function taggingStage(anchor: 'filter' | 'group' | 'sort', tag: string): AnyTableFeature {
   return () => ({
     stages: asStages(
       stageSchema<Row>('pipeline', (s) =>
         stage(s[anchor], {
-          run: (rows: Row[]) =>
-            rows.map((row) => ({ ...row, name: `${row.name}${tag}` })),
-        })
-      )
+          run: (rows: Row[]) => rows.map((row) => ({ ...row, name: `${row.name}${tag}` })),
+        }),
+      ),
     ),
   });
 }
@@ -114,7 +104,7 @@ function declaredPipelineStage(
   anchor: 'filter' | 'group' | 'sort',
   name: PipelineStage,
   placement: 'before' | 'after',
-  tag: string
+  tag: string,
 ): AnyTableFeature {
   return () => ({
     stages: asStages(
@@ -122,10 +112,9 @@ function declaredPipelineStage(
         stage(s[anchor], {
           name,
           placement,
-          run: (rows: Row[]) =>
-            rows.map((row) => ({ ...row, name: `${row.name}${tag}` })),
-        })
-      )
+          run: (rows: Row[]) => rows.map((row) => ({ ...row, name: `${row.name}${tag}` })),
+        }),
+      ),
     ),
   });
 }
@@ -147,7 +136,7 @@ function renderTaggingStage(anchor: 'group' | 'tree', tag: string): AnyTableFeat
             ...node,
             aggregates: { ...(node.aggregates ?? {}), trail: `${trailOf(node)}${tag}` },
           })),
-      })
+      }),
     ),
   });
 }
@@ -160,7 +149,7 @@ function groupWrappingStage(id: string): AnyTableFeature {
     renderStages: stageSchema('render', (s) =>
       stage(s.group, {
         run: (nodes) => [{ id, kind: 'group' as const, data: null, children: nodes }],
-      })
+      }),
     ),
   });
 }
@@ -180,7 +169,7 @@ function pinningStage(placement: 'before' | 'after'): AnyTableFeature {
             ...node,
             aggregates: { ...(node.aggregates ?? {}), trail: `${trailOf(node)}pin>` },
           })),
-      })
+      }),
     ),
   });
 }
@@ -197,7 +186,7 @@ const invented = {
 function duplicatingStage(): AnyTableFeature {
   return () => ({
     renderStages: stageSchema('render', (s) =>
-      stage(s.tree, { run: (nodes) => [...nodes, ...nodes] })
+      stage(s.tree, { run: (nodes) => [...nodes, ...nodes] }),
     ),
   });
 }
@@ -206,7 +195,7 @@ function duplicatingStage(): AnyTableFeature {
 function inventingStage(): AnyTableFeature {
   return () => ({
     renderStages: stageSchema('render', (s) =>
-      stage(s.tree, { run: (nodes) => [...nodes, invented] })
+      stage(s.tree, { run: (nodes) => [...nodes, invented] }),
     ),
   });
 }
@@ -225,15 +214,13 @@ function wrapAndInventStage(): AnyTableFeature {
             children: [...nodes, invented],
           },
         ],
-      })
+      }),
     ),
   });
 }
 
 /** Runs `body` with `console.error` silenced and recorded; the spy is restored after. */
-function withConsoleErrorSpy(
-  body: (spy: ReturnType<typeof vi.spyOn>) => void
-): void {
+function withConsoleErrorSpy(body: (spy: ReturnType<typeof vi.spyOn>) => void): void {
   const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
   try {
     body(spy);
@@ -283,7 +270,7 @@ describe('composeTable', () => {
         taggingStage('sort', '-sort'),
         taggingStage('group', '-group'),
         taggingStage('filter', '-filter'),
-      ]
+      ],
     );
 
     const [row] = (store['rows'] as () => Row[])();
@@ -325,7 +312,7 @@ describe('composeTable', () => {
       renderStages: stageSchema('render', (s) =>
         stage(s.tree, {
           run: (rows) => rows.map((row) => ({ ...row, hasChildren: true })),
-        })
+        }),
       ),
     });
 
@@ -336,10 +323,8 @@ describe('composeTable', () => {
   });
 
   it('throws when two features claim the same pipeline anchor', () => {
-    expect(() =>
-      compose([taggingStage('sort', '-a'), taggingStage('sort', '-b')])
-    ).toThrow(
-      '[createTable] feature 1 and feature 2 both provide the "sort" pipeline stage. Only one feature may provide each stage.'
+    expect(() => compose([taggingStage('sort', '-a'), taggingStage('sort', '-b')])).toThrow(
+      '[createTable] feature 1 and feature 2 both provide the "sort" pipeline stage. Only one feature may provide each stage.',
     );
   });
 
@@ -349,7 +334,7 @@ describe('composeTable', () => {
     });
 
     expect(() => compose([withTreeStage, withTreeStage])).toThrow(
-      '[createTable] feature 1 and feature 2 both provide the "tree" render stage. Only one feature may provide each render stage.'
+      '[createTable] feature 1 and feature 2 both provide the "tree" render stage. Only one feature may provide each render stage.',
     );
   });
 
@@ -359,7 +344,7 @@ describe('composeTable', () => {
     try {
       const store = composeWithRows(
         [{ id: 'r1', name: 'Ann', age: 25 }],
-        [taggingStage('sort', '-a'), taggingStage('sort', '-b')]
+        [taggingStage('sort', '-a'), taggingStage('sort', '-b')],
       );
 
       const [row] = (store['rows'] as () => Row[])();
@@ -390,12 +375,9 @@ describe('composeTable', () => {
     setNgDevMode(false);
     try {
       expect(() =>
-        compose([
-          () => ({ members: { alpha: 1 } }),
-          () => ({ members: { alpha: 2 } }),
-        ])
+        compose([() => ({ members: { alpha: 1 } }), () => ({ members: { alpha: 2 } })]),
       ).toThrow(
-        '[createTable] feature 1 and feature 2 both provide the "alpha" store member. Only one feature may provide each member.'
+        '[createTable] feature 1 and feature 2 both provide the "alpha" store member. Only one feature may provide each member.',
       );
     } finally {
       setNgDevMode(previous);
@@ -433,7 +415,7 @@ describe('composeTable', () => {
               }
               return [{ ...r1, children: [r2] }];
             },
-          })
+          }),
         ),
       });
       // 'r1' lives on the FIRST-folded contributor, an unrelated id on the second. If the fold
@@ -469,9 +451,9 @@ describe('composeTable', () => {
       });
 
       const store = composeWithRows(makeRows(), [withFirst, withSecond]);
-      const flags = (
-        store['renderRows'] as () => { isContextRow?: boolean }[]
-      )().map((row) => row.isContextRow);
+      const flags = (store['renderRows'] as () => { isContextRow?: boolean }[])().map(
+        (row) => row.isContextRow,
+      );
 
       expect(flags).toEqual([true, false]);
     });
@@ -510,10 +492,8 @@ describe('composeTable', () => {
     const withGroupStage: AnyTableFeature = () => ({
       renderStages: stageSchema('render', (s) =>
         stage(s.group, {
-          run: (nodes) => [
-            { id: 'group-1', kind: 'group' as const, data: null, children: nodes },
-          ],
-        })
+          run: (nodes) => [{ id: 'group-1', kind: 'group' as const, data: null, children: nodes }],
+        }),
       ),
     });
     // Tags only the 'group'-kind node — a node that exists solely because 'group' already ran.
@@ -526,9 +506,9 @@ describe('composeTable', () => {
         stage(s.tree, {
           run: (nodes) =>
             nodes.map((node) =>
-              node.kind === 'group' ? { ...node, aggregates: { touched: true } } : node
+              node.kind === 'group' ? { ...node, aggregates: { touched: true } } : node,
             ),
-        })
+        }),
       ),
     });
 
@@ -580,9 +560,7 @@ describe('composeTable', () => {
     const withGroupAndDrop: AnyTableFeature = () => ({
       renderStages: stageSchema('render', (s) => {
         stage(s.group, {
-          run: (nodes) => [
-            { id: 'group-1', kind: 'group' as const, data: null, children: nodes },
-          ],
+          run: (nodes) => [{ id: 'group-1', kind: 'group' as const, data: null, children: nodes }],
         });
         // Drops 'r1' from the header's children (not the top-level array — after 'group' runs,
         // the top level holds only the header itself).
@@ -591,7 +569,7 @@ describe('composeTable', () => {
             nodes.map((node) =>
               node.kind === 'group'
                 ? { ...node, children: node.children.filter((child) => child.id !== 'r1') }
-                : node
+                : node,
             ),
         });
       }),
@@ -610,14 +588,12 @@ describe('composeTable', () => {
   it('lets one feature claim the "group" anchor in both stages and renderStages (mirrors withGrouping)', () => {
     const withGrouping: AnyTableFeature = () => ({
       stages: asStages(
-        stageSchema<Row>('pipeline', (s) => stage(s.group, { run: (rows: Row[]) => rows }))
+        stageSchema<Row>('pipeline', (s) => stage(s.group, { run: (rows: Row[]) => rows })),
       ),
       renderStages: stageSchema('render', (s) =>
         stage(s.group, {
-          run: (nodes) => [
-            { id: 'group-1', kind: 'group' as const, data: null, children: nodes },
-          ],
-        })
+          run: (nodes) => [{ id: 'group-1', kind: 'group' as const, data: null, children: nodes }],
+        }),
       ),
     });
 
@@ -631,9 +607,7 @@ describe('composeTable', () => {
     it('runs a declared render stage placed after an unclaimed anchor', () => {
       const store = composeWithRows(makeRows(), [pinningStage('after')]);
 
-      const ids = (store['renderRows'] as () => { id: string }[])().map(
-        (row) => row.id
-      );
+      const ids = (store['renderRows'] as () => { id: string }[])().map((row) => row.id);
 
       expect(ids).toEqual(['r2', 'r1']);
     });
@@ -644,9 +618,7 @@ describe('composeTable', () => {
         pinningStage('after'),
       ]);
 
-      const rows = (
-        store['renderRows'] as () => { aggregates?: Record<string, unknown> }[]
-      )();
+      const rows = (store['renderRows'] as () => { aggregates?: Record<string, unknown> }[])();
 
       for (const row of rows) {
         expect(trailOf(row)).toBe('tree>pin>');
@@ -659,9 +631,7 @@ describe('composeTable', () => {
         pinningStage('before'),
       ]);
 
-      const rows = (
-        store['renderRows'] as () => { aggregates?: Record<string, unknown> }[]
-      )();
+      const rows = (store['renderRows'] as () => { aggregates?: Record<string, unknown> }[])();
 
       for (const row of rows) {
         expect(trailOf(row)).toBe('pin>tree>');
@@ -671,10 +641,7 @@ describe('composeTable', () => {
     it('runs a declared pipeline stage after the anchor it is placed after', () => {
       const store = composeWithRows(
         [{ id: 'r1', name: 'Ann', age: 25 }],
-        [
-          taggingStage('sort', '-sort'),
-          declaredPipelineStage('sort', 'audit', 'after', '-audit'),
-        ]
+        [taggingStage('sort', '-sort'), declaredPipelineStage('sort', 'audit', 'after', '-audit')],
       );
 
       const [row] = (store['rows'] as () => Row[])();
@@ -784,7 +751,7 @@ describe('composeTable', () => {
     const withEditing: AnyTableFeature = () => ({ members: { editing: signal(0) } });
 
     expect(() => compose([withEditing, withEditing])).toThrow(
-      /feature 1 and feature 2 both provide the "editing" store member/
+      /feature 1 and feature 2 both provide the "editing" store member/,
     );
   });
 
@@ -840,10 +807,7 @@ describe('composeTable', () => {
       onDestroy: () => destroyed.push('torn-down'),
     });
 
-    const injector = createEnvironmentInjector(
-      [],
-      TestBed.inject(EnvironmentInjector)
-    );
+    const injector = createEnvironmentInjector([], TestBed.inject(EnvironmentInjector));
     const config: TableEngineConfig<Row> = { columns, trackBy: 'id', data: signal([]) };
     runInInjectionContext(injector, () => composeTable(config, [withTeardown]));
 
@@ -869,9 +833,9 @@ describe('composeTable', () => {
       const withCoreReader: AnyTableFeature = (store) => {
         // Reading through the signals, not just checking they are functions — `trackBy` is a
         // bare function too, so `typeof` alone would not prove these are live computeds.
-        renderRowIdsAtFactory = (
-          store['renderRows'] as () => { id: string }[]
-        )().map((row) => row.id);
+        renderRowIdsAtFactory = (store['renderRows'] as () => { id: string }[])().map(
+          (row) => row.id,
+        );
         countAtFactory = (store['totalRowCount'] as () => number)();
         return {};
       };
@@ -885,9 +849,7 @@ describe('composeTable', () => {
     it('exposes indexById to a feature at factory time, mapping id to position', () => {
       let indexAtFactory: ReadonlyMap<RowId, number> | undefined;
       const withIndexReader: AnyTableFeature = (store) => {
-        indexAtFactory = (
-          store['indexById'] as () => ReadonlyMap<RowId, number>
-        )();
+        indexAtFactory = (store['indexById'] as () => ReadonlyMap<RowId, number>)();
         return {};
       };
 
@@ -897,7 +859,7 @@ describe('composeTable', () => {
         new Map([
           ['r1', 0],
           ['r2', 1],
-        ])
+        ]),
       );
     });
 
@@ -910,9 +872,7 @@ describe('composeTable', () => {
 
       const data = signal(makeRows());
       const config: TableEngineConfig<Row> = { columns, trackBy: 'id', data };
-      TestBed.runInInjectionContext(() =>
-        composeTable(config, [], [internalReadingCore])
-      );
+      TestBed.runInInjectionContext(() => composeTable(config, [], [internalReadingCore]));
 
       expect(baseColumnsAtFactory).toHaveLength(2);
     });
@@ -925,9 +885,9 @@ describe('composeTable', () => {
         });
 
         expect(() => compose([withShadow])).toThrow(
-          new RegExp(`core and feature 1 both provide the "${key}" store member`)
+          new RegExp(`core and feature 1 both provide the "${key}" store member`),
         );
-      }
+      },
     );
 
     it('lets a feature override totalRowCount (ADR-0005)', () => {
@@ -942,10 +902,12 @@ describe('composeTable', () => {
 
     it('folds internal features before consumer features', () => {
       const order: string[] = [];
-      const marking = (tag: string): AnyTableFeature => () => {
-        order.push(tag);
-        return {};
-      };
+      const marking =
+        (tag: string): AnyTableFeature =>
+        () => {
+          order.push(tag);
+          return {};
+        };
 
       compose([marking('consumer')], [marking('internal')]);
 
@@ -956,15 +918,13 @@ describe('composeTable', () => {
       const inert: AnyTableFeature = () => ({});
 
       expect(() =>
-        compose([taggingStage('sort', '-a'), taggingStage('sort', '-b')], [inert])
+        compose([taggingStage('sort', '-a'), taggingStage('sort', '-b')], [inert]),
       ).toThrow(/feature 1 and feature 2 both provide the "sort" pipeline stage/);
     });
 
     it('names an internal feature as internal in a collision', () => {
-      expect(() =>
-        compose([taggingStage('sort', '-b')], [taggingStage('sort', '-a')])
-      ).toThrow(
-        /internal feature 1 and feature 1 both provide the "sort" pipeline stage/
+      expect(() => compose([taggingStage('sort', '-b')], [taggingStage('sort', '-a')])).toThrow(
+        /internal feature 1 and feature 1 both provide the "sort" pipeline stage/,
       );
     });
   });
@@ -973,8 +933,7 @@ describe('composeTable', () => {
     it('resolves ctx.parentOf lazily, so a factory sees a link a later feature contributes', () => {
       const withParentOfReader: AnyTableFeature = (_store, ctx) => ({
         members: {
-          parentOfRow: (row: Row) =>
-            (ctx.parentOf as ParentLink<Row> | undefined)?.(row) ?? 'root',
+          parentOfRow: (row: Row) => (ctx.parentOf as ParentLink<Row> | undefined)?.(row) ?? 'root',
         },
       });
       const withParentLink: AnyTableFeature = () => ({
@@ -983,10 +942,7 @@ describe('composeTable', () => {
 
       const store = composeWithRows(makeRows(), [withParentOfReader, withParentLink]);
 
-      expect(makeRows().map(store['parentOfRow'] as (row: Row) => RowId)).toEqual([
-        'root',
-        'r1',
-      ]);
+      expect(makeRows().map(store['parentOfRow'] as (row: Row) => RowId)).toEqual(['root', 'r1']);
     });
 
     it('leaves ctx.parentOf undefined when no feature contributes a parent link', () => {
@@ -999,8 +955,8 @@ describe('composeTable', () => {
                   ...row,
                   name: ctx.parentOf === undefined ? 'unlinked' : 'linked',
                 })),
-            })
-          )
+            }),
+          ),
         ),
       });
 
@@ -1022,8 +978,8 @@ describe('composeTable', () => {
                   ...row,
                   name: `${row.name}<${ctx.parentOf?.(row) ?? 'root'}`,
                 })),
-            })
-          )
+            }),
+          ),
         ),
       });
       const withParentLink: AnyTableFeature = () => ({
@@ -1047,7 +1003,7 @@ describe('composeTable', () => {
                 ...node,
                 aggregates: { parent: ctx.parentOf?.(node.data) ?? 'none' },
               })),
-          })
+          }),
         ),
       });
       const withParentLink: AnyTableFeature = () => ({
@@ -1058,8 +1014,8 @@ describe('composeTable', () => {
 
       expect(
         (store['renderRows'] as () => { aggregates?: Record<string, unknown> }[])().map(
-          (row) => row.aggregates?.['parent']
-        )
+          (row) => row.aggregates?.['parent'],
+        ),
       ).toEqual(['none', 'r1']);
     });
 
@@ -1069,7 +1025,7 @@ describe('composeTable', () => {
 
       expect(() => compose([withLinkA, withLinkB])).toThrow(
         '[createTable] feature 1 and feature 2 both provide the parent link. ' +
-          'Only one feature may provide a parent link.'
+          'Only one feature may provide a parent link.',
       );
     });
 
@@ -1082,7 +1038,7 @@ describe('composeTable', () => {
 
         expect(() => compose([withLinkA, withLinkB])).toThrow(
           '[createTable] feature 1 and feature 2 both provide the parent link. ' +
-            'Only one feature may provide a parent link.'
+            'Only one feature may provide a parent link.',
         );
       } finally {
         setNgDevMode(previous);
@@ -1093,7 +1049,7 @@ describe('composeTable', () => {
   describe('onRowsRemoved (ADR-0006)', () => {
     function composeWithData(
       data: ReturnType<typeof signal<Row[]>>,
-      onRowsRemoved: (ids: readonly RowId[]) => void
+      onRowsRemoved: (ids: readonly RowId[]) => void,
     ): void {
       const withReconciler: AnyTableFeature = () => ({ onRowsRemoved });
       const config: TableEngineConfig<Row> = { columns, trackBy: 'id', data };

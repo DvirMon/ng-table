@@ -9,6 +9,7 @@ files:
   - libs/table/src/stories/tree/tree-row-click/tree-row-click.css (new)
   - libs/table/src/stories/tree/tree-row-click/tree-row-click.stories.ts (new)
 ---
+
 # Step 4 — Whole-row click story
 
 Adds the `Whole-row click` story: clicking anywhere on a parent row opens it.
@@ -21,11 +22,13 @@ Decisions: [TR36, TR44](../../../../../../../decisions/tree.md)
 Host shape and handler: see [story-plan.md](story-plan.md) §3 "RowClick".
 
 ```html
-<tr [ngpTableRow]="row" ngpTableTreeRow (click)="toggleFromRowClick(row, $event)">
+<tr [ngpTableRow]="row" ngpTableTreeRow (click)="toggleFromRowClick(row, $event)"></tr>
 ```
 
 ```css
-[ngpTableTreeRow][data-expandable] { cursor: pointer; }
+[ngpTableTreeRow][data-expandable] {
+  cursor: pointer;
+}
 ```
 
 - `withTree({ parentId })` only. No toolbar.
@@ -38,6 +41,7 @@ Host shape and handler: see [story-plan.md](story-plan.md) §3 "RowClick".
 - Export `RowClick` with `name: 'Whole-row click'`.
 
 ## Watch out
+
 - The toggle name is `'Children of ' + row.data.name`, with no level.
 - The toggle sits on every row in the `name` cell, keyed by `column.id === 'name'`.
   No `@if (row.hasChildren)` around it.
@@ -45,15 +49,18 @@ Host shape and handler: see [story-plan.md](story-plan.md) §3 "RowClick".
 - Do not call `stopPropagation` on the toggle. Skipping the toggle's click is the row handler's job.
 
 ## Out of scope
+
 - `withFiltering()`, `withExpansion()`.
 - Adding this handler to `Basic`.
 - Broken-link or cycle rows.
 
 ## Done when
+
 - [ ] Clicking a parent row's text toggles it once.
 - [ ] Clicking the toggle button toggles it exactly once.
 - [ ] Clicking a leaf row does nothing.
 - [ ] The story files contain no `stopPropagation`.
 
 ---
+
 ← [Step 3: Filtered tree story](step-3-filtered-tree-story.plan.md) | [Step 5: Tree docs page](step-5-tree-docs-page.plan.md) →

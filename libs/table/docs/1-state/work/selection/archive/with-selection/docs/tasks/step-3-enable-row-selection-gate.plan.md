@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — enableRowSelection() write-path gate (D58)"
+title: 'Step 3 — enableRowSelection() write-path gate (D58)'
 type: task-step
 issue: 63
 ---
@@ -56,8 +56,8 @@ step is the implementation of that decision — nothing here is a new design cho
 
 ## Implementation Notes
 
-- Gate ordering matters conceptually, not just mechanically: the gate decides *which ids may be
-  added at all*; `applyMultiSelectRule` then truncates what survives. Running gate-then-rule
+- Gate ordering matters conceptually, not just mechanically: the gate decides _which ids may be
+  added at all_; `applyMultiSelectRule` then truncates what survives. Running gate-then-rule
   keeps the two independent, matching D58's "same shape... applied the same way" framing.
 - A gated-out `toggle`/`select` naturally reduces to a no-op: if every requested id is filtered
   out, the resulting candidate set equals `previous`, and `applyNextSelection`'s existing
@@ -83,7 +83,7 @@ step is the implementation of that decision — nothing here is a new design cho
 ## Acceptance Checks
 
 - [ ] `enableRowSelection` added to `WithSelectionConfig<TRow>`, defaulting to `true`, resolved
-  into a `canSelect(row)` predicate the way `canMultiSelect` already is.
+      into a `canSelect(row)` predicate the way `canMultiSelect` already is.
 - [ ] Gate applied only to `toggle`, `select`, and the `initialSelection` seed.
 - [ ] Permissive when the id resolves to no row (D8 untouched).
 - [ ] No read-path gate on `selectedRows()`/`selectionStateOf()`.
@@ -91,4 +91,5 @@ step is the implementation of that decision — nothing here is a new design cho
 - [ ] `tsc --noEmit` passes for the file.
 
 ---
+
 ← [Step 2: withSelection() colocated spec](step-2-with-selection-spec.plan.md) | [Step 4: enableRowSelection() spec coverage](step-4-enable-row-selection-spec.plan.md) →

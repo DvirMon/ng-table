@@ -29,14 +29,14 @@ An add whose initial value comes from an existing row instead of from blank. Eve
 raises is an add question with a different starting value — which is why D42's work mostly covers
 it.
 
-| Question | Answer | Owner |
-|---|---|---|
-| What id does the copy get? | consumer-supplied — the library never fabricates one (D26) | consumer |
-| Which fields are copied? | all, unless the consumer overrides — the library cannot know which fields must be unique | consumer |
-| Where does the copy land in `data`? | immediately after its source: `at: sourceIndex + 1` | library |
-| Where does it land *on screen*? | see the limitation below | neither |
-| Does it open? | gated: yes, already open. Live: it is editable like every row | library |
-| What does Cancel do? | consumer's choice, one call either way (OQ-1) | consumer |
+| Question                            | Answer                                                                                   | Owner    |
+| ----------------------------------- | ---------------------------------------------------------------------------------------- | -------- |
+| What id does the copy get?          | consumer-supplied — the library never fabricates one (D26)                               | consumer |
+| Which fields are copied?            | all, unless the consumer overrides — the library cannot know which fields must be unique | consumer |
+| Where does the copy land in `data`? | immediately after its source: `at: sourceIndex + 1`                                      | library  |
+| Where does it land _on screen_?     | see the limitation below                                                                 | neither  |
+| Does it open?                       | gated: yes, already open. Live: it is editable like every row                            | library  |
+| What does Cancel do?                | consumer's choice, one call either way (OQ-1)                                            | consumer |
 
 ## Gated mode — existing composition, no new verb
 
@@ -69,7 +69,7 @@ capture-composing family (`removeEdit`, `patchEdit`, …). **Rejected 2026-08-27
 
 **Capture exists to preserve information that would otherwise be lost.** Deleting a row loses its
 values and its position, so `removeEdit` must snapshot them before the write. Inserting loses
-nothing — the prior state *is* nothing, and undoing an insert needs only the row's id, which the
+nothing — the prior state _is_ nothing, and undoing an insert needs only the row's id, which the
 caller already holds because it supplied it (D26). There is nothing to save first.
 
 So an optimistic create on a live table is complete as:
@@ -101,21 +101,21 @@ branch), `optimistic-mutations.ts` (`revertEdit`'s re-insert path), the specs, a
 **A verb that affects editing state gets `*Edit`. A verb that only writes rows gets `*Row`.**
 
 Editing state means `snapshots` **and** `open` — restore points are editing state, not a separate
-concept. So a verb that writes rows *and* touches a restore point is an `*Edit` verb; writing rows
-is not disqualifying, writing *only* rows is.
+concept. So a verb that writes rows _and_ touches a restore point is an `*Edit` verb; writing rows
+is not disqualifying, writing _only_ rows is.
 
 Checked against the shipped surface, every name already complies:
 
-| Verb | Touches editing state | Suffix |
-|---|---|---|
-| `insertRow`, `removeRow`, `patchRow` | no — rows only | `*Row` ✅ |
-| `beginEdit`, `endEdit` | `open` | `*Edit` ✅ |
-| `captureEdit`, `releaseEdit` | `snapshots` | `*Edit` ✅ |
+| Verb                                      | Touches editing state         | Suffix     |
+| ----------------------------------------- | ----------------------------- | ---------- |
+| `insertRow`, `removeRow`, `patchRow`      | no — rows only                | `*Row` ✅  |
+| `beginEdit`, `endEdit`                    | `open`                        | `*Edit` ✅ |
+| `captureEdit`, `releaseEdit`              | `snapshots`                   | `*Edit` ✅ |
 | `revertEdit`, `discardEdit`, `removeEdit` | `snapshots` + `open` (+ rows) | `*Edit` ✅ |
-| `patchEdit` | `snapshots` (+ rows) | `*Edit` ✅ |
+| `patchEdit`                               | `snapshots` (+ rows)          | `*Edit` ✅ |
 
 **No renames follow from this beyond `insertRow`.** An earlier draft argued `removeEdit`/`patchEdit`
-were misnamed because they have nothing to do with an *edit session* — that read `Edit` as "session"
+were misnamed because they have nothing to do with an _edit session_ — that read `Edit` as "session"
 rather than "editing state". Under the rule above they are correct as they stand.
 
 **One real inconsistency, now fixed:** `clearEditing` was the only verb using the gerund. Renamed to
@@ -126,7 +126,7 @@ all updated; both tsconfig projects typecheck clean.
 
 Resolved by the second of the two options below: the claim was deleted and replaced with what the
 code actually does. `row-edit-mutations.ts`'s header now states that the verbs write `open`
-unconditionally, that this is *meaningless-but-not-inert* on a `withOptimistic()`-only table, and
+unconditionally, that this is _meaningless-but-not-inert_ on a `withOptimistic()`-only table, and
 that populating `open` there silently shrinks `pending` — the signal a live table actually reads.
 
 The original entry follows.
@@ -147,8 +147,8 @@ Not covered by tests: `with-optimistic.spec.ts` never calls `beginEdit`.
 Two ways out, both cheap: make the claim true (the editing store knows whether an open set is
 meaningful, so the updaters can be no-ops under `withOptimistic` alone), or delete the claim and say
 plainly that the edit-session verbs are meaningless-but-not-inert on a live table. **Either is fine;
-leaving the doc asserting an untrue invariant is not.** — *The second was taken; the code is
-unchanged and only the comment moved.*
+leaving the doc asserting an untrue invariant is not.** — _The second was taken; the code is
+unchanged and only the comment moved._
 
 ## Limitation — "below its source" is storage order, not display order
 
@@ -179,13 +179,14 @@ distinguishes duplicate from add.
   what Cancel means". It does not. Cancel is a UI event, and the button calls one of two verbs:
   `discardEdit(id)` removes the row, `revertEdit(id)` restores it. **That call site is the decision**
   — there is no branch inside either verb, and no policy in the capture. What the capture does is
-  make the second verb *available*: without a restore point, `revertEdit` has nothing to restore and
+  make the second verb _available_: without a restore point, `revertEdit` has nothing to restore and
   only one of the two outcomes exists. Capturing costs one map entry and keeps both open.
 
   This also states the rule for the whole family, which was previously implicit: **capture never
   chooses an outcome, it only preserves the option.** `insertEdit` was rejected above because an
   insert has no option to preserve — not because capture decides anything.
+
 - **Does a duplicated row's unique field get cleared automatically?** Recommendation: no — the
   library cannot know which fields are unique, and the consumer already spreads the source row, so
   clearing is one property in their own object literal. Product's §4.1 asks for such fields to be
-  *flagged*, which is a UI concern (validation on an open row), not a state one.
+  _flagged_, which is a UI concern (validation on an open row), not a state one.

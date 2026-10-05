@@ -11,9 +11,7 @@ export interface SelectionEventLog {
  * in an injection context. Demo-only instrumentation: it is the only surface on which a
  * single-delta clear (D9) and a silent reconciliation prune (D11, no emission at all) are
  * distinguishable from each other. */
-export function createSelectionEventLog(
-  changes: Observable<SelectionChange>
-): SelectionEventLog {
+export function createSelectionEventLog(changes: Observable<SelectionChange>): SelectionEventLog {
   const entries = signal<readonly string[]>([]);
 
   changes.pipe(takeUntilDestroyed()).subscribe((change) => {

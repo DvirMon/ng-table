@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — groupOrder test coverage"
+title: 'Step 4 — groupOrder test coverage'
 type: task-step
 issue: 58
 ---
@@ -34,7 +34,7 @@ exist today from that work):
   directly.
 - `with-grouping.spec.ts` — the issue's "tests go through the public `createTable()` surface
   only" criterion, and the spec's Testing Decisions ("a test composes the feature into a real
-  table via the table factory and asserts on the public members"), are about *this* file: the
+  table via the table factory and asserts on the public members"), are about _this_ file: the
   end-to-end behavior a consumer actually sees (`store.grouping`, `store.renderRows()`).
 
 Spec: `../../3-spec.md`, Testing Decisions — the `groupOrder`-specific bullets.
@@ -46,7 +46,7 @@ Spec: `../../3-spec.md`, Testing Decisions — the `groupOrder`-specific bullets
 - Given a flat two-level `ClusterNode[]` fixture (build via `buildClusters` or hand-construct),
   a `groupOrder` comparing `rows.length` reorders top-level siblings by count, and independently
   reorders each parent's own children by their own count — assert a case where the correct
-  per-parent order would be *wrong* if a global (cross-parent) sort were applied instead, proving
+  per-parent order would be _wrong_ if a global (cross-parent) sort were applied instead, proving
   D9's "siblings only" invariant, not just checking the top level.
 - `groupOrder` omitted (`undefined`) returns `nodes` unchanged, by reference, at every level
   (extra assurance beyond the feature-level "first-occurrence order" test — this is the actual
@@ -67,9 +67,9 @@ composing `withGrouping<GroupingMockRow>({ groupOrder: ... })` with `mockGroupin
   count): `store.renderRows()`'s group headers reorder accordingly, while each cluster's own row
   order (`kind: 'row'` rows nested under a given header) is unchanged from input order.
 - With multi-level grouping (`setGroupLevels(['region', 'category'])`) and a `groupOrder` that
-  would reorder region siblings, assert the `category` sub-clusters *within* a given region are
+  would reorder region siblings, assert the `category` sub-clusters _within_ a given region are
   still in their own first-occurrence (or `groupOrder`, if it reorders them too) order — never
-  reordered *by* the other region's `groupOrder` result.
+  reordered _by_ the other region's `groupOrder` result.
 - Composing `withSorting()` with a `sort` on the grouped column (`region`) and no `groupOrder`:
   `store.renderRows()`'s cluster order is unchanged from the un-sorted case — the D5 no-op,
   asserted explicitly rather than assumed.
@@ -80,7 +80,7 @@ composing `withGrouping<GroupingMockRow>({ groupOrder: ... })` with `mockGroupin
 
 - Reuse `mockGroupingRows`/`mockGroupingTrackBy`/`makeColumns`/`makeStore` from this file
   (`../../table.mock`) — `mockGroupingRows` already has unequal cluster sizes (`US >
-  Electronics` = 2 rows, every other leaf = 1) specifically suited to count-based `groupOrder`
+Electronics` = 2 rows, every other leaf = 1) specifically suited to count-based `groupOrder`
   assertions; don't add a second fixture.
 - Spy `console.error` with `vi.spyOn(console, 'error').mockImplementation(() => {})` (or the
   project's existing convention if `create-filters.spec.ts` already established one for the
@@ -92,7 +92,7 @@ composing `withGrouping<GroupingMockRow>({ groupOrder: ... })` with `mockGroupin
   — only on `console.error` call count and the returned tree/render rows, per this repo's
   "no test reaches into the fold's internals" rule.
 - Keep the throwing-`groupOrder` test's comparator throwing deterministically (e.g. `throw new
-  Error('boom')` unconditionally) rather than only on specific inputs — a comparator that throws
+Error('boom')` unconditionally) rather than only on specific inputs — a comparator that throws
   intermittently makes `Array.sort`'s call count, and therefore which pairs got compared before
   the throw, engine-dependent.
 
@@ -114,4 +114,5 @@ composing `withGrouping<GroupingMockRow>({ groupOrder: ... })` with `mockGroupin
 - [ ] `nx test shared-table` passes.
 
 ---
+
 ← [Step 3: groupOrder on WithGroupingConfig](step-3-with-grouping-config.plan.md) | [Step 5: Docs banner update](step-5-docs-banner.plan.md) →

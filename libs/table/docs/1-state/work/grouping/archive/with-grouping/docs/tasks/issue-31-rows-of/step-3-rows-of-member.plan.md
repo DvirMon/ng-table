@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — rowsOf member on withGrouping()"
+title: 'Step 3 — rowsOf member on withGrouping()'
 type: task-step
 issue: 65
 ---
@@ -105,4 +105,5 @@ Imports: `rowsBeneathGroup` from `../../engine/grouping`, `RenderRow` added to t
 - [ ] `tsc --noEmit` passes with no new errors.
 
 ---
+
 ← [Step 2: rowsBeneathGroup() engine walk](step-2-engine-rows-beneath-group.plan.md) | [Step 4: Tests](step-4-tests.plan.md) →

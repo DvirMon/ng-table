@@ -1,7 +1,14 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { clusterRows } from '../../../engine/grouping/pipeline';
-import { buildGroupRenderRows, reportOrphanedGroupingColumn } from '../../../engine/grouping/render';
-import { collectAppliedLevels, collectGroupIds, rowsBeneathGroup } from '../../../engine/grouping/queries';
+import {
+  buildGroupRenderRows,
+  reportOrphanedGroupingColumn,
+} from '../../../engine/grouping/render';
+import {
+  collectAppliedLevels,
+  collectGroupIds,
+  rowsBeneathGroup,
+} from '../../../engine/grouping/queries';
 import type { ClusterOpts } from '../../../engine/grouping/clusters';
 import {
   buildAsyncGroupingRuleEntry,
@@ -16,7 +23,13 @@ import {
   type GroupingRuleEntry,
 } from '../../../engine/grouping/rules';
 import type { TreeLinkSource } from '../../../engine/tree-links';
-import type { ColumnValuesOf, Feature, RowOf, StageContext, TableFeatureSpec } from '../../../engine/types';
+import type {
+  ColumnValuesOf,
+  Feature,
+  RowOf,
+  StageContext,
+  TableFeatureSpec,
+} from '../../../engine/types';
 import { createWritableView, type WritableView } from '../../../engine/writable-view';
 import { assertDeclarationsAreKnown, assertWrittenIdsAreKnown } from '../../../schema/validate';
 import { runGroupingSchemaFn } from './schema';
@@ -41,7 +54,10 @@ import type {
 // latter circularly self-references under `withGrouping`'s F-bounded `In`, because it derives
 // from `In.columns` through an extra `keyof Record<...>` indirection. `ColumnValuesOf<In>` reads
 // `In`'s own `__columnValues` phantom directly, with no circularity.
-type GroupingInput<In> = Pick<TableStore<RowOf<In>, ColumnValuesOf<In>>, 'columns' | 'rows' | 'trackBy'>;
+type GroupingInput<In> = Pick<
+  TableStore<RowOf<In>, ColumnValuesOf<In>>,
+  'columns' | 'rows' | 'trackBy'
+>;
 
 export interface WithGroupingConfig<TRow, TValues extends ColumnValueMap = ColumnValueMap> {
   /** Declared grouping levels, outermost first — array order is nesting order. A bare column id
@@ -84,7 +100,7 @@ export interface GroupingMembers<TRow> {
 }
 
 function normalizeGroupingLevels<TId extends string>(
-  levels: readonly (TId | GroupingLevel<TId>)[]
+  levels: readonly (TId | GroupingLevel<TId>)[],
 ): { columnIds: string[]; labelByColumnId: Map<string, string> } {
   const columnIds: string[] = [];
   const labelByColumnId = new Map<string, string>();
@@ -105,14 +121,12 @@ function normalizeGroupingLevels<TId extends string>(
 function buildGroupingSpec<TRow, TValues extends ColumnValueMap>(
   input: Pick<TableStore<TRow, TValues>, 'columns' | 'rows' | 'trackBy'>,
   config: WithGroupingConfig<TRow, TValues>,
-  ctx: StageContext<TRow>
+  ctx: StageContext<TRow>,
 ): TableFeatureSpec<TRow, GroupingMembers<TRow>> {
   const { columnIds: initial, labelByColumnId } = normalizeGroupingLevels<ColumnIdIn<TValues>>(
-    config.initial ?? []
+    config.initial ?? [],
   );
-  const rules = config.schema
-    ? [...runGroupingSchemaFn<TRow, TValues>(config.schema)]
-    : [];
+  const rules = config.schema ? [...runGroupingSchemaFn<TRow, TValues>(config.schema)] : [];
   // Fixed at this factory's own construction time, reused below by both the declared-id
   // check and the `when`/`columnWhen` resolver guard `clusterOpts.knownIds` feeds — never
   // rebuilt from a later, live `input.columns()` read (that's `columnById`'s job, and it's
@@ -121,14 +135,14 @@ function buildGroupingSpec<TRow, TValues extends ColumnValueMap>(
   assertDeclarationsAreKnown(
     [...initial, ...rules.map((rule) => rule.columnId)],
     knownColumnIds,
-    'withGrouping'
+    'withGrouping',
   );
   const emptyRule = rules.find(
-    (rule): rule is GroupingRule<TRow> => isGroupingRule(rule) && !rule.enable && !rule.when
+    (rule): rule is GroupingRule<TRow> => isGroupingRule(rule) && !rule.enable && !rule.when,
   );
   if (emptyRule) {
     throw new Error(
-      `[withGrouping] grouping on field '${emptyRule.columnId}' declares neither enable nor when.`
+      `[withGrouping] grouping on field '${emptyRule.columnId}' declares neither enable nor when.`,
     );
   }
 
@@ -175,7 +189,7 @@ function buildGroupingSpec<TRow, TValues extends ColumnValueMap>(
   // Read-only derivation off the same tree `clusterRows` builds — never feeds clustering itself,
   // so there is no cycle with `grouping` above.
   const appliedGrouping = computed(() =>
-    collectAppliedLevels(input.rows(), grouping(), input.columns(), clusterOpts)
+    collectAppliedLevels(input.rows(), grouping(), input.columns(), clusterOpts),
   );
 
   // `table.grouping` reads applied, writes declared — a gated-off/unadmitted level is never
@@ -187,23 +201,21 @@ function buildGroupingSpec<TRow, TValues extends ColumnValueMap>(
       assertWrittenIdsAreKnown(
         next,
         input.columns().map((column) => column.id),
-        'withGrouping'
+        'withGrouping',
       );
       baseGrouping.set(next);
-    }
+    },
   );
 
   const rowsOf = (group: RenderRow<TRow>): readonly TRow[] =>
     rowsBeneathGroup(input.rows(), grouping(), input.columns(), group.id, clusterOpts);
 
   const groupIds = computed(() =>
-    collectGroupIds(input.rows(), grouping(), input.columns(), clusterOpts)
+    collectGroupIds(input.rows(), grouping(), input.columns(), clusterOpts),
   );
 
   const groupingLevels = computed(() => {
-    const columnById = new Map<string, ColumnDef<TRow>>(
-      input.columns().map((c) => [c.id, c])
-    );
+    const columnById = new Map<string, ColumnDef<TRow>>(input.columns().map((c) => [c.id, c]));
     const levels: ColumnDef<TRow>[] = [];
     const reported = new Set<string>();
     for (const id of appliedGrouping()) {
@@ -216,7 +228,7 @@ function buildGroupingSpec<TRow, TValues extends ColumnValueMap>(
         reportOrphanedGroupingColumn(
           id,
           'Omitting it from groupingLevels() for this evaluation.',
-          reported
+          reported,
         );
         continue;
       }
@@ -259,19 +271,19 @@ function buildGroupingSpec<TRow, TValues extends ColumnValueMap>(
  * ```
  */
 export function withGrouping<In extends GroupingInput<In>>(
-  config?: WithGroupingConfig<RowOf<In>, ColumnValuesOf<In>>
+  config?: WithGroupingConfig<RowOf<In>, ColumnValuesOf<In>>,
 ): Feature<In, GroupingMembers<RowOf<In>>>;
 export function withGrouping<In extends GroupingInput<In>, D extends DerivedDict>(
   config: WithGroupingConfig<RowOf<In>, ColumnValuesOf<In>> | undefined,
-  compute: Feature<NoInfer<In> & GroupingMembers<RowOf<In>>, D>
+  compute: Feature<NoInfer<In> & GroupingMembers<RowOf<In>>, D>,
 ): Feature<In, GroupingMembers<RowOf<In>> & D>;
 export function withGrouping(
   config: WithGroupingConfig<any, any> = {},
-  compute?: Feature<any, any>
+  compute?: Feature<any, any>,
 ): Feature<any, any> {
   const factory = <In extends GroupingInput<In>>(
     input: In,
-    ctx: StageContext<RowOf<In>>
+    ctx: StageContext<RowOf<In>>,
   ): TableFeatureSpec<RowOf<In>, GroupingMembers<RowOf<In>>> =>
     buildGroupingSpec(input, config, ctx);
   const feature: Feature<any, any> = compute

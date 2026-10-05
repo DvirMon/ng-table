@@ -31,7 +31,7 @@ interface Row {
  * costs nothing here.
  */
 function makeColumns(
-  overrides: Partial<Record<string, Partial<ColumnDef<Row>>>> = {}
+  overrides: Partial<Record<string, Partial<ColumnDef<Row>>>> = {},
 ): ColumnSet<Row, readonly ColumnDecl<Row, string, unknown>[]> {
   return createColumns(noData<Row>(), (col) => [
     { ...col('name'), ...overrides['name'] },
@@ -75,7 +75,7 @@ function inContext<T>(build: () => T): T {
 describe('withSorting', () => {
   it('exposes an empty sorting array by default', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting())
+      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting()),
     );
 
     expect(store.sorting()).toEqual([]);
@@ -83,7 +83,7 @@ describe('withSorting', () => {
 
   it('toggleSort() cycles a column ascending -> descending -> unsorted', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting())
+      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting()),
     );
 
     store.toggleSort('name');
@@ -98,7 +98,7 @@ describe('withSorting', () => {
 
   it('toggleSort() replaces the sort when a different column is clicked (default: single-column)', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting())
+      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting()),
     );
 
     store.toggleSort('status');
@@ -120,8 +120,8 @@ describe('withSorting', () => {
       createTable(
         signal<Row[]>([]),
         { trackBy: 'id', columns: makeColumns() },
-        withSorting({ multi: true })
-      )
+        withSorting({ multi: true }),
+      ),
     );
 
     store.toggleSort('status');
@@ -146,8 +146,8 @@ describe('withSorting', () => {
       createTable(
         signal<Row[]>([]),
         { trackBy: 'id', columns: makeColumns() },
-        withSorting({ schema: (path) => sortable(path['status'], { enable: () => false }) })
-      )
+        withSorting({ schema: (path) => sortable(path['status'], { enable: () => false }) }),
+      ),
     );
 
     store.toggleSort('status');
@@ -160,8 +160,8 @@ describe('withSorting', () => {
       createTable(
         signal<Row[]>([]),
         { trackBy: 'id', columns: makeColumns() },
-        withSorting({ multi: true })
-      )
+        withSorting({ multi: true }),
+      ),
     );
 
     expect(store.sortDirections()).toEqual(new Map());
@@ -173,7 +173,7 @@ describe('withSorting', () => {
       new Map([
         ['status', 'asc'],
         ['name', 'asc'],
-      ])
+      ]),
     );
 
     store.toggleSort('status');
@@ -182,7 +182,7 @@ describe('withSorting', () => {
 
   it('setSorting() and clearSorting() drive state programmatically', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting())
+      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting()),
     );
 
     const rules: SortRule[] = [{ columnId: 'age', direction: 'desc' }];
@@ -200,17 +200,13 @@ describe('withSorting', () => {
         { trackBy: 'id', columns: makeColumns() },
         withSorting({
           schema: (path) => sortFn(path['name'], (a, b) => b.name.localeCompare(a.name)), // reversed
-        })
-      )
+        }),
+      ),
     );
 
     store.toggleSort('name');
 
-    expect(store.rows().map((row) => row.name)).toEqual([
-      'Charlie',
-      'Bob',
-      'Ann',
-    ]);
+    expect(store.rows().map((row) => row.name)).toEqual(['Charlie', 'Bob', 'Ann']);
   });
 
   it('falls back to numeric comparison for number columns', () => {
@@ -218,8 +214,8 @@ describe('withSorting', () => {
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withSorting()
-      )
+        withSorting(),
+      ),
     );
 
     store.toggleSort('age');
@@ -232,8 +228,8 @@ describe('withSorting', () => {
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withSorting()
-      )
+        withSorting(),
+      ),
     );
 
     store.toggleSort('joined');
@@ -246,17 +242,13 @@ describe('withSorting', () => {
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withSorting()
-      )
+        withSorting(),
+      ),
     );
 
     store.toggleSort('name');
 
-    expect(store.rows().map((row) => row.name)).toEqual([
-      'Ann',
-      'Bob',
-      'Charlie',
-    ]);
+    expect(store.rows().map((row) => row.name)).toEqual(['Ann', 'Bob', 'Charlie']);
   });
 
   it('applies multi-column priority order to rendered rows with multi: true', () => {
@@ -264,8 +256,8 @@ describe('withSorting', () => {
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withSorting({ multi: true })
-      )
+        withSorting({ multi: true }),
+      ),
     );
 
     // status asc (active, active, inactive) then name asc within status
@@ -280,8 +272,8 @@ describe('withSorting', () => {
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withSorting()
-      )
+        withSorting(),
+      ),
     );
 
     // status asc would be (active, active, inactive), but clicking name
@@ -289,11 +281,7 @@ describe('withSorting', () => {
     store.toggleSort('status');
     store.toggleSort('name');
 
-    expect(store.rows().map((row) => row.name)).toEqual([
-      'Ann',
-      'Bob',
-      'Charlie',
-    ]);
+    expect(store.rows().map((row) => row.name)).toEqual(['Ann', 'Bob', 'Charlie']);
   });
 
   describe('manual mode', () => {
@@ -303,8 +291,8 @@ describe('withSorting', () => {
         createTable(
           signal<Row[]>(rawRows),
           { trackBy: 'id', columns: makeColumns() },
-          withSorting({ manual: true })
-        )
+          withSorting({ manual: true }),
+        ),
       );
 
       const emitted: SortRule[][] = [];
@@ -328,7 +316,7 @@ describe('withSorting', () => {
       ];
       const data = signal<NullableRow[]>(rows);
       const store = inContext(() =>
-        createTable(data, { trackBy: 'id', columns: makeNullableColumns(data) }, withSorting())
+        createTable(data, { trackBy: 'id', columns: makeNullableColumns(data) }, withSorting()),
       );
 
       expect(() => store.toggleSort('joined')).not.toThrow();
@@ -343,7 +331,7 @@ describe('withSorting', () => {
       ];
       const data = signal<NullableRow[]>(rows);
       const store = inContext(() =>
-        createTable(data, { trackBy: 'id', columns: makeNullableColumns(data) }, withSorting())
+        createTable(data, { trackBy: 'id', columns: makeNullableColumns(data) }, withSorting()),
       );
 
       store.toggleSort('age'); // asc
@@ -353,7 +341,7 @@ describe('withSorting', () => {
       expect(store.rows().map((row) => row.id)).toEqual(['r3', 'r1', 'r2']);
     });
 
-    it('does not let a number column\'s undefined value corrupt the whole ordering', () => {
+    it("does not let a number column's undefined value corrupt the whole ordering", () => {
       const rows: NullableRow[] = [
         { id: 'r1', age: 5, joined: null, note: 'a' },
         { id: 'r2', age: undefined, joined: null, note: 'b' },
@@ -361,7 +349,7 @@ describe('withSorting', () => {
       ];
       const data = signal<NullableRow[]>(rows);
       const store = inContext(() =>
-        createTable(data, { trackBy: 'id', columns: makeNullableColumns(data) }, withSorting())
+        createTable(data, { trackBy: 'id', columns: makeNullableColumns(data) }, withSorting()),
       );
 
       store.toggleSort('age');
@@ -376,7 +364,7 @@ describe('withSorting', () => {
       ];
       const data = signal<NullableRow[]>(rows);
       const store = inContext(() =>
-        createTable(data, { trackBy: 'id', columns: makeNullableColumns(data) }, withSorting())
+        createTable(data, { trackBy: 'id', columns: makeNullableColumns(data) }, withSorting()),
       );
 
       store.toggleSort('note');
@@ -395,8 +383,8 @@ describe('withSorting', () => {
         createTable(
           defaultData,
           { trackBy: 'id', columns: makeNullableColumns(defaultData) },
-          withSorting()
-        )
+          withSorting(),
+        ),
       );
       defaultStore.toggleSort('note');
       // '' sorts before 'apple' and 'banana' as a normal string.
@@ -409,8 +397,8 @@ describe('withSorting', () => {
           { trackBy: 'id', columns: makeNullableColumns(optedInData) },
           withSorting({
             schema: (path) => sortNulls(path['note'], { order: 'last', emptyString: 'is-empty' }),
-          })
-        )
+          }),
+        ),
       );
       optedInStore.toggleSort('note');
       expect(optedInStore.rows().map((row) => row.id)).toEqual(['r3', 'r1', 'r2']);
@@ -428,10 +416,9 @@ describe('withSorting', () => {
           data,
           { trackBy: 'id', columns: makeNullableColumns(data) },
           withSorting({
-            schema: (path) =>
-              sortFn(path['age'], (a, b) => (a.age as number) - (b.age as number)),
-          })
-        )
+            schema: (path) => sortFn(path['age'], (a, b) => (a.age as number) - (b.age as number)),
+          }),
+        ),
       );
 
       expect(() => store.toggleSort('age')).not.toThrow();
@@ -449,8 +436,8 @@ describe('withSorting', () => {
         createTable(
           data,
           { trackBy: 'id', columns: makeNullableColumns(data) },
-          withSorting({ multi: true })
-        )
+          withSorting({ multi: true }),
+        ),
       );
 
       store.setSorting([
@@ -483,8 +470,8 @@ describe('withSorting', () => {
                 },
               }),
             },
-            withSorting()
-          )
+            withSorting(),
+          ),
         );
 
         expect(() => store.toggleSort('name')).not.toThrow();
@@ -512,8 +499,8 @@ describe('withSorting', () => {
                 },
               }),
             },
-            withSorting()
-          )
+            withSorting(),
+          ),
         );
 
         store.toggleSort('name');
@@ -538,8 +525,8 @@ describe('withSorting', () => {
                 sortFn(path['name'], () => {
                   throw new Error('boom');
                 }),
-            })
-          )
+            }),
+          ),
         );
 
         expect(() => store.toggleSort('name')).not.toThrow();
@@ -561,8 +548,8 @@ describe('withSorting', () => {
                 sortFn(path['name'], () => {
                   throw new Error('boom');
                 }),
-            })
-          )
+            }),
+          ),
         );
 
         store.toggleSort('name');
@@ -596,8 +583,8 @@ describe('withSorting', () => {
                 sortFn(path['age'], () => {
                   throw new Error('boom-comparator');
                 }),
-            })
-          )
+            }),
+          ),
         );
 
         store.toggleSort('name');
@@ -621,9 +608,9 @@ describe('withSorting', () => {
           createTable(
             signal<Row[]>([]),
             { trackBy: 'id', columns: makeColumns() },
-            withSorting({ schema: (path) => sortFn(path['nope'], () => 0) })
-          )
-        )
+            withSorting({ schema: (path) => sortFn(path['nope'], () => 0) }),
+          ),
+        ),
       ).toThrow(/\[withSorting\].*"nope"/);
 
       expect(() =>
@@ -631,9 +618,9 @@ describe('withSorting', () => {
           createTable(
             signal<Row[]>([]),
             { trackBy: 'id', columns: makeColumns() },
-            withSorting({ schema: (path) => sortNulls(path['nope'], { order: 'last' }) })
-          )
-        )
+            withSorting({ schema: (path) => sortNulls(path['nope'], { order: 'last' }) }),
+          ),
+        ),
       ).toThrow(/\[withSorting\].*"nope"/);
 
       expect(() =>
@@ -641,9 +628,9 @@ describe('withSorting', () => {
           createTable(
             signal<Row[]>([]),
             { trackBy: 'id', columns: makeColumns() },
-            withSorting({ schema: (path) => sortable(path['nope'], { enable: () => true }) })
-          )
-        )
+            withSorting({ schema: (path) => sortable(path['nope'], { enable: () => true }) }),
+          ),
+        ),
       ).toThrow(/\[withSorting\].*"nope"/);
     });
 
@@ -658,9 +645,9 @@ describe('withSorting', () => {
                 sortFn(path['name'], () => 0);
                 sortFn(path['name'], () => 0);
               },
-            })
-          )
-        )
+            }),
+          ),
+        ),
       ).toThrow(/\[withSorting\] sort-fn declared twice on column 'name'/);
     });
 
@@ -675,9 +662,9 @@ describe('withSorting', () => {
                 sortFn(path['name'], () => 0);
                 sortNulls(path['name'], { order: 'first' });
               },
-            })
-          )
-        )
+            }),
+          ),
+        ),
       ).not.toThrow();
     });
 
@@ -687,8 +674,8 @@ describe('withSorting', () => {
         createTable(
           signal<Row[]>([]),
           { trackBy: 'id', columns: makeColumns() },
-          withSorting({ schema: (path) => sortable(path['name'], { enable: () => enabled() }) })
-        )
+          withSorting({ schema: (path) => sortable(path['name'], { enable: () => enabled() }) }),
+        ),
       );
 
       store.toggleSort('name');
@@ -705,7 +692,7 @@ describe('withSorting', () => {
 
     it('a column with no sortable rule is sortable by default', () => {
       const store = inContext(() =>
-        createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting())
+        createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting()),
       );
 
       store.toggleSort('name');
@@ -726,8 +713,8 @@ describe('withSorting', () => {
                     throw new Error('boom');
                   },
                 }),
-            })
-          )
+            }),
+          ),
         );
 
         store.toggleSort('name');
@@ -759,8 +746,8 @@ describe('withSorting', () => {
               byAgeNullsFirst(path['age']);
               byAgeNullsFirst(path['note']);
             },
-          })
-        )
+          }),
+        ),
       );
 
       store.toggleSort('age');
@@ -782,7 +769,7 @@ describe('withSorting', () => {
   // a comparator run through `store.rows()` is never observable as a raw throw — only calling
   // `ctx.valueOf` directly can prove the underlying guard fires.
   describe('ctx.valueOf (Issue #117 Step 7)', () => {
-    it("a sortFn comparator reading ctx.valueOf(path.age, a)/(path.age, b) for its own column sorts by the resolved value", () => {
+    it('a sortFn comparator reading ctx.valueOf(path.age, a)/(path.age, b) for its own column sorts by the resolved value', () => {
       const store = inContext(() =>
         createTable(
           signal<Row[]>(makeRows()),
@@ -794,8 +781,8 @@ describe('withSorting', () => {
                 const bAge = ctx.valueOf(path['age'], b) as number;
                 return aAge - bAge;
               }),
-          })
-        )
+          }),
+        ),
       );
 
       store.toggleSort('age');
@@ -815,8 +802,8 @@ describe('withSorting', () => {
                 const bAge = ctx.valueOf(path['age'], b) as number;
                 return aAge - bAge;
               }),
-          })
-        )
+          }),
+        ),
       );
 
       store.toggleSort('name');
@@ -834,8 +821,8 @@ describe('withSorting', () => {
           { trackBy: 'id', columns: makeColumns() },
           withSorting({
             schema: (path) => sortFn(path['age'], (a, b) => b.age - a.age), // reversed
-          })
-        )
+          }),
+        ),
       );
 
       store.toggleSort('age');
@@ -851,9 +838,7 @@ describe('withSorting', () => {
       ];
       const ctx = buildValueOfContext<Row>(() => columns, new Set(['name']), 'withSorting');
 
-      expect(() => ctx.valueOf({ id: 'nope' }, makeRows()[0])).toThrow(
-        /\[withSorting\].*"nope"/
-      );
+      expect(() => ctx.valueOf({ id: 'nope' }, makeRows()[0])).toThrow(/\[withSorting\].*"nope"/);
     });
 
     it('a declared column id resolves the accessor value, not a throw', () => {
@@ -873,7 +858,7 @@ describe('withSorting', () => {
   describe('types', () => {
     it('withSorting() alone contributes exactly SortingMembers, never widened to any', () => {
       const store = inContext(() =>
-        createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting())
+        createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting()),
       );
 
       expectTypeOf(store.sorting).toEqualTypeOf<Signal<SortRule[]>>();
@@ -894,9 +879,9 @@ describe('withSorting', () => {
               expectTypeOf(s.sorting).toEqualTypeOf<Signal<SortRule[]>>();
               expectTypeOf(s.columns).toEqualTypeOf<Signal<ColumnDef<Row>[]>>();
               return { ruleCount: computed(() => s.sorting().length) };
-            })
-          )
-        )
+            }),
+          ),
+        ),
       );
 
       expectTypeOf(store.ruleCount).toEqualTypeOf<Signal<number>>();
@@ -915,8 +900,8 @@ describe('withSorting', () => {
         createTable(
           signal<Row[]>([]),
           { trackBy: 'id', columns: makeColumns() },
-          withSorting(withComputed((s) => ({ ruleCount: computed(() => s.sorting().length) })))
-        )
+          withSorting(withComputed((s) => ({ ruleCount: computed(() => s.sorting().length) }))),
+        ),
       );
 
       expectTypeOf(store.ruleCount).toEqualTypeOf<Signal<number>>();

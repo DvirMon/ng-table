@@ -29,12 +29,12 @@ own `docs/decisions.md` confirms it's button-only by design (`type="button"`, no
 Nesting an `<a>` inside pill-button's `<button>` would also be invalid HTML (interactive content
 can't nest inside `<button>`'s content model).
 
-Since the fixed contract requires hero-band to *consume* pill-button, and pill-button is
+Since the fixed contract requires hero-band to _consume_ pill-button, and pill-button is
 irreducibly a `<button>`, I took the "simpler" branch: plain `primaryLabel`/`secondaryLabel`
 strings and `primaryClick`/`secondaryClick` void outputs. Href/routing is the consumer's job in
 its own click handler (`(primaryClick)="router.navigateByUrl('/docs')"` or
 `window.open(href, '_blank')` for the external one) — hero-band doesn't hold navigation data it
-can't act on. This mirrors `page-footer`'s `FooterLink { label, href, external? }`, which *does*
+can't act on. This mirrors `page-footer`'s `FooterLink { label, href, external? }`, which _does_
 render real `<a>` tags directly (no button in the way) — the two components land on different
 shapes because page-footer isn't constrained to route through a button-only atom.
 
@@ -52,11 +52,11 @@ never global). This rule is explicitly stricter for DS components ("no `::ng-dee
 hero-band is page-local/app-level, not a DS component, so the app-level "last resort" carve-out
 applies. Both override values are exact existing-token matches, not new literals:
 
-| Spec value | Token |
-|---|---|
+| Spec value          | Token                                                 |
+| ------------------- | ----------------------------------------------------- |
 | 14.5px / 600 weight | `--ngpt-sys-typescale-title-small` (`600 14.5px/1.4`) |
-| 11px padding-block | `--ngpt-sys-space-275` |
-| 20px padding-inline | `--ngpt-sys-space-500` |
+| 11px padding-block  | `--ngpt-sys-space-275`                                |
+| 20px padding-inline | `--ngpt-sys-space-500`                                |
 
 Border-radius was **not** overridden — the frame's hero buttons render at 22px vs. pill-button's
 default 20px (`--ngpt-sys-shape-corner-large`), but the spec's own "Hero size override" bullet
@@ -87,10 +87,11 @@ also uses a large low-opacity angular shape bleeding off the band. Implemented e
 the task brief and spec formula specify:
 `left: calc(max(var(--hero-band-rail), (100vw - var(--ngpt-sys-layout-wide-measure)) / 2) + 700px)`.
 The `overflow: hidden` clip this needs now lives on a `.hero-band__clip` wrapper around the shape
-+ content, not on `:host` — see "Navbar moved out of hero-band" below for why. `--hero-band-rail`
-is a local (non-`--ngpt-*`) custom property on `:host` holding `clamp(24px, 4vw, 48px)` — reused by
-both the shape's formula and `.hero-band__content`'s `padding-inline` so the one literal isn't
-duplicated in two places; it is not a design-system token, just DRY within this file.
+
+- content, not on `:host` — see "Navbar moved out of hero-band" below for why. `--hero-band-rail`
+  is a local (non-`--ngpt-*`) custom property on `:host` holding `clamp(24px, 4vw, 48px)` — reused by
+  both the shape's formula and `.hero-band__content`'s `padding-inline` so the one literal isn't
+  duplicated in two places; it is not a design-system token, just DRY within this file.
 
 `top: -140px` comes from the frame (spec.md only says "bleeding off the top-right" qualitatively);
 kept it since spec doesn't contradict a concrete number. `700px` is the spec's own literal, not the
@@ -116,17 +117,17 @@ itself is built elsewhere (page shell), not by this component.
 
 ## Untokenized literals (no `--ngpt-*` token exists for these — kept as spec-given literals)
 
-| Value | Where | Note |
-|---|---|---|
-| `clamp(24px, 4vw, 48px)` | rail padding (`--hero-band-rail`) | shared page-wide rail value, not yet promoted to a sizing token anywhere in `src/styles/tokens/` |
-| `clamp(28px, 3.5vw, 44px)` / `clamp(32px, 4vw, 52px)` | `.hero-band__content` padding-block | band's own top/bottom padding, single-use |
-| `oklch(1 0 0 / 0.07)` | `.hero-band__shape` background | matches pill-button precedent: literal kept when no token matches, not rounded to a near token |
-| `oklch(0 0 0 / 0.15)` | `.hero-band__announcement` background | same — spec's own contrast rationale is pinned to this exact value |
-| `7px` | announcement dot↔text gap | no exact `--ngpt-sys-space-*` step |
-| `11px` | `.hero-band__actions` gap | no exact step |
-| `660px` | `.hero-band__copy` max-width | spec-given copy cap, one-off |
+| Value                                                 | Where                                 | Note                                                                                             |
+| ----------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `clamp(24px, 4vw, 48px)`                              | rail padding (`--hero-band-rail`)     | shared page-wide rail value, not yet promoted to a sizing token anywhere in `src/styles/tokens/` |
+| `clamp(28px, 3.5vw, 44px)` / `clamp(32px, 4vw, 52px)` | `.hero-band__content` padding-block   | band's own top/bottom padding, single-use                                                        |
+| `oklch(1 0 0 / 0.07)`                                 | `.hero-band__shape` background        | matches pill-button precedent: literal kept when no token matches, not rounded to a near token   |
+| `oklch(0 0 0 / 0.15)`                                 | `.hero-band__announcement` background | same — spec's own contrast rationale is pinned to this exact value                               |
+| `7px`                                                 | announcement dot↔text gap            | no exact `--ngpt-sys-space-*` step                                                               |
+| `11px`                                                | `.hero-band__actions` gap             | no exact step                                                                                    |
+| `660px`                                               | `.hero-band__copy` max-width          | spec-given copy cap, one-off                                                                     |
 
-Where an exact token *did* match (20px → `--ngpt-sys-space-500`, 18px → `--ngpt-sys-space-450`, the
+Where an exact token _did_ match (20px → `--ngpt-sys-space-500`, 18px → `--ngpt-sys-space-450`, the
 hero button size step, the 1080px wide measure, all colors, all typescale bases), the token was
 used — these are the only true gaps, all pre-existing in `CONVENTIONS.md`'s "never hardcode a value
 that has a token" sense: no token exists to reference.
@@ -156,7 +157,7 @@ Two bugs traced back to that:
    activates. Fixed by moving the clip to `.hero-band__clip`, wrapping only the shape + content.
 2. Even after (1), the sticky navbar stopped sticking once scroll passed the hero section and
    entered `home-section--features`. A `position: sticky` element can only stay stuck within its
-   *parent's* box — and its parent was hero-band's `:host`, whose box ends with the hero.
+   _parent's_ box — and its parent was hero-band's `:host`, whose box ends with the hero.
 
 Fix: `ngpt-navbar` is now a plain sibling of `ngpt-home-hero-band` in `home.html`, before it in
 document order, not projected content. That makes `<body>`/the page the sticky containing block,

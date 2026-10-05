@@ -8,20 +8,20 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
-| `libs/table/src/stories/filtering/server-filtering/server-filtering.filters.ts` | `:1-27` | rewrite — hoisted schema `const`, no `createFilters`/`rowOf`/`as:` |
-| `libs/table/src/stories/filtering/server-filtering/server-filtering-story-host.component.ts` | `:62-138`, `:148` | edit — model into the table, field order, prose |
-| `libs/table/src/stories/filtering/server-filtering/server-filtering-toolbar.component.ts` | `:34-36` | edit — `dirty()` is `@internal` |
-| `libs/table/src/stories/filtering/server-filtering/server-filtering-toolbar.component.html` | — | edit — only what the input rename forces |
-| `libs/table/src/stories/filtering/server-filtering/server-filtering-story-host.component.html` | `:10` | edit — prose |
-| `libs/table/src/stories/filtering/fixtures/utils.ts` | — | read only — `EMPTY_RANGE`, `isRangeCriterion` unchanged |
+| File                                                                                           | Line              | Action                                                             |
+| ---------------------------------------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------ |
+| `libs/table/src/stories/filtering/server-filtering/server-filtering.filters.ts`                | `:1-27`           | rewrite — hoisted schema `const`, no `createFilters`/`rowOf`/`as:` |
+| `libs/table/src/stories/filtering/server-filtering/server-filtering-story-host.component.ts`   | `:62-138`, `:148` | edit — model into the table, field order, prose                    |
+| `libs/table/src/stories/filtering/server-filtering/server-filtering-toolbar.component.ts`      | `:34-36`          | edit — `dirty()` is `@internal`                                    |
+| `libs/table/src/stories/filtering/server-filtering/server-filtering-toolbar.component.html`    | —                 | edit — only what the input rename forces                           |
+| `libs/table/src/stories/filtering/server-filtering/server-filtering-story-host.component.html` | `:10`             | edit — prose                                                       |
+| `libs/table/src/stories/filtering/fixtures/utils.ts`                                           | —                 | read only — `EMPTY_RANGE`, `isRangeCriterion` unchanged            |
 
 ## Why This Step Exists
 
 This story is the entire evidentiary basis for the spec. R10 justified standalone filters on one
-claim: *in server mode filters produce the data, so a table-owned filter object cannot be
-constructed at all*. The spec calls that claim false and points at this host. Until the host
+claim: _in server mode filters produce the data, so a table-owned filter object cannot be
+constructed at all_. The spec calls that claim false and points at this host. Until the host
 actually builds its filters **through the table**, the refutation is asserted rather than shown.
 
 The issue body describes a `signal([]) + effect + untracked + load()` loop to unwind. **That loop is
@@ -48,7 +48,7 @@ Something can, and it is in this host already.
    ```
 
    `{ as: 'search' }` and `{ as: 'excludedTags' }` are deleted outright — the written property name
-   *is* the key now (R51). `toQueryParams` reads `active['search']` and `active['excludedTags']`
+   _is_ the key now (R51). `toQueryParams` reads `active['search']` and `active['excludedTags']`
    already, so the request shape does not change. Confirm that by eye; a silently renamed key would
    drop a query param with no type error, since `toQueryParams` takes
    `Partial<Record<string, unknown>>`.
@@ -59,7 +59,7 @@ Something can, and it is in this host already.
    initial value.
 
 3. **`rowOf<InvoiceRow>()` and its JSDoc paragraph go.** The file's doc comment currently explains
-   *why* a carrier is needed. That explanation is now the opposite of the truth: `TRow` is
+   _why_ a carrier is needed. That explanation is now the opposite of the truth: `TRow` is
    `RowOf<In>`, supplied by the table. Replace it with one line naming what the table supplies.
 
 4. **Host — the ownership move.** Declaration order matters and is the whole risk:
@@ -119,7 +119,7 @@ Something can, and it is in this host already.
 
 ## Implementation Notes
 
-- `filters` is `Filters<TRow, TState>` — callable *and* indexable. `this.table.filters()` is the
+- `filters` is `Filters<TRow, TState>` — callable _and_ indexable. `this.table.filters()` is the
   root; `this.table.filters.amount()` is the node. The toolbar's existing
   `this.filters().amount()` is correct because `this.filters` there is an `input`, so `()` unwraps
   the signal. Passing `[filters]="table.filters"` keeps every toolbar call site working unchanged.
@@ -132,12 +132,12 @@ Something can, and it is in this host already.
 ## Risks / Watchouts
 
 - **The one real ordering trap in this issue.** `table`'s rows thunk closes over `lastPage`, which
-  closes over `invoices`, whose params close over `table`. That is a cycle in the *reference* graph
-  and not in the *evaluation* graph, and it only stays safe because the thunk is lazy. If the
+  closes over `invoices`, whose params close over `table`. That is a cycle in the _reference_ graph
+  and not in the _evaluation_ graph, and it only stays safe because the thunk is lazy. If the
   implementer is tempted to pass `this.rows` (an eagerly-constructed `linkedSignal`) instead of a
   thunk, the cycle becomes real. Pass the thunk.
 - `filters` was declared before the first fetch for a reason the old code stated. That reason is
-  gone but the *behaviour* must not change: the story still has to render with an empty first page
+  gone but the _behaviour_ must not change: the story still has to render with an empty first page
   and issue its first request from empty criteria.
 - **Request count.** The story counts requests to make the debounce visible. Moving the model must
   not add a request on construction. If `criteria()` is read once more than before, `requestCount`
@@ -166,4 +166,5 @@ Something can, and it is in this host already.
       when the amount is untouched.
 
 ---
+
 ← [Step 7: Client-filtering host](step-7-client-filtering-host.plan.md) | [Step 9: Remaining call sites](step-9-remaining-call-sites.plan.md) →

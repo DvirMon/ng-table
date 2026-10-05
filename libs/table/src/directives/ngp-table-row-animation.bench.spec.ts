@@ -578,7 +578,10 @@ async function sampleProbe(table: HTMLTableElement, rows: HTMLElement[]): Promis
     rows.forEach(() => (heightChecksum += window.innerHeight));
   });
   expect(rectChecksum + heightChecksum).not.toBeNaN();
-  const keyframes = [{ transform: `translateY(${PROBE_KEYFRAME_DELTA_PX}px)` }, { transform: 'none' }];
+  const keyframes = [
+    { transform: `translateY(${PROBE_KEYFRAME_DELTA_PX}px)` },
+    { transform: 'none' },
+  ];
   const animations: Animation[] = [];
   const animateCallsMs = timeMs(() => {
     rows.forEach((row) => animations.push(row.animate(keyframes, PROBE_TIMING)));

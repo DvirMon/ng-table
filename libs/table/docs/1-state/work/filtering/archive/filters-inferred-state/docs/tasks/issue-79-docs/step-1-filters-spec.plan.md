@@ -8,15 +8,15 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                        | Action                                                     |
+| ------------------------------------------- | ---------------------------------------------------------- |
 | `libs/shared/table/docs/1-state/filters.md` | edit — signature, schema form, carrier, guards, public API |
 
 ## Why This Step Exists
 
 `#76` and `#77` shipped (`ffd9649`, `a2f73f4`). The spec still describes the surface they
 replaced: a single-argument `createFilters<TRow, TState>(schema)` whose schema body calls rules as
-statements, with a section arguing that the criterion map *cannot* be inferred. Every one of those
+statements, with a section arguing that the criterion map _cannot_ be inferred. Every one of those
 claims is now false, and this document is the one a reader reaches first.
 
 This is the largest edit in the issue and the only one that adds new material rather than
@@ -32,11 +32,11 @@ Work section by section. Verify each claim against `src/filters/`, not against t
    function createFilters<TRow, S extends readonly unknown[]>(
      rows: readonly TRow[] | (() => readonly TRow[] | undefined) | RowToken<TRow>,
      schema: (path: FiltersPath<TRow>) => S,
-     opts?: { injector?: Injector }
+     opts?: { injector?: Injector },
    ): Filters<TRow, StateOf<S>>;
    ```
    Then rewrite the bullets beneath it:
-   - **`rows` is an inference anchor and is never read.** This is the *first* bullet, not a
+   - **`rows` is an inference anchor and is never read.** This is the _first_ bullet, not a
      footnote — the call reads as if it binds data and it does not. Say what the slot accepts: an
      array, a readonly array, any callable returning rows (a `Signal`, a `WritableSignal`, a signal
      of `rows | undefined`, a bare store accessor), or `rowOf<Row>()`.
@@ -58,9 +58,10 @@ Work section by section. Verify each claim against `src/filters/`, not against t
 
    In the Server subsection, `rowOf<Invoice>()` is the carrier and the reason belongs there: the
    resource has not fetched, so there is no data to anchor the row type to.
+
 4. **`anyOf` and `applyWhen` rows in the rules table.** `anyOf(key, children)` takes a non-empty
    tuple of already-built rules, not a nested schema callback. `applyWhen(path, condition,
-   children)` returns one node that is **placed directly and never spread** — `...applyWhen(…)` is
+children)` returns one node that is **placed directly and never spread** — `...applyWhen(…)` is
    a `TS2488` compile error, which is the shape's whole point. Note that `path` is retained for
    signature parity with Signal Forms and is not read.
 5. **Add `rowOf()` where a reader will look for it.** A short subsection under the schema or
@@ -73,13 +74,14 @@ Work section by section. Verify each claim against `src/filters/`, not against t
      lands on the first property access and names `rowOf<Row>()`.
    - **Non-returning schema** — `src/filters/create-filters.ts`. Construction throws
      `[createFilters] The schema function must return its rules. A body that calls rules as
-     statements declares nothing — return an array: (path) => [equals(path.status)]`.
+statements declares nothing — return an array: (path) => [equals(path.status)]`.
    - **Empty or mixed group** — both compile errors now (non-empty tuple constraint; every later
      child checked against the first child's criterion), with the runtime throw in `validate.ts`
      kept as a backstop for untyped callers.
 
    Keep the existing construction/runtime split and the ADR-0014 framing — these are three more
    construction-class errors, not a new policy.
+
 7. **`### Keys`.** The `as`-must-be-a-string-literal claim is now enforced rather than aspirational
    (`EnforceLiteralKey`, `types.ts:11`, reached through the rule's own inference site). Say that it
    bites; do not restate the mechanism.
@@ -96,7 +98,7 @@ Work section by section. Verify each claim against `src/filters/`, not against t
   parameter of `Filters<TRow, TState>`; what changed is that it is inferred rather than written.
   Do not sweep the identifier out of the document — sweep the claim that a caller supplies it.
 - The `Deliberately not shipped` table's R11 row ("Data-derived filter options") still stands. R11
-  is superseded on the *data argument*, not on set filters — the rows are an anchor and are never
+  is superseded on the _data argument_, not on set filters — the rows are an anchor and are never
   read, so the consumer still computes options themselves.
 - `filters().matcher()`, `active()`, `reset()`, source defaults, empty criteria and the null-cell
   policy are all unchanged. If a rewrite touches them, it has gone past its scope.
@@ -132,4 +134,5 @@ Work section by section. Verify each claim against `src/filters/`, not against t
 - [ ] Every relative link in the file still resolves
 
 ---
+
 [Step 2: Reconcile the feature doc](step-2-feature-doc.plan.md) →

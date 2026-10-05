@@ -7,6 +7,7 @@ files:
   - libs/table/src/directives/panel-registry.ts (new)
   - libs/table/src/directives/ngp-table.directive.ts
 ---
+
 # Step 1 — Panel registry and its provider
 
 This step adds an internal per-table registry that mints panel ids and tracks panels and toggles. It leaves the panel directive to Step 2 and the toggle to #212.
@@ -14,6 +15,7 @@ This step adds an internal per-table registry that mints panel ids and tracks pa
 Decisions: [D1, D9, D13](../../1-decisions.md) · [E44, E52, E56](../../../../../../../decisions/expansion.md)
 
 ## Do
+
 - Create `panel-registry.ts` with a factory and an `NGP_TABLE_PANEL_REGISTRY` `InjectionToken`.
 - Do not export either from `index.ts`. Do not add them to `table.tokens.ts`, which is re-exported with `export *`.
 - Implement this contract:
@@ -37,16 +39,20 @@ interface PanelRegistry {
 - `NgpTableDirective` provides the registry with a factory provider beside `NGP_TABLE_STORE`.
 
 ## Watch out
+
 - Gate the dev check with `typeof ngDevMode === 'undefined' || !ngDevMode`, as `assertTreeComposed` does.
 - Do not use `effect()`.
 
 ## Out of scope
+
 - Any directive that uses the registry.
 - Tests. The registry is tested only through `ngpTablePanel` in Step 2 and through the toggle in #212.
 
 ## Done when
+
 - [ ] `index.ts` does not export the token or the factory.
 - [ ] `NgpTableDirective` provides the registry.
 
 ---
+
 [Step 2: ngpTablePanel: identity, inert and wiring errors](step-2-panel-identity-inert.plan.md) →

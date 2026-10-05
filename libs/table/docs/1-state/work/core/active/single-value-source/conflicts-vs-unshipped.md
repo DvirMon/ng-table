@@ -19,7 +19,7 @@ the #100 edge, but `with-sorting.ts:160,210` read two fields #129 makes
 unsettable [R1][R2][R6], so #100/S1 goes first or #129 ships a silent sorting
 regression. #128 and #127 are downstream of #129 [I13][I12]. The one genuine
 **conflict** is documentary: ADR-0020's Related header asserts the keying rule
-ADR-0019 reversed *and* names `TableConfig.columnsSchema`, which #129 deletes
+ADR-0019 reversed _and_ names `TableConfig.columnsSchema`, which #129 deletes
 — and #102's own open-items list does not track it [S12][I5][I11].
 
 ---
@@ -39,7 +39,7 @@ edge below exists in code and in neither tracker field.
 - `with-sorting.ts:160` — `column.sortFn ?? detectComparator(accessor, rows)`
   [R1].
 - `with-sorting.ts:210` — `const isSortable = !!column && column.enableSorting
-  !== false` [R2].
+!== false` [R2].
 - Both live on the resolved `ColumnDef`, `api/types.ts:91-92` [R3]. The only
   writer is `ColumnDefInput` (`api/types.ts:106-110`) reaching
   `resolveColumnDefs`'s spread (`engine/columns.ts:54-61`) [R4][R5]. A
@@ -75,11 +75,11 @@ runtime.
 
 **Options.**
 
-| | Option | Cost |
-|---|---|---|
-| a | #100/S1 first; #129/N7 migrates already-moved fixtures | Serializes the two largest unshipped nodes. Matches SO19 + #100's own acceptance list [I3]. |
-| b | `col()` keeps the two fields one release | **Re-opens two settled decisions** — N4 [D2][I11] and #100's "deleted, not deprecated" [I3]. Forces N6 to carry them too. |
-| c | Drop at #129, accept the regression | 0 production authors [I4], but `detectComparator` (unspecced) becomes the only comparator [S2]. |
+|     | Option                                                 | Cost                                                                                                                      |
+| --- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| a   | #100/S1 first; #129/N7 migrates already-moved fixtures | Serializes the two largest unshipped nodes. Matches SO19 + #100's own acceptance list [I3].                               |
+| b   | `col()` keeps the two fields one release               | **Re-opens two settled decisions** — N4 [D2][I11] and #100's "deleted, not deprecated" [I3]. Forces N6 to carry them too. |
+| c   | Drop at #129, accept the regression                    | 0 production authors [I4], but `detectComparator` (unspecced) becomes the only comparator [S2].                           |
 
 **Ruled 2026-09-24: (c).** #129 ships first and the regression is
 accepted for one release — see `decisions.md`'s
@@ -124,7 +124,7 @@ grouping column id throws on **both** the construction and writer paths, and
 `groupingLevels()`'s total read depends on it [S4]. Wrapping the shared body
 makes grouping's construction throw dev-only and reintroduces, in production,
 the unreachable-id case G71 closed. G72's degrade path was scoped as the
-*runtime* half, not a substitute [S5].
+_runtime_ half, not a substitute [S5].
 
 **Not tracked anywhere.** Neither #129 nor #114 records this constraint
 [I11]. It belongs in #129's spec: the wrap is `resolve.ts`-local;
@@ -132,11 +132,11 @@ the unreachable-id case G71 closed. G72's degrade path was scoped as the
 
 ---
 
-## E3 ▲ · #129 ↔ #115 — **ordering constraint: #129 before #115** *(moved)*
+## E3 ▲ · #129 ↔ #115 — **ordering constraint: #129 before #115** _(moved)_
 
 **Moved from "no conflict".** The first pass reasoned only about types and
 concluded #115 was unaffected. The type half was right — and #115's body
-states it in the same terms, independently: "The map this slice *reads* is
+states it in the same terms, independently: "The map this slice _reads_ is
 unchanged — it comes off `TableStore` through `ColumnValuesOf<In>`, which #129
 does not touch" [I8]. What the first pass missed is the **migration** half.
 
@@ -160,8 +160,8 @@ on `TableConfig` [R7][R8][R13]. #129 changes only `TCols`'s constraint
 (`with-filtering/feature.ts:27`) — widening it is V3, inside #115 [R14].
 
 **N9 is not an independent leaf.** #129 lists "`FiltersPath` and `SortingPath`
-key by `ColumnIdIn<ColumnValuesOf<In>>` when #115 and #100 land" under *Still
-open, for the spec* [I11]. At execution grain that is the same edit #115 and
+key by `ColumnIdIn<ColumnValuesOf<In>>` when #115 and #100 land" under _Still
+open, for the spec_ [I11]. At execution grain that is the same edit #115 and
 #100 each already make. Either they write that spelling directly and N9 is
 empty, or N9 lands after both. It cannot land before.
 
@@ -171,7 +171,7 @@ consistent, and E1's option (a) is the only ordering that satisfies all three.
 
 ---
 
-## E4 ▲ · #128 ↔ #117 `stateOf` — **conflict (documentary), narrowed scope** *(moved)*
+## E4 ▲ · #128 ↔ #117 `stateOf` — **conflict (documentary), narrowed scope** _(moved)_
 
 **Moved from "no conflict".** The first pass reasoned from G63's one-line
 summary and concluded `stateOf` merely narrows. #117's body names a field
@@ -180,7 +180,7 @@ summary and concluded `stateOf` merely narrows. #117's body names a field
 **The conflict.** #117 illustrates the register three times as:
 
 ```ts
-ctx.stateOf(path.total)        // the column config → { visible, order, … }
+ctx.stateOf(path.total); // the column config → { visible, order, … }
 ```
 
 — verbatim, in both #117 [I15] and #116 [I14]. #128 removes `ColumnDef.order`
@@ -202,7 +202,7 @@ untyped lookup — it has a job regardless of `order`.
 `visible` is rule-folded and AND-combined per column by `foldColumnRules`
 (`engine/columns.ts:163-166`) off the `VISIBLE` key (`:104`), and `meta` is
 rebuilt from the rule registry every fold (`:168-176`) [R15]. N4 removes only
-`meta`'s *declaration* form; `metadata()` stays the writer [D2].
+`meta`'s _declaration_ form; `metadata()` stays the writer [D2].
 
 **Ruled 2026-09-24: `stateOf` ships without order; whether the ordered id
 slice gets a reader is #128's question, not #117's.** The published
@@ -220,14 +220,14 @@ now firsthand on both sides.
 
 **Evidence.** G61 rejects "a single `TableConfig.schema`" because
 "`applyGrouping` could then be declared with no `withGrouping()` composed"
-[S9]. #129 does not create one — it moves the *columns* schema from
+[S9]. #129 does not create one — it moves the _columns_ schema from
 `TableConfig.columnsSchema` [R16] to `createColumns`'s third argument
 [I10][I11], leaving per-feature entries intact [R14]. The rejected shape stays
 rejected.
 
 **Count-independence is stated on the issues.** #100: "the shared mechanism
 has five per-feature entries rather than four. The count was never the rule —
-*one mechanism, per-feature entries* is (G61)" [I2]. #116 states the same as a
+_one mechanism, per-feature entries_ is (G61)" [I2]. #116 states the same as a
 rule: "Every feature with per-column config declares it through a schema entry
 — there is no second spelling" [I14].
 
@@ -241,7 +241,7 @@ bodies; not a reversal.
 
 ## E6 · #116 ↔ ADR-0025 and #129 — **ordering constraint on the wording + one open naming gap**
 
-**Verdict:** #116's *decisions* are unblocked; its *prose* is stale in two
+**Verdict:** #116's _decisions_ are unblocked; its _prose_ is stale in two
 places. Refined — the first pass overstated this as a hard "#116 after #129".
 
 **#116 says it is unblocked.** "Blocked by: None — can start immediately"
@@ -272,7 +272,7 @@ edit, since it owns resolver naming. Owed, not done here. See
 
 ---
 
-## E7 ▲ · #129 N6 ↔ #128 — **ordering constraint; #128 names the property at risk** *(moved)*
+## E7 ▲ · #129 N6 ↔ #128 — **ordering constraint; #128 names the property at risk** _(moved)_
 
 **Moved from "recoverable, low cost".** Still recoverable — but #128's body
 names the exact property #129/N6 breaks, which makes this a knowing regression
@@ -286,7 +286,7 @@ user's drag order must survive a `setColumns()` re-declaration**" [I13].
 **That is precisely what N6 removes for one release.** Today
 `setColumns(defs)` calls `resolveColumnDefs` (`mutations/update-columns.ts:
 14-18`), which assigns `order: def.order ?? index` (`engine/columns.ts:59`)
-[R17][R5] — a caller *can* carry a drag order through. N6 narrows the input to
+[R17][R5] — a caller _can_ carry a drag order through. N6 narrows the input to
 `{ id } & Partial<{ accessor, visible, label }>` [D5][I11], so `order` becomes
 unreachable and every `setColumns()` resets order to the new array index.
 #128's change table confirms the same transition [I13].
@@ -345,7 +345,7 @@ precedent `isColumnSchema` (`resolve.ts:13-17`), one non-test reader [D3][R9].
 which is a **function** on the same slot as the object `ColumnSet`, so
 `resolveColumnsConfig` needs an `isSignal` narrowing again. #127's text does
 not state this. It does not reopen N1 — N1's argument was about a `kind`
-*field*, and `isSignal` is a first-party runtime test — but #127's grill
+_field_, and `isSignal` is a first-party runtime test — but #127's grill
 should not assume the slot stayed single-shaped.
 
 ---
@@ -412,7 +412,7 @@ and schemas, never columns [I5], so it has no use for `col.from`.
 `schema/validate.ts:17-18` hardcodes "no column with this id exists in the
 `columns` array" [R10]. After N3 there is no `columns` array — declarations
 come from `createColumns` [I11][D1]. The `label` parameter names the
-*declaring* surface, not the source of truth, so no call site fixes this. One
+_declaring_ surface, not the source of truth, so no call site fixes this. One
 string edit inside #129's N2 step. Not tracked on any issue [I11].
 
 ---
@@ -543,66 +543,66 @@ branches [I3][I11].
 
 ## Sources
 
-| | Source | Verified |
-|---|---|---|
-| I0 | `…\scratchpad\issues.md` — `gh issue view` output for #100, #102, #115, #116, #117, #127, #128, #129 (bodies + `--comments`), repo `DvirMon/ng-table`, fetched by the maintainer with an authenticated `gh`, 2026-09-22, 917 lines | yes — read in full; supersedes the first pass's access gap |
-| I1 | `issues.md:17` — #100 `blocked-by: #111, #113, #112` | yes — read; #129 absent |
-| I2 | `issues.md:177-210` — #100 "The sorting schema (decided 2026-09-20)" | yes — read; five per-feature entries, G61 count-independence, the `sortFn` resolver closing |
-| I3 | `issues.md:237-238` — #100 acceptance | yes — read; "gone from `ColumnDef` and `ColumnDefInput` — deleted, not deprecated" |
-| I4 | `issues.md:152-175` — #100 "Blast radius, measured (2026-09-16)" | yes — read; corrected against `c3359c0` — the spec-author counts are now low, see E1 |
-| I5 | `issues.md:339-366` — #102 body, plan link and its three open items | yes — read; the stale keying rule is **not** among them |
-| I6 | `issues.md:369-370` — #102 comments | yes — read; none |
-| I7 | `issues.md:387,410-420` — #115 `blocked-by` field and acceptance criteria | yes — read; "migrated, declaring their columns through `createColumns()`" |
-| I8 | `issues.md:431-437` — #115 "Blocked by · #129" | yes — read; **moved E3** — names the migration edge the first pass missed, while confirming the type half |
-| I9 | `issues.md:454-457` — #115 assessment log, 2026-09-22 | yes — read; "STILL BLOCKED, re-edged… Re-run /to-tasks once #129 is done" |
-| I10 | `issues.md:1098-1114` — #129 "The call" | yes — read; schema as `createColumns`'s third argument, `visible()` bare-named |
-| I11 | `issues.md:1116-1163` — #129 Settled table, Still open, Acceptance, Blocks | yes — read; `ColumnDef` itself untouched; rename pass is #129's; `Blocks: #115` |
-| I12 | `issues.md:891-973` — #127 body, options A and B, "What would settle it" | yes — read; option B puts a `Signal` on `TableConfig.columns`; no narrowing discussion |
-| I13 | `issues.md:998-1062` — #128 body | yes — read; **moved E7** — "a user's drag order must survive a `setColumns()` re-declaration" |
-| I14 | `issues.md:522-619` — #116 body, rules 1-3 | yes — read; "Blocked by: None"; rule 2 still names `columnsSchema`/`applyVisible` |
-| I15 | `issues.md:663-730` — #117 header, `blocked-by`, resolver table, three-register block | yes — read; **moved E4** — `stateOf` → `{ visible, order, … }`; `blocked-by: #115, #114` |
-| I16 | `issues.md:815-830` — #117 acceptance criteria | yes — read; "settle with #100"; "without a string-keyed lookup over `columns()`" |
-| I17 | `issues.md:623-635` — #116 acceptance criteria | yes — read; ADR-0021 reconciliation and the ADR-0019 back-reference are already scoped here |
-| I18 | `issues.md:288-316` — #100's single comment | yes — read; strikes D7 / ADR-0019 Amendment / ADR-0021 as dead citations — the same sweep E10 says was never run over ADR-0020 |
-| D1 | `decisions.md:506-518` — N3, array intake dropped outright | yes — read |
-| D2 | `decisions.md:409-426` — N4, `col(id, opts)` options | yes — read |
-| D3 | `decisions.md:428-444` — N1, `ColumnSet` is `{ columns, rules }` | yes — read |
-| D4 | `decisions.md:545-561` — N2, throws relocate and become dev-only | yes — read |
-| D5 | `decisions.md:574-599` — N6, `setColumns`'s narrowed input | yes — read |
-| D7 | `decisions.md:681-697` — the order slice is #128 | yes — read |
-| D8 | `decisions.md:465-481` — runtime-dynamic ids out of scope | yes — read |
-| D9 | `decisions.md:657-679` — `col.from`, never a spread | yes — read |
-| S1 | `libs/table/docs/decisions/sorting.md:64` — SO19 | yes — read; corroborated firsthand by [I3] |
-| S2 | `libs/table/docs/decisions/sorting.md:78-81` — SO7 still open | yes — read; the fallback comparator has no written spec |
-| S3 | `libs/table/docs/decisions/sorting.md:66` — SO21 | yes — read |
-| S4 | `libs/table/docs/decisions/grouping.md:112` — G71, shipped | yes — read |
-| S5 | `libs/table/docs/decisions/grouping.md:113` — G72, shipped | yes — read |
-| S6 | `libs/table/docs/adr/0025-schema-rule-functions-are-bare-named.md:6,8,13,20` | yes — read; governs registrars only — never mentions resolvers |
-| S7 | `libs/table/docs/adr/0019-columns-path-keyed-by-declared-column-ids.md:17-51` | yes — read; the 2026-09-20 amendment |
-| S8 | `design-create-columns.md:36-52` — the `createColumns` signature | yes — read |
-| S9 | `libs/table/docs/decisions/grouping.md:102` — G61 | yes — read |
-| S11 | `discovery-column-order.md:26-28,206-213` | yes — read; `maintainColumnOrder`, and the bench caveat |
-| S12 | `libs/table/docs/adr/0020-open-stage-registration-for-third-party-features.md:11-13` | yes — read; the stale ADR-0021 citation, in a `proposed` ADR |
-| S13 | `libs/table/docs/decisions/sorting.md:98-100` | yes — read |
-| S14 | `4-tasks/issue-111-decouple-mechanism/step-3-shared-recording-runner.plan.md:137-138` | yes — read; "#102 … is what would export it" |
-| R1 | `libs/table/src/api/features/with-sorting.ts:160` | yes — read; `column.sortFn ?? detectComparator(...)` |
-| R2 | `libs/table/src/api/features/with-sorting.ts:210` | yes — read; `column.enableSorting !== false` |
-| R3 | `libs/table/src/api/types.ts:83-98` — `ColumnDef` | yes — read |
-| R4 | `libs/table/src/api/types.ts:106-110` — `ColumnDefInput` | yes — read |
-| R5 | `libs/table/src/engine/columns.ts:27-74` | yes — read; `order: def.order ?? index` at `:59`, dev-gate at `:51`, `applyColumnOrder` at `:65-74` |
-| R6 | repo-wide grep `sortFn\|enableSorting` over `libs/table/src` | yes — ran; 3 files; six spec write sites, correcting [I4]'s three |
-| R7 | `libs/table/src/engine/types.ts:123-127` — `ColumnValuesOf<S>` | yes — read |
-| R8 | `libs/table/src/api/types.ts:238` — `TableStore.__columnValues` | yes — read |
-| R9 | `libs/table/src/engine/columns-schema/resolve.ts:13-78` | yes — read; `isColumnSchema`, both asserts, `resolveColumnsConfig` |
-| R10 | `libs/table/src/schema/validate.ts:1-22` | yes — read; ungated throw; message hardcodes "`columns` array" |
-| R11 | `libs/table/src/api/features/with-filtering/types.ts:96-98` | yes — read; `FiltersPath` keys by `Extract<keyof TRow, string>` |
-| R12 | `libs/table/src/engine/filters/types.ts:10-15` — `FilterHandle` | yes — read |
-| R13 | `libs/table/src/engine/types.ts:57` — `TableCore.__columnValues` | yes — read |
-| R14 | `libs/table/src/api/features/with-filtering/feature.ts:27` | yes — read; `In extends Shape`, no `columns` |
-| R15 | `libs/table/src/engine/columns.ts:104,163-177` — `VISIBLE`, `foldColumnRules` | yes — read |
-| R16 | `libs/table/src/api/types.ts:179-181` — `TableConfig.columnsSchema` | yes — read |
-| R17 | `libs/table/src/mutations/update-columns.ts:14-25` | yes — read; `setColumns`, `reorderColumns` |
-| R18 | grep `.sort((a, b) => a.order - b.order)` over `libs/table/src` | yes — ran; **nine** grouping story hosts, against [I13]'s "roughly ten" |
-| R19 | `libs/table/src/index.ts:8,72-75,116-124` | yes — read; `create-columns` exported, nothing from `schema/` |
-| R20 | grep `meta:\s*new Map\|meta:\s*\w` over `libs/table/src` | yes — ran; no column declaration sets `meta` |
-| R21 | `libs/table/src/columns-schema/types.ts:9-11` — `ColumnRuleContext.columns` | yes — read; the untyped `() => ColumnDef<TRow>[]` lookup `stateOf` replaces |
+|     | Source                                                                                                                                                                                                                             | Verified                                                                                                                       |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| I0  | `…\scratchpad\issues.md` — `gh issue view` output for #100, #102, #115, #116, #117, #127, #128, #129 (bodies + `--comments`), repo `DvirMon/ng-table`, fetched by the maintainer with an authenticated `gh`, 2026-09-22, 917 lines | yes — read in full; supersedes the first pass's access gap                                                                     |
+| I1  | `issues.md:17` — #100 `blocked-by: #111, #113, #112`                                                                                                                                                                               | yes — read; #129 absent                                                                                                        |
+| I2  | `issues.md:177-210` — #100 "The sorting schema (decided 2026-09-20)"                                                                                                                                                               | yes — read; five per-feature entries, G61 count-independence, the `sortFn` resolver closing                                    |
+| I3  | `issues.md:237-238` — #100 acceptance                                                                                                                                                                                              | yes — read; "gone from `ColumnDef` and `ColumnDefInput` — deleted, not deprecated"                                             |
+| I4  | `issues.md:152-175` — #100 "Blast radius, measured (2026-09-16)"                                                                                                                                                                   | yes — read; corrected against `c3359c0` — the spec-author counts are now low, see E1                                           |
+| I5  | `issues.md:339-366` — #102 body, plan link and its three open items                                                                                                                                                                | yes — read; the stale keying rule is **not** among them                                                                        |
+| I6  | `issues.md:369-370` — #102 comments                                                                                                                                                                                                | yes — read; none                                                                                                               |
+| I7  | `issues.md:387,410-420` — #115 `blocked-by` field and acceptance criteria                                                                                                                                                          | yes — read; "migrated, declaring their columns through `createColumns()`"                                                      |
+| I8  | `issues.md:431-437` — #115 "Blocked by · #129"                                                                                                                                                                                     | yes — read; **moved E3** — names the migration edge the first pass missed, while confirming the type half                      |
+| I9  | `issues.md:454-457` — #115 assessment log, 2026-09-22                                                                                                                                                                              | yes — read; "STILL BLOCKED, re-edged… Re-run /to-tasks once #129 is done"                                                      |
+| I10 | `issues.md:1098-1114` — #129 "The call"                                                                                                                                                                                            | yes — read; schema as `createColumns`'s third argument, `visible()` bare-named                                                 |
+| I11 | `issues.md:1116-1163` — #129 Settled table, Still open, Acceptance, Blocks                                                                                                                                                         | yes — read; `ColumnDef` itself untouched; rename pass is #129's; `Blocks: #115`                                                |
+| I12 | `issues.md:891-973` — #127 body, options A and B, "What would settle it"                                                                                                                                                           | yes — read; option B puts a `Signal` on `TableConfig.columns`; no narrowing discussion                                         |
+| I13 | `issues.md:998-1062` — #128 body                                                                                                                                                                                                   | yes — read; **moved E7** — "a user's drag order must survive a `setColumns()` re-declaration"                                  |
+| I14 | `issues.md:522-619` — #116 body, rules 1-3                                                                                                                                                                                         | yes — read; "Blocked by: None"; rule 2 still names `columnsSchema`/`applyVisible`                                              |
+| I15 | `issues.md:663-730` — #117 header, `blocked-by`, resolver table, three-register block                                                                                                                                              | yes — read; **moved E4** — `stateOf` → `{ visible, order, … }`; `blocked-by: #115, #114`                                       |
+| I16 | `issues.md:815-830` — #117 acceptance criteria                                                                                                                                                                                     | yes — read; "settle with #100"; "without a string-keyed lookup over `columns()`"                                               |
+| I17 | `issues.md:623-635` — #116 acceptance criteria                                                                                                                                                                                     | yes — read; ADR-0021 reconciliation and the ADR-0019 back-reference are already scoped here                                    |
+| I18 | `issues.md:288-316` — #100's single comment                                                                                                                                                                                        | yes — read; strikes D7 / ADR-0019 Amendment / ADR-0021 as dead citations — the same sweep E10 says was never run over ADR-0020 |
+| D1  | `decisions.md:506-518` — N3, array intake dropped outright                                                                                                                                                                         | yes — read                                                                                                                     |
+| D2  | `decisions.md:409-426` — N4, `col(id, opts)` options                                                                                                                                                                               | yes — read                                                                                                                     |
+| D3  | `decisions.md:428-444` — N1, `ColumnSet` is `{ columns, rules }`                                                                                                                                                                   | yes — read                                                                                                                     |
+| D4  | `decisions.md:545-561` — N2, throws relocate and become dev-only                                                                                                                                                                   | yes — read                                                                                                                     |
+| D5  | `decisions.md:574-599` — N6, `setColumns`'s narrowed input                                                                                                                                                                         | yes — read                                                                                                                     |
+| D7  | `decisions.md:681-697` — the order slice is #128                                                                                                                                                                                   | yes — read                                                                                                                     |
+| D8  | `decisions.md:465-481` — runtime-dynamic ids out of scope                                                                                                                                                                          | yes — read                                                                                                                     |
+| D9  | `decisions.md:657-679` — `col.from`, never a spread                                                                                                                                                                                | yes — read                                                                                                                     |
+| S1  | `libs/table/docs/decisions/sorting.md:64` — SO19                                                                                                                                                                                   | yes — read; corroborated firsthand by [I3]                                                                                     |
+| S2  | `libs/table/docs/decisions/sorting.md:78-81` — SO7 still open                                                                                                                                                                      | yes — read; the fallback comparator has no written spec                                                                        |
+| S3  | `libs/table/docs/decisions/sorting.md:66` — SO21                                                                                                                                                                                   | yes — read                                                                                                                     |
+| S4  | `libs/table/docs/decisions/grouping.md:112` — G71, shipped                                                                                                                                                                         | yes — read                                                                                                                     |
+| S5  | `libs/table/docs/decisions/grouping.md:113` — G72, shipped                                                                                                                                                                         | yes — read                                                                                                                     |
+| S6  | `libs/table/docs/adr/0025-schema-rule-functions-are-bare-named.md:6,8,13,20`                                                                                                                                                       | yes — read; governs registrars only — never mentions resolvers                                                                 |
+| S7  | `libs/table/docs/adr/0019-columns-path-keyed-by-declared-column-ids.md:17-51`                                                                                                                                                      | yes — read; the 2026-09-20 amendment                                                                                           |
+| S8  | `design-create-columns.md:36-52` — the `createColumns` signature                                                                                                                                                                   | yes — read                                                                                                                     |
+| S9  | `libs/table/docs/decisions/grouping.md:102` — G61                                                                                                                                                                                  | yes — read                                                                                                                     |
+| S11 | `discovery-column-order.md:26-28,206-213`                                                                                                                                                                                          | yes — read; `maintainColumnOrder`, and the bench caveat                                                                        |
+| S12 | `libs/table/docs/adr/0020-open-stage-registration-for-third-party-features.md:11-13`                                                                                                                                               | yes — read; the stale ADR-0021 citation, in a `proposed` ADR                                                                   |
+| S13 | `libs/table/docs/decisions/sorting.md:98-100`                                                                                                                                                                                      | yes — read                                                                                                                     |
+| S14 | `4-tasks/issue-111-decouple-mechanism/step-3-shared-recording-runner.plan.md:137-138`                                                                                                                                              | yes — read; "#102 … is what would export it"                                                                                   |
+| R1  | `libs/table/src/api/features/with-sorting.ts:160`                                                                                                                                                                                  | yes — read; `column.sortFn ?? detectComparator(...)`                                                                           |
+| R2  | `libs/table/src/api/features/with-sorting.ts:210`                                                                                                                                                                                  | yes — read; `column.enableSorting !== false`                                                                                   |
+| R3  | `libs/table/src/api/types.ts:83-98` — `ColumnDef`                                                                                                                                                                                  | yes — read                                                                                                                     |
+| R4  | `libs/table/src/api/types.ts:106-110` — `ColumnDefInput`                                                                                                                                                                           | yes — read                                                                                                                     |
+| R5  | `libs/table/src/engine/columns.ts:27-74`                                                                                                                                                                                           | yes — read; `order: def.order ?? index` at `:59`, dev-gate at `:51`, `applyColumnOrder` at `:65-74`                            |
+| R6  | repo-wide grep `sortFn\|enableSorting` over `libs/table/src`                                                                                                                                                                       | yes — ran; 3 files; six spec write sites, correcting [I4]'s three                                                              |
+| R7  | `libs/table/src/engine/types.ts:123-127` — `ColumnValuesOf<S>`                                                                                                                                                                     | yes — read                                                                                                                     |
+| R8  | `libs/table/src/api/types.ts:238` — `TableStore.__columnValues`                                                                                                                                                                    | yes — read                                                                                                                     |
+| R9  | `libs/table/src/engine/columns-schema/resolve.ts:13-78`                                                                                                                                                                            | yes — read; `isColumnSchema`, both asserts, `resolveColumnsConfig`                                                             |
+| R10 | `libs/table/src/schema/validate.ts:1-22`                                                                                                                                                                                           | yes — read; ungated throw; message hardcodes "`columns` array"                                                                 |
+| R11 | `libs/table/src/api/features/with-filtering/types.ts:96-98`                                                                                                                                                                        | yes — read; `FiltersPath` keys by `Extract<keyof TRow, string>`                                                                |
+| R12 | `libs/table/src/engine/filters/types.ts:10-15` — `FilterHandle`                                                                                                                                                                    | yes — read                                                                                                                     |
+| R13 | `libs/table/src/engine/types.ts:57` — `TableCore.__columnValues`                                                                                                                                                                   | yes — read                                                                                                                     |
+| R14 | `libs/table/src/api/features/with-filtering/feature.ts:27`                                                                                                                                                                         | yes — read; `In extends Shape`, no `columns`                                                                                   |
+| R15 | `libs/table/src/engine/columns.ts:104,163-177` — `VISIBLE`, `foldColumnRules`                                                                                                                                                      | yes — read                                                                                                                     |
+| R16 | `libs/table/src/api/types.ts:179-181` — `TableConfig.columnsSchema`                                                                                                                                                                | yes — read                                                                                                                     |
+| R17 | `libs/table/src/mutations/update-columns.ts:14-25`                                                                                                                                                                                 | yes — read; `setColumns`, `reorderColumns`                                                                                     |
+| R18 | grep `.sort((a, b) => a.order - b.order)` over `libs/table/src`                                                                                                                                                                    | yes — ran; **nine** grouping story hosts, against [I13]'s "roughly ten"                                                        |
+| R19 | `libs/table/src/index.ts:8,72-75,116-124`                                                                                                                                                                                          | yes — read; `create-columns` exported, nothing from `schema/`                                                                  |
+| R20 | grep `meta:\s*new Map\|meta:\s*\w` over `libs/table/src`                                                                                                                                                                           | yes — ran; no column declaration sets `meta`                                                                                   |
+| R21 | `libs/table/src/columns-schema/types.ts:9-11` — `ColumnRuleContext.columns`                                                                                                                                                        | yes — read; the untyped `() => ColumnDef<TRow>[]` lookup `stateOf` replaces                                                    |

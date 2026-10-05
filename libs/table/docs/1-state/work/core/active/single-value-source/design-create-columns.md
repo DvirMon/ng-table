@@ -37,16 +37,22 @@ createTable(this.deals, { trackBy: 'id', columns: createColumns((col) => [...]) 
 declare function createColumns<TRow, TCols extends readonly AnyDecl<TRow>[]>(
   data: TableDataInput<TRow>,
   build: (col: ColumnBuilder<TRow>) => TCols,
-  schema?: ColumnsSchemaFn<TRow, ColumnIdIn<ValuesOf<TCols>>> | ColumnSchema<TRow>
+  schema?: ColumnsSchemaFn<TRow, ColumnIdIn<ValuesOf<TCols>>> | ColumnSchema<TRow>,
 ): ColumnSet<TRow, TCols>;
 declare function createColumns<TRow, TCols extends readonly AnyDecl<TRow>[]>(
   build: (col: ColumnBuilder<TRow>) => TCols,
-  schema?: ColumnsSchemaFn<TRow, ColumnIdIn<ValuesOf<TCols>>> | ColumnSchema<TRow>
+  schema?: ColumnsSchemaFn<TRow, ColumnIdIn<ValuesOf<TCols>>> | ColumnSchema<TRow>,
 ): ColumnSet<TRow, TCols>;
 
 interface ColumnBuilder<TRow> {
-  <K extends string, V>(id: K, opts: Presentation & { accessor: (row: TRow) => V }): ColumnDecl<TRow, K, V>;
-  <K extends string>(id: K, opts?: Presentation): ColumnDecl<TRow, K, K extends keyof TRow ? TRow[K] : unknown>;
+  <K extends string, V>(
+    id: K,
+    opts: Presentation & { accessor: (row: TRow) => V },
+  ): ColumnDecl<TRow, K, V>;
+  <K extends string>(
+    id: K,
+    opts?: Presentation,
+  ): ColumnDecl<TRow, K, K extends keyof TRow ? TRow[K] : unknown>;
 }
 // TableConfig: { trackBy; columns: ColumnSet<TRow, TCols> }. `columnsSchema` is removed.
 ```
@@ -56,15 +62,15 @@ reaches every feature slot through `TableStore<TRow, ColumnValues>` exactly as #
 
 ## What is settled, and by which probe
 
-| Fact | Probe |
-|---|---|
-| Data first: `col`, `row`, `path` typed; typos rejected in the schema fn and in a feature slot; map exact | P5a |
-| Builder first with `col` annotated; a standalone `columnSchema()` value as the second argument | P5b |
-| Builder first with `col` unannotated is a compile error (`row` is `unknown`), never silent | P5c |
-| Inline inside `createTable` with nothing annotated: the row type flows back from `data` | P5d |
-| A column set built for one row type is rejected on a table over another | P5e |
-| A plain object literal in the builder's array is rejected, once `ColumnDecl` carries a brand | P3c |
-| Feature slots see the ids after a context-sensitive `columns` only because `Feature<In, Out>` is callable | P1j |
+| Fact                                                                                                      | Probe |
+| --------------------------------------------------------------------------------------------------------- | ----- |
+| Data first: `col`, `row`, `path` typed; typos rejected in the schema fn and in a feature slot; map exact  | P5a   |
+| Builder first with `col` annotated; a standalone `columnSchema()` value as the second argument            | P5b   |
+| Builder first with `col` unannotated is a compile error (`row` is `unknown`), never silent                | P5c   |
+| Inline inside `createTable` with nothing annotated: the row type flows back from `data`                   | P5d   |
+| A column set built for one row type is rejected on a table over another                                   | P5e   |
+| A plain object literal in the builder's array is rejected, once `ColumnDecl` carries a brand              | P3c   |
+| Feature slots see the ids after a context-sensitive `columns` only because `Feature<In, Out>` is callable | P1j   |
 
 ## Invariants the design rests on
 
@@ -102,4 +108,4 @@ reaches every feature slot through `TableStore<TRow, ColumnValues>` exactly as #
 - B1 (literal-preserving `id` default, non-breaking) — the fallback if the migration is refused.
 - Row-agnostic columns with a `values` field on `createTable` — recorded, not pursued.
 - Record columns — fails array order.
-Each is in the proposal doc with its probes.
+  Each is in the proposal doc with its probes.

@@ -8,12 +8,12 @@ Data table engine for Angular 19+. Three-layer stack: state management (`createT
 
 ## Answering any question about a capability
 
-Fires on *every* question about a feature — "what's the state of grouping?", "can I change X?",
+Fires on _every_ question about a feature — "what's the state of grouping?", "can I change X?",
 "why is Y shaped this way?" — not only when about to implement something.
 
 1. **`docs/status.md`** (generated) — the index. Its **Decisions** column links each capability's log.
 2. **`docs/decisions/<capability>.md`** — every decision ever taken about it, one line each.
-3. **The capability's spec** — `docs/1-state/features/<capability>.md` and `docs/3-ui/directives/<capability>.md`. What it does *today*.
+3. **The capability's spec** — `docs/1-state/features/<capability>.md` and `docs/3-ui/directives/<capability>.md`. What it does _today_.
 
 Those three answer the question. Open a work folder only when a log row sends you to one for
 full rationale — never to survey what shipped. A `—` in the Decisions column means that
@@ -33,8 +33,8 @@ Architectural constraints agreed in drilling sessions. Changing them requires cr
 
 ## Code layout — folders by lifecycle phase
 
-Modeled on Angular Signal Forms (`packages/forms/signals/src`), which groups by *when code
-runs* — declare (`api/`) → compile/run (`field/`, `schema/`) — not by feature. See ADR-0004.
+Modeled on Angular Signal Forms (`packages/forms/signals/src`), which groups by _when code
+runs_ — declare (`api/`) → compile/run (`field/`, `schema/`) — not by feature. See ADR-0004.
 `schema/` and `mutations/` are top-level siblings of `api/`, not subfolders of it — see ADR-0008.
 
 ```
@@ -80,7 +80,7 @@ snake_case — `.claude/rules/file-organization.md` governs.
   (a `Subject`, an unread signal) stay closure variables — no `_`-prefix convention, no
   `OmitPrivate` stripping (removed with `@ngrx/signals`, ADR-0003).
 - **Features declare, never mutate.** A feature returns a `TableFeatureSpec` — `{ members,
-  stages, renderStages, setup, onDestroy }`. Writing to the store object directly is unsupported.
+stages, renderStages, setup, onDestroy }`. Writing to the store object directly is unsupported.
 - **`hostDirectives` only for unconditional or internal-mechanism behavior.** Opt-in behavior
   gets its own public directive — host-composing a feature into a core directive applies it to
   every table and defeats tree-shaking. See the rejected-alternatives section of
@@ -106,18 +106,18 @@ snake_case — `.claude/rules/file-organization.md` governs.
 
 Docs are numbered by dependency order: state layer (1) → columns layer (2) → UI layer (3).
 
-| Location | Purpose | Update pattern |
-|---|---|---|
-| `docs/1-state/prd.md`, `architecture.md`, `features/` | State-layer specs, one per feature plugin | Permanent |
-| `docs/status.md` | Every capability's spec/code maturity, state + UI side by side | **Generated** — never hand-edit |
-| `docs/1-state/row-mutations.md`, `state-persistence.md` | Core/cross-feature specs, not one plugin's state (D8) | Permanent |
-| `docs/2-columns/reference/` | Column schema reference (tiers, ownership, derivation) | Permanent |
-| `docs/3-ui/directives/` | Directive specs and API contracts, one per directive | Permanent |
-| `docs/3-ui/stories.md` | Storybook story conventions | Permanent |
+| Location                                                  | Purpose                                                                                                                        | Update pattern                           |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| `docs/1-state/prd.md`, `architecture.md`, `features/`     | State-layer specs, one per feature plugin                                                                                      | Permanent                                |
+| `docs/status.md`                                          | Every capability's spec/code maturity, state + UI side by side                                                                 | **Generated** — never hand-edit          |
+| `docs/1-state/row-mutations.md`, `state-persistence.md`   | Core/cross-feature specs, not one plugin's state (D8)                                                                          | Permanent                                |
+| `docs/2-columns/reference/`                               | Column schema reference (tiers, ownership, derivation)                                                                         | Permanent                                |
+| `docs/3-ui/directives/`                                   | Directive specs and API contracts, one per directive                                                                           | Permanent                                |
+| `docs/3-ui/stories.md`                                    | Storybook story conventions                                                                                                    | Permanent                                |
 | `docs/1-state/work/<capability>/{active,archive}/<slug>/` | Episodic state-layer work, grouped by the capability that owns it (`core`, `meta`, `feature-authoring` for cross-cutting work) | Episodic; moved to `archive/` after ship |
-| `docs/3-ui/work/<slug>/`, `docs/work/<slug>/` | Episodic UI-layer and cross-stream work folders | Episodic; archived after ship |
-| `docs/decisions/<capability>.md` | The capability's decision history, one line per decision | Permanent; appended as decisions land |
-| `docs/agents/` | Procedures an agent follows against these docs | Permanent |
+| `docs/3-ui/work/<slug>/`, `docs/work/<slug>/`             | Episodic UI-layer and cross-stream work folders                                                                                | Episodic; archived after ship            |
+| `docs/decisions/<capability>.md`                          | The capability's decision history, one line per decision                                                                       | Permanent; appended as decisions land    |
+| `docs/agents/`                                            | Procedures an agent follows against these docs                                                                                 | Permanent                                |
 
 **Key rule:** Specs live in the stream's numbered folder; work happens in a work folder. Specs are edited in place; work folders are episodic containers.
 
@@ -142,9 +142,9 @@ Feature-scoped specs (`docs/1-state/features/*.md`, `docs/3-ui/directives/*.md`,
 specs) declare three machine-read fields; architecture/PRD/reference docs keep a free-text `status:` instead.
 
 ```yaml
-capability: selection                    # groups the state and UI docs for one feature
-spec: none | stub | drafted | drilled    # none → no file; stub → placeholder; drafted → written, never drilled; drilled → contract settled
-code: none | partial | shipped           # state-layer implementation in src/
+capability: selection # groups the state and UI docs for one feature
+spec: none | stub | drafted | drilled # none → no file; stub → placeholder; drafted → written, never drilled; drilled → contract settled
+code: none | partial | shipped # state-layer implementation in src/
 ```
 
 Two axes, not one — `spec: drafted, code: none` and `spec: drilled, code: partial` are both real
@@ -201,6 +201,7 @@ block declaring any pipeline-behavior key (`PIPELINE_BEHAVIOR_KEYS` in
 `api/create-table-feature.ts`), or a member the feature already declared, throws at construction.
 
 Rules:
+
 - **`Feature<In, Out>` stays callable** — a plain-object-returning feature resolves before `TCols`
   is inferred and the column-id union reaching every slot collapses. Probe:
   [`design-create-columns.md`](docs/1-state/work/core/active/single-value-source/design-create-columns.md) P1j.

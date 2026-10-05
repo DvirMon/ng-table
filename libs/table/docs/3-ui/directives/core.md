@@ -25,7 +25,7 @@ Always-present, one-per-element directives (`ngpTable`, `ngpTableRow`, `ngpTable
 
 **Decision (revised 2026-07-31):** the store instance enters the template through a **single required input on `ngpTable`**. `NgpTableDirective` self-provides under the `NGP_TABLE_STORE` token via `useExisting`, so every descendant directive injects the token and reads `.store()`.
 
-**Why:** `createTable(data, config, ...features)` returns a **live store instance**, not a class — it is a component field, owned by the component's injection context and torn down with it (see `../1-state/architecture.md` and `createTable()`'s own JSDoc: "There is no DI token to provide or inject; consumers hold the returned instance directly"). An instance created at field level cannot appear in that same component's `providers: []`, so the class-provider approach is structurally impossible. Handing the instance to `ngpTable` as an input, and letting the *directive* be the DI anchor, gets the instance into DI without asking the consumer to write any provider wiring at all.
+**Why:** `createTable(data, config, ...features)` returns a **live store instance**, not a class — it is a component field, owned by the component's injection context and torn down with it (see `../1-state/architecture.md` and `createTable()`'s own JSDoc: "There is no DI token to provide or inject; consumers hold the returned instance directly"). An instance created at field level cannot appear in that same component's `providers: []`, so the class-provider approach is structurally impossible. Handing the instance to `ngpTable` as an input, and letting the _directive_ be the DI anchor, gets the instance into DI without asking the consumer to write any provider wiring at all.
 
 ```ts
 export const NGP_TABLE_STORE = new InjectionToken<NgpTableDirective>('NGP_TABLE_STORE');
@@ -44,7 +44,9 @@ export class NgpTableDirective {
 
 ```ts
 // Consumer — no providers block, no store class, no token
-@Component({ /* ... */ })
+@Component({
+  /* ... */
+})
 export class ProductsComponent {
   protected readonly data = signal(products);
   protected readonly table = createTable(
@@ -56,7 +58,9 @@ export class ProductsComponent {
 ```
 
 ```html
-<table [ngpTable]="table">…</table>
+<table [ngpTable]="table">
+  …
+</table>
 ```
 
 ```ts
@@ -69,9 +73,10 @@ export class NgpTableXDirective {
 ```
 
 **Rejected:**
+
 - `provideTableStore(StoreClass)` + class-aliasing token — the original decision here, invalidated when `createTable()` moved from returning a generated class to returning an instance (commit `58bc7bc`). There is no class to provide.
 - Consumer-authored `{ provide: NGP_TABLE_STORE, useValue: … }` — the instance is a field of the very component that would declare the provider; needs a factory + holder component to work at all. Pushes real wiring burden onto every consumer.
-- `[store]` input on *every* directive — maximum explicitness, but repeats the store on every `<th>`/`<td>`. The root-only input above gets the same explicitness at one site.
+- `[store]` input on _every_ directive — maximum explicitness, but repeats the store on every `<th>`/`<td>`. The root-only input above gets the same explicitness at one site.
 
 ---
 
@@ -79,31 +84,31 @@ export class NgpTableXDirective {
 
 Structural elements get one coarse directive each, always present. Interactive/optional behaviors (see [`sort.md`](sort.md), future `selection.md`/`resizing.md`/`drag-drop.md`) get one fine-grained directive each, stacked on top only when needed.
 
-No `*`-prefixed (Angular structural) directives anywhere in NGP Table — locked in `overview.md`. "Structural" in this document means *always-present, one-per-element*, unrelated to Angular's DOM-insertion sense of the word.
+No `*`-prefixed (Angular structural) directives anywhere in NGP Table — locked in `overview.md`. "Structural" in this document means _always-present, one-per-element_, unrelated to Angular's DOM-insertion sense of the word.
 
 ---
 
 ## Directive: `ngpTable`
 
-| Element | `<table>` |
-|---|---|
-| Role | Root directive and **store anchor**. Takes the `createTable()` instance as its input and provides *itself* under `NGP_TABLE_STORE` (see Store Connection Pattern above), so descendants resolve the store through DI without any consumer-authored providers. Also the anchor selector for `table[ngpTable]`-scoped styling. Instantiates nothing — the store's lifetime belongs to the component field that created it. |
-| Inputs | `[ngpTable]="table"` — required, the `createTable()` instance |
-| Notes | Coexists with `style="table-layout: fixed;"` when virtual scroll is in use (see `virtual-scroll.md`) |
+| Element | `<table>`                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Role    | Root directive and **store anchor**. Takes the `createTable()` instance as its input and provides _itself_ under `NGP_TABLE_STORE` (see Store Connection Pattern above), so descendants resolve the store through DI without any consumer-authored providers. Also the anchor selector for `table[ngpTable]`-scoped styling. Instantiates nothing — the store's lifetime belongs to the component field that created it. |
+| Inputs  | `[ngpTable]="table"` — required, the `createTable()` instance                                                                                                                                                                                                                                                                                                                                                            |
+| Notes   | Coexists with `style="table-layout: fixed;"` when virtual scroll is in use (see `virtual-scroll.md`)                                                                                                                                                                                                                                                                                                                     |
 
 ---
 
 ## Directive: `ngpTableRow`
 
-| Element | `<tr>` |
-|---|---|
-| Role | Row identity anchor. Carries the row's `RenderRow` and republishes it under `NGP_TABLE_ROW` so any row-scoped feature directive (selection, expansion, drag-drop) resolves the row through DI instead of taking its own duplicate input. |
-| Inputs | `[ngpTableRow]="renderRow"` — required on data rows (see below for header rows) |
-| Notes | Applies uniformly whether the row was rendered via native `@for` or CDK's `*cdkVirtualFor` — Angular permits a structural directive (CDK's) and attribute directives (`ngpTableRow`) stacked on the same element with no conflict (see `virtual-scroll.md`). |
+| Element | `<tr>`                                                                                                                                                                                                                                                       |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Role    | Row identity anchor. Carries the row's `RenderRow` and republishes it under `NGP_TABLE_ROW` so any row-scoped feature directive (selection, expansion, drag-drop) resolves the row through DI instead of taking its own duplicate input.                     |
+| Inputs  | `[ngpTableRow]="renderRow"` — required on data rows (see below for header rows)                                                                                                                                                                              |
+| Notes   | Applies uniformly whether the row was rendered via native `@for` or CDK's `*cdkVirtualFor` — Angular permits a structural directive (CDK's) and attribute directives (`ngpTableRow`) stacked on the same element with no conflict (see `virtual-scroll.md`). |
 
 **Decision (2026-07-31):** binds to `RenderRow<TRow>`, not to the raw `TRow` and not to a bare `RowId`.
 
-**Why `RenderRow` and not the row object:** `with-grouping.md` already commits the UI layer to consuming `renderRows()` rather than `rows()`, and group header rows are *not* `TRow`s — their `id` is synthesized (`` `group:${columnId}:${value}` ``) and their `data` is `null`. A directive that took `TRow` and derived `store.trackBy(row)` internally could not represent a group header at all, foreclosing `withGrouping()`'s render layer as specced.
+**Why `RenderRow` and not the row object:** `with-grouping.md` already commits the UI layer to consuming `renderRows()` rather than `rows()`, and group header rows are _not_ `TRow`s — their `id` is synthesized (`` `group:${columnId}:${value}` ``) and their `data` is `null`. A directive that took `TRow` and derived `store.trackBy(row)` internally could not represent a group header at all, foreclosing `withGrouping()`'s render layer as specced.
 
 **Why `RenderRow` and not a bare `RowId`:** the id alone handles synthetic group ids fine, but drops `depth` and `kind` — pushing grouping indentation and group-vs-data branching back into every consumer's template, and forcing feature directives that need the row object to look it up themselves.
 
@@ -149,12 +154,12 @@ export class NgpTableExpandToggleDirective {
 
 ## Directive: `ngpTableCell`
 
-| Element | `<td>` |
-|---|---|
-| Role | Data cell. Applies token-driven default styling + `data-*` attributes (e.g. `data-column-id`). No behavior logic yet (no click handling, no value formatting). |
-| Inputs | `[ngpTableCell]="columnId"` |
+| Element                             | `<td>`                                                                                                                                                                                                                                                                  |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Role                                | Data cell. Applies token-driven default styling + `data-*` attributes (e.g. `data-column-id`). No behavior logic yet (no click handling, no value formatting).                                                                                                          |
+| Inputs                              | `[ngpTableCell]="columnId"`                                                                                                                                                                                                                                             |
 | Why a directive and not bare markup | Kept minimal deliberately, so it's queryable/extensible later (e.g. via `@ContentChildren` or host injection) without a breaking template change — a future `ngpTableCellEdit` or `ngpTableDragHandle` could target it without altering the consumer's existing markup. |
-| Accessibility | No default `aria-label` (see `accessibility.md` — text content is the accessible name). No `aria-live` (see `accessibility.md` and `virtual-scroll.md` — CDK recycles `<td>` nodes; per-cell live regions would fire spurious announcements on scroll). |
+| Accessibility                       | No default `aria-label` (see `accessibility.md` — text content is the accessible name). No `aria-live` (see `accessibility.md` and `virtual-scroll.md` — CDK recycles `<td>` nodes; per-cell live regions would fire spurious announcements on scroll).                 |
 
 ```html
 <td [ngpTableCell]="col.id" [attr.data-column-id]="col.id">

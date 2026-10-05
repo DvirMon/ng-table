@@ -3,17 +3,17 @@
 **Issue:** #114
 **Status:** 9 / 9 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | Grouping ids validate at construction and on the writer | ✅ done | — |
-| 2 | Both cluster walks read the accessor | ✅ done | — |
-| 3 | Re-key the grouping surface to `TId` | ✅ done | — |
-| 4 | `applyAggregate` keys by column id | ✅ done | — |
-| 5 | Delete the raw-name label tier and the levels filter | ✅ done | — |
-| 6 | The two-walks gate spec | ✅ done | — |
-| 7 | The public-surface spec | ✅ done | — |
-| 8 | Stories and fixtures migrate | ✅ done | — |
-| 9 | Docs, decisions and `llms.txt` | ✅ done | — |
+| Step | Title                                                   | Status  | PR  |
+| ---- | ------------------------------------------------------- | ------- | --- |
+| 1    | Grouping ids validate at construction and on the writer | ✅ done | —   |
+| 2    | Both cluster walks read the accessor                    | ✅ done | —   |
+| 3    | Re-key the grouping surface to `TId`                    | ✅ done | —   |
+| 4    | `applyAggregate` keys by column id                      | ✅ done | —   |
+| 5    | Delete the raw-name label tier and the levels filter    | ✅ done | —   |
+| 6    | The two-walks gate spec                                 | ✅ done | —   |
+| 7    | The public-surface spec                                 | ✅ done | —   |
+| 8    | Stories and fixtures migrate                            | ✅ done | —   |
+| 9    | Docs, decisions and `llms.txt`                          | ✅ done | —   |
 
 ## Execution graph
 

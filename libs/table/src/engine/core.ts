@@ -48,15 +48,11 @@ export interface TableCoreHandle<TRow> {
  * (`baseColumns`, `data`), the derived `columns`, and the pipeline computeds. Knows nothing
  * about features.
  */
-export function createTableCore<TRow>(
-  config: TableEngineConfig<TRow>
-): TableCoreHandle<TRow> {
+export function createTableCore<TRow>(config: TableEngineConfig<TRow>): TableCoreHandle<TRow> {
   // Normalized once at construction so there's zero branching at render/comparison time.
   const trackBy = normalizeTrackBy(config.trackBy);
 
-  const baseColumns = signal<ColumnDef<TRow>[]>(
-    resolveColumnDefs(config.columns, 'createTable')
-  );
+  const baseColumns = signal<ColumnDef<TRow>[]>(resolveColumnDefs(config.columns, 'createTable'));
   const columnRules: ColumnRuleEntry<TRow>[] = [];
   const columns = computed(() => foldColumnRules(baseColumns(), columnRules));
   const renderColumns = computed(() => selectRenderColumns(columns()));
@@ -70,9 +66,7 @@ export function createTableCore<TRow>(
   // starts from.
   const seedRenderNodes = buildDefaultRenderNodes(trackBy);
 
-  const rows = computed(() =>
-    runPipeline(config.data(), stages, { parentOf: parentLink.value })
-  );
+  const rows = computed(() => runPipeline(config.data(), stages, { parentOf: parentLink.value }));
 
   // Unions every contributed `expandedRows` set for `flattenVisible`. `undefined` when zero
   // features contributed the slot (a no-op — everything stays open); a defined — possibly
@@ -139,7 +133,7 @@ export function createTableCore<TRow>(
   const core: TableCore<TRow> = {
     columns: createWritableView(
       () => columns(),
-      (updater) => baseColumns.update(updater)
+      (updater) => baseColumns.update(updater),
     ),
     baseColumns: baseColumns.asReadonly(),
     rows,
@@ -149,8 +143,7 @@ export function createTableCore<TRow>(
     indexById,
     value: createWritableView(
       () => config.data(),
-      (updater) =>
-        config.data.update((rows) => updater(rows, { trackBy, indexById: indexById() }))
+      (updater) => config.data.update((rows) => updater(rows, { trackBy, indexById: indexById() })),
     ),
   };
 

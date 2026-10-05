@@ -17,12 +17,12 @@ describe('rowsBeneathGroup', () => {
   // rows) and never accepts `expandedRows` or `renderRows()` output — there is no collapse-
   // related parameter to even pass, which is the whole point of D17's rewrite.
 
-  it("a depth-0 group id returns every leaf under all of its sub-clusters", () => {
+  it('a depth-0 group id returns every leaf under all of its sub-clusters', () => {
     const result = rowsBeneathGroup(
       orders,
       ['region', 'category'],
       columns,
-      'group:>region:string:US'
+      'group:>region:string:US',
     );
 
     expect(result.map((row) => row.id).sort()).toEqual([1, 3, 4]);
@@ -33,7 +33,7 @@ describe('rowsBeneathGroup', () => {
       orders,
       ['region', 'category'],
       columns,
-      'group:>region:string:US>category:string:Electronics'
+      'group:>region:string:US>category:string:Electronics',
     );
 
     expect(result.map((row) => row.id).sort()).toEqual([1, 4]);
@@ -42,16 +42,14 @@ describe('rowsBeneathGroup', () => {
 
   it('an id matching no cluster returns [], no throw', () => {
     expect(() =>
-      rowsBeneathGroup(orders, ['region', 'category'], columns, 'group:nope')
+      rowsBeneathGroup(orders, ['region', 'category'], columns, 'group:nope'),
     ).not.toThrow();
     expect(rowsBeneathGroup(orders, ['region', 'category'], columns, 'group:nope')).toEqual([]);
   });
 
   it('a malformed/non-group id returns [], no throw', () => {
     expect(rowsBeneathGroup(orders, ['region', 'category'], columns, 1)).toEqual([]);
-    expect(rowsBeneathGroup(orders, ['region', 'category'], columns, 'not-a-group-id')).toEqual(
-      []
-    );
+    expect(rowsBeneathGroup(orders, ['region', 'category'], columns, 'not-a-group-id')).toEqual([]);
   });
 });
 
@@ -76,7 +74,7 @@ describe('collectGroupIds — stability across a row reorder', () => {
     expect(
       rowsBeneathGroup(resorted, ['region', 'category'], columns, collapsed)
         .map((row) => row.id)
-        .sort()
+        .sort(),
     ).toEqual([1, 3, 4]);
   });
 });
@@ -93,7 +91,7 @@ describe('the three readers resolve levels through the accessor (Step 6, case 6)
 
   const salesColumns = resolveColumnDefs(
     [...createColumns(noData<Sale>(), (col) => [tierColumn(col)]).columns],
-    'queries.spec'
+    'queries.spec',
   );
 
   const sales: Sale[] = [
@@ -112,9 +110,7 @@ describe('the three readers resolve levels through the accessor (Step 6, case 6)
   it('collectGroupIds resolves a derived-accessor level', () => {
     const ids = collectGroupIds(sales, ['tier'], salesColumns);
 
-    expect([...ids].sort()).toEqual(
-      ['group:>tier:string:high', 'group:>tier:string:low'].sort()
-    );
+    expect([...ids].sort()).toEqual(['group:>tier:string:high', 'group:>tier:string:low'].sort());
   });
 
   it('collectAppliedLevels resolves a derived-accessor level', () => {
@@ -131,7 +127,7 @@ describe('group queries with treeLinks', () => {
       ['region'],
       treeOrderColumns,
       'group:>region:string:US',
-      treeOrderLinks
+      treeOrderLinks,
     );
 
     expect(result.map((row) => row.id)).toEqual([1, 3, 4, 5]);
@@ -139,7 +135,7 @@ describe('group queries with treeLinks', () => {
 
   it('with treeLinks, collects only group ids that roots produce at every level', () => {
     expect(
-      collectGroupIds(treeOrders, ['region', 'category'], treeOrderColumns, treeOrderLinks)
+      collectGroupIds(treeOrders, ['region', 'category'], treeOrderColumns, treeOrderLinks),
     ).toEqual([
       'group:>region:string:US',
       'group:>region:string:US>category:string:Electronics',
@@ -154,7 +150,7 @@ describe('group queries with treeLinks', () => {
       collectAppliedLevels(treeOrders, ['region'], treeOrderColumns, {
         ...treeOrderLinks,
         when: (state) => state.rows.length >= 4,
-      })
+      }),
     ).toEqual(['region']);
   });
 });

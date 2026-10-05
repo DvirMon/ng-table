@@ -17,7 +17,7 @@ Contract in [`spec.md`](spec.md); evidence in [`2-research.md`](2-research.md); 
 1. **Features carry no row type.** `TableFeature<TRow, Members>` is replaced by
    `Feature<In extends Shape, Out extends object>`, and the row type is recovered as `RowOf<In>`.
    (D20; reverses the rejection recorded in `docs/adr/0003-*` and
-   `docs/1-state/architecture.md` §"Rejected: inferring TRow into with-*() calls".)
+   `docs/1-state/architecture.md` §"Rejected: inferring TRow into with-\*() calls".)
 2. **Composition is positional**, `createTable(data, config, ...features)`, with per-arity
    overloads. Argument order governs member visibility only. (D21, D24.)
 3. **`with*` is reserved for optional features.** Rows and columns are required and stay a plain
@@ -47,20 +47,20 @@ Contract in [`spec.md`](spec.md); evidence in [`2-research.md`](2-research.md); 
 
 ## Current source — what each change lands against
 
-| File | Today | Change |
-|---|---|---|
-| `src/engine/types.ts` | `TableFeature<TRow, Members> = (core: TableCore<TRow>, composed: Record<string, unknown>) => TableFeatureSpec<TRow, Members>` | replaced by `Feature<In, Out>`; `composed` parameter removed entirely |
-| `src/api/types.ts` | `ComposedFeatureMembers<Features>` via `UnionToIntersection<FeatureMembers<…>>`; `TableStoreConfig<TRow, Features>`; `AnyTableFeature` with the doc comment asserting consumers must repeat `<TRow>` | intersection is now built by the overloads, so `ComposedFeatureMembers` goes; `TableStoreConfig` becomes the plain `TableConfig<TRow>` (adds `injector`); `AnyTableFeature`'s comment is false and must be rewritten |
-| `src/api/create-table.ts` | `createTable(data, optsFn, options?)`; calls `resolveColumnsConfig`, then `composeTable` inside `runInInjectionContext`, splicing `wireColumnsSchemaAsync(rules)` as feature 0; ends in a cast justified by ADR-0003 | signature becomes `createTable(data, config, ...features)` with N overloads; thunk and third parameter go; the splice stays (internal, ADR-0010 intact); the cast stays — it is still the static/dynamic boundary |
-| `src/api/table-schema.ts` | `createTableSchema()` builds the thunk, defaults `trackBy` to `'id'` | **deleted** (D25); call sites state `trackBy` explicitly |
-| `src/api/types.ts` `TableStore` | no `indexById` | gains `readonly indexById: Signal<ReadonlyMap<RowId, number>>` (D25) |
-| `src/api/features/with-grouping.ts` | reads `composed['expandedRows']` in the `group` render stage, guarded by `isExpandedRowsSignal` | same read against the store handed in — lazy and guarded, any argument order (D25) |
-| `src/engine/compose-table.ts` | `foldFeatures()` calls `feature(core, composed)` in array order, merging members into a shared `composed`; store assembled as `Object.assign({columns, rows, trackBy, value, renderRows, totalRowCount}, composed)` — **`composed` spread last, which is the shadowing hole** | fold passes the accumulating store instead of `(core, composed)`; core keys claimed before the fold; derive features run in slot order like any other |
-| `src/engine/slots.ts` | `SlotRegistry.claimMember`; `describeFeature(index)` → `features[${index}]`, **off by one** for consumers because the column-schema wiring is spliced as feature 0 | pre-claim core keys with a `core` claimant label; labels become argument positions (consumer's first feature is position 1) and name a derive block distinctly |
-| `src/engine/core.ts` | `createTableCore()` → `TableCoreHandle`; `rows` is the pipeline output, `renderRows` on the handle | unchanged |
-| `src/api/create-table-feature.ts` | identity helper typed `TableFeature<TRow, Members>` | re-typed to `Feature<In, Out>`; gains the one-time derive-block plumbing (call the block with `input & ownMembers`, merge its `Out`) so every feature — first- or third-party — accepts a trailing `withComputed()` with no per-feature code |
-| `src/api/features/with-*.ts` (7 features) | `withX<TRow = unknown>(config): createTableFeature<TRow, XMembers>(...)` | each becomes `withX<In extends Shape, D extends DerivedDict = {}>(config?, derive?)`; row-typed config becomes `RowOf<In>`-typed; each gains the optional derive parameter |
-| `src/index.ts` | exports features, `createTableFeature`, `ComposedFeatureMembers` | add `withComputed`, `composeFeatures`; drop the removed types |
+| File                                      | Today                                                                                                                                                                                                                                                                         | Change                                                                                                                                                                                                                                       |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/engine/types.ts`                     | `TableFeature<TRow, Members> = (core: TableCore<TRow>, composed: Record<string, unknown>) => TableFeatureSpec<TRow, Members>`                                                                                                                                                 | replaced by `Feature<In, Out>`; `composed` parameter removed entirely                                                                                                                                                                        |
+| `src/api/types.ts`                        | `ComposedFeatureMembers<Features>` via `UnionToIntersection<FeatureMembers<…>>`; `TableStoreConfig<TRow, Features>`; `AnyTableFeature` with the doc comment asserting consumers must repeat `<TRow>`                                                                          | intersection is now built by the overloads, so `ComposedFeatureMembers` goes; `TableStoreConfig` becomes the plain `TableConfig<TRow>` (adds `injector`); `AnyTableFeature`'s comment is false and must be rewritten                         |
+| `src/api/create-table.ts`                 | `createTable(data, optsFn, options?)`; calls `resolveColumnsConfig`, then `composeTable` inside `runInInjectionContext`, splicing `wireColumnsSchemaAsync(rules)` as feature 0; ends in a cast justified by ADR-0003                                                          | signature becomes `createTable(data, config, ...features)` with N overloads; thunk and third parameter go; the splice stays (internal, ADR-0010 intact); the cast stays — it is still the static/dynamic boundary                            |
+| `src/api/table-schema.ts`                 | `createTableSchema()` builds the thunk, defaults `trackBy` to `'id'`                                                                                                                                                                                                          | **deleted** (D25); call sites state `trackBy` explicitly                                                                                                                                                                                     |
+| `src/api/types.ts` `TableStore`           | no `indexById`                                                                                                                                                                                                                                                                | gains `readonly indexById: Signal<ReadonlyMap<RowId, number>>` (D25)                                                                                                                                                                         |
+| `src/api/features/with-grouping.ts`       | reads `composed['expandedRows']` in the `group` render stage, guarded by `isExpandedRowsSignal`                                                                                                                                                                               | same read against the store handed in — lazy and guarded, any argument order (D25)                                                                                                                                                           |
+| `src/engine/compose-table.ts`             | `foldFeatures()` calls `feature(core, composed)` in array order, merging members into a shared `composed`; store assembled as `Object.assign({columns, rows, trackBy, value, renderRows, totalRowCount}, composed)` — **`composed` spread last, which is the shadowing hole** | fold passes the accumulating store instead of `(core, composed)`; core keys claimed before the fold; derive features run in slot order like any other                                                                                        |
+| `src/engine/slots.ts`                     | `SlotRegistry.claimMember`; `describeFeature(index)` → `features[${index}]`, **off by one** for consumers because the column-schema wiring is spliced as feature 0                                                                                                            | pre-claim core keys with a `core` claimant label; labels become argument positions (consumer's first feature is position 1) and name a derive block distinctly                                                                               |
+| `src/engine/core.ts`                      | `createTableCore()` → `TableCoreHandle`; `rows` is the pipeline output, `renderRows` on the handle                                                                                                                                                                            | unchanged                                                                                                                                                                                                                                    |
+| `src/api/create-table-feature.ts`         | identity helper typed `TableFeature<TRow, Members>`                                                                                                                                                                                                                           | re-typed to `Feature<In, Out>`; gains the one-time derive-block plumbing (call the block with `input & ownMembers`, merge its `Out`) so every feature — first- or third-party — accepts a trailing `withComputed()` with no per-feature code |
+| `src/api/features/with-*.ts` (7 features) | `withX<TRow = unknown>(config): createTableFeature<TRow, XMembers>(...)`                                                                                                                                                                                                      | each becomes `withX<In extends Shape, D extends DerivedDict = {}>(config?, derive?)`; row-typed config becomes `RowOf<In>`-typed; each gains the optional derive parameter                                                                   |
+| `src/index.ts`                            | exports features, `createTableFeature`, `ComposedFeatureMembers`                                                                                                                                                                                                              | add `withComputed`, `composeFeatures`; drop the removed types                                                                                                                                                                                |
 
 ## Types to add
 
@@ -85,7 +85,7 @@ export type ReadonlyStore<S> = {
   readonly [K in keyof S]: S[K] extends WritableView<infer T, any> ? Signal<T> : S[K];
 };
 export declare function withComputed<In extends Shape, D extends DerivedDict>(
-  factory: (store: ReadonlyStore<In>) => D
+  factory: (store: ReadonlyStore<In>) => D,
 ): Feature<In, D>;
 export interface TableConfig<TRow> {
   trackBy: TrackByConfig<TRow>;
@@ -100,7 +100,7 @@ Feature signature, both placements in one declaration (verified, `probe-r4-direc
 ```ts
 export declare function withSelection<In extends Shape, D extends DerivedDict = {}>(
   a?: WithSelectionConfig<RowOf<In>> | Feature<In & SelectionMembers, D>,
-  b?: Feature<In & SelectionMembers, D>
+  b?: Feature<In & SelectionMembers, D>,
 ): Feature<In, SelectionMembers & D>;
 ```
 
@@ -112,7 +112,7 @@ export declare function createTable<TRow, O1 extends object, O2 extends object>(
   data: TableDataInput<TRow>,
   config: TableConfig<TRow>,
   f1: Feature<TableStore<TRow>, O1>,
-  f2: Feature<TableStore<TRow> & O1, O2>
+  f2: Feature<TableStore<TRow> & O1, O2>,
 ): TableStore<TRow> & O1 & O2;
 ```
 
@@ -136,7 +136,7 @@ the store built so far":
 1. build core (`createTableCore`), claim the core member keys (`rows`, `value`, `columns`,
    `trackBy`, `renderRows` — **not** `totalRowCount`);
 2. build the base store object once, so `renderRows` and `totalRowCount` exist before any feature
-   runs — today `totalRowCount` is built *after* `foldFeatures`, which must move;
+   runs — today `totalRowCount` is built _after_ `foldFeatures`, which must move;
 3. for each feature argument in order: call it with the accumulating store, claim its members,
    assign them onto that same object. A derive feature is not special-cased — it returns members
    like anything else. The fold performs **no** signal check: an ordinary feature's members include
@@ -155,23 +155,23 @@ Step 2 is the ordering fix that D8 identified: a derive block's parameter type i
 
 ## File layout for implementation
 
-| File | Action |
-|---|---|
-| `src/engine/types.ts` | edit — `Feature`, `Shape`, `RowOf`; delete `TableFeature` |
-| `src/engine/compose-table.ts` | edit — fold rewrite, base store built first, core-key claims |
-| `src/engine/slots.ts` | edit — core-key pre-claim, claimant labels |
-| `src/api/types.ts` | edit — `TableConfig`, `DerivedDict`; delete `ComposedFeatureMembers`, `TableStoreConfig`; rewrite `AnyTableFeature` doc |
-| `src/api/create-table.ts` | edit — new signature + overloads |
-| `src/api/create-table-feature.ts` | edit — re-typed |
-| `src/api/table-schema.ts` | delete (D25) |
-| `tools/generate-overloads.ts` (name indicative) | **new** — emits the 15 `createTable` + 15 `composeFeatures` overloads; a check target diffs committed output (D27) |
-| `src/api/features/with-computed.ts` | **new** — `withComputed()` |
-| `src/api/features/compose-features.ts` | **new** — `composeFeatures()` |
-| `src/api/features/with-{sorting,filtering,grouping,selection,expansion,row-edit,optimistic}.ts` | edit — one per feature, each with its own spec updated in the same change |
-| `src/api/create-table.spec.ts` | edit — runtime cases + `expectTypeOf` type cases (the two agreed seams) |
-| `src/engine/compose-table.spec.ts`, `src/engine/slots.spec.ts` | edit — fold and claim coverage |
-| `src/index.ts` | edit — export the two new features, drop removed types |
-| `docs/adr/0003-*`, `docs/adr/0005-*`, `docs/adr/0007-*`, `docs/adr/0014-*`, `docs/1-state/architecture.md`, `docs/1-state/state-persistence.md`, `CLAUDE.md` (composition example, the false "no feature uses `composed`" line, migration before/after table) | edit — see the owed-docs list in `3-decisions.md` |
+| File                                                                                                                                                                                                                                                          | Action                                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `src/engine/types.ts`                                                                                                                                                                                                                                         | edit — `Feature`, `Shape`, `RowOf`; delete `TableFeature`                                                               |
+| `src/engine/compose-table.ts`                                                                                                                                                                                                                                 | edit — fold rewrite, base store built first, core-key claims                                                            |
+| `src/engine/slots.ts`                                                                                                                                                                                                                                         | edit — core-key pre-claim, claimant labels                                                                              |
+| `src/api/types.ts`                                                                                                                                                                                                                                            | edit — `TableConfig`, `DerivedDict`; delete `ComposedFeatureMembers`, `TableStoreConfig`; rewrite `AnyTableFeature` doc |
+| `src/api/create-table.ts`                                                                                                                                                                                                                                     | edit — new signature + overloads                                                                                        |
+| `src/api/create-table-feature.ts`                                                                                                                                                                                                                             | edit — re-typed                                                                                                         |
+| `src/api/table-schema.ts`                                                                                                                                                                                                                                     | delete (D25)                                                                                                            |
+| `tools/generate-overloads.ts` (name indicative)                                                                                                                                                                                                               | **new** — emits the 15 `createTable` + 15 `composeFeatures` overloads; a check target diffs committed output (D27)      |
+| `src/api/features/with-computed.ts`                                                                                                                                                                                                                           | **new** — `withComputed()`                                                                                              |
+| `src/api/features/compose-features.ts`                                                                                                                                                                                                                        | **new** — `composeFeatures()`                                                                                           |
+| `src/api/features/with-{sorting,filtering,grouping,selection,expansion,row-edit,optimistic}.ts`                                                                                                                                                               | edit — one per feature, each with its own spec updated in the same change                                               |
+| `src/api/create-table.spec.ts`                                                                                                                                                                                                                                | edit — runtime cases + `expectTypeOf` type cases (the two agreed seams)                                                 |
+| `src/engine/compose-table.spec.ts`, `src/engine/slots.spec.ts`                                                                                                                                                                                                | edit — fold and claim coverage                                                                                          |
+| `src/index.ts`                                                                                                                                                                                                                                                | edit — export the two new features, drop removed types                                                                  |
+| `docs/adr/0003-*`, `docs/adr/0005-*`, `docs/adr/0007-*`, `docs/adr/0014-*`, `docs/1-state/architecture.md`, `docs/1-state/state-persistence.md`, `CLAUDE.md` (composition example, the false "no feature uses `composed`" line, migration before/after table) | edit — see the owed-docs list in `3-decisions.md`                                                                       |
 
 Ordering constraint for tasks: `slots.ts` core-key pre-claim is a **prerequisite** and lands first;
 `engine/types.ts` + `compose-table.ts` next; then `create-table.ts`; then the seven features in

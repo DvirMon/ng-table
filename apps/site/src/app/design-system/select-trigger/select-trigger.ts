@@ -46,7 +46,8 @@ export class SelectTrigger {
 
   readonly valueChange = output<string>();
 
-  private readonly menu = viewChild.required<TemplateRef<NgpOverlayTemplateContext<unknown>>>('menu');
+  private readonly menu =
+    viewChild.required<TemplateRef<NgpOverlayTemplateContext<unknown>>>('menu');
 
   protected readonly open = withMenuTriggerPanel(this.menu).open;
 

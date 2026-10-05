@@ -44,7 +44,7 @@ Sidebar Navigation layout region: those two tokens are already resolved and wait
 ## Negative horizontal margin value
 
 Spec Notes say "Negative 10px horizontal margin so the row full-bleeds inside the 20px sidebar
-padding (`--ngpt-sys-space-500`)" but only cites the *sidebar's* token (space-500 = 20px) for
+padding (`--ngpt-sys-space-500`)" but only cites the _sidebar's_ token (space-500 = 20px) for
 context, not a token for the 10px margin itself — no dedicated margin token exists in the spec's
 token list. 10px equals `--ngpt-sys-space-250`, already used for the item's own horizontal
 padding, so reused that token (`margin-inline: calc(var(--ngpt-sys-space-250) * -1)`) rather than
@@ -60,11 +60,11 @@ of the host's own `display`).
 
 ## Converted to `a[ngptNavItem]` — ADR-0005
 
-| | Was | Now |
-|---|---|---|
-| Selector | `ngpt-nav-item` (element) | `a[ngptNavItem]` (attribute, camelCase) |
-| Host | inert `<ngpt-nav-item>` wrapping an inner `<a class="nav-item">` | the consumer's own `<a>` |
-| Inputs | `active`, `nested`, `href` | `active`, `nested` |
+|          | Was                                                              | Now                                     |
+| -------- | ---------------------------------------------------------------- | --------------------------------------- |
+| Selector | `ngpt-nav-item` (element)                                        | `a[ngptNavItem]` (attribute, camelCase) |
+| Host     | inert `<ngpt-nav-item>` wrapping an inner `<a class="nav-item">` | the consumer's own `<a>`                |
+| Inputs   | `active`, `nested`, `href`                                       | `active`, `nested`                      |
 
 Per [ADR-0005](../../../../../docs/adr/0005-attribute-hosted-components.md). This domain is one of
 the ADR's own named examples: it "splits state across two elements — `data-active` on the host and
@@ -76,7 +76,7 @@ the ADR's own named examples: it "splits state across two elements — `data-act
 
 The "`href` input added beyond the fixed contract" section above argued for `href = input('#')`
 because an anchor with no `href` is not focusable and the spec's Focus state would be unreachable.
-That reasoning was correct *given a wrapper*: the component owned the only `<a>` in play, so if it
+That reasoning was correct _given a wrapper_: the component owned the only `<a>` in play, so if it
 did not supply an `href` nobody could. Attribute-hosted, the consumer authors the `<a>` and its
 `href` directly, so the concern dissolves — and the `'#'` default goes with it. That default was
 always a placeholder standing in for a route the sidebar had not been built to supply yet; the
@@ -91,8 +91,8 @@ additionally drives `aria-current="page"`, which the spec's `a11y` front-matter 
 ### Both need `transform: booleanAttribute`
 
 CONVENTIONS.md rule 1 scopes the requirement to "a boolean input mirroring a native attribute",
-and strictly neither of these does. Applied anyway, because the failure mode is about the *call
-form*, not about nativeness: both are set as bare attributes (`<a ngptNavItem active>`), which
+and strictly neither of these does. Applied anyway, because the failure mode is about the _call
+form_, not about nativeness: both are set as bare attributes (`<a ngptNavItem active>`), which
 passes the string `''` — falsy — so without the transform `data-active` and `aria-current` would
 never be applied and only `[active]="true"` would work. That is precisely the defect that got
 `pill-button`'s `disabled` input deleted. Reading the rule narrowly here would ship the bug it
@@ -106,7 +106,7 @@ nothing would flag the mistake at build time.
 
 `.nav-item` rules moved to `:host` and its state rules from `:host([data-active]) .nav-item` to
 `:host([data-active])`. `:host { display: contents }` is gone — it existed only to keep the wrapper
-from becoming the sidebar's flex item instead of the anchor; the anchor now *is* the host, so it is
+from becoming the sidebar's flex item instead of the anchor; the anchor now _is_ the host, so it is
 the flex child directly, which is what the mock's `.sidebar-nav > a` shape always assumed.
 `display: block` is retained on `:host` so the row full-bleeds across the column and the
 padding/left-border box applies (an `<a>` is inline by default).

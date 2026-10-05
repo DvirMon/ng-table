@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — re-derive selection coverage marks and clear the doc drift"
+title: 'Step 4 — re-derive selection coverage marks and clear the doc drift'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: I
@@ -39,7 +39,7 @@ the same files.
 ## What To Do
 
 1. **`0-product/selection.md`** — re-derive all 22 story marks from the shipped stories. ✅ only
-   where the behavior *and* its failure path render. Replace the blanket "every story is ❌, verified
+   where the behavior _and_ its failure path render. Replace the blanket "every story is ❌, verified
    2026-09-12" paragraph and the 2026-09-13 correction note. Marks that must stay explicit:
    - §1.3 shift-click range and §4.2 Shift+Arrow — ❌, **blocked on node H** (the undrilled selection
      directive), not skipped. 4 of 5 peers ship shift-click; H's priority rises accordingly.
@@ -86,4 +86,5 @@ the same files.
 - [ ] The gap analysis status reflects what shipped, and node H is named as the remaining blocker.
 
 ---
+
 ← [Step 3: single-selection/](step-3-single-selection-story.plan.md)

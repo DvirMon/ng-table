@@ -33,10 +33,7 @@ shipped updaters — `addRow`, `removeRow`, `patchRow`. No mutation method goes 
     * The raw-lambda form `rows => rows.filter(...)` satisfies this type too; it just ignores
     * `ctx`.
     */
-   export type RowUpdater<TRow> = (
-     rows: TRow[],
-     ctx: { trackBy: TrackByFn<TRow> }
-   ) => TRow[];
+   export type RowUpdater<TRow> = (rows: TRow[], ctx: { trackBy: TrackByFn<TRow> }) => TRow[];
    ```
 
 2. `api/row-mutations.ts` (new file) — mirrors `api/column-rules.ts`'s shape (free functions,
@@ -74,10 +71,7 @@ shipped updaters — `addRow`, `removeRow`, `patchRow`. No mutation method goes 
 
    /** Free function, store first — mirrors `patchState(store, updater)` (D6). Writes through
     * to the consumer's `WritableSignal` (D3/D4); the store gains no write method of its own. */
-   export function updateRows<TRow>(
-     table: TableStore<TRow>,
-     updater: RowUpdater<TRow>
-   ): void {
+   export function updateRows<TRow>(table: TableStore<TRow>, updater: RowUpdater<TRow>): void {
      const { data, trackBy } = table as TableStore<TRow> & Pick<TableCore<TRow>, 'data'>;
      data.update((rows) => updater(rows, { trackBy }));
    }
@@ -126,4 +120,5 @@ shipped updaters — `addRow`, `removeRow`, `patchRow`. No mutation method goes 
 - [ ] `nx typecheck shared-design-system` passes
 
 ---
+
 ← [Step 1: Expose data on TableCore for write-back](step-1-expose-data-on-core.plan.md) | [Step 3: Unit tests for row mutations](step-3-row-mutations-tests.plan.md) →

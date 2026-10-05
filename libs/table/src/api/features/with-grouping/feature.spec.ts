@@ -83,7 +83,7 @@ function makeWidenedColumns(): ColumnSet<
  * assertions below and the `when` cases (#85). Generic over any row shape carrying a
  * numeric `id`, so it also serves the local `when`-only fixtures below. */
 function toShape<TRow extends { id: number }>(
-  rows: readonly { kind: string; depth: number; data: TRow | null }[]
+  rows: readonly { kind: string; depth: number; data: TRow | null }[],
 ): [string, number, number | undefined][] {
   return rows.map((row) => [row.kind, row.depth, row.data?.id]);
 }
@@ -96,7 +96,10 @@ function inContext<T>(build: () => T): T {
 /** Drops id 2 (US > Electronics, amount 300) — shared so stores that must be provably identical
  * (pipeline-order argument swap) reuse one schema instead of two independently-constant ones. */
 const excludeAmount300 = (
-  path: FiltersPath<GroupingMockRow, ColumnValues<GroupingMockRow, ReturnType<typeof makeColumns>['columns']>>
+  path: FiltersPath<
+    GroupingMockRow,
+    ColumnValues<GroupingMockRow, ReturnType<typeof makeColumns>['columns']>
+  >,
 ) => ({
   amount: filter(path.amount, (cell) => cell !== 300, { emptyValue: null, isEmpty: () => false }),
 });
@@ -107,8 +110,8 @@ describe('withGrouping', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping()
-      )
+        withGrouping(),
+      ),
     );
 
     expect(store.grouping()).toEqual([]);
@@ -127,9 +130,9 @@ describe('withGrouping', () => {
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withGrouping(
           { initial: ['region'] },
-          withComputed((s) => ({ levels: computed(() => s.grouping().length) }))
-        )
-      )
+          withComputed((s) => ({ levels: computed(() => s.grouping().length) })),
+        ),
+      ),
     );
 
     expect(store.levels()).toBe(1);
@@ -144,8 +147,8 @@ describe('withGrouping', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] })
-      )
+        withGrouping({ initial: ['region', 'category'] }),
+      ),
     );
 
     const rows = store.renderRows();
@@ -174,7 +177,7 @@ describe('withGrouping', () => {
     expect(leafIds).toEqual([1, 2, 3, 4, 5, 6]);
   });
 
-  it('depth-correctness: a parent header aggregates its true leaves, not an average of its children\'s averages', () => {
+  it("depth-correctness: a parent header aggregates its true leaves, not an average of its children's averages", () => {
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
@@ -182,15 +185,15 @@ describe('withGrouping', () => {
         withGrouping({
           initial: ['region', 'category'],
           schema: (path) => aggregate(path.amount, avgAmount),
-        })
-      )
+        }),
+      ),
     );
 
     // Depth-0 headers are emitted US-then-EU — US is the first region encountered while
     // walking `mockGroupingRows` in order (see the two-level-grouping case above).
-    const [usHeader, euHeader] = store.renderRows().filter(
-      (row) => row.kind === 'group' && row.depth === 0
-    );
+    const [usHeader, euHeader] = store
+      .renderRows()
+      .filter((row) => row.kind === 'group' && row.depth === 0);
 
     // True leaf average across all 3 US rows: (100 + 300 + 50) / 3 = 150. A naive average of
     // the two category averages (200, 50) would give 125 — the bug this case catches.
@@ -203,8 +206,8 @@ describe('withGrouping', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] })
-      )
+        withGrouping({ initial: ['region', 'category'] }),
+      ),
     );
 
     const rows = store.renderRows();
@@ -218,8 +221,8 @@ describe('withGrouping', () => {
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withGrouping({ initial: ['region'] }),
-        withSorting()
-      )
+        withSorting(),
+      ),
     );
 
     store.setSorting([{ columnId: 'amount', direction: 'desc' }]);
@@ -229,8 +232,14 @@ describe('withGrouping', () => {
     // 1 US header + 3 US leaves, then 1 EU header + 3 EU leaves — sorting the grouped column's
     // leaves must never merge, split, or reorder the clusters themselves.
     expect(rows.map((row) => row.kind)).toEqual([
-      'group', 'row', 'row', 'row',
-      'group', 'row', 'row', 'row',
+      'group',
+      'row',
+      'row',
+      'row',
+      'group',
+      'row',
+      'row',
+      'row',
     ]);
 
     const usLeafIds = rows.slice(1, 4).map((row) => (row.data as GroupingMockRow).id);
@@ -251,13 +260,11 @@ describe('withGrouping', () => {
         withGrouping({
           initial: ['region', 'category'],
           schema: (path) => aggregate(path.amount, avgAmount),
-        })
-      )
+        }),
+      ),
     );
 
-    const usHeader = store
-      .renderRows()
-      .find((row) => row.kind === 'group' && row.depth === 0);
+    const usHeader = store.renderRows().find((row) => row.kind === 'group' && row.depth === 0);
 
     // Without the filter, the US average is 150 (see the depth-correctness case). With id 2
     // excluded, the remaining US rows (100, 50) average to 75 — proving `aggregateFn` only
@@ -273,10 +280,9 @@ describe('withGrouping', () => {
         withFiltering({ schema: excludeAmount300 }),
         withGrouping({
           initial: ['region'],
-          schema: (path) =>
-            groupOrder(path.region, (a, b) => b.rows.length - a.rows.length),
-        })
-      )
+          schema: (path) => groupOrder(path.region, (a, b) => b.rows.length - a.rows.length),
+        }),
+      ),
     );
 
     // Unfiltered, US and EU are tied at 3 rows each, so a comparator ranking by raw size would
@@ -303,8 +309,8 @@ describe('withGrouping', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region'] })
-      )
+        withGrouping({ initial: ['region'] }),
+      ),
     );
 
     const groupIds = store
@@ -323,8 +329,8 @@ describe('withGrouping', () => {
         withGrouping({
           initial: ['region', 'category'],
           schema: (path) => groupOrder(path.category, (a, b) => b.rows.length - a.rows.length),
-        })
-      )
+        }),
+      ),
     );
 
     const rows = store.renderRows();
@@ -361,8 +367,8 @@ describe('withGrouping', () => {
           // stays on the stable admission-partition default at every depth.
           schema: (path) =>
             groupOrder(path.region, (a, b) => String(a.key).localeCompare(String(b.key))),
-        })
-      )
+        }),
+      ),
     );
 
     const rows = store.renderRows();
@@ -389,8 +395,8 @@ describe('withGrouping', () => {
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withGrouping({ initial: ['region'] }),
-        withSorting()
-      )
+        withSorting(),
+      ),
     );
 
     const unsortedClusterOrder = store
@@ -419,8 +425,8 @@ describe('withGrouping', () => {
             groupOrder(path.region, (a, b) => String(b.key).localeCompare(String(a.key)));
           },
         }),
-        withSorting()
-      )
+        withSorting(),
+      ),
     );
     const headerKeys = (): unknown[] =>
       store
@@ -450,8 +456,8 @@ describe('withGrouping', () => {
               groupOrder(path.region, () => {
                 throw new Error('boom');
               }),
-          })
-        )
+          }),
+        ),
       );
 
       expect(() => store.renderRows()).not.toThrow();
@@ -478,8 +484,8 @@ describe('withGrouping', () => {
             groupOrder(path.region, (a, b) => String(a.key).localeCompare(String(b.key)));
             groupOrder(path.category, (a, b) => b.rows.length - a.rows.length);
           },
-        })
-      )
+        }),
+      ),
     );
 
     const rows = store.renderRows();
@@ -515,8 +521,8 @@ describe('withGrouping', () => {
             // 'amount' is never grouped by (not in `initial`, never named by `grouping`) —
             // this comparator has no active level to attach to and must never run.
             groupOrder(path.amount, (a, b) => String(b.key).localeCompare(String(a.key))),
-        })
-      )
+        }),
+      ),
     );
 
     expect(() => store.renderRows()).not.toThrow();
@@ -538,8 +544,8 @@ describe('withGrouping', () => {
         withGrouping({
           initial: ['region', 'category'],
           schema: (path) => aggregate(path.amount, avgAmount),
-        })
-      )
+        }),
+      ),
     );
 
     expect(store.renderRows()).toHaveLength(12);
@@ -559,14 +565,14 @@ describe('withGrouping', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region'] })
-      )
+        withGrouping({ initial: ['region'] }),
+      ),
     );
 
     const rows = store.renderRows();
     const usHeader = rows.find((row) => row.kind === 'group' && row.groupKey?.value === 'US')!;
     const usLeaves = rows.filter(
-      (row) => row.kind === 'row' && (row.data as GroupingMockRow).region === 'US'
+      (row) => row.kind === 'row' && (row.data as GroupingMockRow).region === 'US',
     );
 
     expect(usLeaves.length).toBeGreaterThan(0);
@@ -578,13 +584,13 @@ describe('withGrouping', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] })
-      )
+        withGrouping({ initial: ['region', 'category'] }),
+      ),
     );
 
     const rows = store.renderRows();
     const usHeader = rows.find(
-      (row) => row.kind === 'group' && row.depth === 0 && row.groupKey?.value === 'US'
+      (row) => row.kind === 'group' && row.depth === 0 && row.groupKey?.value === 'US',
     )!;
     const usChildHeaders = rows.filter((row) => row.kind === 'group' && row.depth === 1);
 
@@ -598,8 +604,8 @@ describe('withGrouping', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] })
-      )
+        withGrouping({ initial: ['region', 'category'] }),
+      ),
     );
 
     const topLevelHeaders = store
@@ -615,8 +621,8 @@ describe('withGrouping', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping()
-      )
+        withGrouping(),
+      ),
     );
 
     const rows = store.renderRows();
@@ -635,9 +641,9 @@ describe('unknown column ids throw (AC #4)', () => {
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeWidenedColumns() },
-          withGrouping({ initial: ['nope'] })
-        )
-      )
+          withGrouping({ initial: ['nope'] }),
+        ),
+      ),
     ).toThrow(/\[withGrouping\].*"nope"/);
   });
 
@@ -650,9 +656,9 @@ describe('unknown column ids throw (AC #4)', () => {
           withGrouping({
             initial: ['region'],
             schema: (path) => grouping(path['nope'], { enable: () => true }),
-          })
-        )
-      )
+          }),
+        ),
+      ),
     ).toThrow(/\[withGrouping\].*"nope"/);
   });
 
@@ -665,9 +671,9 @@ describe('unknown column ids throw (AC #4)', () => {
           withGrouping({
             initial: ['region'],
             schema: (path) => aggregate(path['nope'], (rows) => rows.length),
-          })
-        )
-      )
+          }),
+        ),
+      ),
     ).toThrow(/\[withGrouping\].*"nope"/);
   });
 
@@ -676,14 +682,14 @@ describe('unknown column ids throw (AC #4)', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region'] })
-      )
+        withGrouping({ initial: ['region'] }),
+      ),
     );
 
     expect(() => store.grouping.update(addGroupLevel('nope'))).toThrow(/\[withGrouping\].*"nope"/);
   });
 
-  it('G76: construction is dev-only — withGrouping({ initial: [\'nope\'] }) builds without throwing when ngDevMode is false', () => {
+  it("G76: construction is dev-only — withGrouping({ initial: ['nope'] }) builds without throwing when ngDevMode is false", () => {
     const previous = getNgDevMode();
     setNgDevMode(false);
     try {
@@ -692,9 +698,9 @@ describe('unknown column ids throw (AC #4)', () => {
           createTable(
             signal<GroupingMockRow[]>(mockGroupingRows),
             { trackBy: mockGroupingTrackBy, columns: makeWidenedColumns() },
-            withGrouping({ initial: ['nope'] })
-          )
-        )
+            withGrouping({ initial: ['nope'] }),
+          ),
+        ),
       ).not.toThrow();
     } finally {
       setNgDevMode(previous);
@@ -709,12 +715,12 @@ describe('unknown column ids throw (AC #4)', () => {
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({ initial: ['region'] })
-        )
+          withGrouping({ initial: ['region'] }),
+        ),
       );
 
       expect(() => store.grouping.update(addGroupLevel('nope'))).toThrow(
-        /\[withGrouping\].*"nope"/
+        /\[withGrouping\].*"nope"/,
       );
     } finally {
       setNgDevMode(previous);
@@ -726,15 +732,15 @@ describe('unknown column ids throw (AC #4)', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] })
-      )
+        withGrouping({ initial: ['region', 'category'] }),
+      ),
     );
 
     expect(() => store.grouping.update(reorderGroupLevels(9, 12))).not.toThrow();
     expect(store.grouping()).toEqual(['region', 'category']); // out-of-range indices: unchanged
   });
 
-  it("a level naming a column added by setColumns() is writable — the writer reads columns() at write time, not at construction", () => {
+  it('a level naming a column added by setColumns() is writable — the writer reads columns() at write time, not at construction', () => {
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
@@ -745,13 +751,13 @@ describe('unknown column ids throw (AC #4)', () => {
             rules: makeWidenedColumns().rules,
           },
         },
-        withGrouping({ initial: ['region'] })
-      )
+        withGrouping({ initial: ['region'] }),
+      ),
     );
 
     // 'category' is not a column yet — the writer would throw if it tried now.
     expect(() => store.grouping.update(addGroupLevel('category'))).toThrow(
-      /\[withGrouping\].*"category"/
+      /\[withGrouping\].*"category"/,
     );
 
     store.columns.update(setColumns([...makeWidenedColumns().columns]));
@@ -777,10 +783,10 @@ describe('aggregate over a derived-accessor column (AC #6)', () => {
           initial: ['region'],
           schema: (path) =>
             aggregate(path.amountDoubled, (rows) =>
-              rows.reduce((sum, row) => sum + row.amount * 2, 0)
+              rows.reduce((sum, row) => sum + row.amount * 2, 0),
             ),
-        })
-      )
+        }),
+      ),
     );
 
     const usHeader = store
@@ -794,7 +800,7 @@ describe('aggregate over a derived-accessor column (AC #6)', () => {
 /** Finds a `kind: 'group'` render row by id — the recipe every `rowsOf` test below shares. */
 function findHeader(
   rows: readonly RenderRow<GroupingMockRow>[],
-  id: string
+  id: string,
 ): RenderRow<GroupingMockRow> | undefined {
   return rows.find((row) => row.kind === 'group' && row.id === id);
 }
@@ -809,8 +815,8 @@ describe('rowsOf', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] })
-      )
+        withGrouping({ initial: ['region', 'category'] }),
+      ),
     );
 
     const rows = store.renderRows();
@@ -828,8 +834,8 @@ describe('rowsOf', () => {
         data,
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withGrouping({ initial: ['region'] }),
-        withSorting()
-      )
+        withSorting(),
+      ),
     );
 
     const staleHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
@@ -843,7 +849,12 @@ describe('rowsOf', () => {
     // nothing about "stale" resolution.
     expect(staleHeader).not.toBe(freshHeader);
 
-    expect(store.rowsOf(staleHeader).map((row) => row.id).sort()).toEqual([1, 2, 3]);
+    expect(
+      store
+        .rowsOf(staleHeader)
+        .map((row) => row.id)
+        .sort(),
+    ).toEqual([1, 2, 3]);
   });
 
   it('reactivity: a computed() reading rowsOf recomputes after a data write, a filter change, and a grouping change', () => {
@@ -862,8 +873,8 @@ describe('rowsOf', () => {
             }),
           }),
         }),
-        withGrouping({ initial: ['region'] })
-      )
+        withGrouping({ initial: ['region'] }),
+      ),
     );
 
     const usLeafIds = computed(() => {
@@ -874,10 +885,7 @@ describe('rowsOf', () => {
     expect(usLeafIds()).toEqual([1, 2, 3]);
 
     // Data write: a new US row joins the cluster.
-    data.update((rows) => [
-      ...rows,
-      { id: 7, region: 'US', category: 'Electronics', amount: 40 },
-    ]);
+    data.update((rows) => [...rows, { id: 7, region: 'US', category: 'Electronics', amount: 40 }]);
     TestBed.tick();
     expect(usLeafIds()).toEqual([1, 2, 3, 7]);
 
@@ -899,8 +907,8 @@ describe('rowsOf', () => {
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withFiltering({ schema: excludeAmount300 }),
-        withGrouping({ initial: ['region', 'category'] })
-      )
+        withGrouping({ initial: ['region', 'category'] }),
+      ),
     );
 
     const usElectronicsHeader = findHeader(store.renderRows(), US_ELECTRONICS_HEADER_ID)!;
@@ -913,8 +921,8 @@ describe('rowsOf', () => {
       createTable(
         data,
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] })
-      )
+        withGrouping({ initial: ['region', 'category'] }),
+      ),
     );
 
     const euElectronicsHeader = findHeader(store.renderRows(), EU_ELECTRONICS_HEADER_ID)!;
@@ -933,8 +941,8 @@ describe('rowsOf', () => {
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withGrouping({ initial: ['region'] }),
-        withSelection()
-      )
+        withSelection(),
+      ),
     );
 
     const usHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
@@ -967,19 +975,29 @@ describe('rowsOf', () => {
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withGrouping({ initial: ['region'] }),
-        withTree()
-      )
+        withTree(),
+      ),
     );
 
     // Header captured while collapsed (default: nothing toggled).
     const collapsedHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
-    expect(store.rowsOf(collapsedHeader).map((row) => row.id).sort()).toEqual([1, 2, 3]);
+    expect(
+      store
+        .rowsOf(collapsedHeader)
+        .map((row) => row.id)
+        .sort(),
+    ).toEqual([1, 2, 3]);
 
     // Same resolution holds for a header captured after an expand/collapse round-trip.
     store.tree.toggle(US_HEADER_ID);
     store.tree.toggle(US_HEADER_ID);
     const reCollapsedHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
-    expect(store.rowsOf(reCollapsedHeader).map((row) => row.id).sort()).toEqual([1, 2, 3]);
+    expect(
+      store
+        .rowsOf(reCollapsedHeader)
+        .map((row) => row.id)
+        .sort(),
+    ).toEqual([1, 2, 3]);
   });
 });
 
@@ -993,8 +1011,8 @@ describe('groupIds', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region'] })
-      )
+        withGrouping({ initial: ['region'] }),
+      ),
     );
 
     const headerIds = store
@@ -1011,8 +1029,8 @@ describe('groupIds', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] })
-      )
+        withGrouping({ initial: ['region', 'category'] }),
+      ),
     );
 
     const rows = store.renderRows();
@@ -1036,8 +1054,8 @@ describe('groupIds', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping()
-      )
+        withGrouping(),
+      ),
     );
 
     expect(store.groupIds()).toEqual([]);
@@ -1050,8 +1068,8 @@ describe('groupingLevels (#81)', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] })
-      )
+        withGrouping({ initial: ['region', 'category'] }),
+      ),
     );
 
     expect(store.groupingLevels().map((column) => column.id)).toEqual(['region', 'category']);
@@ -1063,8 +1081,8 @@ describe('groupingLevels (#81)', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping()
-      )
+        withGrouping(),
+      ),
     );
 
     expect(store.groupingLevels()).toEqual([]);
@@ -1075,8 +1093,8 @@ describe('groupingLevels (#81)', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] })
-      )
+        withGrouping({ initial: ['region', 'category'] }),
+      ),
     );
 
     // Every applied level resolves to a real ColumnDef — an unknown id can no longer reach this
@@ -1089,8 +1107,8 @@ describe('groupingLevels (#81)', () => {
         signal<GroupWhenMockRow[]>(mockGroupWhenRows),
         { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
         // Largest cluster is 2 rows, so a threshold of 3 rejects every cluster.
-        withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 3 })
-      )
+        withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 3 }),
+      ),
     );
 
     // Totality is about *applied* levels — it does not resurrect one that never admitted a
@@ -1104,8 +1122,8 @@ describe('groupingLevels (#81)', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region'] })
-      )
+        withGrouping({ initial: ['region'] }),
+      ),
     );
 
     const levelIds = computed(() => store.groupingLevels().map((column) => column.id));
@@ -1122,13 +1140,13 @@ describe('groupingLevels (#81)', () => {
   // interaction) is therefore a runtime, data-dependent condition, not a construction/writer
   // contract violation — it degrades (omits the orphaned level) and reports once, rather than
   // throwing (ADR-0014).
-  it('removing an active level\'s column via setColumns() degrades and reports, never throws', () => {
+  it("removing an active level's column via setColumns() degrades and reports, never throws", () => {
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] })
-      )
+        withGrouping({ initial: ['region', 'category'] }),
+      ),
     );
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
@@ -1158,8 +1176,8 @@ describe('groupingLevels (#81)', () => {
         withGrouping({
           initial: ['region'],
           schema: (path) => applyAsyncGroupingRule(path.region, control),
-        })
-      )
+        }),
+      ),
     );
 
     // Pending: abstains, holding the declared array unmasked.
@@ -1177,8 +1195,8 @@ describe('isGroupedBy (#81)', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region'] })
-      )
+        withGrouping({ initial: ['region'] }),
+      ),
     );
 
     expect(store.isGroupedBy('region')).toBe(true);
@@ -1191,8 +1209,8 @@ describe('isGroupedBy (#81)', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping()
-      )
+        withGrouping(),
+      ),
     );
 
     expect(store.isGroupedBy('region')).toBe(false);
@@ -1203,8 +1221,8 @@ describe('isGroupedBy (#81)', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region'] })
-      )
+        withGrouping({ initial: ['region'] }),
+      ),
     );
 
     const isCategoryGrouped = computed(() => store.isGroupedBy('category'));
@@ -1223,8 +1241,8 @@ describe('groupingLevels/isGroupedBy composition order (#81)', () => {
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withGrouping({ initial: ['region'] }),
-        withSorting()
-      )
+        withSorting(),
+      ),
     );
 
     expect(store.groupingLevels().map((column) => column.id)).toEqual(['region']);
@@ -1238,8 +1256,8 @@ describe('groupingLevels/isGroupedBy composition order (#81)', () => {
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withSorting(),
-        withGrouping({ initial: ['region'] })
-      )
+        withGrouping({ initial: ['region'] }),
+      ),
     );
 
     expect(store.groupingLevels().map((column) => column.id)).toEqual(['region']);
@@ -1254,8 +1272,8 @@ describe('collapse/expand (#25)', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region'] })
-      )
+        withGrouping({ initial: ['region'] }),
+      ),
     );
 
     const rows = store.renderRows();
@@ -1278,8 +1296,8 @@ describe('collapse/expand (#25)', () => {
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({ initial: ['region'] })
-        )
+          withGrouping({ initial: ['region'] }),
+        ),
       );
 
       expect(() => store.renderRows()).not.toThrow();
@@ -1300,8 +1318,8 @@ describe('pipeline order (story 22)', () => {
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withFiltering({ schema: excludeAmount300 }),
         withGrouping({ initial: ['region'] }),
-        withSorting()
-      )
+        withSorting(),
+      ),
     );
 
     const sortGroupFilter = inContext(() =>
@@ -1310,15 +1328,15 @@ describe('pipeline order (story 22)', () => {
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withSorting(),
         withGrouping({ initial: ['region'] }),
-        withFiltering({ schema: excludeAmount300 })
-      )
+        withFiltering({ schema: excludeAmount300 }),
+      ),
     );
 
     filterGroupSort.toggleSort('amount');
     sortGroupFilter.toggleSort('amount');
 
     expect(filterGroupSort.rows().map((row) => row.id)).toEqual(
-      sortGroupFilter.rows().map((row) => row.id)
+      sortGroupFilter.rows().map((row) => row.id),
     );
     expect(toShape(filterGroupSort.renderRows())).toEqual(toShape(sortGroupFilter.renderRows()));
 
@@ -1366,7 +1384,7 @@ function makeControllableResource<TResult>(): {
 function applyAsyncGroupingRule(
   path: GroupingHandle<GroupingMockRow, 'region'>,
   control: { resource: Resource<unknown> },
-  onError: (error: unknown) => boolean = () => false
+  onError: (error: unknown) => boolean = () => false,
 ): void {
   groupingAsync(path, {
     params: () => 'p',
@@ -1395,8 +1413,8 @@ describe('grouping declarative sugar (#26)', () => {
             schema: (path) => {
               grouping(path.category, { enable: () => true });
             },
-          })
-        )
+          }),
+        ),
       );
 
       expect(store.grouping()).toEqual(['region']);
@@ -1412,8 +1430,8 @@ describe('grouping declarative sugar (#26)', () => {
             schema: (path) => {
               grouping(path.region, { enable: () => undefined });
             },
-          })
-        )
+          }),
+        ),
       );
 
       expect(store.grouping()).toEqual(['region']);
@@ -1429,8 +1447,8 @@ describe('grouping declarative sugar (#26)', () => {
             schema: (path) => {
               grouping(path.region, { enable: () => false });
             },
-          })
-        )
+          }),
+        ),
       );
 
       expect(store.grouping()).toEqual([]);
@@ -1453,8 +1471,8 @@ describe('grouping declarative sugar (#26)', () => {
               grouping(path.region, { enable: () => regionActive() });
               grouping(path.category, { enable: () => categoryActive() });
             },
-          })
-        )
+          }),
+        ),
       );
 
       expect(store.grouping()).toEqual(['region', 'category']);
@@ -1472,8 +1490,8 @@ describe('grouping declarative sugar (#26)', () => {
               grouping(path.category, { enable: () => true });
               grouping(path.region, { enable: () => true });
             },
-          })
-        )
+          }),
+        ),
       );
 
       expect(store.grouping()).toEqual(['region', 'category']);
@@ -1490,8 +1508,8 @@ describe('grouping declarative sugar (#26)', () => {
               grouping(path.category, { enable: () => true });
               grouping(path.region, { enable: () => false });
             },
-          })
-        )
+          }),
+        ),
       );
 
       // Neither rule contributes ordering — masking only ever narrows `initial`.
@@ -1512,8 +1530,8 @@ describe('grouping declarative sugar (#26)', () => {
             schema: (path) => {
               grouping(path.category, { enable: () => categoryActive() });
             },
-          })
-        )
+          }),
+        ),
       );
 
       // `category` is not declared, so its rule cannot introduce it either way.
@@ -1533,8 +1551,8 @@ describe('grouping declarative sugar (#26)', () => {
             schema: (path) => {
               grouping(path.category, { enable: () => undefined });
             },
-          })
-        )
+          }),
+        ),
       );
 
       const withoutSeed = inContext(() =>
@@ -1545,8 +1563,8 @@ describe('grouping declarative sugar (#26)', () => {
             schema: (path) => {
               grouping(path.category, { enable: () => undefined });
             },
-          })
-        )
+          }),
+        ),
       );
 
       expect(withSeed.grouping()).toEqual(['region']);
@@ -1558,8 +1576,8 @@ describe('grouping declarative sugar (#26)', () => {
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({ initial: [{ columnId: 'region' }] })
-        )
+          withGrouping({ initial: [{ columnId: 'region' }] }),
+        ),
       );
 
       expect(store.grouping()).toEqual(['region']);
@@ -1570,8 +1588,8 @@ describe('grouping declarative sugar (#26)', () => {
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({ initial: ['region', { columnId: 'category' }] })
-        )
+          withGrouping({ initial: ['region', { columnId: 'category' }] }),
+        ),
       );
 
       expect(store.grouping()).toEqual(['region', 'category']);
@@ -1582,8 +1600,8 @@ describe('grouping declarative sugar (#26)', () => {
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({ initial: [{ columnId: 'region', label: 'Sales Region' }] })
-        )
+          withGrouping({ initial: [{ columnId: 'region', label: 'Sales Region' }] }),
+        ),
       );
 
       const header = store.renderRows().find((row) => row.kind === 'group')!;
@@ -1595,8 +1613,8 @@ describe('grouping declarative sugar (#26)', () => {
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({ initial: [{ columnId: 'region' }] })
-        )
+          withGrouping({ initial: [{ columnId: 'region' }] }),
+        ),
       );
 
       const header = store.renderRows().find((row) => row.kind === 'group')!;
@@ -1615,8 +1633,8 @@ describe('grouping declarative sugar (#26)', () => {
             schema: (path) => {
               grouping(path.category, { enable: () => undefined });
             },
-          })
-        )
+          }),
+        ),
       );
 
       expect(store.grouping()).toEqual(['region']); // abstain -> falls back to baseGrouping
@@ -1633,8 +1651,8 @@ describe('grouping declarative sugar (#26)', () => {
               grouping(path.region, { enable: () => true });
               grouping(path.category, { enable: () => false });
             },
-          })
-        )
+          }),
+        ),
       );
 
       expect(store.grouping()).toEqual(['region']);
@@ -1649,8 +1667,8 @@ describe('grouping declarative sugar (#26)', () => {
           withGrouping({
             initial: ['region'],
             schema: (path) => applyAsyncGroupingRule(path.region, control, () => false),
-          })
-        )
+          }),
+        ),
       );
 
       // Before settle: the entry is pending -> the whole mask abstains -> declared array
@@ -1684,8 +1702,8 @@ describe('grouping declarative sugar (#26)', () => {
                   },
                 });
               },
-            })
-          )
+            }),
+          ),
         );
 
         expect(() => store.renderRows()).not.toThrow();
@@ -1713,12 +1731,10 @@ describe('grouping declarative sugar (#26)', () => {
               schema: (path) => {
                 grouping(path.category, {});
               },
-            })
-          )
-        )
-      ).toThrow(
-        "[withGrouping] grouping on field 'category' declares neither enable nor when."
-      );
+            }),
+          ),
+        ),
+      ).toThrow("[withGrouping] grouping on field 'category' declares neither enable nor when.");
     });
   });
 
@@ -1734,8 +1750,8 @@ describe('grouping declarative sugar (#26)', () => {
             grouping(path.region, { when: () => true });
             grouping(path.category, { enable: () => false });
           },
-        })
-      )
+        }),
+      ),
     );
 
     expect(store.grouping()).toEqual(['region']);
@@ -1754,8 +1770,8 @@ describe('grouping declarative sugar (#26)', () => {
           schema: (path) => {
             grouping(path.region, { enable: () => true });
           },
-        })
-      )
+        }),
+      ),
     );
 
     expect(store.grouping()).toEqual(['region']);
@@ -1776,9 +1792,9 @@ describe('grouping declarative sugar (#26)', () => {
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeWidenedColumns() },
-          withGrouping({ initial: ['id'] })
-        )
-      )
+          withGrouping({ initial: ['id'] }),
+        ),
+      ),
     ).toThrow(/\[withGrouping\].*"id"/);
   });
 
@@ -1787,8 +1803,8 @@ describe('grouping declarative sugar (#26)', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region'] })
-      )
+        withGrouping({ initial: ['region'] }),
+      ),
     );
 
     expect(store.grouping()).toEqual(['region']);
@@ -1818,8 +1834,8 @@ describe('when (#85 table-wide admission)', () => {
       createTable(
         signal<GroupWhenMockRow[]>(mockGroupWhenRows),
         { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
-        withGrouping({ initial: ['region'], when: (c) => c.key != null })
-      )
+        withGrouping({ initial: ['region'], when: (c) => c.key != null }),
+      ),
     );
 
     const rows = store.renderRows();
@@ -1844,8 +1860,8 @@ describe('when (#85 table-wide admission)', () => {
       createTable(
         data,
         { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
-        withGrouping({ initial: ['region'], when: (c) => c.key != null })
-      )
+        withGrouping({ initial: ['region'], when: (c) => c.key != null }),
+      ),
     );
     const APAC_GROUP_ID = 'group:>region:string:APAC';
 
@@ -1854,7 +1870,7 @@ describe('when (#85 table-wide admission)', () => {
     expect(
       store
         .renderRows()
-        .find((row) => row.kind === 'row' && (row.data as GroupWhenMockRow).id === 5)?.depth
+        .find((row) => row.kind === 'row' && (row.data as GroupWhenMockRow).id === 5)?.depth,
     ).toBe(0);
 
     // Same write a dropdown-driven cell editor performs: patch the row's grouped field.
@@ -1873,8 +1889,8 @@ describe('when (#85 table-wide admission)', () => {
       createTable(
         signal<GroupWhenMockRow[]>(mockGroupWhenRows),
         { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
-        withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 2 })
-      )
+        withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 2 }),
+      ),
     );
 
     const rows = store.renderRows();
@@ -1894,14 +1910,14 @@ describe('when (#85 table-wide admission)', () => {
       createTable(
         signal<GroupWhenMockRow[]>(mockGroupWhenRows),
         { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
-        withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 2 })
-      )
+        withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 2 }),
+      ),
     );
 
     expect(store.groupIds()).not.toContain(EU_GROUP_ID);
-    expect(
-      store.renderRows().some((row) => row.kind === 'group' && row.id === EU_GROUP_ID)
-    ).toBe(false);
+    expect(store.renderRows().some((row) => row.kind === 'group' && row.id === EU_GROUP_ID)).toBe(
+      false,
+    );
   });
 
   // The state surface reports the *observed* result, not declared intent: a level whose every
@@ -1915,8 +1931,8 @@ describe('when (#85 table-wide admission)', () => {
           signal<GroupWhenMockRow[]>(mockGroupWhenRows),
           { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
           // Largest cluster is US at 2 rows, so no cluster clears the threshold.
-          withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 3 })
-        )
+          withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 3 }),
+        ),
       );
 
       // Render side: entirely flat, no header anywhere.
@@ -1940,8 +1956,8 @@ describe('when (#85 table-wide admission)', () => {
         createTable(
           data,
           { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
-          withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 3 })
-        )
+          withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 3 }),
+        ),
       );
 
       expect(store.groupIds()).toHaveLength(1);
@@ -1977,8 +1993,8 @@ describe('when (#85 table-wide admission)', () => {
           signal<GroupWhenMockRow[]>(mockGroupWhenRows),
           { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
           // US (2 rows) survives; EU, null and undefined (1 row each) dissolve.
-          withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 2 })
-        )
+          withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 2 }),
+        ),
       );
 
       expect(store.groupIds()).toHaveLength(1);
@@ -1997,8 +2013,8 @@ describe('when (#85 table-wide admission)', () => {
           withGrouping({
             initial: ['region'],
             schema: (path) => applyAsyncGroupingRule(path.region, control),
-          })
-        )
+          }),
+        ),
       );
 
       control.resolve(false);
@@ -2027,8 +2043,8 @@ describe('when (#85 table-wide admission)', () => {
             initial: ['region'],
             when: (c) => c.rows.length >= 2,
             schema: (path) => aggregate(path.amount, throwingAggregateFn),
-          })
-        )
+          }),
+        ),
       );
 
       const usHeader = store.renderRows().find((row) => row.kind === 'group')!;
@@ -2045,8 +2061,8 @@ describe('when (#85 table-wide admission)', () => {
         signal<GroupWhenMockRow[]>(mockGroupWhenRows),
         { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
         withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 2 }),
-        withSorting()
-      )
+        withSorting(),
+      ),
     );
 
     store.setSorting([{ columnId: 'amount', direction: 'desc' }]);
@@ -2070,8 +2086,8 @@ describe('when (#85 table-wide admission)', () => {
           when: (c) => c.rows.length >= 2,
           schema: (path) =>
             groupOrder(path.region, (a, b) => Number(a.admitted) - Number(b.admitted)),
-        })
-      )
+        }),
+      ),
     );
 
     const rows = store.renderRows();
@@ -2094,8 +2110,8 @@ describe('when (#85 table-wide admission)', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] })
-      )
+        withGrouping({ initial: ['region', 'category'] }),
+      ),
     );
 
     const rows = store.renderRows();
@@ -2147,8 +2163,8 @@ describe('when (#85 table-wide admission)', () => {
               marginHandle = path.margin;
             },
             when: (cluster, ctx) => (ctx.valueOf(marginHandle, cluster.rows[0]) as number) > 0,
-          })
-        )
+          }),
+        ),
       );
 
       // US's first leaf (id 1, amount 100) has margin 40 > 0 -> admitted.
@@ -2179,8 +2195,8 @@ describe('when (#85 table-wide admission)', () => {
               capturedKeys = Object.keys(cluster).sort();
               return true;
             },
-          })
-        )
+          }),
+        ),
       );
 
       store.renderRows(); // triggers evaluation
@@ -2196,8 +2212,8 @@ describe('when (#85 table-wide admission)', () => {
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({ initial: ['region'], when: oneArgWhen })
-        )
+          withGrouping({ initial: ['region'], when: oneArgWhen }),
+        ),
       );
 
       const groupIds = store
@@ -2223,8 +2239,8 @@ describe('when Q1 through the public surface (#85)', () => {
       createTable(
         signal<RepMockRow[]>(mockRepRows),
         { trackBy: mockRepTrackBy, columns: repColumns() },
-        withGrouping({ initial: ['region', 'rep'], when: (c) => c.key != null })
-      )
+        withGrouping({ initial: ['region', 'rep'], when: (c) => c.key != null }),
+      ),
     );
 
     const rows = store.renderRows();
@@ -2238,9 +2254,7 @@ describe('when Q1 through the public surface (#85)', () => {
       ['row', 0, 3], // null region — escapes flat, once
     ]);
 
-    expect(rows.some((row) => row.kind === 'group' && row.groupKey?.value === 'Carol')).toBe(
-      false
-    );
+    expect(rows.some((row) => row.kind === 'group' && row.groupKey?.value === 'Carol')).toBe(false);
     expect(rows.filter((row) => row.data && (row.data as RepMockRow).id === 3)).toHaveLength(1);
   });
 });
@@ -2254,14 +2268,19 @@ describe('rowsOf and when (Q3, #85)', () => {
         withGrouping({
           initial: ['region', 'category'],
           when: (c) => c.columnId !== 'category' || c.rows.length >= 2,
-        })
-      )
+        }),
+      ),
     );
 
     const usHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
     // US > Furniture (id 3 alone) dissolves under the size-2 threshold, yet the region header's
     // rowsOf still returns every leaf beneath it, dissolved or not.
-    expect(store.rowsOf(usHeader).map((row) => row.id).sort()).toEqual([1, 2, 3]);
+    expect(
+      store
+        .rowsOf(usHeader)
+        .map((row) => row.id)
+        .sort(),
+    ).toEqual([1, 2, 3]);
   });
 
   // `rowsOf`/`rowsBeneathGroup` never receive `when` (no `ClusterOpts` is threaded through
@@ -2277,8 +2296,8 @@ describe('rowsOf and when (Q3, #85)', () => {
         withGrouping({
           initial: ['region', 'category'],
           when: (c) => c.columnId !== 'category' || c.rows.length >= 2,
-        })
-      )
+        }),
+      ),
     );
 
     const bogusHeader: RenderRow<GroupingMockRow> = {
@@ -2307,8 +2326,8 @@ describe('types', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region'] })
-      )
+        withGrouping({ initial: ['region'] }),
+      ),
     );
 
     expectTypeOf(store.grouping).toEqualTypeOf<
@@ -2353,8 +2372,8 @@ describe('writes target rows; clustering re-derives', () => {
       createTable(
         signal<GroupingMockRow[]>([...mockGroupingRows]),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial })
-      )
+        withGrouping({ initial }),
+      ),
     );
   }
 
@@ -2381,7 +2400,12 @@ describe('writes target rows; clustering re-derives', () => {
       2, 3,
     ]);
     const euHeader = findHeader(store.renderRows(), 'group:>region:string:EU')!;
-    expect(store.rowsOf(euHeader).map((r) => r.id).sort()).toEqual([1, 4, 5, 6]);
+    expect(
+      store
+        .rowsOf(euHeader)
+        .map((r) => r.id)
+        .sort(),
+    ).toEqual([1, 4, 5, 6]);
   });
 
   it('patching a row to a name a sibling already holds merges the two clusters', () => {
@@ -2398,7 +2422,12 @@ describe('writes target rows; clustering re-derives', () => {
 
     expect(headerIds(store)).not.toContain('group:>region:string:US>category:string:Furniture');
     const merged = findHeader(store.renderRows(), US_ELECTRONICS_HEADER_ID)!;
-    expect(store.rowsOf(merged).map((r) => r.id).sort()).toEqual([1, 2, 3]);
+    expect(
+      store
+        .rowsOf(merged)
+        .map((r) => r.id)
+        .sort(),
+    ).toEqual([1, 2, 3]);
   });
 
   it("removing a cluster's last leaf removes its header, with no group state to clean up", () => {
@@ -2418,12 +2447,17 @@ describe('writes target rows; clustering re-derives', () => {
 
     // Appended at the end, carrying EU > Electronics. No updater takes a group id.
     store.value.update(
-      insertRow<GroupingMockRow>({ id: 7, region: 'EU', category: 'Electronics', amount: 40 })
+      insertRow<GroupingMockRow>({ id: 7, region: 'EU', category: 'Electronics', amount: 40 }),
     );
     TestBed.tick();
 
     const header = findHeader(store.renderRows(), EU_ELECTRONICS_HEADER_ID)!;
-    expect(store.rowsOf(header).map((r) => r.id).sort()).toEqual([4, 7]);
+    expect(
+      store
+        .rowsOf(header)
+        .map((r) => r.id)
+        .sort(),
+    ).toEqual([4, 7]);
     // And the row is rendered inside that subtree, not trailing the table.
     const rendered = store.renderRows();
     const headerIndex = rendered.findIndex((row) => row.id === EU_ELECTRONICS_HEADER_ID);
@@ -2445,21 +2479,21 @@ describe('parent link (#170)', () => {
 
   function setup(
     groupingConfig: WithGroupingConfig<TaskTreeMockRow> = { initial: ['status'] },
-    treeInitial: string[] = []
+    treeInitial: string[] = [],
   ) {
     return inContext(() =>
       createTable(
         signal<TaskTreeMockRow[]>(mockTaskTreeRows),
         { trackBy: 'id', columns: makeTaskColumns() },
         withGrouping(groupingConfig),
-        withTree({ parentId, initial: treeInitial })
-      )
+        withTree({ parentId, initial: treeInitial }),
+      ),
     );
   }
 
   function findTaskHeader(
     rows: readonly RenderRow<TaskTreeMockRow>[],
-    id: string
+    id: string,
   ): RenderRow<TaskTreeMockRow> | undefined {
     return rows.find((row) => row.kind === 'group' && row.id === id);
   }
@@ -2518,12 +2552,11 @@ describe('parent link (#170)', () => {
         signal<TaskTreeMockRow[]>(mockTaskTreeRows),
         { trackBy: 'id', columns: makeTaskColumns() },
         withTree({ parentId }),
-        withGrouping({ initial: ['status'] })
-      )
+        withGrouping({ initial: ['status'] }),
+      ),
     );
 
     expect(store.rows().map((row) => row.id)).toEqual(['t1', 't1a', 't1a1', 't2']);
     expect([...store.groupIds()].sort()).toEqual([DONE_HEADER_ID, OPEN_HEADER_ID].sort());
   });
 });
-

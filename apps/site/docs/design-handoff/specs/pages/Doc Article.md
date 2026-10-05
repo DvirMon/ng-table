@@ -14,18 +14,18 @@ The default page. Every docs route is this unless named otherwise.
 
 ## Slots
 
-| Order | Slot | Component | Page-only decision |
-| --- | --- | --- | --- |
-| 1 | shell | `page-shell` | — |
-| 2 | header | `navbar` | Search slot present |
-| 3 | left | `sidebar` | Exactly one `nav-item` carries `is-active` + `aria-current="page"`; its parent section uses the `--accent` variant |
-| 4 | main | `content-column` | — |
-| 4.1 | main › eyebrow | `category-badge` | Text = the resolved `eyebrow` from `Routing and Page State.md` (`entry.eyebrow ?? section.label`), uppercased. Omitted entirely when that resolves to `null` — the docs root has no section |
-| 4.2 | main › title | `prose` H1 | Exactly one H1, matching the nav item label |
-| 4.3 | main › body | `prose`, `callout`, `code-block`, `preview-window`, `table-row` | Free order, authored per route |
-| 4.4 | main › end | `pagination` | Prev/next follow sidebar order; omit the missing side at the ends |
-| 5 | right | `toc` | Built from H2/H3 in slot 4.3. Hidden if fewer than 2 H2s. |
-| 6 | below grid | `page-footer` | — |
+| Order | Slot           | Component                                                       | Page-only decision                                                                                                                                                                          |
+| ----- | -------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | shell          | `page-shell`                                                    | —                                                                                                                                                                                           |
+| 2     | header         | `navbar`                                                        | Search slot present                                                                                                                                                                         |
+| 3     | left           | `sidebar`                                                       | Exactly one `nav-item` carries `is-active` + `aria-current="page"`; its parent section uses the `--accent` variant                                                                          |
+| 4     | main           | `content-column`                                                | —                                                                                                                                                                                           |
+| 4.1   | main › eyebrow | `category-badge`                                                | Text = the resolved `eyebrow` from `Routing and Page State.md` (`entry.eyebrow ?? section.label`), uppercased. Omitted entirely when that resolves to `null` — the docs root has no section |
+| 4.2   | main › title   | `prose` H1                                                      | Exactly one H1, matching the nav item label                                                                                                                                                 |
+| 4.3   | main › body    | `prose`, `callout`, `code-block`, `preview-window`, `table-row` | Free order, authored per route                                                                                                                                                              |
+| 4.4   | main › end     | `pagination`                                                    | Prev/next follow sidebar order; omit the missing side at the ends                                                                                                                           |
+| 5     | right          | `toc`                                                           | Built from H2/H3 in slot 4.3. Hidden if fewer than 2 H2s.                                                                                                                                   |
+| 6     | below grid     | `page-footer`                                                   | —                                                                                                                                                                                           |
 
 ## Page-only rules
 

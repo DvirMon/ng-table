@@ -40,7 +40,7 @@ this.table.query.set('abc');
 
 The same crash arrives through the two shapes most likely in a derive
 block: `linkedSignal(...)` and `resource(...).value`, both
-`WritableSignal`. Every *read* works, so it only surfaces at the first
+`WritableSignal`. Every _read_ works, so it only surfaces at the first
 write.
 
 The intent isn't in dispute — the file's JSDoc (`:59-62`) and ADR-0014's
@@ -60,15 +60,19 @@ from `:77`.
 `assertDerivedSignals` exists specifically for "a JavaScript consumer
 defeats the `DerivedDict` constraint" (`:14-15`). It calls
 `Object.entries` before testing that it got an object, and it runs
-*outside* the `try` at `:67-75` that produces the
+_outside_ the `try` at `:67-75` that produces the
 `[createTable] withComputed block threw while declaring its members`
 error.
 
 ```js
-createTable(data, config, withComputed(() => {
-  if (!somethingReady) return;        // undefined
-  return { total: computed(() => 1) };
-}));
+createTable(
+  data,
+  config,
+  withComputed(() => {
+    if (!somethingReady) return; // undefined
+    return { total: computed(() => 1) };
+  }),
+);
 ```
 
 Result: `TypeError: Cannot convert undefined or null to object`, no
@@ -107,17 +111,17 @@ an invariant the editing state model documents
 time … read only when the row is missing at revert"), and the brief
 asked for restore points that revive at the wrong position.
 
-`removeEdit` resolves the row's *current* index into `at` (`:142`), then
+`removeEdit` resolves the row's _current_ index into `at` (`:142`), then
 discards it when a restore point is already held, keeping `held.at`
 instead (`:150-152`). `revertEdit` re-inserts at that index because the
 row is missing (`:99`).
 
 ```ts
 // r5 sits at index 5 of a 10-row table
-table.editing.update(captureEdit('r5'));   // snapshot at: 5
-table.value.update(removeRow('r0'));       // r5 is now index 4
-table.editing.update(removeEdit('r5'));    // snapshot keeps at: 5
-table.editing.update(revertEdit('r5'));    // re-inserts at index 5
+table.editing.update(captureEdit('r5')); // snapshot at: 5
+table.value.update(removeRow('r0')); // r5 is now index 4
+table.editing.update(removeEdit('r5')); // snapshot keeps at: 5
+table.editing.update(revertEdit('r5')); // re-inserts at index 5
 ```
 
 `r5` reappears one slot below where it was removed from.
@@ -140,7 +144,7 @@ so consumer argument positions in collision messages are not shifted.
 
 **`api/create-table.overloads.ts`** — matches
 `tools/generate-overloads.ts` exactly (`ARITY = 15`,
-`includeZeroFeature: true` → 16 signatures, slot *k* typed against
+`includeZeroFeature: true` → 16 signatures, slot _k_ typed against
 base ∩ O1…O(k-1)). No generator/output divergence.
 
 **`api/features/compose-features.overloads.ts`** — same generator,
@@ -163,8 +167,8 @@ feature/derive-block key clash before the merged object reaches the
 fold, keeping `SlotRegistry` the single collision authority (ADR-0007's
 amendment). `mergeDerivedSpec` sets the four pipeline-behaviour keys
 explicitly, including to `undefined`, and every consumer tests
-truthiness or `!== undefined`, so a feature built *with* a derive block
-can itself serve *as* one without a false throw.
+truthiness or `!== undefined`, so a feature built _with_ a derive block
+can itself serve _as_ one without a false throw.
 
 **`api/features/compose-features.ts`** — clean on collisions, checked in
 both directions: inner-vs-inner via the private per-fold `SlotRegistry`

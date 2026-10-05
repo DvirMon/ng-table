@@ -32,7 +32,7 @@ Two decisions taken while planning:
 
 **`applyGroupOrder` stays standalone.** It was considered for merging into
 `applyGrouping` as a third `order` slot beside `enable`/`when`. Rejected:
-`order` is orthogonal to *how* a level was activated, so a merge forces it
+`order` is orthogonal to _how_ a level was activated, so a merge forces it
 onto `GroupingAsyncOpts` too — a 6th field with no relation to the async
 machinery, and [`design-group-admission.md`](../../archive/with-grouping/design-group-admission.md)'s
 own example orders an async-activated level. It also makes
@@ -44,7 +44,7 @@ engine slots.
 **`enable` becomes optional.** This is the change worth making, and it is
 independent of the merge question. Today `enable` is required, so
 attaching a per-column `when` with no activation opinion requires
-`enable: () => undefined` — which abstains the *entire rule set*, not just
+`enable: () => undefined` — which abstains the _entire rule set_, not just
 that column. `grouping-static-story-host.component.ts:117-125` ships that
 hack today with the comment `// Abstain: never affect level activation`.
 It works only because that rule is alone; adding one real `enable` rule
@@ -143,7 +143,7 @@ no overlay → `baseGrouping()`. Rules with no `enable` land in the same
 place by the same path.
 
 Amend `foldGroupingRules`'s JSDoc (`engine/grouping-rules.ts:93-102`) —
-entry order is call order *of activating rules*.
+entry order is call order _of activating rules_.
 
 ## Step 3 — construction throw for an empty rule
 
@@ -168,7 +168,7 @@ const grouping = computed(() => rulesGroupingRule?.() ?? baseGrouping());
 ```
 
 This also closes a live asymmetry: with `config.groupingRule` set today,
-`schema`'s *activation* was dropped while its `when`/`order` still applied
+`schema`'s _activation_ was dropped while its `when`/`order` still applied
 (`collectGroupPredicates`/`collectGroupOrder` run over the full array at
 `:125-126` regardless). One less way for the config to half-apply.
 
@@ -178,7 +178,7 @@ grouped by nothing. It now describes `foldGroupingRules`' output rather
 than a consumer lambda. All three outcomes remain reachable from `schema`:
 all-`false` → `[]`, any-`undefined` → abstain.
 
-**Consequence to record:** `groupingRule` was the only *reactive*
+**Consequence to record:** `groupingRule` was the only _reactive_
 free-string path to a level id. After Phase B, a column added later via
 `setColumns()` is reachable only through `initial` and
 `table.grouping.update()` — imperative, not declarative. ADR-0019:29 cites
@@ -215,6 +215,7 @@ behavior — `() => []` and the abstain case are D6/D7 contract coverage and
 must survive the move.
 
 New cases:
+
 - `applyGrouping(path.x, { when })` with no `enable` — does not enter the
   fold, `initial` holds, `when` still applies (this is Step 2's contract).
 - `applyGrouping(path.x, {})` throws at construction.

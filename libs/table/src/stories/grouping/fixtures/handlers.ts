@@ -44,7 +44,7 @@ export const groupingHandlers = [
     if (forceFailure) {
       return HttpResponse.json(
         { message: 'Grouping preference lookup failed (forced).' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 

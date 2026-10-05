@@ -12,7 +12,7 @@ site.
 ```ts
 export function withX(config: WithXConfig = {}) {
   const feature = createTableFeature(<In extends TableStore<any>>(store: In, ctx) =>
-    buildXSpec<RowOf<In>>(store, ctx, config)
+    buildXSpec<RowOf<In>>(store, ctx, config),
   );
   return Object.assign(feature, { displayName: 'withX' });
 }
@@ -20,13 +20,13 @@ export function withX(config: WithXConfig = {}) {
 
 The spec (`TableFeatureSpec`) has these keys, all optional:
 
-| Key | Purpose |
-|---|---|
-| `members` | Signals and methods merged onto the public store |
-| `stages` | Row transforms on the pipeline (`filter → group → sort`) |
-| `renderStages` | `RenderNode` transforms over the pipeline output |
-| `setup` | Runs once every feature is composed, in the owner's injection context |
-| `onRowsRemoved` | Called with ids that just left `data` |
+| Key             | Purpose                                                               |
+| --------------- | --------------------------------------------------------------------- |
+| `members`       | Signals and methods merged onto the public store                      |
+| `stages`        | Row transforms on the pipeline (`filter → group → sort`)              |
+| `renderStages`  | `RenderNode` transforms over the pipeline output                      |
+| `setup`         | Runs once every feature is composed, in the owner's injection context |
+| `onRowsRemoved` | Called with ids that just left `data`                                 |
 
 ## 2. The exported surface
 
@@ -79,10 +79,10 @@ data (group headers, for example). It must land at or after `'group'`.
 
 ## 4. What throws and what is reported
 
-| When | What | Behavior |
-|---|---|---|
-| Construction (dev) | Unknown anchor, a cycle, a duplicate name or claim, an ambiguous tie, `synthesizesRows` placed before `'group'` | Throws, naming both parties |
-| Runtime, every environment | Duplicate row ids in a stage's output; a made-up real-row id | Reported once per stage per evaluation; the output is passed through unchanged |
+| When                       | What                                                                                                            | Behavior                                                                       |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Construction (dev)         | Unknown anchor, a cycle, a duplicate name or claim, an ambiguous tie, `synthesizesRows` placed before `'group'` | Throws, naming both parties                                                    |
+| Runtime, every environment | Duplicate row ids in a stage's output; a made-up real-row id                                                    | Reported once per stage per evaluation; the output is passed through unchanged |
 
 An ambiguous tie is two stages whose relative order the anchors don't fix
 (both placed after the same anchor, say). Fix it by
@@ -174,9 +174,7 @@ export interface RowPinningMembers {
 function buildRowPinningSpec<TRow>(): TableFeatureSpec<TRow, RowPinningMembers> {
   const pinned = signal<ReadonlySet<RowId>>(new Set());
 
-  const hoistPinned = (
-    nodes: readonly RenderNode<TRow>[]
-  ): readonly RenderNode<TRow>[] => {
+  const hoistPinned = (nodes: readonly RenderNode<TRow>[]): readonly RenderNode<TRow>[] => {
     const ids = pinned();
     if (ids.size === 0) return nodes; // inert: same reference
     const isPinned = (node: RenderNode<TRow>): boolean => ids.has(node.id);
@@ -203,7 +201,7 @@ function buildRowPinningSpec<TRow>(): TableFeatureSpec<TRow, RowPinningMembers> 
 
 export function withRowPinning() {
   const feature = createTableFeature(<In extends TableStore<any>>(_store: In) =>
-    buildRowPinningSpec<RowOf<In>>()
+    buildRowPinningSpec<RowOf<In>>(),
   );
   return Object.assign(feature, { displayName: 'withRowPinning' });
 }

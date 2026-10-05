@@ -8,6 +8,7 @@ files:
   - libs/table/src/engine/grouping/render.ts (edit)
   - libs/table/src/engine/grouping/render.spec.ts (edit)
 ---
+
 # Step 8 — Refactor withGrouping
 
 This step converts both of `withGrouping`'s stage claims to the
@@ -95,4 +96,5 @@ object-form wording).
 `RENDER_ORDER` no longer appears in the message.
 
 ---
+
 ← [Step 7: Refactor withSorting + withFiltering](step-7-refactor-sorting-filtering.plan.md) | [Step 9: Refactor withTree](step-9-refactor-tree.plan.md) →

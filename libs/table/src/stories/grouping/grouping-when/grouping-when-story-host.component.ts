@@ -54,16 +54,15 @@ export class GroupingWhenStoryHostComponent {
       schema: (path) =>
         grouping(path.category, {
           when: (cluster) =>
-            !this.applyMinCategorySize() ||
-            cluster.rows.length >= this.minCategoryRowCountValue(),
+            !this.applyMinCategorySize() || cluster.rows.length >= this.minCategoryRowCountValue(),
         }),
-    })
+    }),
   );
 
   /** @internal not a Storybook control.
    * Rows the pipeline produced that no header claims — the flat runs a rejected cluster leaves
    * behind, counted so the opt-out is legible without counting rows by eye. */
   protected readonly flatRowCount = computed(
-    () => this.table.renderRows().filter((row) => row.kind === 'row' && row.depth === 0).length
+    () => this.table.renderRows().filter((row) => row.kind === 'row' && row.depth === 0).length,
   );
 }

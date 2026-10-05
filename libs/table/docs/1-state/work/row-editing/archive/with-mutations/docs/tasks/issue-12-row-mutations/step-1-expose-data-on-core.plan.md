@@ -65,6 +65,7 @@ carve-out in `table/CLAUDE.md`.
 - [ ] `nx typecheck shared-design-system` passes
 
 ---
+
 Depends on issue [#11 — data ingress rework](../issue-11-data-ingress/step-1-rework-data-ingress.plan.md) (shipped).
 
 [Step 2: Row updaters and updateRows](step-2-row-updaters-and-updaterows.plan.md) →

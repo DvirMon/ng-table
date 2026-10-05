@@ -33,7 +33,7 @@ export class MultiSelectionStoryHostComponent {
   protected readonly table = createTable(
     this.data,
     multiSelectionConfig,
-    withSelection({ enableRowSelection: (row: SelectionRow) => !row.locked })
+    withSelection({ enableRowSelection: (row: SelectionRow) => !row.locked }),
   );
 
   protected readonly eventLog = createSelectionEventLog(this.table.selectionChanged);
@@ -48,19 +48,19 @@ export class MultiSelectionStoryHostComponent {
    * Pre-filtered with `isSelectable()` (D61) rather than re-deriving `enableRowSelection` —
    * without it a locked row would hold the header permanently indeterminate. */
   protected readonly selectableRowIds = computed(() =>
-    selectAllIds(this.table).filter((id) => this.table.isSelectable(id))
+    selectAllIds(this.table).filter((id) => this.table.isSelectable(id)),
   );
 
   private readonly headerSelectionState = computed(() =>
-    this.table.selectionStateOf(this.selectableRowIds())
+    this.table.selectionStateOf(this.selectableRowIds()),
   );
 
   protected readonly isEverySelectableRowSelected = computed(
-    () => this.headerSelectionState() === 'all'
+    () => this.headerSelectionState() === 'all',
   );
 
   protected readonly isSomeSelectableRowSelected = computed(
-    () => this.headerSelectionState() === 'some'
+    () => this.headerSelectionState() === 'some',
   );
 
   /** Locked ids resolved once per render pass. `isSelectable()` scans `rows()` per call, so
@@ -71,8 +71,8 @@ export class MultiSelectionStoryHostComponent {
         this.table
           .renderRows()
           .filter((row) => this.isRowLocked(row.id))
-          .map((row) => row.id)
-      )
+          .map((row) => row.id),
+      ),
   );
 
   private isRowLocked(id: RowId): boolean {

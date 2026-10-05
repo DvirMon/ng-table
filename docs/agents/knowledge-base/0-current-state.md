@@ -12,14 +12,14 @@ Measured 2026-09-14 against `libs/table/docs/`.
 
 ## Shape
 
-| Metric | Value |
-|---|---|
-| Markdown files under `docs/` | 310 |
-| By layer | `0-product` 5 · `1-state` 219 · `2-columns` 8 · `3-ui` 60 · `adr` 14 |
-| Work efforts (`*/work/<slug>/`) | 29 |
-| Files with YAML frontmatter | 216 / 310 (70%) |
-| Generated files | 1 (`status.md`, from `tools/generate-status.ts`) |
-| Broken relative `.md` links | 31 real (+3 false positives), fixed 2026-09-14 — see G2 |
+| Metric                          | Value                                                                |
+| ------------------------------- | -------------------------------------------------------------------- |
+| Markdown files under `docs/`    | 310                                                                  |
+| By layer                        | `0-product` 5 · `1-state` 219 · `2-columns` 8 · `3-ui` 60 · `adr` 14 |
+| Work efforts (`*/work/<slug>/`) | 29                                                                   |
+| Files with YAML frontmatter     | 216 / 310 (70%)                                                      |
+| Generated files                 | 1 (`status.md`, from `tools/generate-status.ts`)                     |
+| Broken relative `.md` links     | 31 real (+3 false positives), fixed 2026-09-14 — see G2              |
 
 ## The layering, as it actually exists
 
@@ -84,12 +84,12 @@ implementation. A human reads these fine; a filter cannot. `capability:`/`spec:`
 counter-example — controlled vocabulary, which is precisely why `status.md` can be generated from
 them.
 
-**G4 — No last-reviewed signal.** `date:` records when a doc was *written*, not when it was last
+**G4 — No last-reviewed signal.** `date:` records when a doc was _written_, not when it was last
 checked against reality. 22 files date to 2026-07 and have not been touched since; nothing
 distinguishes "still true, verified last week" from "written in July, never revisited".
 
 ## Interpretation
 
-The base is well-structured for *writing* and under-instrumented for *reading and keeping*. The
+The base is well-structured for _writing_ and under-instrumented for _reading and keeping_. The
 LLM Wiki method names the missing pieces as first-class operations (query, lint, librarian);
 `qmd` supplies the query one directly. Neither asks for the structure to change.

@@ -19,8 +19,8 @@ banner, and **therefore cannot drift**. `README.md` sits beside it, hand-maintai
 bullet pointing at `2-columns/work/` — a folder that never existed.
 
 Same repo, same week, two navigation files: the generated one was correct, the hand-written one
-was not. Every action below is a variation on *move the agent-facing surface to the generated side
-of that line*.
+was not. Every action below is a variation on _move the agent-facing surface to the generated side
+of that line_.
 
 ---
 
@@ -82,7 +82,7 @@ tries to parse it.
 
 ## A3 — Add `last-reviewed:` and `owner:`
 
-`date:` records when a doc was *written*. Nothing records when it was last checked against
+`date:` records when a doc was _written_. Nothing records when it was last checked against
 reality — so 22 files dating to 2026-07 are indistinguishable from 22 verified yesterday. The one
 intervention that held across the documentation surveys was a named owner plus a last-reviewed
 date; cadence alone did not.
@@ -113,7 +113,7 @@ fails.
 ## A6 — Close the fan-out gap in the work-effort pipeline
 
 The sharpest mismatch between our flow and the LLM Wiki method. Their **ingest** operation updates
-*the 10–15 pages a source touches* and logs it. Our pipeline (`1-ticket → 2-decisions → 3-spec →
+_the 10–15 pages a source touches_ and logs it. Our pipeline (`1-ticket → 2-decisions → 3-spec →
 4-issues → 5-tasks`) writes one work folder; propagation into the standing docs is manual and
 undocumented.
 
@@ -134,7 +134,7 @@ by the `qmd` collection config. Directly reduces what an agent loads before it s
 Append-only page recording the knowledge base's own mistakes — "both architecture files wrote
 docs-root-relative paths", "column-rules.ts moved and three docs kept the old path" — read by the
 next compile. From arXiv 2605.25480; the one mechanism in the method with no analogue here.
-`~/.claude/rules/` captures *process* corrections; nothing captures *knowledge-base* corrections.
+`~/.claude/rules/` captures _process_ corrections; nothing captures _knowledge-base_ corrections.
 
 Cheapest version: `docs/error-book.md`, one dated bullet per incident, appended during grooming.
 No tooling.

@@ -20,7 +20,7 @@ describe('createColumns', () => {
   it('returns exactly the keys columns and rules — no data reference, no kind', () => {
     const result = createColumns(
       vi.fn(() => mockRows),
-      (col) => [col('id'), col('name')]
+      (col) => [col('id'), col('name')],
     );
 
     expect(Object.keys(result).sort()).toEqual(['columns', 'rules']);
@@ -29,7 +29,7 @@ describe('createColumns', () => {
   it('preserves declaration order in columns', () => {
     const result = createColumns(
       vi.fn(() => mockRows),
-      (col) => [col('amount'), col('name'), col('id')]
+      (col) => [col('amount'), col('name'), col('id')],
     );
 
     expect(result.columns.map((c) => c.id)).toEqual(['amount', 'name', 'id']);
@@ -55,12 +55,10 @@ describe('createColumns', () => {
   it('col(id) yields a declaration with no accessor key — the engine owns the default', () => {
     const result = createColumns(
       vi.fn(() => mockRows),
-      (col) => [col('amount')]
+      (col) => [col('amount')],
     );
 
-    expect(
-      Object.prototype.hasOwnProperty.call(result.columns[0], 'accessor')
-    ).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(result.columns[0], 'accessor')).toBe(false);
   });
 
   it('col(id, opts) carries label, visible and accessor', () => {
@@ -68,7 +66,7 @@ describe('createColumns', () => {
 
     const result = createColumns(
       vi.fn(() => mockRows),
-      (col) => [col('amount', { label: 'Amount', visible: false, accessor })]
+      (col) => [col('amount', { label: 'Amount', visible: false, accessor })],
     );
 
     expect(result.columns[0]).toMatchObject({
@@ -95,7 +93,7 @@ describe('createColumns', () => {
           expect(original).toEqual(snapshot);
 
           return [original, renamed];
-        }
+        },
       );
 
       expect(result.columns.map((c) => c.id)).toEqual(['amount', 'total']);
@@ -113,7 +111,7 @@ describe('createColumns', () => {
           // Only `relabeled` is returned — `original` shares its id, and `createColumns()`
           // now throws on a duplicate column id at construction (this step's own check).
           return [relabeled];
-        }
+        },
       );
     });
   });
@@ -124,7 +122,7 @@ describe('createColumns', () => {
     expect(() => {
       result = createColumns(
         vi.fn(() => mockRows),
-        () => []
+        () => [],
       );
     }).not.toThrow();
 
@@ -141,12 +139,12 @@ describe('createColumns', () => {
       const inline = createColumns(
         vi.fn(() => mockRows),
         (col) => [col('amount')],
-        schemaBody
+        schemaBody,
       );
       const wrapped = createColumns(
         vi.fn(() => mockRows),
         (col) => [col('amount')],
-        columnSchema(schemaBody)
+        columnSchema(schemaBody),
       );
 
       expect(inline.rules).toEqual(wrapped.rules);
@@ -156,7 +154,7 @@ describe('createColumns', () => {
     it('produces no rules when schema is omitted', () => {
       const result = createColumns(
         vi.fn(() => mockRows),
-        (col) => [col('amount')]
+        (col) => [col('amount')],
       );
 
       expect(result.rules).toEqual([]);
@@ -168,7 +166,7 @@ describe('createColumns', () => {
       const result = createColumns(
         vi.fn(() => mockRows),
         (col) => [col('amount')],
-        schema
+        schema,
       );
 
       expect(result.rules).toBe(schema.rules);
@@ -186,7 +184,11 @@ describe('createColumns', () => {
       });
 
       expect(() =>
-        createColumns(vi.fn(() => mockRows), (col) => [col('amount')], badSchema)
+        createColumns(
+          vi.fn(() => mockRows),
+          (col) => [col('amount')],
+          badSchema,
+        ),
       ).toThrow('[createColumns] Unknown column id "bogus" — no declared column has this id.');
     });
 
@@ -200,11 +202,11 @@ describe('createColumns', () => {
           (path) => {
             metadata(path.amount, KEY, 'a');
             metadata(path.amount, KEY, 'b');
-          }
-        )
+          },
+        ),
       ).toThrow(
         '[createColumns] Duplicate metadata() registration for column "amount" — ' +
-          'call metadata() at most once per key per column; metadata has no reducer/combine.'
+          'call metadata() at most once per key per column; metadata has no reducer/combine.',
       );
     });
 
@@ -217,7 +219,7 @@ describe('createColumns', () => {
         (path) => {
           metadata(path.name, KEY, 'a');
           metadata(path.amount, KEY, 'b');
-        }
+        },
       );
 
       expect(result.rules).toHaveLength(2);
@@ -233,7 +235,7 @@ describe('createColumns', () => {
         (path) => {
           metadata(path.amount, keyA, 'a');
           metadata(path.amount, keyB, 'b');
-        }
+        },
       );
 
       expect(result.rules).toHaveLength(2);
@@ -241,9 +243,12 @@ describe('createColumns', () => {
 
     it('throws when two columns share an id', () => {
       expect(() =>
-        createColumns(vi.fn(() => mockRows), (col) => [col('name'), col('name')])
+        createColumns(
+          vi.fn(() => mockRows),
+          (col) => [col('name'), col('name')],
+        ),
       ).toThrow(
-        '[createColumns] Duplicate column id provided: "name" — ensure all column ids are unique.'
+        '[createColumns] Duplicate column id provided: "name" — ensure all column ids are unique.',
       );
     });
 
@@ -255,8 +260,8 @@ describe('createColumns', () => {
           (path) => {
             visible(path.amount, { when: () => true });
             visible(path.amount, { when: () => false });
-          }
-        )
+          },
+        ),
       ).not.toThrow();
     });
 
@@ -277,7 +282,7 @@ describe('createColumns', () => {
           result = createColumns(
             vi.fn(() => mockRows),
             (col) => [col('name'), col('name'), col('amount')],
-            badSchema
+            badSchema,
           );
         }).not.toThrow();
 

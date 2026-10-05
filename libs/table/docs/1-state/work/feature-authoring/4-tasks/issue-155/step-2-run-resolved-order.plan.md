@@ -15,6 +15,7 @@ files:
   - libs/table/src/engine/render-stages.spec.ts
   - libs/table/src/engine/render-stages.types.spec.ts
 ---
+
 # Step 2 — Run the resolved order
 
 Runs the pipeline and render layers off `resolveStageOrder`'s
@@ -74,4 +75,5 @@ through the private registry.
       [step-2-run-resolved-order.test-plan.md](step-2-run-resolved-order.test-plan.md).
 
 ---
+
 ← [Step 1: The stage order resolver](step-1-stage-order-resolver.plan.md) | [Step 3: Duplicate stage claim is dev-only](step-3-dev-only-duplicate-claim.plan.md) →

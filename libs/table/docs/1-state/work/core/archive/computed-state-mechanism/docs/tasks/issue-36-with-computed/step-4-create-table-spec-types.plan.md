@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — create-table.spec.ts: withComputed type assertions, both placements, not-any, trap 3"
+title: 'Step 4 — create-table.spec.ts: withComputed type assertions, both placements, not-any, trap 3'
 type: task-step
 issue: 70
 ---
@@ -44,7 +44,7 @@ inside the existing type `describe` (comment at its top already states that only
 3. **Block parameter is `ReadonlyStore`.** Inside the block:
    `expectTypeOf(s.value).toEqualTypeOf<Signal<Invoice[]>>()` and
    `// @ts-expect-error` on `s.value.update(...)`; `expectTypeOf(s.rows).toEqualTypeOf<Signal<Invoice[]>>()`.
-4. **Uncomposed member absent.** Block placed *before* `fB()`: `// @ts-expect-error` on
+4. **Uncomposed member absent.** Block placed _before_ `fB()`: `// @ts-expect-error` on
    `s.b` inside the block.
 5. **Following slot sees the contribution.** A synthetic feature after the block declared as
    `createTableFeature((input) => ...)` reads `input.n` — `expectTypeOf(input.n).toEqualTypeOf<Signal<number>>()`.
@@ -91,4 +91,5 @@ inside the existing type `describe` (comment at its top already states that only
       restoring it passes.
 
 ---
+
 ← [Step 3: with-computed.spec.ts — runtime](step-3-with-computed-spec-runtime.plan.md)

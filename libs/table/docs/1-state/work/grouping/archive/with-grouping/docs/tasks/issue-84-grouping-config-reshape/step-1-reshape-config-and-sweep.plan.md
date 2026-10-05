@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — reshape WithGroupingConfig and sweep every call site"
+title: 'Step 1 — reshape WithGroupingConfig and sweep every call site'
 type: task-step
 issue: 118
 ---
@@ -7,7 +7,7 @@ issue: 118
 # Step 1 — reshape `WithGroupingConfig` and sweep every call site
 
 **PR scope:** The breaking rename and the overload deletion, plus every call site that the change
-invalidates. One PR by necessity — see *Why this step is coarse* below.
+invalidates. One PR by necessity — see _Why this step is coarse_ below.
 
 **Task type:** code
 
@@ -36,7 +36,7 @@ type it produces.
 
 Today `withGrouping()`'s first positional argument is **either** a config object **or** a schema
 fn, never both (`with-grouping.ts:138-145`). So `initialGrouping` and `applyGrouping()` rules are
-mutually exclusive: a consumer who wants seed levels *and* a declarative rule cannot express it.
+mutually exclusive: a consumer who wants seed levels _and_ a declarative rule cannot express it.
 
 This is also the epic's prefactor. #85 adds `groupWhen` to `WithGroupingConfig`, #86 adds a
 `groupWhen` member to `applyGrouping`'s opts, #87 removes `groupOrder` from the config. All three
@@ -158,7 +158,7 @@ withGrouping({
     applyGrouping(path.region, { when: () => regionActive() });
     applyGrouping(path.category, { when: () => categoryActive() });
   },
-})
+});
 ```
 
 Mechanical only in this step. New assertions for the combined shape are Step 2 — do not add them
@@ -214,4 +214,5 @@ here, and do not delete a test because its old call shape is gone.
       shapes. Not run locally; the byte-identical claim above is unverified until it passes.
 
 ---
+
 [Step 2: Tests for the combined shape](step-2-tests.plan.md) →

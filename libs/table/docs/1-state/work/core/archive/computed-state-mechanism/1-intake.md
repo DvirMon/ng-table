@@ -82,7 +82,7 @@ makes it more dangerous rather than less. Nor is a consumer-level `withComputed(
 Derived state is declared **on the feature that owns the state it derives from**, as a `computed`
 block in that feature's config, because the re-classification below shows one owner almost always
 holds everything the derivation needs. Cross-feature reach, where genuinely required, is a
-*declared requirement* checked order-free at composition. See [`3-decisions.md`](3-decisions.md) D19-D22.
+_declared requirement_ checked order-free at composition. See [`3-decisions.md`](3-decisions.md) D19-D22.
 
 ## Process note — **answered on evidence, not waived**
 

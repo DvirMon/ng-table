@@ -9,9 +9,9 @@ script, style, layout, paint and GC time. Diagnostic only, never gated.
 
 ## Files
 
-| File | Action |
-|---|---|
-| `apps/table-bench/driver/trace-summary.ts` | create |
+| File                                            | Action                                              |
+| ----------------------------------------------- | --------------------------------------------------- |
+| `apps/table-bench/driver/trace-summary.ts`      | create                                              |
 | `apps/table-bench/driver/trace-summary.test.ts` | create — `node:test`, small hand-made event fixture |
 
 ## Why This Step Exists
@@ -36,5 +36,5 @@ line, replacing `bench-trace` (discovery § Proposed setup › Driver).
 ## Acceptance Checks
 
 - [ ] `node --experimental-strip-types --test apps/table-bench/driver/trace-summary.test.ts`
-  passes (user runs it).
+      passes (user runs it).
 - [ ] Nested-event case in the fixture proves no double counting.

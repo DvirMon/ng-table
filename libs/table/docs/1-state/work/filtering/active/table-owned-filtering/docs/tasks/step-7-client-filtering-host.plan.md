@@ -8,22 +8,22 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
-| `libs/table/src/stories/filtering/client-filtering/client-filtering.filters.ts` | `:1-53` | rewrite — hoisted schema `const`, no `createFilters` |
-| `libs/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.ts` | `:93-103`, `:113-131`, `:155` | edit — `table.filters`, prose |
-| `libs/table/src/stories/filtering/client-filtering/filter-report-log.ts` | `:8`, `:20` | edit — report prefix is `[withFiltering]` |
-| `libs/table/src/stories/filtering/client-filtering/client-filtering.stories.ts` | `:18` | edit — prose only |
-| `libs/table/src/stories/filtering/fixtures/schema.ts` | `:24` | edit — comment names the composition that no longer exists |
-| `libs/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.html` | — | edit — only if a binding names `filters` off the host |
-| `libs/table/src/stories/filtering/client-filtering/client-filtering-toolbar.component.ts` | — | edit — only if its `Filters<…>` input type import moves |
+| File                                                                                           | Line                          | Action                                                     |
+| ---------------------------------------------------------------------------------------------- | ----------------------------- | ---------------------------------------------------------- |
+| `libs/table/src/stories/filtering/client-filtering/client-filtering.filters.ts`                | `:1-53`                       | rewrite — hoisted schema `const`, no `createFilters`       |
+| `libs/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.ts`   | `:93-103`, `:113-131`, `:155` | edit — `table.filters`, prose                              |
+| `libs/table/src/stories/filtering/client-filtering/filter-report-log.ts`                       | `:8`, `:20`                   | edit — report prefix is `[withFiltering]`                  |
+| `libs/table/src/stories/filtering/client-filtering/client-filtering.stories.ts`                | `:18`                         | edit — prose only                                          |
+| `libs/table/src/stories/filtering/fixtures/schema.ts`                                          | `:24`                         | edit — comment names the composition that no longer exists |
+| `libs/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.html` | —                             | edit — only if a binding names `filters` off the host      |
+| `libs/table/src/stories/filtering/client-filtering/client-filtering-toolbar.component.ts`      | —                             | edit — only if its `Filters<…>` input type import moves    |
 
 ## Why This Step Exists
 
 This is the story a reader opens first, and it is the one that carries **R55** — the spec's claim
 that a hoisted arrow annotated `(path: FiltersPath<Row>)` composes by spread and needs no
-`filterSchema()` helper. Nothing proves that today; `createClientFilters` is a *function taking a
-data signal*, which is the shape R52 deletes.
+`filterSchema()` helper. Nothing proves that today; `createClientFilters` is a _function taking a
+data signal_, which is the shape R52 deletes.
 
 It also carries a **live bug this step must fix, not just migrate around**. `filter-report-log.ts`
 matches console messages beginning `'[createFilters]'`. `evaluator.ts:29` now emits
@@ -87,7 +87,7 @@ story that owns the panel.
 
    `filters` must be declared **after** `table`. Keep it as a plain alias field only if the template
    and `activeCriteria` genuinely read it in several places; a single-use read should just say
-   `this.table.filters`. Note the memory rule: aliasing a *nested signal* (`= this.x.signal`) is
+   `this.table.filters`. Note the memory rule: aliasing a _nested signal_ (`= this.x.signal`) is
    banned — `table.filters` is the member itself, not a signal read off one, so a direct alias is
    fine here. Do not write `= this.table.filters()`.
 
@@ -150,4 +150,5 @@ story that owns the panel.
       `clearCriterion()`, as the original JSDoc promises.
 
 ---
+
 ← [Step 6: Rewrite the compile-time probe](step-6-inference-probe.plan.md) | [Step 8: Server-filtering host](step-8-server-filtering-host.plan.md) →

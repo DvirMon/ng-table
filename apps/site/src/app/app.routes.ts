@@ -7,10 +7,12 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'overview',
-    loadComponent: () => import('./pages/doc-placeholder/doc-placeholder').then((m) => m.DocPlaceholder),
+    loadComponent: () =>
+      import('./pages/doc-placeholder/doc-placeholder').then((m) => m.DocPlaceholder),
   },
   {
     path: ':section/:entry',
-    loadComponent: () => import('./pages/doc-placeholder/doc-placeholder').then((m) => m.DocPlaceholder),
+    loadComponent: () =>
+      import('./pages/doc-placeholder/doc-placeholder').then((m) => m.DocPlaceholder),
   },
 ];

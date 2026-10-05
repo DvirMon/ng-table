@@ -3,16 +3,16 @@
 **Issue:** #44
 **Status:** 8 / 8 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | ADR-0003: the deferred row-type inference shipped; record the reversal | ✅ done | — |
-| 2 | ADR-0007 + ADR-0005: core-key pre-claims, the unclaimed `totalRowCount`, derive-block labels | ✅ done | — |
-| 3 | ADR-0014: the derived-signal row in the runtime-error policy | ✅ done | — |
-| 4 | State-layer architecture: argument-order visibility, fixed pipeline order | ✅ done | — |
-| 5 | Row-editing: the shared-store rationale no longer holds | ✅ done | — |
-| 6 | `CLAUDE.md`: kill the false `composed` claim, add `withComputed()`/`composeFeatures()` | ✅ done | — |
-| 7 | Call-shape sweep across the remaining docs, plus the persistence exclusion | ✅ done | — |
-| 8 | `/audit-docs` gate, decisions-log check, close-out of #44 and #33 | ✅ done | — |
+| Step | Title                                                                                        | Status  | PR  |
+| ---- | -------------------------------------------------------------------------------------------- | ------- | --- |
+| 1    | ADR-0003: the deferred row-type inference shipped; record the reversal                       | ✅ done | —   |
+| 2    | ADR-0007 + ADR-0005: core-key pre-claims, the unclaimed `totalRowCount`, derive-block labels | ✅ done | —   |
+| 3    | ADR-0014: the derived-signal row in the runtime-error policy                                 | ✅ done | —   |
+| 4    | State-layer architecture: argument-order visibility, fixed pipeline order                    | ✅ done | —   |
+| 5    | Row-editing: the shared-store rationale no longer holds                                      | ✅ done | —   |
+| 6    | `CLAUDE.md`: kill the false `composed` claim, add `withComputed()`/`composeFeatures()`       | ✅ done | —   |
+| 7    | Call-shape sweep across the remaining docs, plus the persistence exclusion                   | ✅ done | —   |
+| 8    | `/audit-docs` gate, decisions-log check, close-out of #44 and #33                            | ✅ done | —   |
 
 Graph: `1 → 4`; `2 → 5`; `{1…7} → 8`.
 Parallel-safe: `[1, 2, 3, 6, 7]` from the start; `[4, 5]` once their blockers land.

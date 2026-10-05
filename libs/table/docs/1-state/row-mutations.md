@@ -31,7 +31,7 @@ Decision log: [`work/row-editing/archive/with-mutations/2-decisions.md`](./work/
 ## Data Contract
 
 ```ts
-const data  = signal<Person[]>(people);          // WritableSignal — required (D4)
+const data = signal<Person[]>(people); // WritableSignal — required (D4)
 const table = createTable(data, { trackBy: 'id', columns });
 ```
 
@@ -45,10 +45,10 @@ read-only or editable (D4). A read-only table fed by `computed()`, `resource()`,
 
 Two write paths, split by scope:
 
-| Scope | Call |
-|---|---|
-| whole set | `data.set(rows)` — the consumer's own signal (D7) |
-| rows within it | `table.value.update(updater)` (D30) |
+| Scope          | Call                                              |
+| -------------- | ------------------------------------------------- |
+| whole set      | `data.set(rows)` — the consumer's own signal (D7) |
+| rows within it | `table.value.update(updater)` (D30)               |
 
 There is no `setData()`. With no internal row set, there is nothing for it to write.
 
@@ -61,7 +61,7 @@ to write, the shape of a `WritableSignal`:
 table.value.update(insertRow(newRow, { at: 0 }));
 table.value.update(patchRow('42', { status: 'done' }));
 table.value.update(removeRow('42'));
-table.value.update((rows) => rows.filter((r) => !r.stale));   // raw lambda, always allowed
+table.value.update((rows) => rows.filter((r) => !r.stale)); // raw lambda, always allowed
 ```
 
 Named `value`, not `data`: `data` is the input parameter's name (`createTable(data, config)`),
@@ -79,19 +79,19 @@ Whole-array in, whole-array out. Updaters are free, pure functions — tree-shak
 unit-testable without a store (D6). `.update()` supplies `trackBy` so id-based updaters resolve
 identity without holding a store reference.
 
-Two consequences worth carrying: single-row updaters are the *narrow* case of this type, not the
+Two consequences worth carrying: single-row updaters are the _narrow_ case of this type, not the
 general one (which is why bulk is arity, not new verbs — D32); and a raw lambda satisfies it by
 ignoring `ctx`.
 
 ## Shipped Updaters
 
-| Updater | Signature | Notes |
-|---|---|---|
-| `insertRow` | `insertRow(row \| row[], { at?: number })` | splice semantics, never throws — see below. Array overload (D32, shipped 2026-09-05) inserts every row as one contiguous block in one write |
-| `removeRow` | `removeRow(id: RowId \| RowId[])` | filters by `trackBy`. Array overload (D32, shipped 2026-09-27 with #167) removes every listed id in one write; an id not present is skipped, never throws — pairs with `table.tree.descendantsOf(id)` for a cascade delete, see [`features/tree.md`](./features/tree.md#cascade-delete) |
-| `patchRow` | `patchRow(id: RowId, partial: Partial<TRow>)` | shallow spread over the matched row |
+| Updater     | Signature                                     | Notes                                                                                                                                                                                                                                                                                   |
+| ----------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `insertRow` | `insertRow(row \| row[], { at?: number })`    | splice semantics, never throws — see below. Array overload (D32, shipped 2026-09-05) inserts every row as one contiguous block in one write                                                                                                                                             |
+| `removeRow` | `removeRow(id: RowId \| RowId[])`             | filters by `trackBy`. Array overload (D32, shipped 2026-09-27 with #167) removes every listed id in one write; an id not present is skipped, never throws — pairs with `table.tree.descendantsOf(id)` for a cascade delete, see [`features/tree.md`](./features/tree.md#cascade-delete) |
+| `patchRow`  | `patchRow(id: RowId, partial: Partial<TRow>)` | shallow spread over the matched row                                                                                                                                                                                                                                                     |
 
-**Why exactly these three** (D19): the bar for shipping an updater is *error-proneness*, not
+**Why exactly these three** (D19): the bar for shipping an updater is _error-proneness_, not
 convenience — it earns its place when hand-rolling it needs `trackBy` resolution or index math.
 All three clear it, and all three have a real caller: `patchRow` is the save path and the
 row-actions path, `removeRow` is delete, `insertRow({ at: 0 })` is the add-blank-row flow.
@@ -100,19 +100,19 @@ row-actions path, `removeRow` is delete, `insertRow({ at: 0 })` is the add-blank
 
 `insertRow(row, { at })` behaves exactly as `Array.prototype.splice(at, 0, row)`.
 
-| `at` | Behavior |
-|---|---|
-| omitted | append |
-| in range | insert **before** the row currently at that index |
-| `>= length` | clamped to append |
-| negative | counts from the end — `-1` inserts before the last row |
-| `< -length` | clamped to prepend |
+| `at`        | Behavior                                               |
+| ----------- | ------------------------------------------------------ |
+| omitted     | append                                                 |
+| in range    | insert **before** the row currently at that index      |
+| `>= length` | clamped to append                                      |
+| negative    | counts from the end — `-1` inserts before the last row |
+| `< -length` | clamped to prepend                                     |
 
 **Never throws.** An index computed from an async result can legitimately go stale; clamping
 degrades to a cosmetic misplacement instead of a crash.
 
-**Do not call this "`at()` semantics" in consumer docs.** `at(-1)` *returns* the last element;
-`splice(-1, 0, x)` inserts *before* it. They disagree, and insertion follows `splice`.
+**Do not call this "`at()` semantics" in consumer docs.** `at(-1)` _returns_ the last element;
+`splice(-1, 0, x)` inserts _before_ it. They disagree, and insertion follows `splice`.
 
 The add-blank-row flow passes `{ at: 0 }` explicitly rather than relying on the default —
 append puts the new row off-screen in a long table.
@@ -120,20 +120,20 @@ append puts the new row off-screen in a long table.
 ### Storage position is not display position
 
 All writes land in `data`. The pipeline reads `data` and produces `renderRows()`. Under an
-active sort these are unrelated orderings, and sort *replaces* storage order rather than
+active sort these are unrelated orderings, and sort _replaces_ storage order rather than
 adjusting it — so **no value of `at` can place a row at a chosen display position.** This is not
 a mapping waiting to be solved; it is unrepresentable in storage coordinates.
 
-| Caller intent | Mechanism it actually needs |
-|---|---|
+| Caller intent                   | Mechanism it actually needs                          |
+| ------------------------------- | ---------------------------------------------------- |
 | index into the underlying array | `at` — well defined always, rarely what a user means |
-| "top of what I'm looking at" | pinning — sort exemption plus a held position |
+| "top of what I'm looking at"    | pinning — sort exemption plus a held position        |
 
 The second intent is the editing cluster's "don't move the row I'm editing", resolved there by
 D24's commit boundary rather than by pipeline exemption. See
 [`features/row-editing.md`](./features/row-editing.md).
 
-**Related concern, not a mutation concern — closed:** where a *blank* row lands under an active
+**Related concern, not a mutation concern — closed:** where a _blank_ row lands under an active
 sort is decided by how the comparator treats `""`/`null`. That position used to flip with sort
 direction; the null-ordering contract shipped 2026-08-27 (`nulls: 'last'` by default, `''`
 treated as a real value unless opted out via `sortNulls`), so a blank row now holds a
@@ -149,26 +149,26 @@ library never fabricates one:
 table.value.update(insertRow({ id: crypto.randomUUID(), name: '', dept: '' }, { at: 0 }));
 ```
 
-The library *cannot* fabricate one: `trackBy` is `keyof TRow | ((row) => RowId)`, and when it is
+The library _cannot_ fabricate one: `trackBy` is `keyof TRow | ((row) => RowId)`, and when it is
 a function there is no field the engine knows how to write, so a generated id has nowhere to
 live. Fabricating would mean the engine owning row identity — which `trackBy` explicitly
 delegates.
 
 When the server's id replaces the temp id, everything keyed by `RowId` is affected:
 
-| Keyed by `RowId` | Effect of the swap |
-|---|---|
-| `editing` / `pending` maps | entry orphaned under the old key — the row silently leaves edit mode |
-| `@for (… track row.id)` | Angular destroys and recreates the `<tr>`; focus inside it is lost |
-| expansion, future selection | same orphaning |
-| `sourceIndex` | self-correcting — `indexById` is a `computed` over `data` |
+| Keyed by `RowId`            | Effect of the swap                                                   |
+| --------------------------- | -------------------------------------------------------------------- |
+| `editing` / `pending` maps  | entry orphaned under the old key — the row silently leaves edit mode |
+| `@for (… track row.id)`     | Angular destroys and recreates the `<tr>`; focus inside it is lost   |
+| expansion, future selection | same orphaning                                                       |
+| `sourceIndex`               | self-correcting — `indexById` is a `computed` over `data`            |
 
 **Recommended save order**, which makes the orphaning harmless:
 
 ```ts
 const saved = await this.service.save(row);
-table.editing.update(endEdit(row.id));         // exit edit under the OLD id first
-table.value.update(patchRow(row.id, saved));   // then swap in the server's id
+table.editing.update(endEdit(row.id)); // exit edit under the OLD id first
+table.value.update(patchRow(row.id, saved)); // then swap in the server's id
 ```
 
 Nothing is keyed by the temp id when it disappears, and the `<tr>` teardown happens on a row
@@ -190,11 +190,11 @@ actually lives — resolved there as D24/D25.
 
 ## Not Shipped
 
-| Deferred | Reason | Shape already settled |
-|---|---|---|
-| `moveRow(id, to)` | no v1 caller — sorting owns order, `withDragDrop()` is unshipped | no |
-| `batch(...updaters)` | no v1 flow batches two row writes | yes — D32 |
-| bulk `patchRow(id[], partial)` | unblocked by `withSelection()` (shipped), not yet built | yes — D32 |
+| Deferred                       | Reason                                                           | Shape already settled |
+| ------------------------------ | ---------------------------------------------------------------- | --------------------- |
+| `moveRow(id, to)`              | no v1 caller — sorting owns order, `withDragDrop()` is unshipped | no                    |
+| `batch(...updaters)`           | no v1 flow batches two row writes                                | yes — D32             |
+| bulk `patchRow(id[], partial)` | unblocked by `withSelection()` (shipped), not yet built          | yes — D32             |
 
 **Bulk is widened arity plus `batch()`; "bulk" never enters the API** (D32). It is a product
 word for the UI affordance, not an API word. Plural verbs (`removeRows`) were rejected — the
@@ -204,7 +204,7 @@ shape falls out of `RowUpdater` already being whole-array.
 answering the bulk-add question: a consumer opens N new rows in one call
 (`createRow([{ id, row }, …], { at })`, `mutations/row-edit-mutations.ts`) instead of looping N
 single-row `createRow` calls, and it resolves in one `data` write / one `{ snapshots, open }`
-transition, not N. `patchRow`'s array form stays unshipped — the bulk-*edit* half, unblocked by
+transition, not N. `patchRow`'s array form stays unshipped — the bulk-_edit_ half, unblocked by
 `withSelection()` (shipped) but not yet built, as tabled above.
 
 **`removeRow`'s widened arity shipped 2026-09-27 with #167** — the array overload removes every
@@ -216,7 +216,7 @@ selected" is fully unblocked, as tabled above.
 `batch()` earns its place beyond tidiness: one `data` emission means one pipeline run, one
 `indexById` rebuild, and one undo step, instead of N of each.
 
-Whoever builds bulk *edit* resolves D31.2 first — it implies `multiple: true`, which combined
+Whoever builds bulk _edit_ resolves D31.2 first — it implies `multiple: true`, which combined
 with optimistic save is explicitly undesigned.
 
 ## Open Questions
@@ -227,7 +227,7 @@ with optimistic save is explicitly undesigned.
       **closed by #33.** A feature's input is `Feature<In extends Shape, Out>`, so a dependency is
       expressed as an F-bounded input slice (`Pick<TableStore<RowOf<In>>, 'columns'> & Shape`) and
       is typed by argument order. `Record<string, unknown>` survives only as the engine-internal
-      folding store, which no feature signature sees. There is still no *runtime* dependency
+      folding store, which no feature signature sees. There is still no _runtime_ dependency
       assertion. Engine-wide, not specific to mutations.
 - [ ] **O20** — on an id swap, does the table enforce the end-edit-first order, detect an
       orphaned key and migrate it, or just document the sequence? See G3 in the gap register.

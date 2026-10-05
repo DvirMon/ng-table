@@ -50,7 +50,7 @@ as the contract and builds a declaring runner nobody asked for.
    >   mechanism nobody extends is cost without payoff. Reading C was
    >   rejected because it leaves the recording body duplicated, which is
    >   the one piece of real duplication in the file set. `engine/filters/
-   >   build.ts` is untouched by #111; #102 reopens it.
+build.ts` is untouched by #111; #102 reopens it.
 
 2. In the same file, amend node **M2** in the **Nodes** table so it names
    one runner, not three symbols. Replace its cell text with:
@@ -62,7 +62,7 @@ as the contract and builds a declaring runner nobody asked for.
 
 3. In the **Nodes added after this ranking was written** section, amend the
    first bullet (`**M2 is two runners, not one** (G62)`). G62 is about the
-   two *authoring forms* being permanent, which stays true — what changes is
+   two _authoring forms_ being permanent, which stays true — what changes is
    that only one of them gets an extracted runner in this slice. Reword the
    bullet's second half to say that, and link the new "Questions settled"
    entry.
@@ -118,4 +118,5 @@ as the contract and builds a declaring runner nobody asked for.
       below `libs/table/docs`).
 
 ---
+
 [Step 2: Decouple `path-proxy.ts` from the columns schema](step-2-decouple-path-proxy.plan.md) →

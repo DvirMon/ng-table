@@ -1,5 +1,5 @@
 ---
-title: "Step 5 — tests through the public createTable() surface"
+title: 'Step 5 — tests through the public createTable() surface'
 type: task-step
 issue: 60
 ---
@@ -23,7 +23,7 @@ fixes surfaced by a failing test.
   fill out fully here if not already complete)
 - `libs/shared/table/src/schema/grouping-rules.spec.ts` (extend, same note)
 - `libs/shared/table/src/api/features/with-grouping.spec.ts` (edit — new `describe('groupingRule
-  declarative sugar (#26)', ...)` block)
+declarative sugar (#26)', ...)` block)
 
 ## Why This Step Exists
 
@@ -71,7 +71,7 @@ every case (never constructing a feature spec by hand):
   file.
 - Group new tests under one `describe('groupingRule declarative sugar (#26)', () => { ... })`
   block, matching this file's existing per-issue `describe` convention (`describe('collapse/expand
-  (#25)', ...)`).
+(#25)', ...)`).
 
 ## Risks / Watchouts
 
@@ -97,4 +97,5 @@ every case (never constructing a feature spec by hand):
       file).
 
 ---
+
 ← [Step 4: Wire withGrouping() feature](step-4-wire-with-grouping-feature.plan.md) | [Step 6: Docs →](step-6-docs.plan.md)

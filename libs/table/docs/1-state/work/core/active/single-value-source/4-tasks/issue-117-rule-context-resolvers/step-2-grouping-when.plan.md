@@ -24,7 +24,7 @@ Step 3, Step 4, Step 5.
 Grouping's `when` receives a `ClusterSummary` carrying `columnId`, `key`
 and raw rows. The cluster's own key is already accessor-resolved (free);
 a plain row field is free (real row objects); what has no spelling is
-reading a *different* column's value — the carrier-column case this
+reading a _different_ column's value — the carrier-column case this
 epic (#110) introduces. ADR-0027 Rule 3 + the issue's own acceptance
 criteria require widening `when`'s arity additively — every existing
 one-argument `when` must keep typechecking untouched (TypeScript allows a
@@ -44,10 +44,10 @@ widening, not a migration).
 
 2. **`engine/grouping/clusters.ts`.**
    - `evaluateGroupWhen<TRow>(predicate, summary, columnId,
-     reportedColumns, ctx: ValueOfContext<TRow>)` — add the `ctx`
+reportedColumns, ctx: ValueOfContext<TRow>)` — add the `ctx`
      parameter, call `predicate(summary, ctx)`.
    - `admitClusters<T, TRow>(nodes, when, toRows, reportedColumns,
-     columnWhen, columns: () => readonly ColumnDef<TRow>[])` — add a
+columnWhen, columns: () => readonly ColumnDef<TRow>[])` — add a
      trailing `columns` parameter (needed to build the context), build
      `const ctx = buildValueOfContext(columns);` **once per
      `admitClusters` call** (not once per node — matches the existing
@@ -73,7 +73,7 @@ widening, not a migration).
 
 - Build `ctx` from the **same** `columns` array both call sites already
   thread through — do not introduce a second `ColumnDef[] →
-  ValueOfContext` construction path.
+ValueOfContext` construction path.
 - A consumer `when` reading `ctx.valueOf(path.margin, cluster.rows[0])`
   per the issue's own example — this is the shape a runtime spec
   (Step 7) exercises.
@@ -101,4 +101,5 @@ widening, not a migration).
 - [ ] `admitClusters`'s recursive call passes `columns` through.
 
 ---
+
 ← [Step 1: Shared `valueOf` resolver](step-1-valueof-resolver.plan.md) | [Step 3: Sorting `sortFn` reads `ctx.valueOf`](step-3-sorting-sortfn.plan.md) →

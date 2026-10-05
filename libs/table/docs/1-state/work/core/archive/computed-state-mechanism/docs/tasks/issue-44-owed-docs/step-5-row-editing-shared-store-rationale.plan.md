@@ -1,5 +1,5 @@
 ---
-title: "Step 5 — row-editing: the shared-store rationale no longer holds"
+title: 'Step 5 — row-editing: the shared-store rationale no longer holds'
 type: task-step
 issue: 78
 ---
@@ -65,7 +65,7 @@ reader following it hits a construction throw and has no doc to reconcile it aga
 - 663 lines; the rationale is not the only place order-independence is implied. Grep the file for
   "order" and check each hit before calling the rewrite done.
 - Do not turn this into a migration guide. The feature's API is unchanged apart from the call
-  shape — only the *rationale* is wrong.
+  shape — only the _rationale_ is wrong.
 
 ## Non-Goals
 
@@ -81,4 +81,5 @@ reader following it hits a construction throw and has no doc to reconcile it aga
 - [ ] `grep -in 'order' docs/1-state/features/row-editing.md` — every hit checked, none implies order-independence
 
 ---
+
 ← [Step 4: state-layer architecture](step-4-state-architecture-composition.plan.md) | [Step 6: CLAUDE.md](step-6-claude-md-composed-and-surface.plan.md) →

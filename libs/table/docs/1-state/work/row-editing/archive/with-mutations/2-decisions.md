@@ -35,6 +35,7 @@ mirrors the existing `data` ownership model — consumer-side.
 public methods, independent of any form.
 
 **Rationale:** Two distinct scenarios converge on the same operation:
+
 1. Form-driven edit — consumer's Signal Form commits a row's new values.
 2. Non-form mutation — rows arriving or changing from another source (push, another
    screen, a bulk action), or a delete/add action with no form involved at all.
@@ -83,7 +84,7 @@ generic write, following the two precedents in the stack —
 updateRows(table, addRow(newRow, { at: 0 }));
 updateRows(table, patchRow('42', { status: 'done' }));
 updateRows(table, removeRow('42'));
-updateRows(table, rows => rows.filter(r => !r.stale));   // raw updater always allowed
+updateRows(table, (rows) => rows.filter((r) => !r.stale)); // raw updater always allowed
 ```
 
 `updateRows` writes through to the consumer's `WritableSignal` (per D3/D4). Id-based updaters
@@ -163,7 +164,7 @@ no replacement and is currently unenforced. Tracked as O8.
 ## D11 — Rework the ingress; `data` is the single source of truth (2026-08-11)
 
 **Decision:** D3/D4 win over the engine's current model. `data` becomes a required
-`WritableSignal<TRow[]>` and *is* the row set. The engine's `rawRows` signal and the copy-in
+`WritableSignal<TRow[]>` and _is_ the row set. The engine's `rawRows` signal and the copy-in
 `effect()` in `createTable()` are removed; the pipeline reads `data()` directly
 (`rows = computed(() => runPipeline(data(), stages))`).
 
@@ -172,6 +173,7 @@ re-emit silently overwrites local row mutations, which is exactly the failure D3
 avoid.
 
 **Consequences:**
+
 - Engine surgery on freshly-migrated code: `engine/core.ts` (drop `rawRows`, `setData`),
   `api/create-table.ts` (drop the copy effect), `engine/types.ts` (`TableCore.rawRows`).
 - `TableDataInput<TRow>` narrows to `WritableSignal<TRow[]>` — `computed()` and plain-thunk
@@ -199,6 +201,7 @@ members — see D30. Updater purity/tree-shaking rationale carries over unchange
 call-site wrapper moves.
 
 **Consequences:**
+
 - Churns the just-migrated column API: `setColumns`, `updateColumns`, `reorderColumns`,
   `toggleColumnVisibility` move off `TableCore`/`TableStore` (`engine/core.ts`,
   `engine/types.ts`, `api/types.ts`) and become exported free functions.
@@ -222,7 +225,7 @@ patchRow(id: RowId, partial: Partial<TRow>)
 
 **Rationale:** D6 keeps the raw lambda form (`updateRows(table, rows => …)`) always available,
 so an unshipped updater costs a consumer one inline function. The bar for shipping is therefore
-not convenience but *error-proneness*: an updater earns its place when hand-rolling it needs
+not convenience but _error-proneness_: an updater earns its place when hand-rolling it needs
 `trackBy` resolution or index math. All three above clear that bar, and all three have a v1
 caller — `patchRow` is the save path and the row-actions path (see D18 in the editing decisions),
 `removeRow` is delete, `addRow({ at })` is the add-blank-row-then-fill flow (D9/F2).
@@ -234,7 +237,7 @@ caller — `patchRow` is the save path and the row-actions path (see D18 in the 
   unshipped. Shipping it now means speccing and testing it against no real use case. Revisit
   when `withDragDrop()` lands.
 - **`compose(...updaters)`** — no v1 flow batches two row writes. The obvious candidate,
-  commit-an-edit, writes to `data` *and* to editing state, which are separate signals (see D16/D17
+  commit-an-edit, writes to `data` _and_ to editing state, which are separate signals (see D16/D17
   in the editing decisions), so `compose` would not collapse it into one pipeline rerun anyway.
   Revisit if a genuine multi-write-to-`data` flow appears.
 - **Plural forms (`removeRows(ids)`, `patchRows(…)`)** — bulk operations need a selection source,
@@ -245,7 +248,7 @@ verbs plus one `batch()`, not new plural names.
 
 ## D32 — Bulk is widened arity plus `batch()`; the word "bulk" never enters the API (2026-08-25)
 
-**Decision:** Settles the *naming and shape* of the operations D19 deferred, without building
+**Decision:** Settles the _naming and shape_ of the operations D19 deferred, without building
 them. "Bulk" conflates two things that need different answers:
 
 **(a) One operation over N rows** — bulk delete, bulk patch. This is arity, not a new capability,
@@ -270,20 +273,21 @@ table.value.update(batch(removeRow(1), removeRow(2), patchRow(3, { dept: 'Ops' }
 one `indexById` rebuild (D23), and one undo step, instead of N of each.
 
 **Why this shape falls out of what already exists:** `RowUpdater` is `(rows: TRow[], ctx) =>
-TRow[]` — it already operates on the whole array, so single-row updaters are the *narrow* case,
+TRow[]` — it already operates on the whole array, so single-row updaters are the _narrow_ case,
 not the general one. Widening `removeRow` is a one-line change to its `filter` predicate, and
 `batch` is plain function composition over the existing type. Neither needs engine involvement.
 
-**Still not built, and the blocker is unchanged from D19:** bulk *edit* needs a selection source
+**Still not built, and the blocker is unchanged from D19:** bulk _edit_ needs a selection source
 and `withSelection()` does not exist (`docs/1-state/features/selection.md` is a spec with no
 implementation; `api/features/` holds sorting, expansion, columns-schema, row-edit). Bulk
 delete/add are reachable without it when the consumer supplies ids, but neither has a caller yet.
 
 **Consequences:**
-- D19's "plural forms" deferral stands on timing; its *shape* is now decided, so whoever builds it
+
+- D19's "plural forms" deferral stands on timing; its _shape_ is now decided, so whoever builds it
   does not re-open the naming.
 - D19's `compose` deferral is superseded in name only — `batch` is the same function. Its stated
-  reason for deferral (commit-an-edit spans `data` *and* editing state, two signals, so `compose`
+  reason for deferral (commit-an-edit spans `data` _and_ editing state, two signals, so `compose`
   would not collapse it) still holds and is not what `batch` is for.
 - **Collides with D31.2 (editing decisions).** Bulk edit implies `multiple: true`, which combined
   with optimistic save is explicitly undesigned — N open rows × M in-flight saves. Whoever specs
@@ -298,16 +302,16 @@ unit-testable without a store (D6).
 Not a decision yet; the framing every insertion question reduces to.
 
 All writes land in `data` (D3/D6). The pipeline reads `data` and produces `renderRows()`. When a
-sort is active, these are unrelated orderings — and sort *replaces* storage order rather than
+sort is active, these are unrelated orderings — and sort _replaces_ storage order rather than
 adjusting it, so **no value of `at` can place a row at a chosen display position**. This is not a
 mapping that needs solving; it is unrepresentable in storage coordinates.
 
 `at` therefore serves two different intents that must not share one parameter:
 
-| Caller intent | Mechanism it actually needs |
-|---|---|
-| index into the underlying array | a `data` index — well-defined always, rarely what a user means |
-| "top of what I'm looking at" | exemption from the sort stage + a held position, i.e. **pinning** |
+| Caller intent                   | Mechanism it actually needs                                       |
+| ------------------------------- | ----------------------------------------------------------------- |
+| index into the underlying array | a `data` index — well-defined always, rarely what a user means    |
+| "top of what I'm looking at"    | exemption from the sort stage + a held position, i.e. **pinning** |
 
 The second is the same mechanism the editing cluster needs for "don't move the row I'm editing",
 resolved there as D24's `debounce()` boundary rather than pipeline exemption — see
@@ -325,7 +329,7 @@ Value Ordering — REQUIRED, NOT IMPLEMENTED") along with three real defects fou
 comparators, including a `TypeError` crash on any nullable Date column.
 
 It must ship with or before editable rows, but it is a separate work item. It makes the empty
-row's landing spot *stable and configurable*; it does not hold the row still while typing — that
+row's landing spot _stable and configurable_; it does not hold the row still while typing — that
 is resolved by D24 in the editing decisions.
 
 ### Deferred — insertion under grouping
@@ -364,25 +368,25 @@ trips, deliberately kept out by D1 and D18 (editing decisions).
 **What this obliges us to spec — the identity swap.** When the server's id replaces the temp id,
 every structure keyed by `RowId` is affected:
 
-| Keyed by `RowId` | Effect of the swap |
-|---|---|
-| `editing` Map (editing decisions D17) | entry is orphaned under the old key — the row silently leaves edit mode |
-| `@for (… track row.id)` | Angular destroys and recreates the `<tr>`; focus inside it is lost |
-| expansion / future selection state | same orphaning as the editing Map |
+| Keyed by `RowId`                      | Effect of the swap                                                        |
+| ------------------------------------- | ------------------------------------------------------------------------- |
+| `editing` Map (editing decisions D17) | entry is orphaned under the old key — the row silently leaves edit mode   |
+| `@for (… track row.id)`               | Angular destroys and recreates the `<tr>`; focus inside it is lost        |
+| expansion / future selection state    | same orphaning as the editing Map                                         |
 | `sourceIndex` (editing decisions D23) | self-correcting — `indexById` is a `computed` over `data`, so it rebuilds |
 
 **Recommended save order, which makes the orphaning harmless:**
 
 ```ts
 const saved = await this.service.save(row);
-table.editing.update(endEdit(row.id));          // exit edit under the OLD id first
-table.value.update(patchRow(row.id, saved));    // then swap in the server's id
+table.editing.update(endEdit(row.id)); // exit edit under the OLD id first
+table.value.update(patchRow(row.id, saved)); // then swap in the server's id
 ```
 
 Ending the edit before the swap means nothing is keyed by the temp id when it disappears, and the
 `<tr>` teardown happens on a row that no longer holds focus.
 
-**Open:** whether the table should *enforce* that order, detect an orphaned key and migrate it, or
+**Open:** whether the table should _enforce_ that order, detect an orphaned key and migrate it, or
 simply document the sequence. Tracked as O20.
 
 ## D27 — `at` is `splice` semantics; omitted means append (2026-08-13)
@@ -390,13 +394,13 @@ simply document the sequence. Tracked as O20.
 **Decision:** Closes the `at` gap left open by D19. `addRow(row, { at })` inserts into `data` with
 exactly `Array.prototype.splice(at, 0, row)` behavior, and omitting `at` appends.
 
-| `at` | Behavior |
-|---|---|
-| omitted | append — matches `push`, and matches where new things go in every list API |
-| in range | insert before the row currently at that index |
-| `>= length` | clamped to the end (append) |
-| negative | counts from the end — `-1` inserts *before* the last row |
-| `< -length` | clamped to 0 (prepend) |
+| `at`        | Behavior                                                                   |
+| ----------- | -------------------------------------------------------------------------- |
+| omitted     | append — matches `push`, and matches where new things go in every list API |
+| in range    | insert before the row currently at that index                              |
+| `>= length` | clamped to the end (append)                                                |
+| negative    | counts from the end — `-1` inserts _before_ the last row                   |
+| `< -length` | clamped to 0 (prepend)                                                     |
 
 Verified against the runtime, not asserted from memory: `[1,2,3]` with `at: -1` gives
 `[1,2,X,3]`; `at: 999` and `at: -999` clamp to append and prepend respectively.
@@ -404,8 +408,8 @@ Verified against the runtime, not asserted from memory: `[1,2,3]` with `at: -1` 
 **Never throws.** An index computed from an async result can legitimately go stale; clamping
 degrades to a cosmetic misplacement instead of a crash.
 
-**Documentation trap:** `splice(-1, …)` and `at(-1)` disagree — `at(-1)` *returns* the last element,
-`splice(-1, 0, x)` inserts *before* it. Insertion follows `splice`. Do not describe this as "`at()`
+**Documentation trap:** `splice(-1, …)` and `at(-1)` disagree — `at(-1)` _returns_ the last element,
+`splice(-1, 0, x)` inserts _before_ it. Insertion follows `splice`. Do not describe this as "`at()`
 semantics" in the public docs.
 
 **Consequence:** the add-blank-row-then-fill flow passes `{ at: 0 }` explicitly rather than relying
@@ -434,6 +438,7 @@ sub-paths of `value` — they keep descriptive names; only the primary row-data 
 generic `value`.
 
 **Rationale — reopened via Signal Forms comparison:**
+
 - `Field`/`FieldTree` is `() => FieldState`, not a bare `Signal`; `FieldState.value` is the actual
   writable surface (`nameForm().value.set(...)`), and it lives **on the field**, not on a raw
   signal the consumer holds separately. D12's "store keeps no write methods" modeled the wrong
@@ -441,7 +446,7 @@ generic `value`.
   precedent (D15) is Signal Forms, which puts the write surface on the object being read, not
   beside it.
 - Table has three independent slices (`value`/`columns`/`editing`), not one root model — ruled
-  out mirroring `field().value` at the *table* level (`table().value.update(...)`) since that
+  out mirroring `field().value` at the _table_ level (`table().value.update(...)`) since that
   would force synthesizing one root object across slices, including the optional `editing` slice
   (D8/D10: only present when `withRowEdit()` is composed), breaking tree-shaking and the
   additive-feature-members model. Chose flat per-slice members instead of the full
@@ -454,6 +459,7 @@ generic `value`.
   (`table.value.update(updater)`).
 
 **Consequences:**
+
 - `api/update-columns.ts`, `api/row-mutations.ts`, `api/row-edit-mutations.ts` — the
   `updateRows`/`updateColumns`/`updateEditing` free-function wrappers are removed; updater
   factories they export stay.
@@ -481,7 +487,7 @@ generic `value`.
   untyped). Affects `withGrouping`→`withExpansion` today, and any dependency `withRowEdit()`
   wants to declare (editing decisions). Separate track — an engine regression, not specific to
   this cluster.
-- **O20** *(from D26)* On an id swap, does the table enforce the end-edit-first order, detect
+- **O20** _(from D26)_ On an id swap, does the table enforce the end-edit-first order, detect
   an orphaned `editing` key and migrate it, or just document the sequence?
 
 **Resolved:** O1→D3, O5→D9 (mechanism resolved in editing decisions D20/D24/D25), O7→D19,

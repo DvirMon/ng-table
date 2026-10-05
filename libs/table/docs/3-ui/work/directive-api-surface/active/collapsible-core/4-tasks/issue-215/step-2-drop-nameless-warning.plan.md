@@ -7,6 +7,7 @@ files:
   - libs/table/src/directives/ngp-table-tree-toggle.directive.ts
   - libs/table/src/directives/ngp-table-tree-toggle.directive.spec.ts
 ---
+
 # Step 2 — Drop the nameless-toggle warning
 
 Removes the development warning for a toggle with no accessible name, and its tests.
@@ -49,4 +50,5 @@ In the spec, delete:
 - [ ] The `withTree()` throw case is unchanged.
 
 ---
+
 ← [Step 1: The collapsible trigger core](step-1-collapsible-trigger-core.plan.md) | [Step 3: Tree toggle extends the core](step-3-tree-toggle-extends-core.plan.md) →

@@ -90,13 +90,13 @@ Not generic in `TRow` — nothing in it reads a row. `initial` is covered under
 
 ## Methods
 
-| Method | Description |
-|---|---|
-| `table.expansion.toggle(rowId, options?)` | Toggle a single row's open state. Emits `changed` once. |
-| `table.expansion.expand(ids?, options?)` | Adds. Omitted `ids`: every row in `rows()`, unioned with what's already open. |
-| `table.expansion.collapse(ids?, options?)` | Removes. Omitted `ids`: everything currently open. |
-| `table.expansion.set(ids, options?)` | Atomic replace — the restore path. |
-| `table.expansion.release(ids?)` | **Specced, not shipped (E39, #200).** Removes ids from `everExpanded`; omitted `ids` clears it. Never touches the open set; emits nothing on `changed`. Frees kept panels. |
+| Method                                     | Description                                                                                                                                                                |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `table.expansion.toggle(rowId, options?)`  | Toggle a single row's open state. Emits `changed` once.                                                                                                                    |
+| `table.expansion.expand(ids?, options?)`   | Adds. Omitted `ids`: every row in `rows()`, unioned with what's already open.                                                                                              |
+| `table.expansion.collapse(ids?, options?)` | Removes. Omitted `ids`: everything currently open.                                                                                                                         |
+| `table.expansion.set(ids, options?)`       | Atomic replace — the restore path.                                                                                                                                         |
+| `table.expansion.release(ids?)`            | **Specced, not shipped (E39, #200).** Removes ids from `everExpanded`; omitted `ids` clears it. Never touches the open set; emits nothing on `changed`. Frees kept panels. |
 
 Every write verb takes `options?: ExpansionWriteOptions` (`{ emitEvent?: boolean }`) — see
 [Silent writes](#silent-writes-emitevent-false).
@@ -111,11 +111,11 @@ for that reason (D5/E9); the panel's one-line equivalent, if a consumer ever nee
 ### `initial` — a construction-time seed
 
 ```ts
-withExpansion({ initial: savedIds() })
+withExpansion({ initial: savedIds() });
 ```
 
 A **plain array, read once** when the feature factory runs. It seeds `expansion()` and
-`everExpanded()` (a restored-open row *has* been opened, so its detail panel mounts
+`everExpanded()` (a restored-open row _has_ been opened, so its detail panel mounts
 immediately rather than waiting for a toggle) and emits **no** `changed` — nothing changed, the
 table started this way.
 
@@ -189,24 +189,24 @@ there is no contributor to the union for `engine/flatten.ts`'s `flattenVisible` 
 ## Open Questions
 
 - [x] **Non-expandable rows.** **Resolved 2026-09-30 — consumer-owned, no library gate**
-  (`0-product/expansion.md` OQ-exp-4). No per-row predicate, no `isExpandable(id)`; this
-  deliberately does not mirror selection's D58 (`enableRowSelection`). Reason: whether a row has
-  detail depends on panel content, which is consumer data (OQ-exp-5), unlike selection's lock state
-  on the row itself. Recipe: hide the toggle per row in the template; expand-all passes filtered
-  ids, `expand(rows().filter(hasDetail).map(trackBy))`. Bare `expand()` means every row.
+      (`0-product/expansion.md` OQ-exp-4). No per-row predicate, no `isExpandable(id)`; this
+      deliberately does not mirror selection's D58 (`enableRowSelection`). Reason: whether a row has
+      detail depends on panel content, which is consumer data (OQ-exp-5), unlike selection's lock state
+      on the row itself. Recipe: hide the toggle per row in the template; expand-all passes filtered
+      ids, `expand(rows().filter(hasDetail).map(trackBy))`. Bare `expand()` means every row.
 - [ ] Should `everExpanded` be seeded by a snapshot `restore()`, or only by `initial`?
 - [ ] Precise lazy-load UX contract (e.g. a per-row loading indicator) not addressed — likely a
-  UI-layer concern once directives are specced, but the *state* for "is this panel currently
-  loading" hasn't been assigned to any feature yet.
+      UI-layer concern once directives are specced, but the _state_ for "is this panel currently
+      loading" hasn't been assigned to any feature yet.
 - [x] **Stale restored ids.** `initial` (and a snapshot `write()`) can carry ids whose rows are
-  absent from `data` — deleted server-side since the state was saved. **Resolved — keep them;
-  staleness is caller-owned.** Adopts selection's [D8](../work/with-selection/2-decisions.md)
-  verbatim: neither id-set feature carries a data-backed invariant, and an id matching no row
-  renders nothing. `onRowsRemoved` prunes the open set (`table.expansion()`), never
-  `everExpanded` (ADR-0006 exemption, deliberate — it's an additive ledger).
+      absent from `data` — deleted server-side since the state was saved. **Resolved — keep them;
+      staleness is caller-owned.** Adopts selection's [D8](../work/with-selection/2-decisions.md)
+      verbatim: neither id-set feature carries a data-backed invariant, and an id matching no row
+      renders nothing. `onRowsRemoved` prunes the open set (`table.expansion()`), never
+      `everExpanded` (ADR-0006 exemption, deliberate — it's an additive ledger).
 - [x] **Does `expansionState` land here or in `withTree()`?** Resolved — it shipped as
-  `withTree()`'s `state` property (tri-state depends on the discovery walk, which only the
-  tree feature has). See [tree.md](tree.md).
+      `withTree()`'s `state` property (tri-state depends on the discovery walk, which only the
+      tree feature has). See [tree.md](tree.md).
 
 ---
 

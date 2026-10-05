@@ -73,7 +73,7 @@ place that is not yet honoured" clause, since it is now honoured.
   in the decisions log.
 - No new `SO`-number is needed — SO24 is being closed, not superseded.
   Per the log's own maintenance rule 4, a superseded row keeps its
-  history; a *closed* (no-longer-open) row is simply flipped to
+  history; a _closed_ (no-longer-open) row is simply flipped to
   `shipped` in place, matching how other `shipped` rows in this same
   file read (e.g. SO10–SO15).
 
@@ -104,4 +104,5 @@ place that is not yet honoured" clause, since it is now honoured.
       "not yet honoured" clause is gone.
 
 ---
+
 ← [Step 2: Cover the two degrade paths](step-2-degrade-path-tests.plan.md)

@@ -10,7 +10,12 @@ export interface RowEditRequestOptions {
 }
 
 export interface RowEditApi {
-  readonly saveRow: (id: RowId, row: EditRow, isCreate: boolean, options: RowEditRequestOptions) => Observable<EditRow>;
+  readonly saveRow: (
+    id: RowId,
+    row: EditRow,
+    isCreate: boolean,
+    options: RowEditRequestOptions,
+  ) => Observable<EditRow>;
   readonly deleteRow: (id: RowId, options: RowEditRequestOptions) => Observable<void>;
   /** One request for every row in `rows` — a batch failure fails the whole array, never some of
    * it. Used only by `../gated-bulk-optimistic/`. */
@@ -41,14 +46,18 @@ export function injectRowEditApi(): RowEditApi {
     const request$ = isCreate
       ? http.post<EditRow>('/api/rows', row, { headers })
       : http.put<EditRow>(`/api/rows/${id}`, row, { headers });
-    return request$.pipe(catchError((error: unknown) => throwError(() => normalizeError(error, 'Save failed.'))));
+    return request$.pipe(
+      catchError((error: unknown) => throwError(() => normalizeError(error, 'Save failed.'))),
+    );
   }
 
   function deleteRow(id: RowId, options: RowEditRequestOptions): Observable<void> {
     const headers = headersFor(options);
     return http
       .delete<void>(`/api/rows/${id}`, { headers })
-      .pipe(catchError((error: unknown) => throwError(() => normalizeError(error, 'Delete failed.'))));
+      .pipe(
+        catchError((error: unknown) => throwError(() => normalizeError(error, 'Delete failed.'))),
+      );
   }
 
   function saveBulk(rows: EditRow[], options: RowEditRequestOptions): Observable<EditRow[]> {

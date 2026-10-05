@@ -28,10 +28,14 @@ from the one the cell shows. ADR-0024 requires the ADR-0014-wrapped
 **1. `build.ts` — take a columns getter.**
 
 ```ts
-export function buildFilterModel<TRow, TValues extends ColumnValueMap, S extends Record<string, AnyRule>>(
+export function buildFilterModel<
+  TRow,
+  TValues extends ColumnValueMap,
+  S extends Record<string, AnyRule>,
+>(
   schema: (path: FiltersPath<TRow, TValues>) => S,
-  columns: () => readonly ColumnDef<TRow>[]
-): Filters<TRow, StateOf<S>>
+  columns: () => readonly ColumnDef<TRow>[],
+): Filters<TRow, StateOf<S>>;
 ```
 
 A getter, not an array: `table.columns` is writable (`setColumns`), so
@@ -89,4 +93,5 @@ the logged `cell` is the value the predicate actually saw.
 - [ ] `readAccessor` is the only way a cell is read in `engine/filters/`.
 
 ---
+
 ← [Step 1: Re-key the filter type surface](step-1-rekey-filter-types.plan.md) | [Step 3: Widen `withFiltering`'s input](step-3-widen-feature-input.plan.md) →

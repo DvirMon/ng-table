@@ -20,13 +20,13 @@ Product input: [`0-product/row-editing.md`](../../../../../0-product/row-editing
 D31.2 records `multiple: true` + optimistic save as undesigned, framed as "N open rows × M
 in-flight saves." Checked against the shipped code, most of that is already well-defined:
 
-| Concern | Status |
-|---|---|
-| Per-row isolation | **Fine.** `snapshots` is a map and `open` a set, both keyed by id. There is no shared editing state for N rows to contend over. |
-| Partial failure of a batched save | **Fine.** Restore points are per row, so reverting row 2 out of a 3-row batch is three ordinary calls. D32's "a batched write is one rollback unit" constrains the *write*, not the recovery. |
-| Save-all as a loop over `table.editing()` | **Fine.** Each iteration is an independent per-row sequence. |
-| `open ⊆ snapshots` invariant | **Fine.** Every updater preserves it. |
-| Bulk close while a save is in flight | **Broken — see below.** |
+| Concern                                   | Status                                                                                                                                                                                        |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Per-row isolation                         | **Fine.** `snapshots` is a map and `open` a set, both keyed by id. There is no shared editing state for N rows to contend over.                                                               |
+| Partial failure of a batched save         | **Fine.** Restore points are per row, so reverting row 2 out of a 3-row batch is three ordinary calls. D32's "a batched write is one rollback unit" constrains the _write_, not the recovery. |
+| Save-all as a loop over `table.editing()` | **Fine.** Each iteration is an independent per-row sequence.                                                                                                                                  |
+| `open ⊆ snapshots` invariant              | **Fine.** Every updater preserves it.                                                                                                                                                         |
+| Bulk close while a save is in flight      | **Broken — see below.**                                                                                                                                                                       |
 
 So one defect, with two entry points.
 
@@ -62,7 +62,7 @@ in flight.
 
 ### The root cause — `pending` cannot express "open and saving"
 
-`pending` is defined as *has a restore point and is not open*. A row that is open **and** has a
+`pending` is defined as _has a restore point and is not open_. A row that is open **and** has a
 save in flight is therefore invisible to it, and indistinguishable from a row the user is merely
 typing in. The library cannot tell them apart, so a bulk close cannot know which restore points are
 load-bearing.
@@ -77,7 +77,7 @@ concurrency one.
 ```ts
 // Save all — the defined shape
 for (const id of table.editing()) {
-  table.editing.update(endEdit(id));        // closes; row becomes `pending`
+  table.editing.update(endEdit(id)); // closes; row becomes `pending`
 }
 // then fire the writes; per row:
 //   ok     -> table.editing.update(releaseEdit(id));
@@ -110,21 +110,21 @@ pessimistic bulk edit work — a mode we are declining to support).
 
 ## Definitions this settles
 
-| Affordance | State-layer meaning |
-|---|---|
-| **Save all** | `endEdit` per open row, then one write or N; `releaseEdit` / `revertEdit` per row as answers arrive |
-| **Cancel all** | `clearEdit()` — closes every open row and drops their restore points in one write. Pending rows untouched (D44), which is now load-bearing rather than incidental |
-| **Partial failure** | per-row `revertEdit`; failed rows may be re-opened with `beginEdit`, which is capture-if-absent and so restores the *original* pre-edit point (D31.1) |
-| **Mode flip `true` → `false`** | closes every open row and drops their restore points, one write — no survivor chosen. Pending rows untouched. See the section below |
+| Affordance                     | State-layer meaning                                                                                                                                               |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Save all**                   | `endEdit` per open row, then one write or N; `releaseEdit` / `revertEdit` per row as answers arrive                                                               |
+| **Cancel all**                 | `clearEdit()` — closes every open row and drops their restore points in one write. Pending rows untouched (D44), which is now load-bearing rather than incidental |
+| **Partial failure**            | per-row `revertEdit`; failed rows may be re-opened with `beginEdit`, which is capture-if-absent and so restores the _original_ pre-edit point (D31.1)             |
+| **Mode flip `true` → `false`** | closes every open row and drops their restore points, one write — no survivor chosen. Pending rows untouched. See the section below                               |
 
 ## Mode flip `true` → `false` — closes everything (decided 2026-08-27)
 
 Two paths currently share `closeAllButLast`, and only one of them should.
 
-| Path | Trigger | Behavior |
-|---|---|---|
-| **Single-mode trim** | a write that would leave >1 row open — `beginEdit(B)` while A is open | unchanged: keep the row just opened, close the rest (D14) |
-| **Mode flip `true` → `false`** | `multiple` accessor turns false with N rows open | **close all N.** No survivor is chosen |
+| Path                           | Trigger                                                               | Behavior                                                  |
+| ------------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------- |
+| **Single-mode trim**           | a write that would leave >1 row open — `beginEdit(B)` while A is open | unchanged: keep the row just opened, close the rest (D14) |
+| **Mode flip `true` → `false`** | `multiple` accessor turns false with N rows open                      | **close all N.** No survivor is chosen                    |
 
 **Why no survivor.** `closeAllButLast` keeps the most recently opened row, which is meaningful for
 the trim path — the user just asked for that row. On a mode flip nobody asked for anything; the

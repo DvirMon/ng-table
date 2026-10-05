@@ -3,11 +3,11 @@
 **Issue:** #121
 **Status:** 3 / 3 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | `withExpansion()` narrows to the detail panel | ✅ done | — |
-| 2 | `with-expansion.spec.ts` narrows to the panel | ✅ done | — |
-| 3 | Docs and ADRs catch up | ✅ done | — |
+| Step | Title                                         | Status  | PR  |
+| ---- | --------------------------------------------- | ------- | --- |
+| 1    | `withExpansion()` narrows to the detail panel | ✅ done | —   |
+| 2    | `with-expansion.spec.ts` narrows to the panel | ✅ done | —   |
+| 3    | Docs and ADRs catch up                        | ✅ done | —   |
 
 ## Graph
 
@@ -28,5 +28,4 @@ already, nothing there is discovered during implementation.
 one in-repo consumer of the old tree-shaped `withExpansion()` API is
 already off it.
 
-Step 2 also lands the type-level D25 case `with-tree.spec.ts` (line
-1275) explicitly deferred to this issue.
+Step 2 also lands the type-level D25 case `with-tree.spec.ts` (line 1275) explicitly deferred to this issue.

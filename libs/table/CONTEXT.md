@@ -1,6 +1,6 @@
 ---
 title: Table
-summary: "Standalone `@ngp/table` headless table primitive, extracted from Design System (ADR-0009)."
+summary: 'Standalone `@ngp/table` headless table primitive, extracted from Design System (ADR-0009).'
 depends-on: []
 ---
 
@@ -46,8 +46,8 @@ other feature's config.
 
 **Resolver** — a method a rule callback uses to reach something it was not
 handed. Every resolver names a path; what differs is the **register** it reads
-that path in. *What does the data say?* is one register, *what did the user ask
-for?* another, *how is this column configured?* a third. A path resolves to a
+that path in. _What does the data say?_ is one register, _what did the user ask
+for?_ another, _how is this column configured?_ a third. A path resolves to a
 different kind of thing in each, so each register has its own resolver rather
 than one name doing three jobs.
 

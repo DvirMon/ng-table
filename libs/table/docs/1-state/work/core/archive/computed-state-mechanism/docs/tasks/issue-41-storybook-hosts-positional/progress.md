@@ -3,12 +3,12 @@
 **Issue:** #41
 **Status:** 4 / 4 complete — issue closed
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | Nine row-edit story hosts + two schema files on positional `createTable()` | ✅ done | fe23c9a (on feat/table) |
-| 2 | Tidy the two migration-touched lines that skipped formatting | ✅ done | 46094b7 |
-| 3 | `docs/3-ui/stories.md`: `schema.ts` row and the "no schema call in a host" rule | ✅ done | 46094b7 |
-| 4 | Storybook render/behaviour verification (user-run) and #41 close-out | ✅ done | — |
+| Step | Title                                                                           | Status  | PR                      |
+| ---- | ------------------------------------------------------------------------------- | ------- | ----------------------- |
+| 1    | Nine row-edit story hosts + two schema files on positional `createTable()`      | ✅ done | fe23c9a (on feat/table) |
+| 2    | Tidy the two migration-touched lines that skipped formatting                    | ✅ done | 46094b7                 |
+| 3    | `docs/3-ui/stories.md`: `schema.ts` row and the "no schema call in a host" rule | ✅ done | 46094b7                 |
+| 4    | Storybook render/behaviour verification (user-run) and #41 close-out            | ✅ done | —                       |
 
 Graph: `1 → {2, 3}`; `{2, 3} → 4`.
 Parallel-safe: `[2, 3]` after `1`. Dependency: `1 → 2 → 4`, `1 → 3 → 4`.

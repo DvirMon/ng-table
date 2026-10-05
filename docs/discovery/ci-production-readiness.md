@@ -56,40 +56,41 @@ GitHub Pages (R16).
   "can only be restored by re-runs of the pull request"; main cannot restore a PR's cache [S9].
 - `nx.json` lists `.github/workflows/ci.yml` under `sharedGlobals`, so the workflow file is an input
   to every task hash [R2] — the input CREEP exploits being absent.
+
 ## Comparison — the two caching options at this scale
 
-| Axis | `actions/cache` on `.nx` | Nx Cloud Hobby |
-|---|---|---|
-| Cost | free, 10 GB/repo quota [S11] | free: 50k credits/mo [S3] |
-| Works on nx@23.1.1 | only if `.nx/workspace-data/*.db*` is cached too [S7]; `.nx/cache` alone fails [S6] | zero-config [S3] |
-| Escape hatch if it misbehaves | none — `NX_REJECT_UNKNOWN_LOCAL_CACHE` is dead on the db cache [S4][S5] | n/a |
-| CREEP exposure | mitigated by GitHub's merge-ref cache scoping [S9] + `ci.yml` in `sharedGlobals` [R2] | mitigated by design [S8] |
-| Eviction | 7 days idle, 10 GB/repo [S9] | credit-metered [S3] |
-| Nx's own recommendation | not documented as an option [S1] | yes [S1][S3] |
+| Axis                          | `actions/cache` on `.nx`                                                              | Nx Cloud Hobby            |
+| ----------------------------- | ------------------------------------------------------------------------------------- | ------------------------- |
+| Cost                          | free, 10 GB/repo quota [S11]                                                          | free: 50k credits/mo [S3] |
+| Works on nx@23.1.1            | only if `.nx/workspace-data/*.db*` is cached too [S7]; `.nx/cache` alone fails [S6]   | zero-config [S3]          |
+| Escape hatch if it misbehaves | none — `NX_REJECT_UNKNOWN_LOCAL_CACHE` is dead on the db cache [S4][S5]               | n/a                       |
+| CREEP exposure                | mitigated by GitHub's merge-ref cache scoping [S9] + `ci.yml` in `sharedGlobals` [R2] | mitigated by design [S8]  |
+| Eviction                      | 7 days idle, 10 GB/repo [S9]                                                          | credit-metered [S3]       |
+| Nx's own recommendation       | not documented as an option [S1]                                                      | yes [S1][S3]              |
 
 ## Inventory — candidate additions
 
-| | Addition | Verdict | Rationale | Source |
-|---|---|---|---|---|
-| R1 | Run `nx affected -t typecheck` | **worth it for solo** | Target exists on both projects and never runs; `tsc` never opens a template, and that gap shipped bug #60 in this repo | [R3][R5] |
-| R2 | Drop the `build --exclude=shared-table,ng-table` | **worth it for solo** | Only two projects exist, so the exclusion list is the whole workspace — the line is a no-op wearing a green check | [R1][P1] |
-| R3 | Add `npm run llms:check` (and `table:overloads:check`) | **worth it for solo** | CLAUDE.md declares `llms:check` "must stay clean"; an unenforced invariant drifts | [R4] |
-| R4 | `concurrency: ${{ github.workflow }}-${{ github.ref }}` + `cancel-in-progress` | **worth it for solo** | Public repo → unlimited free minutes, so this isn't a quota fix; still worth it for faster feedback — a superseded push shouldn't leave a stale run queued/running | [S10][S11][P2] |
-| R5 | Bump `nx-set-shas` v4 → v5 | **worth it for solo** | v5 is current (node24 runtime); one-line, no behavior change | [S12] |
-| R6 | `setup-node` `cache: 'npm'` | **already done** | Present in the workflow today; this is the highest-value cache at this size | [R1] |
-| R7 | `actions/cache` on `.nx/cache` + `.nx/workspace-data/*.db*` | **situational** | Correct and safe here, but with 2 projects `affected` rarely narrows anything and `npm ci` + Angular build dominate — measure before adding | [S7][S9][S2] |
-| R8 | Nx Cloud Hobby (Nx Replay remote cache) | **situational** | Free and zero-config, and Nx's own answer; the trade is a third-party dependency for a cache whose hit rate at 2 projects is unproven | [S3][S1] |
-| R9 | Nx Agents / DTE | **skip until team grows** | Its documented trigger is an affected set that outgrows one machine; two projects never will | [S2] |
-| R10 | `nx fix-ci` (self-healing) | **skip until team grows** | Requires the Nx Cloud connection and exists to unblock reviewers you don't have | [S1][S3] |
-| R11 | Dependabot version updates | **worth it for solo** | Config-only, `groups` + `open-pull-requests-limit` keep PR volume to one batch; the solo failure mode is silently rotting deps, not too many PRs | [S15] |
-| R12 | Renovate instead of Dependabot | **situational** | Only if grouped-Angular-major batching becomes painful; adds an external app to a private repo | [S15] |
-| R13 | CodeQL / code scanning | **worth it for solo** | Needs public visibility or paid GitHub Code Security [S13]; the repo is public, so it's free — default setup is a few clicks, no workflow authoring | [S13][P2] |
-| R14 | Library publish + versioning workflow | **skip for now** | `libs/table` has no `package.json` and no packaging target — nothing to publish yet | [R3] |
-| R15 | npm trusted publishing (OIDC) when R14 happens | **worth it, when it applies** | Removes the long-lived `NPM_TOKEN` and emits provenance by default — strictly better than a secret on day one | [S14] |
-| R16 | Storybook deploy to GitHub Pages | **situational** | Pages on Free needs public visibility [S16], which this repo has — no plan blocker. Worth it once there's a docs site worth publishing; not a correctness gap today | [S16][P2] |
-| R17 | Coverage reporting / thresholds | **skip until team grows** | Coverage gates exist to police contributors you can't review; solo, the number is information you already have locally | — |
-| R18 | Artifact upload (Storybook build, dist) | **situational** | 500 MB artifact storage on Free; useful only to eyeball a built docs site from a PR | [S11] |
-| R19 | Merge queue | **skip until team grows** | Its purpose is serializing concurrent merges from multiple authors | [S2] |
+|     | Addition                                                                       | Verdict                       | Rationale                                                                                                                                                           | Source         |
+| --- | ------------------------------------------------------------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| R1  | Run `nx affected -t typecheck`                                                 | **worth it for solo**         | Target exists on both projects and never runs; `tsc` never opens a template, and that gap shipped bug #60 in this repo                                              | [R3][R5]       |
+| R2  | Drop the `build --exclude=shared-table,ng-table`                               | **worth it for solo**         | Only two projects exist, so the exclusion list is the whole workspace — the line is a no-op wearing a green check                                                   | [R1][P1]       |
+| R3  | Add `npm run llms:check` (and `table:overloads:check`)                         | **worth it for solo**         | CLAUDE.md declares `llms:check` "must stay clean"; an unenforced invariant drifts                                                                                   | [R4]           |
+| R4  | `concurrency: ${{ github.workflow }}-${{ github.ref }}` + `cancel-in-progress` | **worth it for solo**         | Public repo → unlimited free minutes, so this isn't a quota fix; still worth it for faster feedback — a superseded push shouldn't leave a stale run queued/running  | [S10][S11][P2] |
+| R5  | Bump `nx-set-shas` v4 → v5                                                     | **worth it for solo**         | v5 is current (node24 runtime); one-line, no behavior change                                                                                                        | [S12]          |
+| R6  | `setup-node` `cache: 'npm'`                                                    | **already done**              | Present in the workflow today; this is the highest-value cache at this size                                                                                         | [R1]           |
+| R7  | `actions/cache` on `.nx/cache` + `.nx/workspace-data/*.db*`                    | **situational**               | Correct and safe here, but with 2 projects `affected` rarely narrows anything and `npm ci` + Angular build dominate — measure before adding                         | [S7][S9][S2]   |
+| R8  | Nx Cloud Hobby (Nx Replay remote cache)                                        | **situational**               | Free and zero-config, and Nx's own answer; the trade is a third-party dependency for a cache whose hit rate at 2 projects is unproven                               | [S3][S1]       |
+| R9  | Nx Agents / DTE                                                                | **skip until team grows**     | Its documented trigger is an affected set that outgrows one machine; two projects never will                                                                        | [S2]           |
+| R10 | `nx fix-ci` (self-healing)                                                     | **skip until team grows**     | Requires the Nx Cloud connection and exists to unblock reviewers you don't have                                                                                     | [S1][S3]       |
+| R11 | Dependabot version updates                                                     | **worth it for solo**         | Config-only, `groups` + `open-pull-requests-limit` keep PR volume to one batch; the solo failure mode is silently rotting deps, not too many PRs                    | [S15]          |
+| R12 | Renovate instead of Dependabot                                                 | **situational**               | Only if grouped-Angular-major batching becomes painful; adds an external app to a private repo                                                                      | [S15]          |
+| R13 | CodeQL / code scanning                                                         | **worth it for solo**         | Needs public visibility or paid GitHub Code Security [S13]; the repo is public, so it's free — default setup is a few clicks, no workflow authoring                 | [S13][P2]      |
+| R14 | Library publish + versioning workflow                                          | **skip for now**              | `libs/table` has no `package.json` and no packaging target — nothing to publish yet                                                                                 | [R3]           |
+| R15 | npm trusted publishing (OIDC) when R14 happens                                 | **worth it, when it applies** | Removes the long-lived `NPM_TOKEN` and emits provenance by default — strictly better than a secret on day one                                                       | [S14]          |
+| R16 | Storybook deploy to GitHub Pages                                               | **situational**               | Pages on Free needs public visibility [S16], which this repo has — no plan blocker. Worth it once there's a docs site worth publishing; not a correctness gap today | [S16][P2]      |
+| R17 | Coverage reporting / thresholds                                                | **skip until team grows**     | Coverage gates exist to police contributors you can't review; solo, the number is information you already have locally                                              | —              |
+| R18 | Artifact upload (Storybook build, dist)                                        | **situational**               | 500 MB artifact storage on Free; useful only to eyeball a built docs site from a PR                                                                                 | [S11]          |
+| R19 | Merge queue                                                                    | **skip until team grows**     | Its purpose is serializing concurrent merges from multiple authors                                                                                                  | [S2]           |
 
 ## Synthesis
 
@@ -109,9 +110,9 @@ GitHub Pages (R16).
   [S9]. And CREEP's premise — the CI workflow is not part of the cache key — is false in this
   workspace, since `ci.yml` sits in `sharedGlobals` [R2]. Either alone closes it. The deprecation
   applies to the bucket-backed plugins, not to a provider cache action.
-- **Solo changes which practices pay, not how much rigor is warranted.** Every *skip* row is a
+- **Solo changes which practices pay, not how much rigor is warranted.** Every _skip_ row is a
   **coordination** control (coverage gates, merge queues, self-healing comments, review-blocking
-  scans); every *worth it* row is a **correctness or quota** control. That line is cleaner than
+  scans); every _worth it_ row is a **correctness or quota** control. That line is cleaner than
   "lean vs. production-grade" — R1–R3 are not concessions, they are checks the repo already
   documents as required and does not run.
 
@@ -146,30 +147,31 @@ GitHub Pages (R16).
 
 ## Sources
 
-| | Source | Version | Verified |
-|---|---|---|---|
-| S1 | https://nx.dev/docs/getting-started/setup-ci | nx 23 docs | yes — fetched; workflow reproduced, no team-size axis, no `nx-set-shas` |
-| S2 | https://nx.dev/docs/kb/monorepo-ci-best-practices | nx 23 docs | yes — fetched; supplied the distribution threshold quote |
-| S3 | https://nx.dev/pricing | read 2026-09-17 | yes — fetched; Hobby = 50k credits, 5 contributors, 10 connections |
-| S4 | https://nx.dev/docs/reference/deprecated/legacy-cache | nx 23 docs | yes — fetched; corrected the common claim that `NX_REJECT_UNKNOWN_LOCAL_CACHE` is a usable workaround |
-| S5 | https://nx.dev/docs/reference/environment-variables | nx 23 docs | yes — fetched; "Not supported with the new database cache" |
-| S6 | https://github.com/nrwl/nx/discussions/30760 | — | yes — fetched; exact error text |
-| S7 | https://github.com/exactly/exa/pull/1315 | — | yes — fetched; the `/etc/machine-id` probe that overturned S6's implication |
-| S8 | https://nx.dev/blog/cve-2025-36852-critical-cache-poisoning-vulnerability-creep | CVE-2025-36852 | yes — fetched; attack sequence + branch-scoping mitigation |
-| S9 | https://docs.github.com/en/actions/reference/dependency-caching-reference | — | yes — fetched; merge-ref scoping, 10 GB, 7-day eviction |
-| S10 | https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#concurrency | — | yes — fetched; group expression + `cancel-in-progress` |
-| S11 | https://docs.github.com/en/billing/managing-billing-for-your-products/about-billing-for-github-actions | — | yes — fetched; 2,000 min / 500 MB / 10 GB on Free |
-| S12 | https://github.com/nrwl/nx-set-shas/releases | v5.0.1 | yes — fetched; v5 current, node24 runtime |
-| S13 | https://docs.github.com/en/code-security/code-scanning/enabling-code-scanning/configuring-default-setup-for-code-scanning | — | yes — fetched; public-or-Code-Security prerequisite |
-| S14 | https://docs.npmjs.com/trusted-publishers | — | yes — fetched; OIDC, `id-token: write`, automatic provenance |
-| S15 | https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference | — | yes — fetched; `groups`, `open-pull-requests-limit`, `schedule.interval` |
-| S16 | https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages | — | no — plan banner not present in fetched page; sentence from search snippet only |
-| P1 | `git ls-files '**/project.json'` → 2 files | — | yes — ran it |
-| P2 | `gh repo view --json visibility` → `PRIVATE` | — | yes — ran it |
-| R1 | `.github/workflows/ci.yml` | — | yes — read |
-| R2 | `nx.json` — `namedInputs.sharedGlobals` | — | yes — read |
-| R3 | `libs/table/project.json` (targets incl. `typecheck`; no sibling `package.json`) | — | yes — read |
-| R4 | `CLAUDE.md` — "`npm run llms:check` must stay clean" | — | yes — read |
-| R5 | `.claude/rules/typecheck-angular-templates.md` — bug #60 | — | yes — read |
+|     | Source                                                                                                                    | Version         | Verified                                                                                              |
+| --- | ------------------------------------------------------------------------------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------- |
+| S1  | https://nx.dev/docs/getting-started/setup-ci                                                                              | nx 23 docs      | yes — fetched; workflow reproduced, no team-size axis, no `nx-set-shas`                               |
+| S2  | https://nx.dev/docs/kb/monorepo-ci-best-practices                                                                         | nx 23 docs      | yes — fetched; supplied the distribution threshold quote                                              |
+| S3  | https://nx.dev/pricing                                                                                                    | read 2026-09-17 | yes — fetched; Hobby = 50k credits, 5 contributors, 10 connections                                    |
+| S4  | https://nx.dev/docs/reference/deprecated/legacy-cache                                                                     | nx 23 docs      | yes — fetched; corrected the common claim that `NX_REJECT_UNKNOWN_LOCAL_CACHE` is a usable workaround |
+| S5  | https://nx.dev/docs/reference/environment-variables                                                                       | nx 23 docs      | yes — fetched; "Not supported with the new database cache"                                            |
+| S6  | https://github.com/nrwl/nx/discussions/30760                                                                              | —               | yes — fetched; exact error text                                                                       |
+| S7  | https://github.com/exactly/exa/pull/1315                                                                                  | —               | yes — fetched; the `/etc/machine-id` probe that overturned S6's implication                           |
+| S8  | https://nx.dev/blog/cve-2025-36852-critical-cache-poisoning-vulnerability-creep                                           | CVE-2025-36852  | yes — fetched; attack sequence + branch-scoping mitigation                                            |
+| S9  | https://docs.github.com/en/actions/reference/dependency-caching-reference                                                 | —               | yes — fetched; merge-ref scoping, 10 GB, 7-day eviction                                               |
+| S10 | https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#concurrency                            | —               | yes — fetched; group expression + `cancel-in-progress`                                                |
+| S11 | https://docs.github.com/en/billing/managing-billing-for-your-products/about-billing-for-github-actions                    | —               | yes — fetched; 2,000 min / 500 MB / 10 GB on Free                                                     |
+| S12 | https://github.com/nrwl/nx-set-shas/releases                                                                              | v5.0.1          | yes — fetched; v5 current, node24 runtime                                                             |
+| S13 | https://docs.github.com/en/code-security/code-scanning/enabling-code-scanning/configuring-default-setup-for-code-scanning | —               | yes — fetched; public-or-Code-Security prerequisite                                                   |
+| S14 | https://docs.npmjs.com/trusted-publishers                                                                                 | —               | yes — fetched; OIDC, `id-token: write`, automatic provenance                                          |
+| S15 | https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference                  | —               | yes — fetched; `groups`, `open-pull-requests-limit`, `schedule.interval`                              |
+| S16 | https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages                                   | —               | no — plan banner not present in fetched page; sentence from search snippet only                       |
+| P1  | `git ls-files '**/project.json'` → 2 files                                                                                | —               | yes — ran it                                                                                          |
+| P2  | `gh repo view --json visibility` → `PRIVATE`                                                                              | —               | yes — ran it                                                                                          |
+| R1  | `.github/workflows/ci.yml`                                                                                                | —               | yes — read                                                                                            |
+| R2  | `nx.json` — `namedInputs.sharedGlobals`                                                                                   | —               | yes — read                                                                                            |
+| R3  | `libs/table/project.json` (targets incl. `typecheck`; no sibling `package.json`)                                          | —               | yes — read                                                                                            |
+| R4  | `CLAUDE.md` — "`npm run llms:check` must stay clean"                                                                      | —               | yes — read                                                                                            |
+| R5  | `.claude/rules/typecheck-angular-templates.md` — bug #60                                                                  | —               | yes — read                                                                                            |
+
 </content>
 </invoke>

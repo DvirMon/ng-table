@@ -132,4 +132,5 @@ set's `data`.
 - [ ] Hand-off names the chosen `TableConfig` shape.
 
 ---
+
 [Step 2: Generator constraint](step-2-generator-constraint.plan.md) →

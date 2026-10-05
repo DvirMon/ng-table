@@ -23,21 +23,21 @@ implementation reasons. That split is invisible to the person using the table an
 
 Two modes, genuinely different products:
 
-| Mode | What the person sees |
-|---|---|
-| **Gated (by-row)** | Row is read-only text. An Edit affordance opens it. Explicit end: Save or Cancel. |
-| **Live** | Every row is always an input. No Edit button. The "session" is wherever focus happens to be. |
+| Mode               | What the person sees                                                                         |
+| ------------------ | -------------------------------------------------------------------------------------------- |
+| **Gated (by-row)** | Row is read-only text. An Edit affordance opens it. Explicit end: Save or Cancel.            |
+| **Live**           | Every row is always an input. No Edit button. The "session" is wherever focus happens to be. |
 
 Where the two modes need different answers to the same need, they get separate stories rather than
 one story that papers over the difference.
 
 ## Coverage marks
 
-| Mark | Meaning |
-|---|---|
-| ✅ **covered** | Demonstrable today in `src/stories/` or a demo app, with the failure path included |
+| Mark                  | Meaning                                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| ✅ **covered**        | Demonstrable today in `src/stories/` or a demo app, with the failure path included                                             |
 | 🟡 **partly covered** | The mechanism exists but the person's experience of it does not — no affordance, no message, no recipe, or the happy path only |
-| ❌ **not covered** | Nothing on screen anywhere; or structurally impossible with what ships |
+| ❌ **not covered**    | Nothing on screen anywhere; or structurally impossible with what ships                                                         |
 
 Marks are verified directly against `*-story-host.component.ts` under `src/stories/`, not
 `.mdx` wrappers or story names — those drift from what a story actually does as it gets
@@ -57,7 +57,7 @@ exercise more than the existing Save/Cancel buttons already do.
 
 Ordered by how badly the person is hurt if it is missing.
 
-## 1.1 — Correct a wrong value and keep it *(both modes)* — ✅ covered
+## 1.1 — Correct a wrong value and keep it _(both modes)_ — ✅ covered
 
 > As someone correcting a shipping address that was typed wrong, I want to click into the address
 > cell, fix the street number, and have my correction stick — without leaving the table, opening a
@@ -65,10 +65,10 @@ Ordered by how badly the person is hurt if it is missing.
 
 **Acceptance criteria**
 
-- *Gated:* the row shows plain text with an Edit affordance. Activating it turns that row's
+- _Gated:_ the row shows plain text with an Edit affordance. Activating it turns that row's
   editable cells into inputs, all at once, and the row keeps its position on screen while I do it.
   Save returns the row to text showing my new value.
-- *Live:* the cell is already an input. I type; my typing appears in the cell immediately.
+- _Live:_ the cell is already an input. I type; my typing appears in the cell immediately.
 - Both: while I am typing, **no other row on screen moves, disappears, or changes**.
 - Both: after the value is committed, the value shown in the row is the value I typed, not a
   round-tripped, reformatted, or reverted version of it.
@@ -93,7 +93,7 @@ Failure path shown in all gated stories and both live stories. Per-row error pla
 🟡 — persistent errors + Retry exist (`rowErrors`), but whether the message sits visually
 adjacent to the row vs. elsewhere is unconfirmed (UI gap G10).
 
-## 1.2 — Abandon an edit and get the old value back *(gated only)* — ✅ covered
+## 1.2 — Abandon an edit and get the old value back _(gated only)_ — ✅ covered
 
 > As someone who started editing the wrong row, I want to back out and have the row exactly as it
 > was, without remembering what it said.
@@ -115,7 +115,7 @@ adjacent to the row vs. elsewhere is unconfirmed (UI gap G10).
   re-creating a deleted row, and I am told the row is gone.
 
 **Mode note — live has no equivalent, and this is the sharpest product difference between the
-modes.** There is no session to cancel: the last committed value *is* the value. A live table
+modes.** There is no session to cancel: the last committed value _is_ the value. A live table
 therefore needs §1.3 (undo) to give a person any way out of a mistake. Treating "live mode has no
 Cancel" as acceptable without shipping undo leaves the live table with **no** recovery path.
 
@@ -128,7 +128,7 @@ it never undoes an already-accepted resolution. A displaced row's unsaved draft 
 discarded on a single-mode switch, not just an external write — tracked as **G13**, blocked on a
 product call (**O26**).
 
-## 1.3 — Undo my last change *(live especially; both)* — 🟡 partly covered
+## 1.3 — Undo my last change _(live especially; both)_ — 🟡 partly covered
 
 > As someone who tabbed out of a cell after typing into the wrong row, I want to press Undo and put
 > the value back, because in this table there was never a Cancel button to press.
@@ -148,7 +148,7 @@ product call (**O26**).
 
 - If the row I am undoing has since been changed by someone else, undo is refused with an
   explanation rather than clobbering their value.
-- If the row has since been deleted, undo of a *value* change does nothing and says so.
+- If the row has since been deleted, undo of a _value_ change does nothing and says so.
 
 **Coverage:** both live stories have working undo, keyboard-bound: `live-optimistic/` undoes a
 delete within a 6-second window (Ctrl+Z/⌘Z); `live-table/` has a combined undo slot covering
@@ -158,7 +158,7 @@ local-only — the acceptance criterion that undo is itself a server write that 
 demonstrated anywhere. §3.2 (undo a delete) is the same affordance and should stay one feature,
 not two.
 
-## 1.4 — Know a row is saved, saving, or failed *(both)* — 🟡 partly covered
+## 1.4 — Know a row is saved, saving, or failed _(both)_ — 🟡 partly covered
 
 > As someone editing a table connected to a slow backend, I want to know at a glance which of my
 > changes have actually landed, so I do not close the tab on unsaved work.
@@ -185,7 +185,7 @@ per-row persistent errors + Retry (`rowErrors`/`retrySave`) shared across every 
 Remaining for ✅: a documented recipe (G7) doesn't exist yet, so this pattern lives only in one
 story, not as guidance a consumer can follow without reading that story's source.
 
-## 1.5 — Be told when someone else changed the row I am editing *(both)* — 🟡 partly covered
+## 1.5 — Be told when someone else changed the row I am editing _(both)_ — 🟡 partly covered
 
 > As someone editing an order that a colleague is also working on, I want to be told their change
 > arrived, and to choose whose version wins — not to discover afterwards that I overwrote them, or
@@ -198,7 +198,7 @@ story, not as guidance a consumer can follow without reading that story's source
 - I am shown **what** changed, per field, not just that something did.
 - I choose: keep mine, take theirs, or merge field by field. The default when I do nothing is
   never a silent overwrite in either direction.
-- If the external change is for a row I am *not* editing, it applies quietly and does not steal
+- If the external change is for a row I am _not_ editing, it applies quietly and does not steal
   focus or move my cursor.
 
 **Failure behavior**
@@ -209,11 +209,11 @@ story, not as guidance a consumer can follow without reading that story's source
 **Coverage:** `external-write/` — `simulateServerPush(id)` stages a `RowConflict` while the row
 is open, and the person is shown a real three-way choice (Keep mine / Take theirs / merge field
 by field), matching this story's acceptance criteria directly. A write to a row the person is
-*not* editing still applies quietly, as specified. Remaining for ✅: this exists in the gated
+_not_ editing still applies quietly, as specified. Remaining for ✅: this exists in the gated
 story only, no live-mode equivalent, and the server-side-version-check failure path (conflict
 detected only at Save time) is not demonstrated.
 
-## 1.6 — Drive the whole edit from the keyboard *(gated primarily; live for Escape)* — 🟡 partly covered
+## 1.6 — Drive the whole edit from the keyboard _(gated primarily; live for Escape)_ — 🟡 partly covered
 
 > As someone entering fifty corrections in a row, I want to work through the table without
 > reaching for the mouse.
@@ -244,7 +244,7 @@ directive — see `1-state/work/row-edit-keyboard-a11y/2-decisions.md` (D1) — 
 is unwritten. The id-swap focus-loss defect (G9, `@for` recreating the `<tr>` on id change) is
 tracked in §2.1.
 
-## 1.7 — Be stopped from saving something invalid *(both)* — ❌ not covered
+## 1.7 — Be stopped from saving something invalid _(both)_ — ❌ not covered
 
 > As someone typing a quantity into a stock table, I want the table to stop me at the cell rather
 > than let me save and hand me a server error thirty seconds later.
@@ -252,8 +252,8 @@ tracked in §2.1.
 **Acceptance criteria**
 
 - An invalid cell is marked at the cell, with the reason, while I am still in the row.
-- *Gated:* Save is disabled, or gives the reason on activation, while the row is invalid.
-- *Live:* an invalid value is not committed; the cell holds it and stays marked until I fix or
+- _Gated:_ Save is disabled, or gives the reason on activation, while the row is invalid.
+- _Live:_ an invalid value is not committed; the cell holds it and stays marked until I fix or
   revert it. The rest of the table is unaffected — one bad cell does not block edits elsewhere.
 - Validation errors are associated with their inputs for screen readers.
 
@@ -268,7 +268,7 @@ input cell itself, no SR-associated error id. G7 in the UI register: the form ow
 the table exposes the open-row set, so everything needed exists, but there is no recipe, no real
 save-gating, no cross-row "any row invalid" signal, and the demo validates server-side only.
 
-## 1.8 — Edit several rows before committing *(gated only)* — ✅ covered
+## 1.8 — Edit several rows before committing _(gated only)_ — ✅ covered
 
 > As someone reclassifying twenty records, I want to open several rows, make all the changes, then
 > save once — rather than a round trip per row.
@@ -284,7 +284,7 @@ save-gating, no cross-row "any row invalid" signal, and the demo validates serve
 
 - A partial failure leaves the failed rows marked with their reason and recoverable; successful rows
   settle. The table does not roll all of them back because one failed.
-- *Refined by the design (2026-08-27):* Save All **closes every row it saves**, so each row shows its
+- _Refined by the design (2026-08-27):_ Save All **closes every row it saves**, so each row shows its
   own saving state and a failure reopens or marks that row alone. Rows do not stay open across the
   round trip — N open editors the person must not touch, with no indication which are still live, is
   the failure mode this avoids.
@@ -305,7 +305,7 @@ every open row rather than stranding one.
 
 # 2. Add a row
 
-## 2.1 — Add a record without leaving the table *(both)* — ✅ covered (gated) / 🟡 (live)
+## 2.1 — Add a record without leaving the table _(both)_ — ✅ covered (gated) / 🟡 (live)
 
 > As someone entering a new supplier, I want a blank row to appear where I can see it, with my
 > cursor already in the first field, so I can start typing.
@@ -313,8 +313,8 @@ every open row rather than stranding one.
 **Acceptance criteria**
 
 - The new row appears **in view** — not appended below the fold of a thousand-row table.
-- *Gated:* the new row appears already open, with Save and Cancel, without a separate Edit click.
-- *Live:* the new row appears as inputs like every other row; focus lands in the first editable
+- _Gated:_ the new row appears already open, with Save and Cancel, without a separate Edit click.
+- _Live:_ the new row appears as inputs like every other row; focus lands in the first editable
   cell.
 - The row is visually distinguishable as new/unsaved until it is committed.
 - Nothing else on screen moves.
@@ -337,7 +337,7 @@ the same `swapRowId` re-keying (`live-table/`'s Add row also focuses the new row
 can take focus with it (G9, `docs/3-ui/work/row-editing/5-gaps.md`) — a UI-layer gap `swapRowId`
 was never designed to fix.
 
-## 2.2 — Find the row I just added, under a sort *(both)* — ❌ not covered
+## 2.2 — Find the row I just added, under a sort _(both)_ — ❌ not covered
 
 > As someone adding a row to a table sorted by name, I want the blank row to stay where I can see
 > it until I have filled it in — not to jump to wherever an empty name sorts.
@@ -353,7 +353,7 @@ predictable, direction-stable placement (§5, S-2). What remains is holding the 
 position for the duration of the fill (OQ-3's row-hold), which is designed but not implemented.
 Tagged to sorting in §4, but listed here because the person meets it during Add.
 
-## 2.3 — Add several rows in a run *(both)* — ✅ covered (gated)
+## 2.3 — Add several rows in a run _(both)_ — ✅ covered (gated)
 
 > As someone entering a batch of ten new records from a printed list, I want each Save to leave me
 > ready to type the next one.
@@ -373,7 +373,7 @@ exists — live has no explicit "run" concept, since every row is already an inp
 
 # 3. Delete a row
 
-## 3.1 — Remove a record I do not want *(both)* — 🟡 partly covered
+## 3.1 — Remove a record I do not want _(both)_ — 🟡 partly covered
 
 > As someone clearing a cancelled order out of a list, I want to remove that row and see it go.
 
@@ -383,7 +383,7 @@ exists — live has no explicit "run" concept, since every row is already an inp
   the row's identity, not just "Delete").
 - The row disappears immediately on activation. Rows below close the gap without the rest of the
   table jumping.
-- Deleting a row does not change the values, dirty state, or edit state of any *other* row.
+- Deleting a row does not change the values, dirty state, or edit state of any _other_ row.
 
 **Failure behavior**
 
@@ -400,11 +400,11 @@ demonstrates it end to end — Delete button, simulated server failure, row reap
 server-backed everywhere: every gated story's "Discard (remove)" calls a real `DELETE`, and
 `live-table/`/`live-pessimistic/` have delete backed by a real request too. Remaining for ✅:
 `live-table/` has a named accessible delete label (`discardLabel`, e.g. "Discard
-{rowLabel(row)}"), not yet carried to every story; telling the person *why* a delete failed near
+{rowLabel(row)}"), not yet carried to every story; telling the person _why_ a delete failed near
 the row rather than in a corner toast is real in every gated story (`rowErrors`), though whether
 it sits visually adjacent to the row is unconfirmed.
 
-## 3.2 — Undo a delete *(both)* — 🟡 partly covered
+## 3.2 — Undo a delete _(both)_ — 🟡 partly covered
 
 > As someone who deleted the wrong row, I want it back — with everything it had in it, where it
 > was — without re-typing it or finding it in an audit log.
@@ -417,13 +417,13 @@ This is deliberately worked out here because the docs do not reach it.
   (⌘Z / Ctrl+Z) and from a visible control. A five-second toast alone is not sufficient: a person
   who deleted the wrong row usually notices after they look back at the list.
 - **Where the row reappears:**
-  - *No sort active:* at its original index. Adjacent rows are the ones that were adjacent before.
-  - *Sort active:* wherever the sort puts it — which may not be where it was. Restoring it to its
-    old *visual* slot would contradict the sort. Therefore the row is **scrolled into view and
-    briefly highlighted**, so the person sees it return even when it returns elsewhere. *(Split by
+  - _No sort active:_ at its original index. Adjacent rows are the ones that were adjacent before.
+  - _Sort active:_ wherever the sort puts it — which may not be where it was. Restoring it to its
+    old _visual_ slot would contradict the sort. Therefore the row is **scrolled into view and
+    briefly highlighted**, so the person sees it return even when it returns elsewhere. _(Split by
     layer per OQ-2: the state layer exposes which rows just returned; a UI directive does the
-    scrolling and flashing.)*
-  - *Filter active and the row no longer matches:* it comes back and stays visible, flagged as not
+    scrolling and flashing.)_
+  - _Filter active and the row no longer matches:_ it comes back and stays visible, flagged as not
     matching, until the filter next changes — the same retention rule as a row edited out of the
     filter (D25). Restoring a row into invisibility reads as "undo did nothing".
 - **What comes back:** the whole row, including values that were never displayed in a visible
@@ -460,7 +460,7 @@ lives permanently, not just in Storybook.
 it. Undo for delete and undo for value changes (§1.3) should be designed together — one history,
 one affordance.
 
-## 3.3 — Delete several rows at once *(both)* — ❌ not covered
+## 3.3 — Delete several rows at once _(both)_ — ❌ not covered
 
 > As someone clearing out fifty archived records, I want to select them and delete them in one go,
 > and undo that in one go too.
@@ -483,7 +483,7 @@ one affordance.
 
 # 4. Duplicate a row
 
-## 4.1 — Copy an existing record and change a couple of fields *(both)* — ✅ covered (gated) / ❌ (live)
+## 4.1 — Copy an existing record and change a couple of fields _(both)_ — ✅ covered (gated) / ❌ (live)
 
 > As someone entering next quarter's version of an existing contract, I want to duplicate the
 > current one and change the two fields that differ, instead of retyping fourteen fields.
@@ -494,7 +494,7 @@ one affordance.
 - The copy appears **immediately below its source**, not at the top and not appended — proximity to
   the source is the whole point of the operation, and the person needs to compare the two.
 - The copy is visibly marked as new and unsaved.
-- *Gated:* the copy appears already open. *Live:* focus lands in its first editable cell.
+- _Gated:_ the copy appears already open. _Live:_ focus lands in its first editable cell.
 - Fields that must be unique (identifiers, names, codes) are visibly flagged as needing a change,
   rather than being silently blanked out or silently copied into a collision.
 
@@ -522,16 +522,16 @@ display position. It holds when no sort is active, and otherwise wants OQ-3's ro
 is the strongest case for that hold, since comparing source against copy is the whole point of the
 operation.
 
-## 4.2 — Cancelling a duplicate versus cancelling an add *(both)* — ❌ not covered, and the current default is wrong for both
+## 4.2 — Cancelling a duplicate versus cancelling an add _(both)_ — ❌ not covered, and the current default is wrong for both
 
 The brief asks whether these should behave the same. Working it through:
 
-|  | Add | Duplicate |
-|---|---|---|
-| Starts from | nothing | an existing row |
-| Person's intent on Cancel | "forget it, I did not mean to add" | "forget it, I did not mean to copy" |
-| A "reset" result | an empty row still sitting there | a row that is still a full copy of its source |
-| Is the reset result useful? | no — an empty row is litter | no — a stray duplicate is *worse* than litter; it looks like real data |
+|                             | Add                                | Duplicate                                                              |
+| --------------------------- | ---------------------------------- | ---------------------------------------------------------------------- |
+| Starts from                 | nothing                            | an existing row                                                        |
+| Person's intent on Cancel   | "forget it, I did not mean to add" | "forget it, I did not mean to copy"                                    |
+| A "reset" result            | an empty row still sitting there   | a row that is still a full copy of its source                          |
+| Is the reset result useful? | no — an empty row is litter        | no — a stray duplicate is _worse_ than litter; it looks like real data |
 
 **Resolved 2026-08-27: the library takes no position.** Both outcomes are legitimate product
 choices — some tables want the row kept, some want it gone — and the consumer owns both the Cancel
@@ -559,9 +559,9 @@ remaining work, not the choice of default.
 Editing collides with other features. **Each story below belongs to the feature that has to change
 its behavior to resolve the collision**, not to editing. Only sorting is built today.
 
-## Owned by sorting *(built)*
+## Owned by sorting _(built)_
 
-### S-1 — A row must not move while I am working in it — 🟡 partly covered *(gated behavior decided, OQ-3)*
+### S-1 — A row must not move while I am working in it — 🟡 partly covered _(gated behavior decided, OQ-3)_
 
 > As someone fixing a name in a table sorted by name, I want the row to stay under my cursor while
 > I type, and I want to know where it went when it moves.
@@ -571,7 +571,7 @@ its behavior to resolve the collision**, not to editing. Only sorting is built t
 - Typing never re-sorts.
 - When the value does commit and the row moves, the move is perceptible: the row is followed
   (scrolled into view) or its departure is announced. It does not vanish silently.
-- Re-sorting triggered by *me* (clicking a header) while a row is open does not lose my in-progress
+- Re-sorting triggered by _me_ (clicking a header) while a row is open does not lose my in-progress
   edit.
 
 **The existing engineering decision, examined as asked.** D24 delays a text field's commit until
@@ -584,7 +584,7 @@ In gated mode, tabbing from the name cell to the next cell in the same row commi
 the row can re-sort out from under the cursor **mid-row-edit**, while I am still working in it. The
 person's unit of work is the row (they were shown Save and Cancel; that is a row-level contract),
 so the position should hold until the row-level session ends. Live mode is fine as specified — the
-field *is* the session there.
+field _is_ the session there.
 
 **Decided 2026-08-27 (OQ-3):** hold the edited row's display position for the lifetime of the open
 session in gated mode, releasing it on Save or Cancel; keep field-level commit in live mode. Tagged
@@ -606,7 +606,7 @@ is an empty row" scenarios (S1–S9) stay parked **because of OQ-3** — the edi
 position, so null ordering no longer has to keep a row the person is filling in visible. If OQ-3's
 row-hold is ever dropped, those scenarios come back.
 
-## Owned by filtering *(unbuilt)*
+## Owned by filtering _(unbuilt)_
 
 ### F-1 — My own edit must not make the row vanish — ❌ not covered (forward-looking)
 
@@ -624,7 +624,7 @@ row-hold is ever dropped, those scenarios come back.
 The state layer has already decided the retention rule (D25) and flagged that it needs a chip or
 muted styling (G11). Story belongs to filtering.
 
-## Owned by grouping *(unbuilt)*
+## Owned by grouping _(unbuilt)_
 
 ### G-1 — Changing the grouping field moves my row to another group — ❌ not covered (forward-looking)
 
@@ -652,7 +652,7 @@ muted styling (G11). Story belongs to filtering.
   group's value in the grouped column.
 - Adding into a collapsed group expands it rather than filling an invisible row.
 
-## Owned by drag-and-drop *(unbuilt)*
+## Owned by drag-and-drop _(unbuilt)_
 
 ### D-1 — Reordering must not disturb an open editor — ❌ not covered (forward-looking)
 
@@ -668,10 +668,10 @@ muted styling (G11). Story belongs to filtering.
 ### D-2 — Undo a reorder — ❌ not covered, and blocked (forward-looking)
 
 Same mechanism as §3.2, and **still blocked after it**: the agreed design gives a restore point a
-position, which covers delete, but a *move* needs the inverse-operation representation O22 actually
+position, which covers delete, but a _move_ needs the inverse-operation representation O22 actually
 rejected. If drag-and-drop ships before that is designed, it ships without undo.
 
-## Owned by pagination / virtual scroll *(pagination unbuilt; virtual scroll drafted)*
+## Owned by pagination / virtual scroll _(pagination unbuilt; virtual scroll drafted)_
 
 ### P-1 — An open row must not be destroyed by scrolling — ❌ not covered (forward-looking)
 
@@ -685,7 +685,7 @@ rejected. If drag-and-drop ships before that is designed, it ships without undo.
 - A validation error on a row I cannot see (another page, filtered out) never blocks a save without
   telling me which row and letting me get to it. The state register already flags this as O17.
 
-## Owned by selection *(built, blocked on bulk write verbs)*
+## Owned by selection _(built, blocked on bulk write verbs)_
 
 ### X-1 — Bulk delete and bulk edit — ❌ not covered (forward-looking) — updated 2026-09-12
 
@@ -694,11 +694,11 @@ blocker** — `withSelection()` has shipped, tested code (`spec: drilled, code: 
 `docs/status.md`). What's still missing is the bulk write verbs it would feed:
 `removeRow(id[])`/`patchRow(id[], partial)` are explicitly out of scope for that effort (D12,
 [`1-state/work/with-selection/2-decisions.md`](../1-state/work/selection/archive/with-selection/2-decisions.md)).
-Bulk *edit* additionally needs the multiple-open semantics resolved first (G4) — the two features
+Bulk _edit_ additionally needs the multiple-open semantics resolved first (G4) — the two features
 cannot be specified independently. See [`0-product/selection.md`](selection.md) §6 for the
 selection-side accounting of this story.
 
-## Owned by tree *(built)*
+## Owned by tree _(built)_
 
 ### E-1 — Editing a child row of an expanded parent — ❌ not covered
 
@@ -748,7 +748,7 @@ linked work-folder decision, not here.
   [`with-multiple-edit/1-design.md`](../1-state/work/row-editing/archive/with-multiple-edit/1-design.md) — the real
   risk was `clearEdit()`/the single-mode trim dropping in-flight restore points under
   `multiple: true`; resolved by making bulk edit optimistic-only (D41). Save-all's "N independent
-  or one batched write" (D32) bulk-*add* half shipped via widened-arity `createRow`/`insertRow`
+  or one batched write" (D32) bulk-_add_ half shipped via widened-arity `createRow`/`insertRow`
   (`docs/1-state/row-mutations.md`); bulk edit/delete stay unshipped, blocked on
   `withSelection()`.
 
@@ -772,9 +772,9 @@ not mistaken for missing stories.
 - **Whether per-column commit timing is declared per column or by a shared schema fragment** —
   developer ergonomics.
 - **Field dirty/touched state misattributing after a structural change** — an upstream framework
-  limitation. It becomes user-facing if it makes a wrong row *look* edited; worth re-checking
+  limitation. It becomes user-facing if it makes a wrong row _look_ edited; worth re-checking
   against §1.4's badge before dismissing it.
 - **Whether Cancel on a new row discards or resets it** — consumer product policy (OQ-1), not a
-  library default. What *is* the library's problem is keeping both one call.
-- **Temp id versus server id** — the person never sees an id. Its *consequences* (focus loss, row
+  library default. What _is_ the library's problem is keeping both one call.
+- **Temp id versus server id** — the person never sees an id. Its _consequences_ (focus loss, row
   dropping out of edit mode) are user-facing and are in §2.1.

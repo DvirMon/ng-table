@@ -64,17 +64,17 @@ export class GroupingEditingStoryHostComponent {
         groupOrder(path['category'], compareCategoryGroups);
       },
     }),
-    withSorting()
+    withSorting(),
   );
   protected readonly rows = form(this.data, groupEditRowsSchema);
   protected readonly categoryOptions = CATEGORY_OPTIONS;
   protected readonly nameSortAria = computed(() =>
-    toAriaSort(this.table.sortDirections().get('name'))
+    toAriaSort(this.table.sortDirections().get('name')),
   );
 
   /** Rows still sitting flat at depth 0 — the count a person watches drop to 0 as they pick a
    * category for each one. */
   protected readonly ungroupedRowCount = computed(
-    () => this.table.renderRows().filter((row) => row.kind === 'row' && row.depth === 0).length
+    () => this.table.renderRows().filter((row) => row.kind === 'row' && row.depth === 0).length,
   );
 }

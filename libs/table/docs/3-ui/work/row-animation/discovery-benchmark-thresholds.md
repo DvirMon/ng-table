@@ -12,7 +12,7 @@ benchmark this, and what methodology should this library adopt.
   (1) The **reorder frame** (click → first paint) is an INP/RAIL budget: ≤ 50 ms of main-thread
   work, ≤ 100 ms response, INP good ≤ 200 ms [S1][S3][S4].
   (2) The **glide** is compositor-driven when it is a transform animation, so "smooth" means
-  *no main-thread long animation frames after the first frame*. It does not mean "rAF deltas
+  _no main-thread long animation frames after the first frame_. It does not mean "rAF deltas
   < 50 ms" [S5][S7][S10].
 - **No surveyed grid library uses absolute ms thresholds in CI.** AG Grid gates on a live
   control-vs-variant comparison (z > 1.96 and ≥ 5 %) [S26]. Handsontable gates at 15 % against
@@ -98,7 +98,7 @@ benchmark this, and what methodology should this library adopt.
   - `kTransformRelatedPropertyCannotBeAcceleratedOnTarget`: `!IsTransformApplicable()` [S11][S12].
 - `IsTransformApplicable()` = `IsBox() || IsSVG()` [S14]. CSS Transforms makes table-row boxes
   transformable; only table-column and column-group boxes are excluded [S15].
-- `kActiveTransformAnimation` is a *direct* compositing reason [S13]. Every animating `<tr>`
+- `kActiveTransformAnimation` is a _direct_ compositing reason [S13]. Every animating `<tr>`
   therefore gets its own compositing property node.
 - A composited animation stays smooth while the main thread janks. The proposed smoothness
   metric is **percent dropped frames**: average, plus worst and p95 over 1 s sliding windows [S7].
@@ -107,7 +107,7 @@ benchmark this, and what methodology should this library adopt.
 ### 3 · How others benchmark
 
 - **js-framework-benchmark**
-  - Nine operations. "swap rows" = *swap 2 rows of a 1,000-row table*, with 5 warm-ups and 4× CPU
+  - Nine operations. "swap rows" = _swap 2 rows of a 1,000-row table_, with 5 warm-ups and 4× CPU
     throttle [S18].
   - Other sizes: create 1k and create 10k. The README and the code disagree on partial-update
     size (10k vs 1k) [S17][S18].
@@ -195,41 +195,41 @@ benchmark this, and what methodology should this library adopt.
 
 ## Comparison — harness methodology
 
-| Axis | js-framework-benchmark | AG Grid | Handsontable | TanStack Virtual | Angular | This repo today |
-|---|---|---|---|---|---|---|
-| Driver | Puppeteer [S19] | Playwright [S27] | Playwright [S36] | Playwright [S34] | benchpress/Bazel [S41] | Vitest browser mode [R3] |
-| Metric source | trace click→commit [S20] | LoAF / named entry [S26] | CDP trace between marks [S35] | rAF / perf.now [S34] | scriptTime [S41] | `performance.measure` around tick [R1] |
-| Warm-up | 5 [S18] | 3 default [S26] | 1 [S35] | not stated [S34] | regression-stopped [S41] | none [R1] |
-| Samples | 15 [S19] | 10–30 default [S26] | 3–5 [S35] | 5 [S34] | 20 [S41] | 5 [R1] |
-| Statistic | mean/median, geo-mean rank [S17] | mean, IQR-trimmed, MoE [S26] | mean + CV [S35] | median [S34] | regression [S41] | median [R1] |
-| CPU throttle | 4× (swap) [S18] | none [S28] | none [S36] | not stated [S34] | not stated [S41] | none [R1] |
-| Baseline | none — cross-framework table [S17] | live control build [S26] | 5 stored goldens [S35] | none [S34] | ref commit on demand [S42] | none [R1] |
-| Gate | none | z>1.96 ∧ ≥5 % [S26] | 15 % time / 5 % heap [S35] | none [S34] | none (comment) [S42] | absolute 16 ms @1000 [R1] |
+| Axis          | js-framework-benchmark             | AG Grid                      | Handsontable                  | TanStack Virtual     | Angular                    | This repo today                        |
+| ------------- | ---------------------------------- | ---------------------------- | ----------------------------- | -------------------- | -------------------------- | -------------------------------------- |
+| Driver        | Puppeteer [S19]                    | Playwright [S27]             | Playwright [S36]              | Playwright [S34]     | benchpress/Bazel [S41]     | Vitest browser mode [R3]               |
+| Metric source | trace click→commit [S20]           | LoAF / named entry [S26]     | CDP trace between marks [S35] | rAF / perf.now [S34] | scriptTime [S41]           | `performance.measure` around tick [R1] |
+| Warm-up       | 5 [S18]                            | 3 default [S26]              | 1 [S35]                       | not stated [S34]     | regression-stopped [S41]   | none [R1]                              |
+| Samples       | 15 [S19]                           | 10–30 default [S26]          | 3–5 [S35]                     | 5 [S34]              | 20 [S41]                   | 5 [R1]                                 |
+| Statistic     | mean/median, geo-mean rank [S17]   | mean, IQR-trimmed, MoE [S26] | mean + CV [S35]               | median [S34]         | regression [S41]           | median [R1]                            |
+| CPU throttle  | 4× (swap) [S18]                    | none [S28]                   | none [S36]                    | not stated [S34]     | not stated [S41]           | none [R1]                              |
+| Baseline      | none — cross-framework table [S17] | live control build [S26]     | 5 stored goldens [S35]        | none [S34]           | ref commit on demand [S42] | none [R1]                              |
+| Gate          | none                               | z>1.96 ∧ ≥5 % [S26]          | 15 % time / 5 % heap [S35]    | none [S34]           | none (comment) [S42]       | absolute 16 ms @1000 [R1]              |
 
 ## Comparison — can a published number be compared to "reverse N + FLIP"?
 
-| Published number | Metric definition | Comparable? |
-|---|---|---|
-| jfb "swap rows" [S18][S20] | 2 rows moved of 1k; click→last commit; 4× throttle | **No** — reversal moves N rows, not 2; includes paint; throttled |
-| jfb "create 1k / 10k rows" [S18] | row creation click→commit, 4× throttle | **No** — creation, not a move; useful only as an order-of-magnitude band for the *plain* host |
-| AG Grid set-data [S29] | live A/B duration | **No** — relative only, no absolute published |
-| 1771 sort FPS [S46] | average FPS during sort, virtualized grids, M4/Chrome 149 | **No** — FPS not ms, virtualized (≤ viewport rows animate), vendor-run |
-| TanStack Virtual mount / jank [S34] | render→commit; frames >32 ms / >50 ms | **Partly** — its jank definition (>50 ms summed) is reusable as a metric, not its values |
-| Handsontable sort 100k×100 [S35] | CDP-trace categories between marks | **No** — virtualized, different window |
+| Published number                    | Metric definition                                         | Comparable?                                                                                   |
+| ----------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| jfb "swap rows" [S18][S20]          | 2 rows moved of 1k; click→last commit; 4× throttle        | **No** — reversal moves N rows, not 2; includes paint; throttled                              |
+| jfb "create 1k / 10k rows" [S18]    | row creation click→commit, 4× throttle                    | **No** — creation, not a move; useful only as an order-of-magnitude band for the _plain_ host |
+| AG Grid set-data [S29]              | live A/B duration                                         | **No** — relative only, no absolute published                                                 |
+| 1771 sort FPS [S46]                 | average FPS during sort, virtualized grids, M4/Chrome 149 | **No** — FPS not ms, virtualized (≤ viewport rows animate), vendor-run                        |
+| TanStack Virtual mount / jank [S34] | render→commit; frames >32 ms / >50 ms                     | **Partly** — its jank definition (>50 ms summed) is reusable as a metric, not its values      |
+| Handsontable sort 100k×100 [S35]    | CDP-trace categories between marks                        | **No** — virtualized, different window                                                        |
 
 ## Synthesis
 
 - **Absolute vs relative.** The web platform publishes absolute budgets [S1][S3][S4][S5].
   Every library that gates in CI uses relative ones instead: live A/B [S26], stored-golden
   median [S35], or A/B on demand [S42]. The disagreement is about hardware. An absolute budget
-  is a statement about a *user's* device, and CI is not that device. Use absolutes only as a
+  is a statement about a _user's_ device, and CI is not that device. Use absolutes only as a
   coarse ceiling that stays true on any reasonable runner; gate everything else relatively.
 - **Where the budget lives.** js-framework-benchmark counts through paint [S20], AG Grid counts
   whole frames (LoAF) [S26], and this repo counts only the tick [R1]. The frame-level window
   matches INP's presentation delay [S1][S2]. The tick window undercounts, because N
   `animate()` calls pay their style and compositor setup in the next rendering update [S10].
   Move the absolute budget to the LoAF, or to a tick → double-rAF window.
-- **Smoothness.** A rAF-delta sampler measures the *main* thread. A composited glide can be
+- **Smoothness.** A rAF-delta sampler measures the _main_ thread. A composited glide can be
   visually smooth while rAF stutters, and the reverse can also happen [S7][S10]. So a rAF or
   LoAF gate is a gate on the main thread staying free. That is the right thing to gate: the
   reorder is when a user clicks again. Visual smoothness needs compositor frame data from a
@@ -261,15 +261,15 @@ benchmark this, and what methodology should this library adopt.
 
 **Environment**
 
-| Item | Proposal | Basis |
-|---|---|---|
-| Runner | Vitest browser mode, Playwright provider, Chromium — install `@vitest/browser-playwright` + `playwright` first | [S57][R4][R5] |
-| Headless flavour | pin one and record it; prefer `channel: 'chromium'` (new headless) for authenticity | [S58][S60] |
-| Workers | 1 | [S27][S36] |
-| Viewport | fixed, e.g. 1400×720 | [S36] |
-| GC | `HeapProfiler.collectGarbage` via `cdp()` before each measured sample | [S28][S35][S53] |
-| Throttle | two passes: 1× (gated) and 4× via `Emulation.setCPUThrottlingRate` (report-only) | [S18][S50] |
-| Provenance | record Chromium build, Playwright version, CPU model, commit with every result | [S35] |
+| Item             | Proposal                                                                                                       | Basis           |
+| ---------------- | -------------------------------------------------------------------------------------------------------------- | --------------- |
+| Runner           | Vitest browser mode, Playwright provider, Chromium — install `@vitest/browser-playwright` + `playwright` first | [S57][R4][R5]   |
+| Headless flavour | pin one and record it; prefer `channel: 'chromium'` (new headless) for authenticity                            | [S58][S60]      |
+| Workers          | 1                                                                                                              | [S27][S36]      |
+| Viewport         | fixed, e.g. 1400×720                                                                                           | [S36]           |
+| GC               | `HeapProfiler.collectGarbage` via `cdp()` before each measured sample                                          | [S28][S35][S53] |
+| Throttle         | two passes: 1× (gated) and 4× via `Emulation.setCPUThrottlingRate` (report-only)                               | [S18][S50]      |
+| Provenance       | record Chromium build, Playwright version, CPU model, commit with every result                                 | [S35]           |
 
 **Sampling**
 
@@ -285,18 +285,18 @@ line up with js-framework-benchmark `05_swap1k` [S18].
 
 **Metrics and pass/fail**
 
-| Metric | How measured | N=100 | N=1000 | N=5000 | N=10000 | Basis |
-|---|---|---|---|---|---|---|
-| animations started | `document.getAnimations().length` | = moved | = moved | = moved | = moved | deterministic [R1] |
-| animations after settle | same, after `finished` + 1 frame | = 0 | = 0 | = 0 | = 0 | leak check, deterministic |
-| mid-glide peak / after first | as today | ≤ 2×moved / ≤ moved | same | same | same | [R1] |
-| overhead (animated − plain) | median of interleaved `performance.measure` samples, window = tick → double-rAF | report | **< 16.7 ms** | report | report | 1 × 60 Hz frame [S3] |
-| overhead scaling | overhead(5000) / overhead(1000) | — | — | **≤ 7.5** (5× linear × 1.5 noise) | report | general mechanism, machine-independent |
-| reorder frame | LoAF entry covering the reorder, else tick → double-rAF | report | **< 50 ms** at 1× | report | report | LoAF/long-task line [S4][S5] |
-| reorder frame, 4× throttle | same | report | report (≤ 100 ms target) | report | report | RAIL response [S3] |
-| main-thread free during glide | LoAF entries after the first frame | **0** | **0** | report | report | [S5][S7] |
-| percent dropped rAF frames | delta > 1.5 × median interval, first frame excluded | report | report | report | report | [S7]; headless pacing unverified |
-| regression vs stored baseline | median of the 5 newest compatible baselines | report at > 15 % | same | same | same | [S35]; gate only on a dedicated runner [S37] |
+| Metric                        | How measured                                                                    | N=100               | N=1000                   | N=5000                            | N=10000 | Basis                                        |
+| ----------------------------- | ------------------------------------------------------------------------------- | ------------------- | ------------------------ | --------------------------------- | ------- | -------------------------------------------- |
+| animations started            | `document.getAnimations().length`                                               | = moved             | = moved                  | = moved                           | = moved | deterministic [R1]                           |
+| animations after settle       | same, after `finished` + 1 frame                                                | = 0                 | = 0                      | = 0                               | = 0     | leak check, deterministic                    |
+| mid-glide peak / after first  | as today                                                                        | ≤ 2×moved / ≤ moved | same                     | same                              | same    | [R1]                                         |
+| overhead (animated − plain)   | median of interleaved `performance.measure` samples, window = tick → double-rAF | report              | **< 16.7 ms**            | report                            | report  | 1 × 60 Hz frame [S3]                         |
+| overhead scaling              | overhead(5000) / overhead(1000)                                                 | —                   | —                        | **≤ 7.5** (5× linear × 1.5 noise) | report  | general mechanism, machine-independent       |
+| reorder frame                 | LoAF entry covering the reorder, else tick → double-rAF                         | report              | **< 50 ms** at 1×        | report                            | report  | LoAF/long-task line [S4][S5]                 |
+| reorder frame, 4× throttle    | same                                                                            | report              | report (≤ 100 ms target) | report                            | report  | RAIL response [S3]                           |
+| main-thread free during glide | LoAF entries after the first frame                                              | **0**               | **0**                    | report                            | report  | [S5][S7]                                     |
+| percent dropped rAF frames    | delta > 1.5 × median interval, first frame excluded                             | report              | report                   | report                            | report  | [S7]; headless pacing unverified             |
+| regression vs stored baseline | median of the 5 newest compatible baselines                                     | report at > 15 %    | same                     | same                              | same    | [S35]; gate only on a dedicated runner [S37] |
 
 **Plain host was detached (fixed 2026-09-25).** `TestBed.createComponent` removes every earlier
 root (`[id^=root]`) before adding its own, so mounting the animated host detached the plain one:
@@ -332,7 +332,7 @@ median; the table reports both. Load from other processes only adds time — the
 
 **Comparison against published results:** none as a gate (see the table above). Use the
 js-framework-benchmark Angular create-1k entries only as an order-of-magnitude sanity band for
-the *plain* host [S21][S18].
+the _plain_ host [S21][S18].
 
 ## Not researched
 
@@ -367,70 +367,70 @@ the *plain* host [S21][S18].
 
 ## Sources
 
-| | Source | Version | Verified |
-|---|---|---|---|
-| S1 | https://web.dev/articles/inp | page, fetched 2026-09-24 | yes — page read |
-| S2 | https://web.dev/articles/optimize-inp | updated 2025-09-02 | yes — page read |
-| S3 | https://web.dev/articles/rail | updated 2020-06-10 | yes — page read; old, still unmarked |
-| S4 | https://w3c.github.io/longtasks/ | ED | yes — spec read |
-| S5 | https://developer.chrome.com/docs/web-platform/long-animation-frames | Chrome 123 | yes — page read; silent on compositor animations |
-| S6 | https://w3c.github.io/event-timing/ | ED | yes — spec read; 8 ms granularity changed the "use Event Timing" idea |
-| S7 | https://web.dev/articles/smoothness | 2021-11-03 | yes — page read |
-| S8 | https://web.dev/articles/animations-guide | 2020-10-06 | yes — page read |
-| S9 | https://developer.chrome.com/blog/hardware-accelerated-animations | 2021-02-22 | yes — page read; silent on WAAPI, so S10 needed |
-| S10 | https://raw.githubusercontent.com/chromium/chromium/main/third_party/blink/renderer/core/animation/README.md | main (unpinned) | yes — source read; showed main thread still ticks |
-| S11 | https://raw.githubusercontent.com/chromium/chromium/main/third_party/blink/renderer/core/animation/compositor_animations.h | main (unpinned) | yes — enum read |
-| S12 | https://raw.githubusercontent.com/chromium/chromium/main/third_party/blink/renderer/core/animation/compositor_animations.cc | main (unpinned) | yes — conditions read |
-| S13 | https://raw.githubusercontent.com/chromium/chromium/main/third_party/blink/renderer/platform/graphics/compositing_reasons.h | main (unpinned) | yes — read |
-| S14 | https://raw.githubusercontent.com/chromium/chromium/main/third_party/blink/renderer/core/layout/layout_object.h | main (unpinned) | yes — `IsTransformApplicable` read |
-| S15 | https://raw.githubusercontent.com/w3c/csswg-drafts/main/css-transforms-1/Overview.bs | main (unpinned) | yes — dfn read |
-| S16 | https://web.dev/articles/dom-size-and-interactivity | 2023-05-09 | yes — page read |
-| S17 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/master/README.md | master ≈ f2df01a | yes — read; row sizes contradict S18 |
-| S18 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/master/webdriver-ts/src/benchmarksCommon.ts | master ≈ f2df01a | yes — source read; corrected README sizes |
-| S19 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/master/webdriver-ts/src/common.ts | master ≈ f2df01a | yes — config read |
-| S20 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/master/webdriver-ts/src/timeline.ts | master ≈ f2df01a | yes — source read |
-| S21 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/frameworks/keyed/angular-cf-signals/package.json | f2df01a | yes — read |
-| S22 | https://api.github.com/repos/krausest/js-framework-benchmark/contents/frameworks/keyed?ref=f2df01a8679de05225c32714ca8cecbea3d78c5d | f2df01a | yes — listing read |
-| S23 | https://github.com/krausest/js-framework-benchmark/releases | Chrome 152 run, 2026-09-01 | yes — page read |
-| S24 | https://krausest.github.io/js-framework-benchmark/2026/chrome150.html | Chrome 150 | no — JS-rendered, no data |
-| S25 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/master/webdriver-ts-results/src/results.ts | master | partial — structure read, mapping not |
-| S26 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/testing/performance/benchmarking.ts | b36.2.0 | yes — source read; gate logic quoted |
-| S27 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/testing/performance/playwright.config.ts | b36.2.0 | yes — read |
-| S28 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/testing/performance/cdp.utils.ts | b36.2.0 | yes — read; no throttling |
-| S29 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/testing/performance/e2e/setData.spec.ts | b36.2.0 | yes — read |
-| S30 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/documentation/ag-grid-docs/src/content/docs/row-animation/index.mdoc | b36.2.0 | yes — read; no numbers |
-| S31 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/documentation/ag-grid-docs/src/content/docs/scrolling-performance/index.mdoc | b36.2.0 | yes — read (`rowBuffer` default 10) |
-| S32 | https://tanstack.com/blog/tanstack-table-v9-memory-performance | 2026-06-22 | yes — page read |
-| S33 | https://github.com/KevinVandy/tanstack-table-benchmarks | 1c50441 | yes — README read |
-| S34 | https://raw.githubusercontent.com/TanStack/virtual/main/benchmarks/README.md | main ≈ 78371e8 | yes — read |
-| S35 | https://raw.githubusercontent.com/handsontable/handsontable/develop/performance-tests/README.md | develop ≈ bd508b7 | yes — read |
-| S36 | https://raw.githubusercontent.com/handsontable/handsontable/develop/performance-tests/playwright.config.ts | develop ≈ bd508b7 | yes — read |
-| S37 | https://api.github.com/repos/handsontable/handsontable/commits?sha=develop&path=performance-tests&per_page=1 | bd508b7 | yes — commit message read |
-| S38 | https://handsontable.com/docs/javascript-data-grid/performance/ | unversioned | yes — pointed to `performance-tests/` |
-| S39 | https://api.github.com/repos/formkit/auto-animate/contents/tests/e2e | default branch | yes — listing read |
-| S40 | https://raw.githubusercontent.com/formkit/auto-animate/master/tests/e2e/memory.spec.ts | master (unpinned) | yes — read |
-| S41 | https://raw.githubusercontent.com/angular/angular/main/modules/benchmarks/README.md | main | yes — read |
-| S42 | https://raw.githubusercontent.com/angular/angular/main/.github/workflows/benchmark-compare.yml | main | yes — read; still present |
-| S43 | https://api.github.com/repos/angular/angular/pulls/58760 | — | yes — closed unmerged; changed "removed" to "still present" |
-| S44 | https://api.github.com/repos/angular/components/contents/ | main | yes — no `benchmarks/` at root |
-| S45 | https://github.com/hckhanh/benchmark-table-libraries | 446a382 | yes — README read |
-| S46 | https://www.1771technologies.com/blog/performance-benchmarks | 2026-06 | yes — page read; vendor-run |
-| S47 | https://raw.githubusercontent.com/google/tachometer/main/README.md | tachometer 0.7.2 (registry) | yes — read |
-| S48 | https://codspeed.io/blog/benchmarks-in-ci-without-noise | 2025-07-30 | yes — read; CPU workloads, not browser |
-| S49 | https://raw.githubusercontent.com/benchmark-action/github-action-benchmark/master/README.md | v1.22.2 | yes — read |
-| S50 | https://raw.githubusercontent.com/ChromeDevTools/devtools-protocol/master/pdl/domains/Emulation.pdl | master | yes — read |
-| S51 | https://developer.chrome.com/docs/devtools/settings/throttling | unversioned | yes — calibration read |
-| S52 | https://unpkg.com/@vitest/browser@4.1.9/context.d.ts | 4.1.9 | yes — `cdp` declared |
-| S53 | https://vitest.dev/api/browser/context | docs v5.0.1 | yes — "playwright + chromium only" |
-| S54 | https://unpkg.com/vitest@4.1.9/browser/context.d.ts | 4.1.9 | yes — re-exports provider contexts |
-| S55 | https://v4.vitest.dev/api/#bench | v4 docs | yes — "experimental"; no `toBeFasterThan` |
-| S56 | https://vitest.dev/guide/benchmarking | docs v5.0.1 | yes — v5 only, does not apply to 4.1.9 |
-| S57 | https://angular.dev/guide/testing/migrating-to-vitest | Angular 22 docs | yes — install `@vitest/browser-playwright` |
-| S58 | https://playwright.dev/docs/browsers | playwright 1.63.0 (registry) | yes — headless shell default |
-| S59 | https://developer.chrome.com/docs/chromium/headless | unversioned | yes — read |
-| S60 | https://developer.chrome.com/blog/chrome-headless-shell | unversioned | yes — read |
-| R1 | libs/table/src/directives/ngp-table-row-animation.bench.spec.ts:17 | working tree | yes — read (`ROW_COUNTS`, samples, frame sampler) |
-| R2 | libs/table/src/directives/ngp-table-row-animation.directive.ts:41 | working tree | yes — read (`afterRenderEffect` earlyRead/write) |
-| R3 | libs/table/project.json:63 | working tree | yes — `bench` target read |
-| R4 | package.json:36 | working tree | yes — no `@vitest/browser-playwright`/`playwright` |
-| R5 | node_modules/@vitest/ | installed | yes — no `browser*` package present |
+|     | Source                                                                                                                                                      | Version                      | Verified                                                              |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------- |
+| S1  | https://web.dev/articles/inp                                                                                                                                | page, fetched 2026-09-24     | yes — page read                                                       |
+| S2  | https://web.dev/articles/optimize-inp                                                                                                                       | updated 2025-09-02           | yes — page read                                                       |
+| S3  | https://web.dev/articles/rail                                                                                                                               | updated 2020-06-10           | yes — page read; old, still unmarked                                  |
+| S4  | https://w3c.github.io/longtasks/                                                                                                                            | ED                           | yes — spec read                                                       |
+| S5  | https://developer.chrome.com/docs/web-platform/long-animation-frames                                                                                        | Chrome 123                   | yes — page read; silent on compositor animations                      |
+| S6  | https://w3c.github.io/event-timing/                                                                                                                         | ED                           | yes — spec read; 8 ms granularity changed the "use Event Timing" idea |
+| S7  | https://web.dev/articles/smoothness                                                                                                                         | 2021-11-03                   | yes — page read                                                       |
+| S8  | https://web.dev/articles/animations-guide                                                                                                                   | 2020-10-06                   | yes — page read                                                       |
+| S9  | https://developer.chrome.com/blog/hardware-accelerated-animations                                                                                           | 2021-02-22                   | yes — page read; silent on WAAPI, so S10 needed                       |
+| S10 | https://raw.githubusercontent.com/chromium/chromium/main/third_party/blink/renderer/core/animation/README.md                                                | main (unpinned)              | yes — source read; showed main thread still ticks                     |
+| S11 | https://raw.githubusercontent.com/chromium/chromium/main/third_party/blink/renderer/core/animation/compositor_animations.h                                  | main (unpinned)              | yes — enum read                                                       |
+| S12 | https://raw.githubusercontent.com/chromium/chromium/main/third_party/blink/renderer/core/animation/compositor_animations.cc                                 | main (unpinned)              | yes — conditions read                                                 |
+| S13 | https://raw.githubusercontent.com/chromium/chromium/main/third_party/blink/renderer/platform/graphics/compositing_reasons.h                                 | main (unpinned)              | yes — read                                                            |
+| S14 | https://raw.githubusercontent.com/chromium/chromium/main/third_party/blink/renderer/core/layout/layout_object.h                                             | main (unpinned)              | yes — `IsTransformApplicable` read                                    |
+| S15 | https://raw.githubusercontent.com/w3c/csswg-drafts/main/css-transforms-1/Overview.bs                                                                        | main (unpinned)              | yes — dfn read                                                        |
+| S16 | https://web.dev/articles/dom-size-and-interactivity                                                                                                         | 2023-05-09                   | yes — page read                                                       |
+| S17 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/master/README.md                                                                          | master ≈ f2df01a             | yes — read; row sizes contradict S18                                  |
+| S18 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/master/webdriver-ts/src/benchmarksCommon.ts                                               | master ≈ f2df01a             | yes — source read; corrected README sizes                             |
+| S19 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/master/webdriver-ts/src/common.ts                                                         | master ≈ f2df01a             | yes — config read                                                     |
+| S20 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/master/webdriver-ts/src/timeline.ts                                                       | master ≈ f2df01a             | yes — source read                                                     |
+| S21 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/frameworks/keyed/angular-cf-signals/package.json | f2df01a                      | yes — read                                                            |
+| S22 | https://api.github.com/repos/krausest/js-framework-benchmark/contents/frameworks/keyed?ref=f2df01a8679de05225c32714ca8cecbea3d78c5d                         | f2df01a                      | yes — listing read                                                    |
+| S23 | https://github.com/krausest/js-framework-benchmark/releases                                                                                                 | Chrome 152 run, 2026-09-01   | yes — page read                                                       |
+| S24 | https://krausest.github.io/js-framework-benchmark/2026/chrome150.html                                                                                       | Chrome 150                   | no — JS-rendered, no data                                             |
+| S25 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/master/webdriver-ts-results/src/results.ts                                                | master                       | partial — structure read, mapping not                                 |
+| S26 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/testing/performance/benchmarking.ts                                                               | b36.2.0                      | yes — source read; gate logic quoted                                  |
+| S27 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/testing/performance/playwright.config.ts                                                          | b36.2.0                      | yes — read                                                            |
+| S28 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/testing/performance/cdp.utils.ts                                                                  | b36.2.0                      | yes — read; no throttling                                             |
+| S29 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/testing/performance/e2e/setData.spec.ts                                                           | b36.2.0                      | yes — read                                                            |
+| S30 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/documentation/ag-grid-docs/src/content/docs/row-animation/index.mdoc                              | b36.2.0                      | yes — read; no numbers                                                |
+| S31 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/documentation/ag-grid-docs/src/content/docs/scrolling-performance/index.mdoc                      | b36.2.0                      | yes — read (`rowBuffer` default 10)                                   |
+| S32 | https://tanstack.com/blog/tanstack-table-v9-memory-performance                                                                                              | 2026-06-22                   | yes — page read                                                       |
+| S33 | https://github.com/KevinVandy/tanstack-table-benchmarks                                                                                                     | 1c50441                      | yes — README read                                                     |
+| S34 | https://raw.githubusercontent.com/TanStack/virtual/main/benchmarks/README.md                                                                                | main ≈ 78371e8               | yes — read                                                            |
+| S35 | https://raw.githubusercontent.com/handsontable/handsontable/develop/performance-tests/README.md                                                             | develop ≈ bd508b7            | yes — read                                                            |
+| S36 | https://raw.githubusercontent.com/handsontable/handsontable/develop/performance-tests/playwright.config.ts                                                  | develop ≈ bd508b7            | yes — read                                                            |
+| S37 | https://api.github.com/repos/handsontable/handsontable/commits?sha=develop&path=performance-tests&per_page=1                                                | bd508b7                      | yes — commit message read                                             |
+| S38 | https://handsontable.com/docs/javascript-data-grid/performance/                                                                                             | unversioned                  | yes — pointed to `performance-tests/`                                 |
+| S39 | https://api.github.com/repos/formkit/auto-animate/contents/tests/e2e                                                                                        | default branch               | yes — listing read                                                    |
+| S40 | https://raw.githubusercontent.com/formkit/auto-animate/master/tests/e2e/memory.spec.ts                                                                      | master (unpinned)            | yes — read                                                            |
+| S41 | https://raw.githubusercontent.com/angular/angular/main/modules/benchmarks/README.md                                                                         | main                         | yes — read                                                            |
+| S42 | https://raw.githubusercontent.com/angular/angular/main/.github/workflows/benchmark-compare.yml                                                              | main                         | yes — read; still present                                             |
+| S43 | https://api.github.com/repos/angular/angular/pulls/58760                                                                                                    | —                            | yes — closed unmerged; changed "removed" to "still present"           |
+| S44 | https://api.github.com/repos/angular/components/contents/                                                                                                   | main                         | yes — no `benchmarks/` at root                                        |
+| S45 | https://github.com/hckhanh/benchmark-table-libraries                                                                                                        | 446a382                      | yes — README read                                                     |
+| S46 | https://www.1771technologies.com/blog/performance-benchmarks                                                                                                | 2026-06                      | yes — page read; vendor-run                                           |
+| S47 | https://raw.githubusercontent.com/google/tachometer/main/README.md                                                                                          | tachometer 0.7.2 (registry)  | yes — read                                                            |
+| S48 | https://codspeed.io/blog/benchmarks-in-ci-without-noise                                                                                                     | 2025-07-30                   | yes — read; CPU workloads, not browser                                |
+| S49 | https://raw.githubusercontent.com/benchmark-action/github-action-benchmark/master/README.md                                                                 | v1.22.2                      | yes — read                                                            |
+| S50 | https://raw.githubusercontent.com/ChromeDevTools/devtools-protocol/master/pdl/domains/Emulation.pdl                                                         | master                       | yes — read                                                            |
+| S51 | https://developer.chrome.com/docs/devtools/settings/throttling                                                                                              | unversioned                  | yes — calibration read                                                |
+| S52 | https://unpkg.com/@vitest/browser@4.1.9/context.d.ts                                                                                                        | 4.1.9                        | yes — `cdp` declared                                                  |
+| S53 | https://vitest.dev/api/browser/context                                                                                                                      | docs v5.0.1                  | yes — "playwright + chromium only"                                    |
+| S54 | https://unpkg.com/vitest@4.1.9/browser/context.d.ts                                                                                                         | 4.1.9                        | yes — re-exports provider contexts                                    |
+| S55 | https://v4.vitest.dev/api/#bench                                                                                                                            | v4 docs                      | yes — "experimental"; no `toBeFasterThan`                             |
+| S56 | https://vitest.dev/guide/benchmarking                                                                                                                       | docs v5.0.1                  | yes — v5 only, does not apply to 4.1.9                                |
+| S57 | https://angular.dev/guide/testing/migrating-to-vitest                                                                                                       | Angular 22 docs              | yes — install `@vitest/browser-playwright`                            |
+| S58 | https://playwright.dev/docs/browsers                                                                                                                        | playwright 1.63.0 (registry) | yes — headless shell default                                          |
+| S59 | https://developer.chrome.com/docs/chromium/headless                                                                                                         | unversioned                  | yes — read                                                            |
+| S60 | https://developer.chrome.com/blog/chrome-headless-shell                                                                                                     | unversioned                  | yes — read                                                            |
+| R1  | libs/table/src/directives/ngp-table-row-animation.bench.spec.ts:17                                                                                          | working tree                 | yes — read (`ROW_COUNTS`, samples, frame sampler)                     |
+| R2  | libs/table/src/directives/ngp-table-row-animation.directive.ts:41                                                                                           | working tree                 | yes — read (`afterRenderEffect` earlyRead/write)                      |
+| R3  | libs/table/project.json:63                                                                                                                                  | working tree                 | yes — `bench` target read                                             |
+| R4  | package.json:36                                                                                                                                             | working tree                 | yes — no `@vitest/browser-playwright`/`playwright`                    |
+| R5  | node_modules/@vitest/                                                                                                                                       | installed                    | yes — no `browser*` package present                                   |

@@ -8,8 +8,8 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                     | Action  |
+| ---------------------------------------- | ------- |
 | `libs/shared/table/src/filters/rules.ts` | rewrite |
 
 `recorder.ts` still exists at the end of this step — `create-filters.ts` is its last caller until
@@ -56,6 +56,7 @@ until the rules produce them.
    compile error. The runtime fold is what it is today: `paths` from the children, `children` mapped
    to `{ path, predicate }`, and `isEmpty`/`emptyValue` borrowed from the first child. Keep the
    construction throw for an empty group — it is the backstop for an untyped caller.
+
 6. **`applyWhen(path, condition, children)` returns one node.** A `ConditionalRule` carrying its
    children, never an array. Returning an array would let a forgotten spread leave a nested array
    the fold skips, silently dropping those filters from both the type and the runtime. Gating
@@ -70,7 +71,7 @@ until the rules produce them.
 ## Implementation Notes
 
 - **Never name the key type in the `children` constraint.** `C extends readonly [unknown,
-  ...unknown[]]` is deliberate. Constraining to a rule type whose key parameter is `string`
+...unknown[]]` is deliberate. Constraining to a rule type whose key parameter is `string`
   contextually types the elements and widens every child's key; the tuple survives, so it looks like
   tuple widening and sends you after the wrong cause. This bites `anyOf` and `applyWhen` exactly as
   it bites `createFilters`, and it will bite every future combinator.
@@ -79,10 +80,10 @@ until the rules produce them.
   in the runtime shape is sound even though the compiler cannot prove it.
 - `equals`' `const TEmpty = null` parameter and the `emptyValue` override behaviour are unchanged.
   **Superseded 2026-09-16 by [#82](https://github.com/DvirMon/ng-table/issues/82):** `TEmpty` now
-  defaults to `never` and the criterion is `TRow[K] | null | TEmpty` — `emptyValue` *extends* the
+  defaults to `never` and the criterion is `TRow[K] | null | TEmpty` — `emptyValue` _extends_ the
   rule's empty set rather than displacing it, and `isEmpty` (promoted from `filter()` to every rule
   via `FilterOptions`) is the total override.
-- The file header comment describes rules as "bare verbs that *do* something (register a filter)".
+- The file header comment describes rules as "bare verbs that _do_ something (register a filter)".
   They no longer register anything — they return a declaration. Correct it, and drop the
   decision-number citations rather than updating them.
 
@@ -127,4 +128,5 @@ until the rules produce them.
       `create-filters.ts`
 
 ---
+
 ← [Step 2: Add the row-type token](step-2-row-of-token.plan.md) | [Step 4: The row carrier and the array schema](step-4-carrier-and-array-schema.plan.md) →

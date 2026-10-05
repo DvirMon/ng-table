@@ -10,11 +10,13 @@ Fixtures are local helpers in the spec file: `claim(label, anchor)` and `declare
 Three `it.each` tables — one row per case below. A new check later is one new row.
 
 ## Stubs (red phase)
+
 - `LabelledStageRule<TTransform>` = `{ readonly label: string; readonly rule: StageRule<TTransform> }` — type only.
 - `ResolvedStage<TTransform>` = `{ readonly name: string; readonly run: TTransform }` — type only.
 - `resolveStageOrder<TTransform>(layer: 'pipeline' | 'render', rules)` — throws `not implemented: resolveStageOrder`.
 
 ## Table 1 — `it.each`: resolves the order (dev gate on, no throw, assert output names)
+
 - A. Built-in claims registered in reverse → built-in order, both layers. Pipeline claims `sort, group, filter` → `filter, group, sort`; render `tree, group` → `group, tree`; each `run` paired with its own name by reference. Catches registration order, the wrong layer's list, a mis-paired `run`.
 - B. Unclaimed built-in left out. Pipeline claims `filter`, `sort` → `['filter','sort']`, no entry with undefined `run`. Catches emitting every built-in.
 - D. Declared `before`. Pipeline claims `filter`, `sort`; `audit` before `filter` → `['audit','filter','sort']`. Catches `placement` ignored.
@@ -25,7 +27,9 @@ Three `it.each` tables — one row per case below. A new check later is one new 
 - R. `synthesizesRows: true` after render `group` is allowed → `['group','headers']`. Catches a check that fires on any synthesizing stage anchored on `group`.
 
 ## Table 2 — `it.each`: throws on wiring errors (dev gate on; assert message fragments, each row lists its own)
+
 All rows match `/^\[createTable\]/`.
+
 - I. Unknown anchor: `withBadge` declares `badge` after `pin`, nobody declares `pin` → `/withBadge/`, `/"pin"/`, `/unknown anchor/i`.
 - J. Pipeline `group` anchor: `withGrouping` claims `group`, `withAudit` declares `audit` after `group` → `/withAudit/`, `/"group"/`, `/not anchor-eligible/`, and the message does **not** match `/unknown anchor/i`.
 - K. Cycle: `a` after `b`, `b` after `a` → `/cycle/i`, `/withA/`, `/withB/`, `/"a"/`, `/"b"/`. Catches an infinite loop and a one-sided message.
@@ -35,13 +39,16 @@ All rows match `/^\[createTable\]/`.
 - Q. `synthesizesRows: true` before render `group`: `withHeaders` declares `headers` before `group` → `/withHeaders/`, `/"headers"/`, `/"group"/`, `/synthesizesRows/`.
 
 ## Table 3 — `it.each`: dev checks off (`setNgDevMode(false)` in `try/finally`; no throw; assert output names)
+
 - S. Tie falls back to name order: `zeta` after `tree` registered before `alpha` after `tree` → `['group','tree','alpha','zeta']`. Catches the gate at a call site and a registration-order fallback.
 - T. Offending stages dropped (Q10): unknown anchor and pipeline-`group` anchor dropped; a cycle dropped without hanging; a duplicate declared name keeps the later declaration; valid stages still run in order.
 
 ## Types phase (after green)
+
 None — `resolveStageOrder`/`LabelledStageRule` stay engine-internal.
 
 ## Not tested
+
 - Duplicate claims of a built-in slot — `SlotRegistry`, step 3 (including last-claim-wins with the gate off).
 - Each gated `assert*` helper on its own — reached through `resolveStageOrder`; importing them ties the spec to how checks are split.
 - Calling any `run` — the resolver treats `run` as opaque.
@@ -51,6 +58,7 @@ None — `resolveStageOrder`/`LabelledStageRule` stay engine-internal.
 - Separate rows for "declared after the last anchor" (covered by F) and "after a middle anchor" (covered by H), and the same-anchor tie (covered by O).
 
 ## Resolved questions
+
 - `layer: 'pipeline' | 'render'`; the resolver owns the eligible sets.
 - `LabelledStageRule` is `{ label, rule }`.
 - Placement is a gap (plan.md Q9).

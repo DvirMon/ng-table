@@ -10,9 +10,7 @@ interface Row {
   name: string;
 }
 
-const columns = [
-  ...createColumns(noData<Row>(), (col) => [col('name')]).columns,
-];
+const columns = [...createColumns(noData<Row>(), (col) => [col('name')]).columns];
 
 function makeRows(): Row[] {
   return [
@@ -113,8 +111,8 @@ describe('createTableCore — cells on data rows (ADR-0022)', () => {
       cols.map((column) =>
         column.id === 'name'
           ? { ...column, accessor: (row: Row) => row.name.toUpperCase() }
-          : column
-      )
+          : column,
+      ),
     );
 
     expect(renderRows()[0].cells['name']).toBe('ANN');
@@ -206,7 +204,7 @@ describe('createTableCore — group-row cells (D5, ADR-0022)', () => {
     expect('name' in groupRow.cells).toBe(false);
   });
 
-  it("a group header carries no cells entry keyed by groupKey.columnId unless that column has an aggregateFn", () => {
+  it('a group header carries no cells entry keyed by groupKey.columnId unless that column has an aggregateFn', () => {
     const { renderRows, renderStages } = createTableCore<Row>({
       columns,
       trackBy: 'id',
@@ -248,9 +246,7 @@ describe('createTableCore — expandedRows union (ADR-0017)', () => {
     }
     const rows: TreeRow[] = [{ id: 'p1' }, { id: 'c1' }, { id: 'p2' }, { id: 'c2' }];
     const { renderRows, renderStages, expandedSources } = createTableCore<TreeRow>({
-      columns: [
-        ...createColumns(noData<TreeRow>(), (col) => [col('id')]).columns,
-      ],
+      columns: [...createColumns(noData<TreeRow>(), (col) => [col('id')]).columns],
       trackBy: 'id',
       data: signal(rows),
     });
@@ -302,11 +298,7 @@ describe('createTableCore — isContextRow stamp', () => {
   it('leaves isContextRow undefined on every row when no feature contributes context rows', () => {
     const { renderRows } = makeCore();
 
-    expect(renderRows().map((row) => row.isContextRow)).toEqual([
-      undefined,
-      undefined,
-      undefined,
-    ]);
+    expect(renderRows().map((row) => row.isContextRow)).toEqual([undefined, undefined, undefined]);
   });
 
   it('stamps false, not undefined, when a contributor exists but its set is empty', () => {

@@ -1,5 +1,5 @@
 ---
-title: "Step 6 — with-grouping.spec.ts: positional form, either-order expansion, pipeline-order permutation, column-id autocomplete"
+title: 'Step 6 — with-grouping.spec.ts: positional form, either-order expansion, pipeline-order permutation, column-id autocomplete'
 type: task-step
 issue: 72
 ---
@@ -17,7 +17,7 @@ carrying three of #38's acceptance lines.
 **Depends on:** Step 1, Step 2, Step 3
 **Parallel-safe with:** Step 4, Step 5
 **Cross-issue edge:** this spec composes `withSelection()` and `withExpansion()` (#39). Their
-*old* signatures still satisfy a `createTable` slot structurally (a `(core: Pick<TableCore<Row>, 'rows' | 'trackBy'>) => spec`
+_old_ signatures still satisfy a `createTable` slot structurally (a `(core: Pick<TableCore<Row>, 'rows' | 'trackBy'>) => spec`
 is assignable to `Feature<TableStore<Row> & O, …>`), so if #39 has not landed, keep the explicit
 `withSelection<GroupingMockRow>()` / `withExpansion<GroupingMockRow>()` on those calls **only**
 and leave a `// #39 strips the type argument` comment; #39 Step 3/4 remove them. If #39 has
@@ -32,6 +32,7 @@ landed, write them bare.
 ## Why This Step Exists
 
 Issue #38 acceptance lines owned here:
+
 - "Grouping + expansion composed in either order: expanded groups render correctly (spec covers
   both orders)" — D25's lazy guarded read.
 - "Pipeline stage order (filter → group → sort → expand) and render-stage order unchanged by
@@ -56,11 +57,11 @@ Issue #38 acceptance lines owned here:
 3. **Either-order expansion (D25).** Extend the collapse/expand describe with an explicit pair:
    - `withExpansion(), withGrouping({ initialGrouping: ['region'] })` — expansion first;
    - `withGrouping({ initialGrouping: ['region'] }), withExpansion()` — grouping first.
-   In both: nothing toggled → only two depth-0 headers; `toggleExpanded(US_HEADER_ID)` → the
-   three US leaves appear, EU stays collapsed. Same expected `renderRows()` shape for both.
-   Add the type-level half: in the expansion-first order, a trailing block on grouping sees
-   `expandedRows` — `withGrouping({}, withComputed((s) => { expectTypeOf(s.expandedRows).toEqualTypeOf<Signal<Set<RowId>>>(); return { … }; }))`;
-   in the grouping-first order the same read is a `@ts-expect-error` (types stricter than runtime).
+     In both: nothing toggled → only two depth-0 headers; `toggleExpanded(US_HEADER_ID)` → the
+     three US leaves appear, EU stays collapsed. Same expected `renderRows()` shape for both.
+     Add the type-level half: in the expansion-first order, a trailing block on grouping sees
+     `expandedRows` — `withGrouping({}, withComputed((s) => { expectTypeOf(s.expandedRows).toEqualTypeOf<Signal<Set<RowId>>>(); return { … }; }))`;
+     in the grouping-first order the same read is a `@ts-expect-error` (types stricter than runtime).
 
 4. **Pipeline-order permutation (story 22).** One new case: build the same data with
    `withFiltering({ filters }), withGrouping({ initialGrouping: ['region'] }), withSorting()` and
@@ -113,4 +114,5 @@ Issue #38 acceptance lines owned here:
 - [ ] Runtime green (`vitest run …/with-grouping.spec.ts`) — the user runs it.
 
 ---
+
 ← [Step 5: with-filtering.spec.ts](step-5-with-filtering-spec.plan.md)

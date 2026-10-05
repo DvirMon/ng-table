@@ -36,7 +36,7 @@ export interface ValueOfContext<TRow> {
 export function buildValueOfContext<TRow>(
   columns: () => readonly ColumnDef<TRow>[],
   knownIds: ReadonlySet<string>,
-  label: string
+  label: string,
 ): ValueOfContext<TRow> {
   const reportedColumns = new Set<string>();
   return {

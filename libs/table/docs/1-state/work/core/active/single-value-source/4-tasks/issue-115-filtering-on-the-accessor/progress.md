@@ -3,16 +3,16 @@
 **Issue:** #115
 **Status:** 8 / 8 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | Re-key the filter type surface to column id | ✅ done | — |
-| 2 | The engine reads the accessor | ✅ done | — |
-| 3 | Widen `withFiltering`'s input; ids checked at construction | ✅ done | — |
-| 4 | Engine specs | ✅ done | — |
-| 5 | Feature spec | ✅ done | — |
-| 6 | Type specs | ✅ done | — |
-| 7 | Stories and fixtures migrate | ✅ done | — |
-| 8 | Docs, decisions and `llms.txt` | ✅ done | — |
+| Step | Title                                                      | Status  | PR  |
+| ---- | ---------------------------------------------------------- | ------- | --- |
+| 1    | Re-key the filter type surface to column id                | ✅ done | —   |
+| 2    | The engine reads the accessor                              | ✅ done | —   |
+| 3    | Widen `withFiltering`'s input; ids checked at construction | ✅ done | —   |
+| 4    | Engine specs                                               | ✅ done | —   |
+| 5    | Feature spec                                               | ✅ done | —   |
+| 6    | Type specs                                                 | ✅ done | —   |
+| 7    | Stories and fixtures migrate                               | ✅ done | —   |
+| 8    | Docs, decisions and `llms.txt`                             | ✅ done | —   |
 
 ## Execution graph
 

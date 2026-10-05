@@ -33,15 +33,15 @@ issue's to expose or omit as a design choice.
 
    ```ts
    export interface ColumnRuleContext<TRow> {
-     readonly columns: () => ColumnDef<TRow>[];      // unchanged, stays
+     readonly columns: () => ColumnDef<TRow>[]; // unchanged, stays
      stateOf<K extends string>(
-       handle: ColumnHandle<TRow, K, unknown>
-     ): Pick<ColumnDef<TRow>, 'visible' | 'label' | 'meta'>;   // no `order` — R2
+       handle: ColumnHandle<TRow, K, unknown>,
+     ): Pick<ColumnDef<TRow>, 'visible' | 'label' | 'meta'>; // no `order` — R2
    }
    ```
 
    `columns` is **not removed** — this is additive, matching the issue's
-   own framing ("Column rules can name another column *without* a
+   own framing ("Column rules can name another column _without_ a
    string-keyed lookup", not "columns() is deleted"). Keep `columns` for
    whatever existing rule logic already reads the raw array for reasons
    other than "read one other column's state" (e.g. counting, filtering
@@ -49,14 +49,14 @@ issue's to expose or omit as a design choice.
 
 2. **`engine/columns-schema/wire-columns-schema.ts`.** The one
    construction site, `const ctx: ColumnRuleContext<TRow> = { columns:
-   () => core.baseColumns() };` (~line 40), gains `stateOf(handle) {
-   const column = core.baseColumns().find((c) => c.id === handle.id);
-   return { visible: column?.visible ?? true, label: column?.label ??
-   handle.id, meta: column?.meta }; }` — resolves against
+() => core.baseColumns() };` (~line 40), gains `stateOf(handle) {
+const column = core.baseColumns().find((c) => c.id === handle.id);
+return { visible: column?.visible ?? true, label: column?.label ??
+handle.id, meta: column?.meta }; }` — resolves against
    `baseColumns`, **never** the derived `columns` (same reasoning as the
    existing doc comment there: reading the derived `columns` here would
    close the `columns → ruleResults → params → resource →
-   ruleResults` cycle the file's own header comment warns about). Match
+ruleResults` cycle the file's own header comment warns about). Match
    this file's existing fallback values (`visible ?? true`) — check
    `engine/columns.ts`'s `resolveColumnDefs` defaults (`visible`
    defaults `true`, `label` defaults to `id`) rather than inventing new
@@ -90,4 +90,5 @@ issue's to expose or omit as a design choice.
       resolves against base state) still passes unchanged.
 
 ---
+
 ← [Step 4: Filtering rename to `criterionOf`](step-4-filtering-criterionof-rename.plan.md) | [Step 6: Construction check for resolver ids](step-6-construction-check.plan.md) →

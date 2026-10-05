@@ -9,6 +9,7 @@ files:
   - libs/table/src/engine/pipeline.ts
   - libs/table/src/ng-dev-mode.testing.ts
 ---
+
 # Step 1 — The stage order resolver
 
 Adds a pure module that turns a layer's claimed and declared
@@ -74,7 +75,7 @@ may anchor on another declared stage.
   cycle) is dropped and never hangs the resolver; a duplicate
   declared name keeps the later declaration (Q10); a duplicate
   claim of a built-in keeps the later claim (Q8).
-- Duplicate *claims* of a built-in are thrown by `SlotRegistry`,
+- Duplicate _claims_ of a built-in are thrown by `SlotRegistry`,
   not here. The resolver only needs last-claim-wins for the
   gate-off case, and that path is tested in Step 3.
 - Update the `ng-dev-mode.testing.ts` header comment to list
@@ -95,4 +96,5 @@ may anchor on another declared stage.
       [step-1-stage-order-resolver.test-plan.md](step-1-stage-order-resolver.test-plan.md).
 
 ---
+
 [Step 2: Run the resolved order](step-2-run-resolved-order.plan.md) →

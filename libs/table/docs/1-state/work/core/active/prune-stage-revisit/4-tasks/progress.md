@@ -4,15 +4,15 @@
 **Epic:** #105
 **Status:** 0 / 7 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | [The IR migration](step-1-node-ir-migration.plan.md) | ✅ done | — |
-| 2 | [The engine IR seam pair](step-2-flatten-and-fold-specs.plan.md) | ✅ done | — |
-| 3 | [Grouping's node tree](step-3-grouping-render-spec.plan.md) | ✅ done | — |
-| 4 | [Expansion end-to-end](step-4-expansion-spec.plan.md) | ✅ done | — |
-| 5 | [core.spec and the wording sweep](step-5-core-spec-and-sweep.plan.md) | ✅ done | — |
-| 6 | [The collapsible grouping story](step-6-collapsible-story.plan.md) | ✅ done | — |
-| 7 | [ADRs and maintainer docs](step-7-adrs-and-docs.plan.md) | ✅ done | — |
+| Step | Title                                                                 | Status  | PR  |
+| ---- | --------------------------------------------------------------------- | ------- | --- |
+| 1    | [The IR migration](step-1-node-ir-migration.plan.md)                  | ✅ done | —   |
+| 2    | [The engine IR seam pair](step-2-flatten-and-fold-specs.plan.md)      | ✅ done | —   |
+| 3    | [Grouping's node tree](step-3-grouping-render-spec.plan.md)           | ✅ done | —   |
+| 4    | [Expansion end-to-end](step-4-expansion-spec.plan.md)                 | ✅ done | —   |
+| 5    | [core.spec and the wording sweep](step-5-core-spec-and-sweep.plan.md) | ✅ done | —   |
+| 6    | [The collapsible grouping story](step-6-collapsible-story.plan.md)    | ✅ done | —   |
+| 7    | [ADRs and maintainer docs](step-7-adrs-and-docs.plan.md)              | ✅ done | —   |
 
 Status values: `⬚ pending`, `▶ in progress`, `✅ done`, `⏭ skipped`.
 

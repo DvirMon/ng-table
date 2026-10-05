@@ -16,7 +16,7 @@ Research pack answering four questions:
    pattern, the arXiv formalisation, the shipped implementations), and how it maps onto what we
    already have.
 3. **[2-qmd-retrieval.md](2-qmd-retrieval.md)** — `qmd`, the local CLI/MCP search engine that lets
-   an agent *query* a markdown knowledge base instead of globbing it.
+   an agent _query_ a markdown knowledge base instead of globbing it.
 4. **[3-grooming.md](3-grooming.md)** — grooming: the periodic clean-up/refine pass that keeps the
    base from rotting, with a concrete rubric and cadence.
 5. **[4-adoption-plan.md](4-adoption-plan.md)** — how to run this across many projects, in three

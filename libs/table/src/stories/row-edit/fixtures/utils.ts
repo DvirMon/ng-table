@@ -2,8 +2,7 @@ import type { SortDirection } from '../../../api/types';
 import type { EditRow } from './types';
 
 const SAVE_LATENCY_MS = 700;
-const FOCUSABLE_SELECTOR =
-  'input, select, textarea, button, [tabindex]:not([tabindex="-1"])';
+const FOCUSABLE_SELECTOR = 'input, select, textarea, button, [tabindex]:not([tabindex="-1"])';
 
 /** Pessimistic-save stand-in (S2, S5): the row stays open for the whole round trip. Rejects a
  * blank name so the failure path is reachable without an external mock. */
@@ -30,9 +29,9 @@ export function rowLabel(row: EditRow): string {
  * fighting Angular's default tab order. Simplest-correct: it does not trap focus that enters via
  * a click, only Tab/Shift+Tab at the row's boundary. */
 export function containFocusTab(event: KeyboardEvent, container: HTMLElement): void {
-  const focusable = Array.from(
-    container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
-  ).filter((element) => !element.hasAttribute('disabled'));
+  const focusable = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+    (element) => !element.hasAttribute('disabled'),
+  );
   if (focusable.length === 0) {
     return;
   }

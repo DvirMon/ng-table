@@ -43,10 +43,10 @@ outside: first through the shared body, then through
 Under `ngDevMode = false`, restored in a `finally`:
 
 - **Construction is dev-only.** `withGrouping({ initial:
-  ['nope'] })` builds without throwing. This is the same
+['nope'] })` builds without throwing. This is the same
   setup as `:640-648`.
 - **Writer still throws.** `store.grouping.update(
-  addGroupLevel('nope'))` throws
+addGroupLevel('nope'))` throws
   `/\[withGrouping\].*"nope"/`. This is the same setup as
   `:680-690`.
 
@@ -86,4 +86,5 @@ dev" half.
 - [ ] The touched spec files pass.
 
 ---
+
 ← [Step 3: Construction-check specs](step-3-construction-check-specs.plan.md) | [Step 5: Record it](step-5-record-it.plan.md) →

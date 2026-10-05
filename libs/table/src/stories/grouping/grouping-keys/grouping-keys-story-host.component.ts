@@ -42,9 +42,9 @@ export class GroupingKeysStoryHostComponent {
       // `value` arrives as `unknown` (Step 3); narrow with `isDateValue` rather than a cast.
       schema: (path) =>
         groupKey(path.closedAt, (value) =>
-          this.bucketClosedAtByMonth() && this.isDateValue(value) ? monthOf(value) : value
+          this.bucketClosedAtByMonth() && this.isDateValue(value) ? monthOf(value) : value,
         ),
-    })
+    }),
   );
 
   protected isDateValue(value: unknown): value is Date {

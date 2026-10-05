@@ -8,10 +8,10 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                                                                            | Action                                          |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | `libs/shared/table/src/stories/composition/derived-state/derived-state-story-host.component.ts` | edit — array schema, row carrier, field reorder |
-| `libs/shared/table/src/stories/composition/fixtures/types.ts` | edit — delete `CompositionFilterState` |
+| `libs/shared/table/src/stories/composition/fixtures/types.ts`                                   | edit — delete `CompositionFilterState`          |
 
 The smallest of the five story sites: one rule, one criterion. Done first so the shape of the
 rewrite is settled on a site where nothing else is going on.
@@ -43,7 +43,7 @@ which is the duplication the epic removes.
 2. **Move `data` above `filters`.** It currently sits below. A field initializer reading
    `this.data` before it is assigned yields `undefined`; `createFilters` never reads the carrier
    (`void rows`), so nothing breaks at runtime — but a reader cannot tell that from the call, and
-   the next person to pass a carrier that *is* read inherits the trap. Order the fields so the
+   the next person to pass a carrier that _is_ read inherits the trap. Order the fields so the
    carrier is real by the time it is passed.
 3. Drop the `CompositionFilterState` import; keep `CompositionRow`.
 4. Delete `CompositionFilterState` from `composition/fixtures/types.ts`, and with it the
@@ -62,7 +62,7 @@ which is the duplication the epic removes.
 
 - **A silent `{}` fold.** If `StateOf<S>` stops resolving, `filters.dept` is a property access on
   `{}` and fails to compile — loudly. But if the array is typed as `unknown[]` (for example by
-  annotating the schema callback's return), the fold yields `{}` *and* compiles. Never annotate the
+  annotating the schema callback's return), the fold yields `{}` _and_ compiles. Never annotate the
   schema's return type.
 - The template binds nothing filter-shaped beyond what the class exposes; leave the `.html`
   untouched.
@@ -85,4 +85,5 @@ which is the duplication the epic removes.
       a whole is still red until Step 9 — check the paths, not the exit code)
 
 ---
+
 [Step 2: The client filtering host](step-2-client-filtering-host.plan.md) →

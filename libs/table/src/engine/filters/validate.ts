@@ -22,7 +22,7 @@ export function validateRecords<TRow>(records: readonly FilterRuleRecord<TRow>[]
         throw new Error(
           `[withFiltering] "${existingOwner}" and "${record.key}" both filter path "${path}". ` +
             'Only one filter may target a given path — two keys may not target one path. ' +
-            'Combine with filter() over a compound criterion instead.'
+            'Combine with filter() over a compound criterion instead.',
         );
       }
       keyOwnerByPath.set(path, record.key);

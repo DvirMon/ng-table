@@ -17,15 +17,15 @@ same per-file split `1-state/architecture.md` uses for state features).
 
 ## Companion documents
 
-| Doc | Covers |
-|---|---|
-| [2-columns/reference/ownership-model.md](reference/ownership-model.md) | The seed-vs-rule contract, three input shapes (static / reactive / async), store-owns-reactivity law, snapshot-diff patcher. **Read first.** |
-| [2-columns/reference/tier-1-intrinsic.md](reference/tier-1-intrinsic.md) | `visible` (+Async), `applyOrder` (never shipped — order dropped from the schema, see [columns.md COL4](../decisions/columns.md)) — column-owned, no store feature. First-impl scope. |
-| [2-columns/reference/tier-2-layout.md](reference/tier-2-layout.md) | `applyWidth`, `applyFlex` — column-owned sizing. `applyPinned` — seeds a new `withColumnPinning()` store feature, not a column field. The real gaps. |
-| [2-columns/reference/tier-3-feature-config.md](reference/tier-3-feature-config.md) | `applyEnableSorting`, `sortFn` (not yet available — #100), `applyDefaultSort`, `applyEnableFiltering`, `applyFilterFn`, `applyGroup`, `applyAggregateFn` — seed opt-in store features. |
-| [2-columns/reference/data-derived.md](reference/data-derived.md) | **REJECTED** — data-derived column set (from row keys). Kept for historical record only; `createColumns`'s schema argument alone covers the DX need. |
-| [2-columns/reference/signal-forms-techniques.md](reference/signal-forms-techniques.md) | Seven techniques mined from Signal Forms source — metadata+reducer, reducer-vs-reject, `{ when }`, `applyEach`, `apply`/`schema`, `assertPathIsCurrent`, `NoInfer`. Two are open decisions. |
-| [2-columns/reference/column-metadata.md](reference/column-metadata.md) | **Implemented.** `createColumnMetaKey`/`metadata`/`readColumnMeta` — consumer-facing, non-participating column side channel. Not the same as this table's internal metadata+reducer core sketched in signal-forms-techniques.md §1. |
+| Doc                                                                                    | Covers                                                                                                                                                                                                                              |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [2-columns/reference/ownership-model.md](reference/ownership-model.md)                 | The seed-vs-rule contract, three input shapes (static / reactive / async), store-owns-reactivity law, snapshot-diff patcher. **Read first.**                                                                                        |
+| [2-columns/reference/tier-1-intrinsic.md](reference/tier-1-intrinsic.md)               | `visible` (+Async), `applyOrder` (never shipped — order dropped from the schema, see [columns.md COL4](../decisions/columns.md)) — column-owned, no store feature. First-impl scope.                                                |
+| [2-columns/reference/tier-2-layout.md](reference/tier-2-layout.md)                     | `applyWidth`, `applyFlex` — column-owned sizing. `applyPinned` — seeds a new `withColumnPinning()` store feature, not a column field. The real gaps.                                                                                |
+| [2-columns/reference/tier-3-feature-config.md](reference/tier-3-feature-config.md)     | `applyEnableSorting`, `sortFn` (not yet available — #100), `applyDefaultSort`, `applyEnableFiltering`, `applyFilterFn`, `applyGroup`, `applyAggregateFn` — seed opt-in store features.                                              |
+| [2-columns/reference/data-derived.md](reference/data-derived.md)                       | **REJECTED** — data-derived column set (from row keys). Kept for historical record only; `createColumns`'s schema argument alone covers the DX need.                                                                                |
+| [2-columns/reference/signal-forms-techniques.md](reference/signal-forms-techniques.md) | Seven techniques mined from Signal Forms source — metadata+reducer, reducer-vs-reject, `{ when }`, `applyEach`, `apply`/`schema`, `assertPathIsCurrent`, `NoInfer`. Two are open decisions.                                         |
+| [2-columns/reference/column-metadata.md](reference/column-metadata.md)                 | **Implemented.** `createColumnMetaKey`/`metadata`/`readColumnMeta` — consumer-facing, non-participating column side channel. Not the same as this table's internal metadata+reducer core sketched in signal-forms-techniques.md §1. |
 
 ## Executive Summary
 
@@ -88,6 +88,7 @@ doc is the result of that design conversation.
   The schema fn receives a typed `path` proxy (one property per declared column id) used only to
   layer rules on top; it does not redefine shape. (`applyOrder` never shipped — order dropped
   from the schema entirely, see [columns.md COL4](../decisions/columns.md).)
+
 - **Standalone `columnSchema<TRow>(fn)` for reuse.** The schema argument accepts **either** an
   inline fn **or** a standalone `columnSchema<TRow>(fn)` value — the same duality as `form()`
   accepting an inline fn or a `schema()` value. The standalone form lets a consumer define a
@@ -100,10 +101,11 @@ doc is the result of that design conversation.
   });
   createColumns(data, (col) => [col('name'), col('price')], adminSchema);
   ```
+
 - **Store owns the async resource lifecycle for `apply*Async`-configured columns.** A deliberate,
   scoped reversal of "reactivity lives in the consumer" (recorded in `1-state/columns.md`) — but
   only for this opt-in path. Plain-array `columns` config keeps today's consumer-owned pattern as the
-  default. Extended to the sync-*reactive* shape too — see
+  default. Extended to the sync-_reactive_ shape too — see
   [ownership-model.md](reference/ownership-model.md).
 - **Conflicting rules on one column property: currently throws, not combined via a reducer.**
   Superseded 2026-07-25 — see
@@ -125,18 +127,19 @@ doc is the result of that design conversation.
   criterion for `grouping`/`groupingAsync` (shipped, issue #26); this file described the
   two as counterparts without ever stating when to choose which.
 
-  | | `visible` (sync/reactive) | `visibleAsync` (resource-backed) |
-  |---|---|---|
-  | Use when | the value is settled by the time it matters, however it was obtained | the server owns it at runtime and it can change; the rule must re-query |
-  | Owns fetching | consumer | the rule (`params`/`factory`) |
-  | Owns success/error | consumer, upstream | the rule (`onSuccess`/`onError`) |
-  | Pending | consumer returns `undefined` from `when` | rule returns `undefined` until first resolution |
+  |                    | `visible` (sync/reactive)                                            | `visibleAsync` (resource-backed)                                        |
+  | ------------------ | -------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+  | Use when           | the value is settled by the time it matters, however it was obtained | the server owns it at runtime and it can change; the rule must re-query |
+  | Owns fetching      | consumer                                                             | the rule (`params`/`factory`)                                           |
+  | Owns success/error | consumer, upstream                                                   | the rule (`onSuccess`/`onError`)                                        |
+  | Pending            | consumer returns `undefined` from `when`                             | rule returns `undefined` until first resolution                         |
 
   A value fetched once at init and closed over (e.g. `linkedSignal(() => prefs.value()?.canSeeCol
-  ?? …)` read inside `{ when }`) is the sync case, not the async one — it is async only in *how*
+?? …)` read inside `{ when }`) is the sync case, not the async one — it is async only in _how_
   it was obtained, and `visible`'s `{ when }` already runs reactively off that signal.
   `visibleAsync` is strictly heavier and is for the case that must re-query: default to
   `visible`, reach for `visibleAsync` only when the rule itself must own re-fetching.
+
 - **Data-derived column set — rejected 2026-07-31.** A `createColumns(data, schemaFn)` overload
   deriving columns from row-data keys at runtime was proposed and rejected — never a dependency of
   the schema argument, and a later variant (`createColumns(baseColumns, schemaFn)` wrapping the
@@ -177,9 +180,9 @@ doc is the result of that design conversation.
   [techniques §5](reference/signal-forms-techniques.md#5--applypath-schema--schema-reuse--defer--revisits-no-composability)).
 - Signal Forms **internals** confirmed against fetched `angular/angular` source: the schema-path
   proxy is purely structural — `FIELD_PATH_PROXY_HANDLER`
-  (`packages/forms/signals/src/schema/path_node.ts:102-110`) fabricates a child for *any* property
+  (`packages/forms/signals/src/schema/path_node.ts:102-110`) fabricates a child for _any_ property
   accessed and reads zero model data; typing is 100% compile-time. The data-bound field tree is a
-  *separate* reactive computed deriving fields via `Object.keys(value)` (`field/structure.ts:346`),
+  _separate_ reactive computed deriving fields via `Object.keys(value)` (`field/structure.ts:346`),
   tracking array items by a synthetic identity symbol (`structure.ts:365`). This two-tree decoupling
   grounds [data-derived.md](reference/data-derived.md). Rule accumulation + reducers
   (`schema/logic_node.ts`, `api/rules/metadata.ts`) ground
@@ -210,7 +213,7 @@ pass — see Open Questions.
 
 ### `ColumnsPath<TRow>` — must be a real `Proxy`
 
-`keyof TRow` is compile-time only; the path proxy mirrors the *type*, not just what's present in
+`keyof TRow` is compile-time only; the path proxy mirrors the _type_, not just what's present in
 `baseColumns`. The `get` trap fabricates a `ColumnHandle<TRow, K>` for any string property accessed
 (same structural design as Signal Forms' `FieldPathNode`):
 
@@ -222,7 +225,10 @@ export type ColumnsPath<TRow> = {
 /** @internal */
 export declare const COLUMN_RECORDER: unique symbol;
 
-export interface ColumnHandle<TRow, K extends Extract<keyof TRow, string> = Extract<keyof TRow, string>> {
+export interface ColumnHandle<
+  TRow,
+  K extends Extract<keyof TRow, string> = Extract<keyof TRow, string>,
+> {
   readonly id: K;
   readonly [COLUMN_RECORDER]: ColumnSchemaRecorder<TRow>;
 }
@@ -239,8 +245,8 @@ as `createColumns`'s third argument:
 ```ts
 export interface TableConfig<TRow, TCols extends readonly ColumnDecl<TRow, string, unknown>[]> {
   trackBy: TrackByConfig<TRow>;
-  columns: ColumnSet<TRow, TCols>;   // from createColumns(data, build, schema?)
-  injector?: Injector;               // outside an injection context
+  columns: ColumnSet<TRow, TCols>; // from createColumns(data, build, schema?)
+  injector?: Injector; // outside an injection context
 }
 // Features are trailing positional arguments, not a config key (#33):
 //   createTable(data, config, withSorting(), withGrouping())
@@ -274,16 +280,16 @@ on rule args — see [techniques §6–7](reference/signal-forms-techniques.md#6
 
 ## Feature Catalog
 
-Full rule set, grouped **by ownership** — *not* by end-user value. The tier axis answers "does
+Full rule set, grouped **by ownership** — _not_ by end-user value. The tier axis answers "does
 the column schema own this concern, or is it seeding config for a store feature that owns it?" This
 traces the store-owned vs column-owned line the whole architecture is built on
 (`overview.md`).
 
-| Tier | Property class | Owner | Detail |
-|---|---|---|---|
-| **1 — Intrinsic** | identity / presence | column def only (no store feature) | [tier-1-intrinsic.md](reference/tier-1-intrinsic.md) |
-| **2 — Layout** | geometry / framing | mixed: sizing = column def only; pinning = seeds `withColumnPinning()` store feature | [tier-2-layout.md](reference/tier-2-layout.md) |
-| **3 — Feature config** | pipeline behavior | store feature; column seeds it | [tier-3-feature-config.md](reference/tier-3-feature-config.md) |
+| Tier                   | Property class      | Owner                                                                                | Detail                                                         |
+| ---------------------- | ------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| **1 — Intrinsic**      | identity / presence | column def only (no store feature)                                                   | [tier-1-intrinsic.md](reference/tier-1-intrinsic.md)           |
+| **2 — Layout**         | geometry / framing  | mixed: sizing = column def only; pinning = seeds `withColumnPinning()` store feature | [tier-2-layout.md](reference/tier-2-layout.md)                 |
+| **3 — Feature config** | pipeline behavior   | store feature; column seeds it                                                       | [tier-3-feature-config.md](reference/tier-3-feature-config.md) |
 
 **Ship order = tier order.** Tier 1 first (first-impl scope), then Tier 2 (the real gaps), then
 Tier 3 (future work). Rationale: more users hit sizing/pinning than custom sort/filter predicates,
@@ -332,16 +338,16 @@ This table is the original implementation-session plan; the file layout it propo
 been reshaped by the `createColumns()` grill. For the actual current layout, see
 `libs/table/CLAUDE.md`'s code-layout table. Kept here for the historical planning record only.
 
-| File | Concern |
-|---|---|
-| `api/types.ts` (edit) | Add an optional schema argument, typed `ColumnsSchemaFn<TRow> \| ColumnSchema<TRow>`, to `createColumns()`. `ColumnDefInput<TRow>` and `resolveColumnDefs()` already shipped 2026-07-25. |
-| `schema/column-schema.types.ts` (new) | `ColumnsPath`, `ColumnHandle`, `COLUMN_RECORDER` (internal), `ColumnSchemaRecorder` (internal), `ColumnsSchemaFn`, `ColumnSchema`. (`ColumnDefInput` stays in `api/types.ts`.) |
-| `schema/column-rules.ts` (new) | `SyncColumnRule`, `AsyncColumnRule`, `ColumnRule`, `ColumnRuleContext`, `AsyncColumnRuleContext`, and all rule functions (Tier 1 first). Landing spot for every future tier. |
-| `schema/column-schema.ts` (new) | `columnSchema()` (standalone helper), `buildColumnsPath()` (the `Proxy`), `assertPathIsCurrent`, the shared recorder that both inline fns and `columnSchema()` run through, unknown-id + conflict validation. |
-| `engine/columns-schema/` (new) | Normalizes the inline fn / `columnSchema()` value into a `ColumnSchema`, sync/static resolution, and `wireColumnsSchemaAsync()` (the `withHooks` feature). All DI/reactivity code lives here only. |
-| `api/create-table.ts` (edit) | Resolve `createColumns()`'s schema argument into `config.columns`; splice `wireColumnsSchemaAsync(rules)` into `coreFeature`. |
-| `index.ts` (edit) | Barrel-export the public rule functions + `columnSchema` + public types. **Not** `COLUMN_RECORDER` / `ColumnSchemaRecorder` — internal only. |
-| `column-schema.spec.ts`, `wire-columns-schema.spec.ts` (new) | Resolution + validation + conflict handling; reactive + async wiring via `TestBed` + a controllable `resource()` loader (mirrors `table.store.spec.ts`'s `TestBed.inject(Store)` pattern). |
+| File                                                         | Concern                                                                                                                                                                                                       |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api/types.ts` (edit)                                        | Add an optional schema argument, typed `ColumnsSchemaFn<TRow> \| ColumnSchema<TRow>`, to `createColumns()`. `ColumnDefInput<TRow>` and `resolveColumnDefs()` already shipped 2026-07-25.                      |
+| `schema/column-schema.types.ts` (new)                        | `ColumnsPath`, `ColumnHandle`, `COLUMN_RECORDER` (internal), `ColumnSchemaRecorder` (internal), `ColumnsSchemaFn`, `ColumnSchema`. (`ColumnDefInput` stays in `api/types.ts`.)                                |
+| `schema/column-rules.ts` (new)                               | `SyncColumnRule`, `AsyncColumnRule`, `ColumnRule`, `ColumnRuleContext`, `AsyncColumnRuleContext`, and all rule functions (Tier 1 first). Landing spot for every future tier.                                  |
+| `schema/column-schema.ts` (new)                              | `columnSchema()` (standalone helper), `buildColumnsPath()` (the `Proxy`), `assertPathIsCurrent`, the shared recorder that both inline fns and `columnSchema()` run through, unknown-id + conflict validation. |
+| `engine/columns-schema/` (new)                               | Normalizes the inline fn / `columnSchema()` value into a `ColumnSchema`, sync/static resolution, and `wireColumnsSchemaAsync()` (the `withHooks` feature). All DI/reactivity code lives here only.            |
+| `api/create-table.ts` (edit)                                 | Resolve `createColumns()`'s schema argument into `config.columns`; splice `wireColumnsSchemaAsync(rules)` into `coreFeature`.                                                                                 |
+| `index.ts` (edit)                                            | Barrel-export the public rule functions + `columnSchema` + public types. **Not** `COLUMN_RECORDER` / `ColumnSchemaRecorder` — internal only.                                                                  |
+| `column-schema.spec.ts`, `wire-columns-schema.spec.ts` (new) | Resolution + validation + conflict handling; reactive + async wiring via `TestBed` + a controllable `resource()` loader (mirrors `table.store.spec.ts`'s `TestBed.inject(Store)` pattern).                    |
 
 ---
 
@@ -360,52 +366,52 @@ sizing-vs-pinning ownership split above.
 Feature-local open questions live in each tier / companion file. Cross-cutting ones:
 
 - [x] **~~`visible`'s function form is snapshot-once, not reactive.~~** RESOLVED 2026-07-24 —
-  superseded by the [ownership model](reference/ownership-model.md); reactive `{ when }` is live.
+      superseded by the [ownership model](reference/ownership-model.md); reactive `{ when }` is live.
 - [x] **~~Metadata+reducer core vs bespoke rule functions.~~** RESOLVED 2026-07-25 — hybrid: bespoke
-  typed rule-function public surface, one generic `applyMeta`+reducer core internally. See
-  [techniques §1](reference/signal-forms-techniques.md#1--generic-metadata--reducer-instead-of-n-bespoke-apply--decided-2026-07-25--hybrid).
+      typed rule-function public surface, one generic `applyMeta`+reducer core internally. See
+      [techniques §1](reference/signal-forms-techniques.md#1--generic-metadata--reducer-instead-of-n-bespoke-apply--decided-2026-07-25--hybrid).
 - [x] **~~Reducer-combine vs build-time rejection.~~** RESOLVED 2026-07-25 — reducer-combine, see
-  [techniques §2](reference/signal-forms-techniques.md#2--reducers-replace-conflict-rejection--decided-2026-07-25--reducer-combine-reverses-the-earlier-settled-decision).
+      [techniques §2](reference/signal-forms-techniques.md#2--reducers-replace-conflict-rejection--decided-2026-07-25--reducer-combine-reverses-the-earlier-settled-decision).
 - [x] **~~Derived/computed columns~~** (not 1:1 with a `TRow` field — `fullName`, an actions column).
-  RESOLVED 2026-07-31: already supported by the array config as-is — `ColumnDef.id: string` /
-  `accessor: (row: TRow) => unknown` in [api/types.ts](../../src/api/types.ts:24-26) are not
-  `keyof TRow`-constrained, so `{ id: 'actions', accessor: (row) => row }` works with zero code
-  change. The actual gap was narrower: the schema `path` proxy is typed 100% off `keyof TRow`
-  (ownership-model.md), so `visible(path.actions, ...)` etc. couldn't target a derived column.
-  Fix: a schema fn typed `<TRow, ExtraCols>((path) => ...)` — consumer declares an `ExtraCols`
-  interface (e.g. `{ actions: unknown }`), path proxy types over `TRow & ExtraCols`. Column
-  *creation* stays builder-only (schema is reactive/async-only, never a membership source per
-  ownership-model.md); the generic only widens what the existing rule functions can
-  type-check against — no new `applyAction`/`applyCustom*` functions.
+      RESOLVED 2026-07-31: already supported by the array config as-is — `ColumnDef.id: string` /
+      `accessor: (row: TRow) => unknown` in [api/types.ts](../../src/api/types.ts:24-26) are not
+      `keyof TRow`-constrained, so `{ id: 'actions', accessor: (row) => row }` works with zero code
+      change. The actual gap was narrower: the schema `path` proxy is typed 100% off `keyof TRow`
+      (ownership-model.md), so `visible(path.actions, ...)` etc. couldn't target a derived column.
+      Fix: a schema fn typed `<TRow, ExtraCols>((path) => ...)` — consumer declares an `ExtraCols`
+      interface (e.g. `{ actions: unknown }`), path proxy types over `TRow & ExtraCols`. Column
+      _creation_ stays builder-only (schema is reactive/async-only, never a membership source per
+      ownership-model.md); the generic only widens what the existing rule functions can
+      type-check against — no new `applyAction`/`applyCustom*` functions.
 - [x] **~~Column order under the data overload.~~** MOOT — overload rejected 2026-07-31, see
-  [data-derived.md](reference/data-derived.md).
+      [data-derived.md](reference/data-derived.md).
 - [x] **~~Tier 2 sizing state ownership.~~** RESOLVED 2026-07-25 — column-owned seed by default,
-  `withColumnSizing()` if resizable, same precedent as pinning. See
-  [tier-2-layout.md](reference/tier-2-layout.md#open-questions-tier-2).
+      `withColumnSizing()` if resizable, same precedent as pinning. See
+      [tier-2-layout.md](reference/tier-2-layout.md#open-questions-tier-2).
 - [x] **~~Tier 2 reactive `applyWidth`/`applyPinned` demand.~~** RESOLVED 2026-07-31 — static-only,
-  consumer template/CSS owns width. See [tier-2-layout.md](reference/tier-2-layout.md#open-questions-tier-2).
+      consumer template/CSS owns width. See [tier-2-layout.md](reference/tier-2-layout.md#open-questions-tier-2).
 - [x] **~~Tier 3 feature-absent handling.~~** RESOLVED 2026-07-31 — compile error (threads feature
-  presence into the schema fn's / `columnSchema()`'s generic). See
-  [tier-3-feature-config.md](reference/tier-3-feature-config.md#open-questions-tier-3).
+      presence into the schema fn's / `columnSchema()`'s generic). See
+      [tier-3-feature-config.md](reference/tier-3-feature-config.md#open-questions-tier-3).
 - [x] **~~Tier 3 reusable archetypes (`apply(path, schema)` composability).~~** RESOLVED 2026-07-31 —
-  deferred, no confirmed use case yet.
+      deferred, no confirmed use case yet.
 - [x] **~~`applyGroup` reactivity.~~** RESOLVED 2026-07-31 — accepts static seed **and** reactive
-  `{ when }` form (unlike `applyPinned`/`applyDefaultSort`), store `effect()` calls `withGrouping()`'s
-  own patcher method on change. See [tier-3-feature-config.md](reference/tier-3-feature-config.md).
+      `{ when }` form (unlike `applyPinned`/`applyDefaultSort`), store `effect()` calls `withGrouping()`'s
+      own patcher method on change. See [tier-3-feature-config.md](reference/tier-3-feature-config.md).
 
 ---
 
 ## Next Steps
 
 - [ ] Implement per the File Layout table, in order: pure types/rules → `schema/column-schema.ts` (testable
-  without DI) → `engine/columns-schema/` (DI/reactivity, tested via `TestBed`) → `api/types.ts` /
-  `api/create-table.ts` wiring (run the **existing** `table.store.spec.ts` first to confirm zero
-  regressions on the legacy plain-array path) → barrel export → `1-state/columns.md` update.
+      without DI) → `engine/columns-schema/` (DI/reactivity, tested via `TestBed`) → `api/types.ts` /
+      `api/create-table.ts` wiring (run the **existing** `table.store.spec.ts` first to confirm zero
+      regressions on the legacy plain-array path) → barrel export → `1-state/columns.md` update.
 - [x] ~~Resolve the two ⚠️ open decisions (§1 metadata core, §2 reducer vs reject).~~ Already
-  resolved 2026-07-25 (see Open Questions above) — stale item, removed as blocker.
+      resolved 2026-07-25 (see Open Questions above) — stale item, removed as blocker.
 - [ ] Optional follow-up once shipped: replace the manual `effect()` + `resource()` pattern in
-  `apps/demo/src/app/table-demo/table-demo.ts` with `visibleAsync`, as a live Pattern B
-  illustration.
+      `apps/demo/src/app/table-demo/table-demo.ts` with `visibleAsync`, as a live Pattern B
+      illustration.
 
 ---
 

@@ -19,7 +19,7 @@ That has three consequences a table maintainer feels:
   alone.
 - "No effect-driven state writes" cannot be enforced as a project rule while the design system's
   own solution violates it. Consumers reasonably copy what the DS does.
-- There is no purely derived path for *any* column state. Every write — rule-driven, imperative,
+- There is no purely derived path for _any_ column state. Every write — rule-driven, imperative,
   or config-driven — funnels through the same imperative update call, so the three cannot be
   told apart, tested apart, or given different precedence.
 
@@ -109,8 +109,8 @@ base internally.
 column changes that rules do not govern — order, and visibility of unruled columns — are
 preserved through the base and survive rule re-evaluation.
 
-**Async rules need no effect (D3).** Resource *construction* requires an injection context and
-stays in the feature's init hook. Resource *reading* is ordinary signal composition.
+**Async rules need no effect (D3).** Resource _construction_ requires an injection context and
+stays in the feature's init hook. Resource _reading_ is ordinary signal composition.
 
 **A general rule reducer, not a visibility-only overlay (D4).** The fold is a per-column rule
 registry keyed by rule kind. Visibility is the only kind implemented; a future kind registers
@@ -128,7 +128,7 @@ its inputs. This mirrors how Angular's own resource and debounce primitives carr
 Accepted: the API is Tier 1 and the demo is its only consumer.
 
 **An optional pending override is deferred (D5).** Retention answers the previous parameters'
-question when the *subject* changes — a known, accepted limitation. A future optional pending
+question when the _subject_ changes — a known, accepted limitation. A future optional pending
 handler covers the fail-closed case; it is purely additive and nothing here blocks it.
 
 **Rules reach the fold through a mutable registry on the core handle (D6).** The feature declares
@@ -146,7 +146,7 @@ have — rules are static and resources are per-rule, not per-column).
 
 **The rule set is static; columns and rule results are not (D9).** Which rules exist, and which
 column id each targets, is fixed at construction. Rule results and the column list are both
-dynamic. Only a changing *rule set* would justify keyed lookup, and that does not exist here.
+dynamic. Only a changing _rule set_ would justify keyed lookup, and that does not exist here.
 Rules key on column id, so a replaced column list needs no registration or teardown — the fold
 skips ids that are absent and picks up newly added ones on its next evaluation.
 
@@ -175,16 +175,16 @@ not tested directly.
 
 **Three existing seams, zero new ones.**
 
-1. *The columns-schema feature spec* — the primary behavior seam, already structured as
+1. _The columns-schema feature spec_ — the primary behavior seam, already structured as
    "public factory in, public columns signal out". Every rule behavior is asserted here. It
    gains cases for: imperative visibility toggle losing to a rule on the same column; replacing
    the column list while rules are active, both adding and removing a rule-governed column; an
    async rule holding its value across an in-flight refetch; and a rule reading the current
    columns not cycling. One existing case must be rewritten — the one asserting that an async
-   rule *without* an error handler holds its last resolved value on error, since the handler
+   rule _without_ an error handler holds its last resolved value on error, since the handler
    becomes required.
 
-2. *The engine columns spec* — the rule fold is a pure columns-to-columns transform, so it is
+2. _The engine columns spec_ — the rule fold is a pure columns-to-columns transform, so it is
    tested as plain unit tests with no test harness and no injection context, beside its existing
    siblings for column resolution, ordering and visibility. This follows the table's own written
    rule that everything in the engine layer except the composer is pure and must be testable
@@ -192,7 +192,7 @@ not tested directly.
    Cases: multiple rules merging on one column, a rule targeting an absent column id, a column
    with no rules passing through untouched, and rule results overriding base visibility.
 
-3. *The update-columns spec* — regression only, unchanged. The imperative updaters stay pure
+3. _The update-columns spec_ — regression only, unchanged. The imperative updaters stay pure
    updater factories; only their target moves. It passing unmodified is the evidence that
    imperative writes were preserved.
 

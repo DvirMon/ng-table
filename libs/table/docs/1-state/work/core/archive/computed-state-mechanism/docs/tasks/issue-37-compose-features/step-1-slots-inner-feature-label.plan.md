@@ -26,7 +26,7 @@ caller. No spec change here (Step 3 adds the `slots.spec.ts` case).
 
 ## Why This Step Exists
 
-Issue AC 6: a member/stage/render-stage collision *inside* a composite must throw "with a
+Issue AC 6: a member/stage/render-stage collision _inside_ a composite must throw "with a
 label naming the composite and the inner position". The registry's collision messages take
 the claimant label verbatim, so the only new piece is a third label shape. It lives with the
 other two so the three claimant vocabularies (`feature N`, `internal feature N`,
@@ -73,4 +73,5 @@ other two so the three claimant vocabularies (`feature N`, `internal feature N`,
 - [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` passes.
 
 ---
+
 [Step 2: compose-features.ts + index.ts — composeFeatures()](step-2-compose-features.plan.md) →

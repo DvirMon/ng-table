@@ -9,6 +9,7 @@ files:
   - libs/table/docs/0-product/filtering.md
   - llms.txt
 ---
+
 # Step 6 — Story conventions and coverage marks
 
 Records the Tree stories in the story conventions and re-marks the product coverage.
@@ -28,19 +29,23 @@ Edit list: see [story-plan.md](story-plan.md) "Doc edits this plan owes".
 - Regenerate `llms.txt` with `npm run llms`.
 
 ## Watch out
+
 - Re-mark from the story code that landed in Steps 2 to 4, not from the plan.
 - 1.7 stays partly covered: depth announcement is unmet by design.
 - 1.6 stays uncovered (U6 belongs to #202).
 
 ## Out of scope
+
 - Marking 1.4, 1.6, 2.5, 3.2, 4.3, 4.4, E-T1 or E-1 as covered.
 - Hand-editing `docs/status.md`.
 - Any file under `src/`.
 
 ## Done when
+
 - [ ] `stories.md` lists the `tree/` layout and no longer says `grouping-collapsible/` uses `withExpansion()`.
 - [ ] The re-marked rows in `tree.md` and `filtering.md` match the shipped stories.
 - [ ] `npm run llms:check` is clean.
 
 ---
+
 ← [Step 5: Tree docs page](step-5-tree-docs-page.plan.md)

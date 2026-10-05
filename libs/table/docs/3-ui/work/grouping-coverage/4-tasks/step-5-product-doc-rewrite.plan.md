@@ -35,7 +35,7 @@ Then repair the prose that referenced them:
 
 - §3.4 "Covered by:" (`:502-506`) — its middle sentence exists purely to argue criterion 2 is
   "checkable on screen rather than argued". Rewrite around `grouping-order/`'s `by-count`.
-- §3.4 "Design status:" (`:508-510`) — ends *"worth a test, not a decision"*. Replace with a
+- §3.4 "Design status:" (`:508-510`) — ends _"worth a test, not a decision"_. Replace with a
   pointer to step 3's assertion in `with-grouping/feature.spec.ts`, which discharges it.
 - F-G1 "Covered by:" (`:779-783`) — says "for the first two criteria" (now both) and spends two
   clauses on the disappearing-group half that just left.
@@ -52,39 +52,39 @@ Then repair the prose that referenced them:
 coverage claim for G-2 against `grouping-crud/` — a deleted folder. Deleting that sentence fixes
 the dead link and the self-contradiction at once.
 
-**`row-editing.md` needs no edit.** It already marks G-2 ❌ *(forward-looking)* and never
+**`row-editing.md` needs no edit.** It already marks G-2 ❌ _(forward-looking)_ and never
 mentions `grouping-crud/`. The re-audit's claim that it did is wrong; step 6 corrects that.
 
 ### 3. Re-point every "Covered by:" and update the front matter
 
 Per `4-coverage-reaudit.md` §2. The marks to land, assuming steps 1–4 shipped:
 
-| Entry | Mark | Covered by |
-|---|---|---|
-| 1.1, 1.2 | ✅ | every story; Ungroup half → `grouping-selection/` |
-| 1.3 | ✅ | `grouping-aggregates/` — happy path *and* the ADR-0014 failure, in one story |
-| 1.4 | 🟡 | pills → `grouping-basic/`, `groupedColumnMode` → `grouping-columns/`; the failure half returns with `grouping-keys/` |
-| 2.1, 2.2, 2.3 | ✅ / 🟡 / ❌ | unchanged |
-| 2.4 | 🟡 | `grouping-basic/`'s `stickyHeaders` arg (step 2). U5 keeps it off ✅ |
-| 2.5 | 🟡 | Refetch and Regroup on canvas; the sort attack is `feature.spec.ts`, which is below the doc's own ✅ bar |
-| 3.1, 3.2 | ✅ | `grouping-basic/`, `grouping-collapsible/`, `grouping-selection/` |
-| 3.3, 3.4 | ✅ | `grouping-order/` — 3.4 on its one remaining criterion |
-| 4.1, 4.3 | 🟡 / ✅ | `grouping-when/` |
-| 4.2, 4.4 | 🟡 / ❌ | both pending `grouping-keys/`; do not claim them |
-| X-G1 | ✅ | `grouping-selection/` — **two** cascade modes plus the derived third, not "all three peer defaults" |
-| S-G1 | ✅ | `grouping-order/` (step 4), **with the criterion-2 trade named** — see below |
-| S-G2 | ✅ | `grouping-order/` |
-| F-G1 | 🟡 | `grouping-selection/`; counts only — summaries left the canvas with step 1 |
-| E-G1 | ✅ | `grouping-collapsible/` |
-| F-G2, P-G1, P-G2, D-G1 | ❌ | unchanged, forward-looking |
+| Entry                  | Mark         | Covered by                                                                                                           |
+| ---------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------- |
+| 1.1, 1.2               | ✅           | every story; Ungroup half → `grouping-selection/`                                                                    |
+| 1.3                    | ✅           | `grouping-aggregates/` — happy path _and_ the ADR-0014 failure, in one story                                         |
+| 1.4                    | 🟡           | pills → `grouping-basic/`, `groupedColumnMode` → `grouping-columns/`; the failure half returns with `grouping-keys/` |
+| 2.1, 2.2, 2.3          | ✅ / 🟡 / ❌ | unchanged                                                                                                            |
+| 2.4                    | 🟡           | `grouping-basic/`'s `stickyHeaders` arg (step 2). U5 keeps it off ✅                                                 |
+| 2.5                    | 🟡           | Refetch and Regroup on canvas; the sort attack is `feature.spec.ts`, which is below the doc's own ✅ bar             |
+| 3.1, 3.2               | ✅           | `grouping-basic/`, `grouping-collapsible/`, `grouping-selection/`                                                    |
+| 3.3, 3.4               | ✅           | `grouping-order/` — 3.4 on its one remaining criterion                                                               |
+| 4.1, 4.3               | 🟡 / ✅      | `grouping-when/`                                                                                                     |
+| 4.2, 4.4               | 🟡 / ❌      | both pending `grouping-keys/`; do not claim them                                                                     |
+| X-G1                   | ✅           | `grouping-selection/` — **two** cascade modes plus the derived third, not "all three peer defaults"                  |
+| S-G1                   | ✅           | `grouping-order/` (step 4), **with the criterion-2 trade named** — see below                                         |
+| S-G2                   | ✅           | `grouping-order/`                                                                                                    |
+| F-G1                   | 🟡           | `grouping-selection/`; counts only — summaries left the canvas with step 1                                           |
+| E-G1                   | ✅           | `grouping-collapsible/`                                                                                              |
+| F-G2, P-G1, P-G2, D-G1 | ❌           | unchanged, forward-looking                                                                                           |
 
 Then the §0 story table (eight rows, not six), the intro line naming `grouping-static/` as "the
 one to copy" (now `grouping-basic/`), and the frontmatter `status:` block with the new tally.
 
 ### S-G1 needs a sentence, not just a mark
 
-Its second criterion is *"What does not happen: the header shows a sort indicator while the table
-does not change."* Under a real comparator in `grouping-order/`, clicking the grouped column does
+Its second criterion is _"What does not happen: the header shows a sort indicator while the table
+does not change."_ Under a real comparator in `grouping-order/`, clicking the grouped column does
 exactly that. Mark it ✅ — the user story's verb is "I want to understand why nothing moved", and
 both criterion 1 and that understanding are delivered — but state in one sentence that criterion
 2 is knowingly violated under a comparator, and that this is D5's accepted cost made visible

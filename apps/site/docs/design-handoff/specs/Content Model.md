@@ -6,14 +6,14 @@ spec: specs/Content Model.md
 frame: null
 owns:
   - "The nav tree: sections, their order, their entries, and each entry's label / slug / archetype"
-  - "The rule that sidebar, TOC, pagination, search, and active state all derive from this tree"
-  - "Entry field definitions and slug rules"
+  - 'The rule that sidebar, TOC, pagination, search, and active state all derive from this tree'
+  - 'Entry field definitions and slug rules'
 does_not_own:
-  - "How any of those five surfaces look — see their own specs"
-  - "The prose inside a page (authored per route)"
-  - "Which heading levels a TOC shows — see layout/TOC Column.md"
+  - 'How any of those five surfaces look — see their own specs'
+  - 'The prose inside a page (authored per route)'
+  - 'Which heading levels a TOC shows — see layout/TOC Column.md'
 depends_on:
-  - "pages/*.md (archetype names)"
+  - 'pages/*.md (archetype names)'
 states: []
 a11y: []
 tokens: []
@@ -26,13 +26,13 @@ The site's page list, in order, in one place.
 
 Five specced surfaces are all views of this one structure. None of them may be hand-authored per page:
 
-| Surface | What it derives |
-| --- | --- |
-| `sidebar` | Sections and their entries, in tree order |
-| `toc` | Headings of the current entry only |
+| Surface      | What it derives                                                                 |
+| ------------ | ------------------------------------------------------------------------------- |
+| `sidebar`    | Sections and their entries, in tree order                                       |
+| `toc`        | Headings of the current entry only                                              |
 | `pagination` | Prev/next = the entries either side of the current one, in flattened tree order |
-| `search` | Result groups = sections; result items = entries |
-| active state | Which `nav-item` is active, which section reads as current |
+| `search`     | Result groups = sections; result items = entries                                |
+| active state | Which `nav-item` is active, which section reads as current                      |
 
 If two of these ever disagree at runtime, one of them was hand-authored. That is the bug.
 
@@ -66,13 +66,13 @@ relied on.
 
 ## Entry fields
 
-| Field | Required | Rule |
-| --- | --- | --- |
-| `label` | yes | Single source for three things: the sidebar item, the page H1, and the pagination card. They are never worded differently. |
-| `slug` | yes | Absolute, leading slash, no trailing slash, lowercase, hyphenated. No `/docs` prefix — see the prefix rule above (resolved 2026-08-25, dropped). The route, and the anchor-free part of every link to this page. |
-| `archetype` | yes | Must name a file in `specs/pages/`. Determines the page's slot composition. |
-| `eyebrow` | no | Overrides the `category-badge` text. Defaults to the parent section's label — see `pages/Doc Article.md`. |
-| `hidden` | no | Excluded from the sidebar but still routable and still indexed. Use sparingly. |
+| Field       | Required | Rule                                                                                                                                                                                                             |
+| ----------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `label`     | yes      | Single source for three things: the sidebar item, the page H1, and the pagination card. They are never worded differently.                                                                                       |
+| `slug`      | yes      | Absolute, leading slash, no trailing slash, lowercase, hyphenated. No `/docs` prefix — see the prefix rule above (resolved 2026-08-25, dropped). The route, and the anchor-free part of every link to this page. |
+| `archetype` | yes      | Must name a file in `specs/pages/`. Determines the page's slot composition.                                                                                                                                      |
+| `eyebrow`   | no       | Overrides the `category-badge` text. Defaults to the parent section's label — see `pages/Doc Article.md`.                                                                                                        |
+| `hidden`    | no       | Excluded from the sidebar but still routable and still indexed. Use sparingly.                                                                                                                                   |
 
 `Not Found` is an archetype but never an entry — it has no slug and no place in the order.
 
@@ -168,7 +168,7 @@ leave unknown, do not infer.
 
 Section 4+ is referenced by the numbering but its entries are still unknown — no source folder exists for it.
 
-The frames show a pagination card reading "State Layer Architecture", which is a *composed* string
+The frames show a pagination card reading "State Layer Architecture", which is a _composed_ string
 (section + label). **Resolved 2026-08-22: the card shows `label` alone.** `label` is the single source for
 the sidebar item, the H1 and the card, and they are never worded differently — a composed card title
 re-introduces exactly the drift this file exists to prevent. See `Pagination Footer.md` § Build spec.

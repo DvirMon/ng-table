@@ -7,6 +7,7 @@ files:
   - libs/table/src/directives/ngp-table-tree-toggle.directive.ts
   - libs/table/src/directives/ngp-table-tree-toggle.directive.spec.ts
 ---
+
 # Step 3 — Tree toggle extends the core
 
 Makes `NgpTableTreeToggleDirective` extend `NgpTableCollapsibleTrigger`, so the core owns `type`, click and the expanded attributes.
@@ -34,7 +35,9 @@ Decisions: [D2, D9, D10](../../1-decisions.md) · [TR37, TR48](../../../../../..
 })
 export class NgpTableTreeToggleDirective extends NgpTableCollapsibleTrigger {
   protected override readonly isOpen: Signal<boolean> = computed(/* as today */);
-  protected override toggle(): void { /* table.tree.toggle(id), as today */ }
+  protected override toggle(): void {
+    /* table.tree.toggle(id), as today */
+  }
 }
 ```
 
@@ -55,4 +58,5 @@ export class NgpTableTreeToggleDirective extends NgpTableCollapsibleTrigger {
 - [ ] No `ariaExpanded` member remains.
 
 ---
+
 ← [Step 2: Drop the nameless-toggle warning](step-2-drop-nameless-warning.plan.md) | [Step 4: Stories drop the manual button type](step-4-stories-drop-manual-type.plan.md) →

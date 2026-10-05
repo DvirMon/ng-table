@@ -61,5 +61,5 @@ export type SortingPath<TRow, TValues extends ColumnValueMap> = {
 
 /** Schema fn passed as `WithSortingConfig.schema`. */
 export type SortingSchemaFn<TRow, TValues extends ColumnValueMap> = (
-  path: SortingPath<TRow, TValues>
+  path: SortingPath<TRow, TValues>,
 ) => void;

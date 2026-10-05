@@ -31,7 +31,7 @@ parent immediately before its descendants, a fact nothing enforces.
 
 [#102](https://github.com/DvirMon/ng-table/issues/102) (ADR-0020) made this a live cost rather
 than a historical one: open, third-party stage registration needs that emission-order invariant
-to be *checkable*, not merely documented, which is what ADR-0020 D3's declared
+to be _checkable_, not merely documented, which is what ADR-0020 D3's declared
 `preservesEmissionOrder: boolean` existed to buy. A declared boolean a stage author can get
 wrong is today's silent bug with more ceremony, not a fix.
 
@@ -48,18 +48,19 @@ export interface RenderNode<TRow> {
   readonly data: TRow | null;
   readonly groupKey?: { columnId: string; value: unknown; label: string };
   readonly aggregates?: Record<string, unknown>;
-  readonly hasChildren?: boolean;      // overrides children.length > 0 — the lazy-row escape hatch
+  readonly hasChildren?: boolean; // overrides children.length > 0 — the lazy-row escape hatch
   readonly children: readonly RenderNode<TRow>[];
 }
 
-export const RENDER_ORDER = ['group', 'tree'] as const;   // claimable stages only
-export type RenderNodeTransform<TRow> =
-  (nodes: readonly RenderNode<TRow>[]) => readonly RenderNode<TRow>[];
+export const RENDER_ORDER = ['group', 'tree'] as const; // claimable stages only
+export type RenderNodeTransform<TRow> = (
+  nodes: readonly RenderNode<TRow>[],
+) => readonly RenderNode<TRow>[];
 export type RenderStages<TRow> = Partial<Record<RenderStage, RenderNodeTransform<TRow>>>;
 
 export function mapNodes<TRow>(
   nodes: readonly RenderNode<TRow>[],
-  fn: (node: RenderNode<TRow>) => RenderNode<TRow>
+  fn: (node: RenderNode<TRow>) => RenderNode<TRow>,
 ): readonly RenderNode<TRow>[]; // post-order — fn sees already-mapped children
 ```
 
@@ -67,7 +68,7 @@ export function mapNodes<TRow>(
 // engine/flatten.ts — the only reader of expansion state, the only producer of depth/parentId
 export function flattenVisible<TRow>(
   nodes: readonly RenderNode<TRow>[],
-  expanded: ReadonlySet<RowId> | undefined
+  expanded: ReadonlySet<RowId> | undefined,
 ): FlatRenderRow<TRow>[];
 ```
 
@@ -79,12 +80,12 @@ returns flat `RenderRow<TRow>[]` with the same fields.
 Every field a synthesizing stage used to stamp by hand becomes something `flattenVisible` derives
 from tree position instead:
 
-| Was | Becomes |
-|---|---|
-| `parentId` stamped by each stage; forgetting it yields a silently unprunable row | derived from position; cannot be forgotten |
-| `depth` stamped by each stage; can disagree with `parentId` | derived; cannot disagree |
-| "parent emitted immediately before its descendants" — load-bearing, unchecked | structural — a child is *inside* its parent, not a neighbor after it |
-| `hasChildren` a stage must remember to set | derived (`children.length > 0`), with an explicit `RenderNode.hasChildren` override for a lazy row whose children have not loaded yet |
+| Was                                                                              | Becomes                                                                                                                               |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `parentId` stamped by each stage; forgetting it yields a silently unprunable row | derived from position; cannot be forgotten                                                                                            |
+| `depth` stamped by each stage; can disagree with `parentId`                      | derived; cannot disagree                                                                                                              |
+| "parent emitted immediately before its descendants" — load-bearing, unchecked    | structural — a child is _inside_ its parent, not a neighbor after it                                                                  |
+| `hasChildren` a stage must remember to set                                       | derived (`children.length > 0`), with an explicit `RenderNode.hasChildren` override for a lazy row whose children have not loaded yet |
 
 All four `'prune'`-support constructs — the `'prune'` entry itself, `Exclude<RenderStage,
 'prune'>`, `CLAIMABLE_RENDER_STAGES`, and the `stage === 'prune'` reduce branch — are **deleted**,
@@ -97,7 +98,7 @@ hand-writing its own walk — closing a gap neither rejected alternative fixes: 
 today's flat version cannot do. This is also what makes "a stage forgot to recurse, so nested
 rows were silently skipped" unrepresentable rather than a new silent bug traded for the old one.
 
-**`isExpanded` is stamped only when a feature contributed the `expanded` slot *and* the node has
+**`isExpanded` is stamped only when a feature contributed the `expanded` slot _and_ the node has
 children** — never merely because a node has children. Dropping the first condition would make a
 grouping-only table (no `withExpansion()` composed) report every header as expanded, inventing
 state a table without an expansion feature does not have. `expanded === undefined` (zero
@@ -124,12 +125,12 @@ work around the header never having `isExpanded` (`grouping-collapsible-story-ho
 - **Alt 1 — fold the prune into `core.ts`'s terminal pass** (`alt-1-terminal-finalize.md`).
   Deletes the same four `'prune'`-support constructs by moving `pruneUnexpandedDescendants` beside
   the existing `index`/`sourceIndex` stamping pass instead of running it as a named stage. Smaller
-  diff, behavior-neutral. Rejected: it *relocates* the emission-order invariant rather than
+  diff, behavior-neutral. Rejected: it _relocates_ the emission-order invariant rather than
   removing it — the prune is still one unchecked forward pass over a `hidden` accumulator, still
   correct only because a parent is emitted before its children. It also forces pagination to join
   the same terminal step the moment it is built, pre-deciding a #102 question this ADR leaves
   open. Under ADR-0020's open, third-party stage registration, an invariant that can only be
-  *documented* is exactly the gap #102 exists to close — a stranger's stage would inherit the same
+  _documented_ is exactly the gap #102 exists to close — a stranger's stage would inherit the same
   silent failure mode Alt 1 does nothing to prevent.
 - **Keep ADR-0017 as shipped**, and answer #102's `preservesEmissionOrder` need by making the
   boolean checkable at construction time. Rejected for the same reason: a declared invariant a
@@ -144,6 +145,7 @@ relocating or policing it.
 ## Consequences
 
 **Gained**
+
 - The four `'prune'`-support constructs are gone, not renamed or moved.
 - The parent-before-child emission invariant becomes structural rather than an unchecked,
   load-bearing assumption — closing ADR-0020's `preservesEmissionOrder` gap for free rather than
@@ -152,12 +154,13 @@ relocating or policing it.
   (`mapNodes` owns the walk), and can no longer forget to stamp `parentId` (nothing stamps it).
 - [#105](https://github.com/DvirMon/ng-table/issues/105) lands before
   [#101](https://github.com/DvirMon/ng-table/issues/101)/ADR-0012 on purpose: the tree IR goes in
-  against today's `withExpansion()`, so #101 later *moves* an already-nesting stage into
+  against today's `withExpansion()`, so #101 later _moves_ an already-nesting stage into
   `withTree()` instead of rewriting it, and #101's own open question (`childrenAccessor` vs. a
   `getDataPath()`-style flat contract) becomes "two ways to build the same node tree" rather than
   two different engine shapes.
 
 **Cost**
+
 - Allocation roughly doubles: one `RenderNode` per row, plus the flat `FlatRenderRow` output
   `flattenVisible` produces. Accepted — prior-art discovery
   (`tree-ir-pitfalls.md`) found no reported tree-vs-flat IR cost below roughly 10k rows (cited
@@ -170,7 +173,7 @@ relocating or policing it.
   story 21 passes unchanged" gate is no longer the whole story for this slice; both diffs are
   named so a reviewer does not read either as accidental.
 - `RenderStages<TRow>` no longer needs `Exclude<RenderStage, 'prune'>` — every `RENDER_ORDER`
-  entry is claimable, which also means a *third*-party render stage (ADR-0020) has one fewer
+  entry is claimable, which also means a _third_-party render stage (ADR-0020) has one fewer
   reserved name to avoid colliding with.
 - ADR-0020 D2's anchor set loses `'paginate'` and `'prune'` both, leaving no post-flatten anchor
   at all — whether to reintroduce one deliberately, once pagination is actually built, is #102's

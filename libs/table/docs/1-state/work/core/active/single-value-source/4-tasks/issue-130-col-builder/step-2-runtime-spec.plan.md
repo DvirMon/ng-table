@@ -90,4 +90,5 @@ how the brand is spelled:
 - [ ] `nx run shared-table:typecheck-spec` clean.
 
 ---
+
 ← [Step 1: Declaration types and the data-first builder](step-1-declaration-types-and-builder.plan.md) | [Step 3: Type proofs](step-3-type-proofs.plan.md) →

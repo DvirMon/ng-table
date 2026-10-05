@@ -8,30 +8,30 @@ purpose — it is read once, during implementation.
 
 ## Settled — not open for relitigation
 
-| # | Decision | Source |
-|---|---|---|
-| 1 | The tree IR is the chosen alternative; alt-1 and "keep as shipped" are rejected | A1 |
-| 2 | `RENDER_ORDER = ['group', 'tree']` — `'prune'` and `'paginate'` both leave | B1 |
-| 3 | The engine ships `mapNodes`; no stage hand-writes a walk | C1 |
-| 4 | `RenderNode.hasChildren` is an explicit optional override, not a predicate parameter | C3 |
-| 5 | `isExpanded` stamped uniformly by the walk, on every node with children | D1 |
-| 6 | Stamped only when a feature contributed the slot (`expanded !== undefined`) | D1a |
-| 7 | A new ADR supersedes ADR-0017 **D2 only**; ADR-0020 is edited in place | G1, G3 |
-| 8 | #105 lands before #101 | F1 |
+| #   | Decision                                                                             | Source |
+| --- | ------------------------------------------------------------------------------------ | ------ |
+| 1   | The tree IR is the chosen alternative; alt-1 and "keep as shipped" are rejected      | A1     |
+| 2   | `RENDER_ORDER = ['group', 'tree']` — `'prune'` and `'paginate'` both leave           | B1     |
+| 3   | The engine ships `mapNodes`; no stage hand-writes a walk                             | C1     |
+| 4   | `RenderNode.hasChildren` is an explicit optional override, not a predicate parameter | C3     |
+| 5   | `isExpanded` stamped uniformly by the walk, on every node with children              | D1     |
+| 6   | Stamped only when a feature contributed the slot (`expanded !== undefined`)          | D1a    |
+| 7   | A new ADR supersedes ADR-0017 **D2 only**; ADR-0020 is edited in place               | G1, G3 |
+| 8   | #105 lands before #101                                                               | F1     |
 
 ## Current source — what each file does today
 
-| File | Today | After |
-|---|---|---|
-| `libs/table/src/engine/render-stages.ts` | `RENDER_ORDER` (4 entries), `StagedRow`, `RenderRowTransform`, `RenderStages` (with `Exclude`), `CLAIMABLE_RENDER_STAGES`, `pruneUnexpandedDescendants`, `runRenderStages(rows, stages, expanded?)` | `RenderNode`, `RenderNodeTransform`, `RENDER_ORDER` (2 entries), `RenderStages`, `mapNodes`, `runRenderStages(nodes, stages)` |
-| `libs/table/src/engine/flatten.ts` | — | **new**: `FlatRenderRow`, `flattenVisible` |
-| `libs/table/src/engine/rows.ts:26` | `buildDefaultRenderRows` → flat `StagedRow[]` with `depth: 0` | `buildDefaultRenderNodes` → `RenderNode[]` with `children: []` |
-| `libs/table/src/engine/core.ts:88` | `runRenderStages(seedRenderRows(rows()), renderStages, expanded())` then `.map` stamps `index`/`sourceIndex`/`cells` | `runRenderStages(seed, renderStages)` → `flattenVisible(tree, expanded())` → same `.map` |
-| `libs/table/src/engine/compose-table.ts:104` | `for (const stage of CLAIMABLE_RENDER_STAGES)` | `for (const stage of RENDER_ORDER)` |
-| `libs/table/src/api/features/compose-features.ts:51` | same | same |
-| `libs/table/src/engine/grouping/render.ts:79` | `emitGroupRows` — flat, stamps `depth`/`parentId`/`hasChildren` | `buildGroupNodes` — nested, stamps none of the three |
-| `libs/table/src/api/features/with-expansion.ts:100` | `buildTreeStage(trackBy, expandedRows, childrenAccessor, isExpandable)` — flattens children as siblings, reads `expandedRows` | `buildTreeStage(trackBy, childrenAccessor, isExpandable)` — nests children, reads no state |
-| `libs/table/src/api/types.ts:33` | `RenderRow` | unchanged in shape; two field comments rewritten |
+| File                                                 | Today                                                                                                                                                                                               | After                                                                                                                         |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `libs/table/src/engine/render-stages.ts`             | `RENDER_ORDER` (4 entries), `StagedRow`, `RenderRowTransform`, `RenderStages` (with `Exclude`), `CLAIMABLE_RENDER_STAGES`, `pruneUnexpandedDescendants`, `runRenderStages(rows, stages, expanded?)` | `RenderNode`, `RenderNodeTransform`, `RENDER_ORDER` (2 entries), `RenderStages`, `mapNodes`, `runRenderStages(nodes, stages)` |
+| `libs/table/src/engine/flatten.ts`                   | —                                                                                                                                                                                                   | **new**: `FlatRenderRow`, `flattenVisible`                                                                                    |
+| `libs/table/src/engine/rows.ts:26`                   | `buildDefaultRenderRows` → flat `StagedRow[]` with `depth: 0`                                                                                                                                       | `buildDefaultRenderNodes` → `RenderNode[]` with `children: []`                                                                |
+| `libs/table/src/engine/core.ts:88`                   | `runRenderStages(seedRenderRows(rows()), renderStages, expanded())` then `.map` stamps `index`/`sourceIndex`/`cells`                                                                                | `runRenderStages(seed, renderStages)` → `flattenVisible(tree, expanded())` → same `.map`                                      |
+| `libs/table/src/engine/compose-table.ts:104`         | `for (const stage of CLAIMABLE_RENDER_STAGES)`                                                                                                                                                      | `for (const stage of RENDER_ORDER)`                                                                                           |
+| `libs/table/src/api/features/compose-features.ts:51` | same                                                                                                                                                                                                | same                                                                                                                          |
+| `libs/table/src/engine/grouping/render.ts:79`        | `emitGroupRows` — flat, stamps `depth`/`parentId`/`hasChildren`                                                                                                                                     | `buildGroupNodes` — nested, stamps none of the three                                                                          |
+| `libs/table/src/api/features/with-expansion.ts:100`  | `buildTreeStage(trackBy, expandedRows, childrenAccessor, isExpandable)` — flattens children as siblings, reads `expandedRows`                                                                       | `buildTreeStage(trackBy, childrenAccessor, isExpandable)` — nests children, reads no state                                    |
+| `libs/table/src/api/types.ts:33`                     | `RenderRow`                                                                                                                                                                                         | unchanged in shape; two field comments rewritten                                                                              |
 
 `engine/cells.ts`, `engine/pipeline.ts`, `engine/columns.ts`, `engine/slots.ts`,
 `engine/grouping/clusters.ts` and every `with-*` feature other than `withExpansion()` and
@@ -61,7 +61,7 @@ export const RENDER_ORDER = ['group', 'tree'] as const;
 export type RenderStage = (typeof RENDER_ORDER)[number];
 
 export type RenderNodeTransform<TRow> = (
-  nodes: readonly RenderNode<TRow>[]
+  nodes: readonly RenderNode<TRow>[],
 ) => readonly RenderNode<TRow>[];
 
 export type RenderStages<TRow> = Partial<Record<RenderStage, RenderNodeTransform<TRow>>>;
@@ -75,10 +75,7 @@ is the whole point of B1.
 ```ts
 /** What the walk produces. `index`, `sourceIndex` and `cells` are stamped centrally in
  *  `engine/core.ts` after it runs (ADR-0011 D5, ADR-0022). */
-export type FlatRenderRow<TRow> = Omit<
-  RenderRow<TRow>,
-  'index' | 'sourceIndex' | 'cells'
->;
+export type FlatRenderRow<TRow> = Omit<RenderRow<TRow>, 'index' | 'sourceIndex' | 'cells'>;
 ```
 
 `StagedRow` is deleted. `FlatRenderRow` additionally drops `sourceIndex`, which `StagedRow`
@@ -96,10 +93,10 @@ carried but no stage ever set.
  */
 export function mapNodes<TRow>(
   nodes: readonly RenderNode<TRow>[],
-  fn: (node: RenderNode<TRow>) => RenderNode<TRow>
+  fn: (node: RenderNode<TRow>) => RenderNode<TRow>,
 ): readonly RenderNode<TRow>[] {
   return nodes.map((node) =>
-    fn(node.children.length === 0 ? node : { ...node, children: mapNodes(node.children, fn) })
+    fn(node.children.length === 0 ? node : { ...node, children: mapNodes(node.children, fn) }),
   );
 }
 ```
@@ -112,11 +109,11 @@ that covers every verified case; sibling insertion is exactly the flat shape bei
 ```ts
 export function runRenderStages<TRow>(
   nodes: readonly RenderNode<TRow>[],
-  stages: RenderStages<TRow>
+  stages: RenderStages<TRow>,
 ): readonly RenderNode<TRow>[] {
   return RENDER_ORDER.reduce<readonly RenderNode<TRow>[]>(
     (current, stage) => stages[stage]?.(current) ?? current,
-    nodes
+    nodes,
   );
 }
 ```
@@ -137,7 +134,7 @@ No `expanded` parameter, no branch. The reduce no longer special-cases its own o
  */
 export function flattenVisible<TRow>(
   nodes: readonly RenderNode<TRow>[],
-  expanded: ReadonlySet<RowId> | undefined
+  expanded: ReadonlySet<RowId> | undefined,
 ): FlatRenderRow<TRow>[] {
   const out: FlatRenderRow<TRow>[] = [];
 
@@ -170,7 +167,7 @@ Three details a reviewer will look for:
 - **Descent is `isOpen` alone**, not `isOpen && hasChildren`. An explicit
   `hasChildren: true` on a lazy row with an empty `children` array must not suppress a
   descent that would be a no-op anyway, and must not gate a later-loaded array.
-- **`isExpanded` needs both conditions** — a contributed slot *and* children. Dropping the
+- **`isExpanded` needs both conditions** — a contributed slot _and_ children. Dropping the
   first invents expansion state on a grouping-only table (D1a).
 - **`hasChildren` is always stamped now**, on every row, where today it is `undefined` on a
   data row unless `withExpansion()` is composed. `false` on a leaf is additive.
@@ -179,10 +176,9 @@ Three details a reviewer will look for:
 
 ```ts
 export function buildDefaultRenderNodes<TRow>(
-  trackBy: TrackByFn<TRow>
+  trackBy: TrackByFn<TRow>,
 ): (rows: TRow[]) => RenderNode<TRow>[] {
-  return (rows) =>
-    rows.map((row) => ({ id: trackBy(row), kind: 'row', data: row, children: [] }));
+  return (rows) => rows.map((row) => ({ id: trackBy(row), kind: 'row', data: row, children: [] }));
 }
 ```
 
@@ -229,23 +225,25 @@ function buildGroupNodes<TRow>(
   parentPath: string,
   columns: ColumnDef<TRow>[],
   reportedColumns: Set<string>,
-  labelByColumn: ReadonlyMap<string, string> | undefined
+  labelByColumn: ReadonlyMap<string, string> | undefined,
 ): RenderNode<TRow>[] {
   return nodes.flatMap((node) => {
     if (!node.admitted) {
-      return node.items;                       // inlined at the parent's level — was a
-    }                                          // `depth`/`parentId` re-stamp
+      return node.items; // inlined at the parent's level — was a
+    } // `depth`/`parentId` re-stamp
     const path = buildGroupPath(parentPath, node.columnId, node.value);
     const header: RenderNode<TRow> = {
       id: toGroupId(path),
       kind: 'group',
       data: null,
-      groupKey: { /* unchanged */ },
+      groupKey: {
+        /* unchanged */
+      },
       aggregates: computeAggregates(/* unchanged */),
       children:
         node.children.length > 0
           ? buildGroupNodes(node.children, path, columns, reportedColumns, labelByColumn)
-          : node.items,                        // was `.map(item => ({...item, depth, parentId}))`
+          : node.items, // was `.map(item => ({...item, depth, parentId}))`
     };
     return [header];
   });
@@ -267,7 +265,7 @@ function toChildNode<TRow>(
   row: TRow,
   trackBy: TrackByFn<TRow>,
   childrenAccessor: (row: TRow) => TRow[] | undefined,
-  isExpandable: (row: TRow) => boolean
+  isExpandable: (row: TRow) => boolean,
 ): RenderNode<TRow> {
   const children = childrenAccessor(row);
   return {
@@ -284,12 +282,12 @@ function toChildNode<TRow>(
 function buildTreeStage<TRow>(
   trackBy: TrackByFn<TRow>,
   childrenAccessor: (row: TRow) => TRow[] | undefined,
-  isExpandable: (row: TRow) => boolean
+  isExpandable: (row: TRow) => boolean,
 ): RenderNodeTransform<TRow> {
   return (nodes) =>
     mapNodes(nodes, (node) => {
       if (node.data === null) {
-        return node;                                  // a group header — pass through
+        return node; // a group header — pass through
       }
       const children = childrenAccessor(node.data);
       return {
@@ -306,7 +304,7 @@ function buildTreeStage<TRow>(
 Two things disappear with this rewrite:
 
 - The `expandedRows: Signal<Set<RowId>>` parameter, and with it the whole "read the signal
-  *inside* the returned transform, not at declaration time" hazard its JSDoc documents. The
+  _inside_ the returned transform, not at declaration time" hazard its JSDoc documents. The
   stage reads no state at all now.
 - `expandRow`'s hand-written recursion, replaced by `mapNodes` — which is what lets the stage
   reach data leaves nested under group nodes, something today's version cannot do (C1).
@@ -338,18 +336,18 @@ and its spec is the one place "why is this row hidden" is answered.
 
 Every site that must change, from the `prune` / `RENDER_ORDER` / `StagedRow` sweep:
 
-| Path | What |
-|---|---|
-| `engine/render-stages.ts:8,14,16,26,32,44,77` | The whole file |
-| `engine/flatten.ts` | New |
-| `engine/rows.ts:2,26,28` | `StagedRow` import; seed rename and shape |
-| `engine/core.ts:25,53,88` | Comment on `expandedSources`; comment on `expanded`; `renderRows` body |
-| `engine/compose-table.ts:5,104` | Import and fold |
-| `api/features/compose-features.ts:4,51` | Import and fold |
-| `engine/grouping/render.ts:2,15,76,80,87,94,121,127,131,139,144` | Node rewrite + JSDoc |
-| `api/features/with-expansion.ts:4,82,91,104-131,247` | Node rewrite + JSDoc |
-| `api/types.ts:57,60,71` | `isExpanded` / `hasChildren` / `parentId` field comments |
-| `engine/types.ts:65,72` | `renderStages` and `expandedRows` slot docs |
+| Path                                                             | What                                                                   |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `engine/render-stages.ts:8,14,16,26,32,44,77`                    | The whole file                                                         |
+| `engine/flatten.ts`                                              | New                                                                    |
+| `engine/rows.ts:2,26,28`                                         | `StagedRow` import; seed rename and shape                              |
+| `engine/core.ts:25,53,88`                                        | Comment on `expandedSources`; comment on `expanded`; `renderRows` body |
+| `engine/compose-table.ts:5,104`                                  | Import and fold                                                        |
+| `api/features/compose-features.ts:4,51`                          | Import and fold                                                        |
+| `engine/grouping/render.ts:2,15,76,80,87,94,121,127,131,139,144` | Node rewrite + JSDoc                                                   |
+| `api/features/with-expansion.ts:4,82,91,104-131,247`             | Node rewrite + JSDoc                                                   |
+| `api/types.ts:57,60,71`                                          | `isExpanded` / `hasChildren` / `parentId` field comments               |
+| `engine/types.ts:65,72`                                          | `renderStages` and `expandedRows` slot docs                            |
 
 Specs: `engine/render-stages.spec.ts` (rewrite), `engine/grouping/render.spec.ts`
 (`depth`/`parentId` assertions move out; lines 86, 101, 146 are the affected cases),
@@ -360,18 +358,18 @@ Specs: `engine/render-stages.spec.ts` (rewrite), `engine/grouping/render.spec.ts
 
 Docs and stories:
 
-| Path | What |
-|---|---|
-| `libs/table/docs/adr/00XX-…md` | New ADR — next free number is **0023** |
-| `libs/table/docs/adr/0017-…md` | `supersedes` marker on D2; D1's "stamped by each stage" → "derived by the walk" |
-| `libs/table/docs/adr/0011-…md` | Amend D2's `RENDER_ORDER` literal and the `RenderRowTransform` snippet |
-| `libs/table/docs/adr/0020-…md` | Drop D3, the emission-order half of D5, and `'paginate'`/`'prune'` from D2's anchor set |
-| `libs/table/CLAUDE.md:63,65,210,245` | `render-stages.ts` row in the file table; `rows.ts` row; the "add a render stage" rule; the `withGrouping()`/ADR-0017 paragraph |
-| `libs/table/docs/1-state/architecture.md:158` | "entirely the engine-owned `'prune'` render stage's job" |
-| `libs/table/src/stories/grouping/grouping-collapsible/…component.html:77,79` | `table.expandedRows().has(row.id)` → `row.isExpanded` (D1/D3) |
-| `libs/table/src/stories/grouping/grouping-collapsible/…component.ts:25` | The JSDoc sentence describing the split |
-| `libs/table/src/stories/grouping/grouping.mdx:427` | Same paragraph |
-| `llms.txt` | Regenerate (`npm run llms`); `npm run llms:check` must stay clean |
+| Path                                                                         | What                                                                                                                            |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `libs/table/docs/adr/00XX-…md`                                               | New ADR — next free number is **0023**                                                                                          |
+| `libs/table/docs/adr/0017-…md`                                               | `supersedes` marker on D2; D1's "stamped by each stage" → "derived by the walk"                                                 |
+| `libs/table/docs/adr/0011-…md`                                               | Amend D2's `RENDER_ORDER` literal and the `RenderRowTransform` snippet                                                          |
+| `libs/table/docs/adr/0020-…md`                                               | Drop D3, the emission-order half of D5, and `'paginate'`/`'prune'` from D2's anchor set                                         |
+| `libs/table/CLAUDE.md:63,65,210,245`                                         | `render-stages.ts` row in the file table; `rows.ts` row; the "add a render stage" rule; the `withGrouping()`/ADR-0017 paragraph |
+| `libs/table/docs/1-state/architecture.md:158`                                | "entirely the engine-owned `'prune'` render stage's job"                                                                        |
+| `libs/table/src/stories/grouping/grouping-collapsible/…component.html:77,79` | `table.expandedRows().has(row.id)` → `row.isExpanded` (D1/D3)                                                                   |
+| `libs/table/src/stories/grouping/grouping-collapsible/…component.ts:25`      | The JSDoc sentence describing the split                                                                                         |
+| `libs/table/src/stories/grouping/grouping.mdx:427`                           | Same paragraph                                                                                                                  |
+| `llms.txt`                                                                   | Regenerate (`npm run llms`); `npm run llms:check` must stay clean                                                               |
 
 ## Open questions
 

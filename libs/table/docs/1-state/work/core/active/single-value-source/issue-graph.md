@@ -11,20 +11,20 @@ fits a tracer bullet, so both are sequenced
 
 ## Nodes
 
-| # | Title | State | Depends on | Blocks |
-|---|---|---|---|---|
-| [#130](https://github.com/DvirMon/ng-table/issues/130) | `col()` builder and `ColumnSet` exist, unused | ✅ CLOSED 09-24 | — | #131 |
-| [#131](https://github.com/DvirMon/ng-table/issues/131) | `createTable` accepts a `ColumnSet` beside the array; `columnsSchema` removed (expand) | ✅ CLOSED 09-24 (918551f) | #130 (cleared) | #132, #137, #138 |
-| [#132](https://github.com/DvirMon/ng-table/issues/132) | Construction checks relocate into `createColumns` and go dev-only | ✅ CLOSED 09-24 | #131 (cleared) | #139 |
-| [#133](https://github.com/DvirMon/ng-table/issues/133) | ADR-0025 rename, expand: bare names ship beside `apply*` | ✅ CLOSED 09-24 (ffa2bf7) | — | #134, #135 |
-| [#134](https://github.com/DvirMon/ng-table/issues/134) | ADR-0025 rename, migrate: library source | ✅ CLOSED 09-24 (1eaad97) | #133 (cleared) | #136 |
-| [#135](https://github.com/DvirMon/ng-table/issues/135) | ADR-0025 rename, migrate: specs, story hosts, fixtures | ✅ CLOSED 09-24 (1eaad97) | #133 (cleared) | #136 |
-| [#136](https://github.com/DvirMon/ng-table/issues/136) | ADR-0025 rename, contract: delete the `apply*` exports | ✅ CLOSED 09-24 (ce13765) | #134, #135 (cleared) | #141 |
-| [#137](https://github.com/DvirMon/ng-table/issues/137) | Migrate declarations: specs, mocks, fixtures | ✅ CLOSED 09-24 (b6209bc) | #131 (cleared) | #139, #140 |
-| [#138](https://github.com/DvirMon/ng-table/issues/138) | Migrate declarations: story hosts and type specs | ✅ CLOSED 09-24 (6af4cc7) | #131 (cleared) | #139 |
-| [#139](https://github.com/DvirMon/ng-table/issues/139) | Contract: delete the array intake | ✅ CLOSED 09-24 (1704cfd) | #132 (cleared), #137 (cleared), #138 (cleared) | — |
-| [#140](https://github.com/DvirMon/ng-table/issues/140) | `setColumns` narrows its input; the order window is documented | ✅ CLOSED 09-25 (74e29a2, 786e067) | #137 (cleared) | #141 |
-| [#141](https://github.com/DvirMon/ng-table/issues/141) | Docs, ADR-0019 amendment, CLAUDE.md invariant, decision rows, `llms` | ✅ CLOSED 09-25 (782f443) | #136 (cleared), #140 (cleared) | — |
+| #                                                      | Title                                                                                  | State                              | Depends on                                     | Blocks           |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------- | ---------------------------------- | ---------------------------------------------- | ---------------- |
+| [#130](https://github.com/DvirMon/ng-table/issues/130) | `col()` builder and `ColumnSet` exist, unused                                          | ✅ CLOSED 09-24                    | —                                              | #131             |
+| [#131](https://github.com/DvirMon/ng-table/issues/131) | `createTable` accepts a `ColumnSet` beside the array; `columnsSchema` removed (expand) | ✅ CLOSED 09-24 (918551f)          | #130 (cleared)                                 | #132, #137, #138 |
+| [#132](https://github.com/DvirMon/ng-table/issues/132) | Construction checks relocate into `createColumns` and go dev-only                      | ✅ CLOSED 09-24                    | #131 (cleared)                                 | #139             |
+| [#133](https://github.com/DvirMon/ng-table/issues/133) | ADR-0025 rename, expand: bare names ship beside `apply*`                               | ✅ CLOSED 09-24 (ffa2bf7)          | —                                              | #134, #135       |
+| [#134](https://github.com/DvirMon/ng-table/issues/134) | ADR-0025 rename, migrate: library source                                               | ✅ CLOSED 09-24 (1eaad97)          | #133 (cleared)                                 | #136             |
+| [#135](https://github.com/DvirMon/ng-table/issues/135) | ADR-0025 rename, migrate: specs, story hosts, fixtures                                 | ✅ CLOSED 09-24 (1eaad97)          | #133 (cleared)                                 | #136             |
+| [#136](https://github.com/DvirMon/ng-table/issues/136) | ADR-0025 rename, contract: delete the `apply*` exports                                 | ✅ CLOSED 09-24 (ce13765)          | #134, #135 (cleared)                           | #141             |
+| [#137](https://github.com/DvirMon/ng-table/issues/137) | Migrate declarations: specs, mocks, fixtures                                           | ✅ CLOSED 09-24 (b6209bc)          | #131 (cleared)                                 | #139, #140       |
+| [#138](https://github.com/DvirMon/ng-table/issues/138) | Migrate declarations: story hosts and type specs                                       | ✅ CLOSED 09-24 (6af4cc7)          | #131 (cleared)                                 | #139             |
+| [#139](https://github.com/DvirMon/ng-table/issues/139) | Contract: delete the array intake                                                      | ✅ CLOSED 09-24 (1704cfd)          | #132 (cleared), #137 (cleared), #138 (cleared) | —                |
+| [#140](https://github.com/DvirMon/ng-table/issues/140) | `setColumns` narrows its input; the order window is documented                         | ✅ CLOSED 09-25 (74e29a2, 786e067) | #137 (cleared)                                 | #141             |
+| [#141](https://github.com/DvirMon/ng-table/issues/141) | Docs, ADR-0019 amendment, CLAUDE.md invariant, decision rows, `llms`                   | ✅ CLOSED 09-25 (782f443)          | #136 (cleared), #140 (cleared)                 | —                |
 
 ## Graph
 

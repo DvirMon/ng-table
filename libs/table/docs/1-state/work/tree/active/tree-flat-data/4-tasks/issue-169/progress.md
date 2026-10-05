@@ -20,14 +20,14 @@ Steps 3–8 all edit `api/features/with-tree/feature.ts`, so they run in order.
 
 ## Steps
 
-| Step | Title | Status |
-|---|---|---|
-| 1 | Split with-tree into a folder | ✅ done |
-| 2 | Engine read of context rows | ✅ done |
-| 3 | table.tree.contextRowIds | ✅ done |
-| 4 | Reveal context rows | ✅ done |
-| 5 | Close a revealed row | ✅ done |
-| 6 | Open-set writes clear closed rows | ✅ done |
-| 7 | expand() includeHidden | ✅ done |
-| 8 | state() includeHidden | ✅ done |
-| 9 | Docs and decisions | ✅ done |
+| Step | Title                             | Status  |
+| ---- | --------------------------------- | ------- |
+| 1    | Split with-tree into a folder     | ✅ done |
+| 2    | Engine read of context rows       | ✅ done |
+| 3    | table.tree.contextRowIds          | ✅ done |
+| 4    | Reveal context rows               | ✅ done |
+| 5    | Close a revealed row              | ✅ done |
+| 6    | Open-set writes clear closed rows | ✅ done |
+| 7    | expand() includeHidden            | ✅ done |
+| 8    | state() includeHidden             | ✅ done |
+| 9    | Docs and decisions                | ✅ done |

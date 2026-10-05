@@ -3,11 +3,11 @@
 **Issue:** #120
 **Status:** 3 / 3 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | The collapsible grouping story composes `withTree()` | ✅ done | — |
-| 2 | The collapse cases move to the tree's spec | ✅ done | — |
-| 3 | The documented spelling | ✅ done | — |
+| Step | Title                                                | Status  | PR  |
+| ---- | ---------------------------------------------------- | ------- | --- |
+| 1    | The collapsible grouping story composes `withTree()` | ✅ done | —   |
+| 2    | The collapse cases move to the tree's spec           | ✅ done | —   |
+| 3    | The documented spelling                              | ✅ done | —   |
 
 ## Graph
 

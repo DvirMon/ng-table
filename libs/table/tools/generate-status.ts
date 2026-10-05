@@ -153,7 +153,10 @@ function readEnumField<TValue extends string>(
     return null;
   }
   if (!isValid(raw)) {
-    reportDiagnostic(href, `unrecognised \`${key}: ${raw}\` — expected one of ${allowed.join(' | ')}`);
+    reportDiagnostic(
+      href,
+      `unrecognised \`${key}: ${raw}\` — expected one of ${allowed.join(' | ')}`,
+    );
     return null;
   }
   return raw;
@@ -187,7 +190,10 @@ function listMarkdownFiles(directory: string): string[] {
 }
 
 function collectSpecDocs(): SpecDoc[] {
-  const stateFiles = [...listMarkdownFiles(STATE_FEATURES_DIR), ...CROSS_FEATURE_FILES.filter(existsSync)];
+  const stateFiles = [
+    ...listMarkdownFiles(STATE_FEATURES_DIR),
+    ...CROSS_FEATURE_FILES.filter(existsSync),
+  ];
   const uiFiles = listMarkdownFiles(UI_DIRECTIVES_DIR);
   const productFiles = listMarkdownFiles(PRODUCT_DOCS_DIR);
 
@@ -202,7 +208,12 @@ function groupByCapability(docs: SpecDoc[]): CapabilityRow[] {
   const rows = new Map<string, CapabilityRow>();
 
   for (const doc of docs) {
-    const row = rows.get(doc.capability) ?? { capability: doc.capability, state: null, ui: null, product: null };
+    const row = rows.get(doc.capability) ?? {
+      capability: doc.capability,
+      state: null,
+      ui: null,
+      product: null,
+    };
     const occupant = row[doc.layer];
 
     if (occupant !== null) {

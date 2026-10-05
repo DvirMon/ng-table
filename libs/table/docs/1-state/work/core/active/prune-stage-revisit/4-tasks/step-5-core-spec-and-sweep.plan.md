@@ -10,12 +10,12 @@
 
 ## Files
 
-| Path | Action |
-|---|---|
-| `libs/table/src/engine/core.spec.ts` | edit (4 fake stages) |
-| `libs/table/src/engine/compose-table.spec.ts` | edit (comments, ~187, ~219) |
-| `libs/table/src/api/features/compose-features.spec.ts` | edit (comments, ~466-472) |
-| `libs/table/src/api/features/with-grouping/feature.spec.ts` | edit (comment, ~1317) |
+| Path                                                        | Action                      |
+| ----------------------------------------------------------- | --------------------------- |
+| `libs/table/src/engine/core.spec.ts`                        | edit (4 fake stages)        |
+| `libs/table/src/engine/compose-table.spec.ts`               | edit (comments, ~187, ~219) |
+| `libs/table/src/api/features/compose-features.spec.ts`      | edit (comments, ~466-472)   |
+| `libs/table/src/api/features/with-grouping/feature.spec.ts` | edit (comment, ~1317)       |
 
 ## Why This Step Exists
 
@@ -82,7 +82,7 @@ not wording.
   structurally compatible it may not even do that. Read each fake and
   confirm the nesting is real, rather than trusting a green run.
 - The union test is the one place a wrong rebuild is invisible: nest
-  each child under its *own* parent, not both under one, or the test
+  each child under its _own_ parent, not both under one, or the test
   stops proving the union.
 
 ## Non-Goals
@@ -106,4 +106,5 @@ not wording.
       removed — check it by hand once.
 
 ---
+
 ← [Step 4: Expansion end-to-end](step-4-expansion-spec.plan.md) | [Step 6: The collapsible grouping story](step-6-collapsible-story.plan.md) →

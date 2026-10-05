@@ -17,11 +17,11 @@ Parallel-safe: [1, 2, 6] · Dependency: 2 → 3 → 4 → 5; 1 → 4
 
 ## Steps
 
-| Step | Title | Status |
-|---|---|---|
-| 1 | Feature factories receive the stage context | ✅ done |
-| 2 | Cluster by root value in the group stages | 🧪 awaiting CI |
-| 3 | Group queries follow the root | ✅ done |
-| 4 | Wire the parent link into withGrouping() | 🧪 awaiting CI |
-| 5 | Show roots-only grouping in the collapsible story | ✅ done |
-| 6 | Record the roots-only grouping contract | ✅ done |
+| Step | Title                                             | Status         |
+| ---- | ------------------------------------------------- | -------------- |
+| 1    | Feature factories receive the stage context       | ✅ done        |
+| 2    | Cluster by root value in the group stages         | 🧪 awaiting CI |
+| 3    | Group queries follow the root                     | ✅ done        |
+| 4    | Wire the parent link into withGrouping()          | 🧪 awaiting CI |
+| 5    | Show roots-only grouping in the collapsible story | ✅ done        |
+| 6    | Record the roots-only grouping contract           | ✅ done        |

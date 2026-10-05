@@ -8,13 +8,13 @@
 
 ## Files
 
-| File | Line | Says today |
-|---|---|---|
-| `libs/shared/table/src/stories/filtering/client-filtering/client-filtering.mdx` | 13 | "`withFiltering({ filters })` applies a standalone `createFilters()` object…" |
-| `libs/shared/table/src/stories/filtering/server-filtering/server-filtering.mdx` | 14, 16-17 | "`withFiltering({ manual: true })`…"; "the same `createFilters()` object the client story hands to `withFiltering()`" |
-| `libs/shared/table/src/stories/filtering/fixtures/schema.ts` | 25, 38 | "Consumed by `client-filtering/`, which composes `withFiltering({ filters })`." |
-| `libs/shared/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.ts` | 107, 110 | "The filtering baseline — `withFiltering({ filters })` over a standalone `createFilters()`…" |
-| `libs/shared/table/src/stories/filtering/server-filtering/server-filtering-story-host.component.ts` | 72-74 | "No filtering feature is composed. `withFiltering({ manual: true })` exists for symmetry…" |
+| File                                                                                                | Line      | Says today                                                                                                            |
+| --------------------------------------------------------------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------- |
+| `libs/shared/table/src/stories/filtering/client-filtering/client-filtering.mdx`                     | 13        | "`withFiltering({ filters })` applies a standalone `createFilters()` object…"                                         |
+| `libs/shared/table/src/stories/filtering/server-filtering/server-filtering.mdx`                     | 14, 16-17 | "`withFiltering({ manual: true })`…"; "the same `createFilters()` object the client story hands to `withFiltering()`" |
+| `libs/shared/table/src/stories/filtering/fixtures/schema.ts`                                        | 25, 38    | "Consumed by `client-filtering/`, which composes `withFiltering({ filters })`."                                       |
+| `libs/shared/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.ts` | 107, 110  | "The filtering baseline — `withFiltering({ filters })` over a standalone `createFilters()`…"                          |
+| `libs/shared/table/src/stories/filtering/server-filtering/server-filtering-story-host.component.ts` | 72-74     | "No filtering feature is composed. `withFiltering({ manual: true })` exists for symmetry…"                            |
 
 ## Why This Step Exists
 
@@ -31,12 +31,12 @@ do, and it should be rewritten against the migrated code, not against the intent
 Rewrite each site to describe the composition the code now performs:
 
 - `withFiltering({ filters })` → `withFiltering({ predicates: () => [filters().matcher()] })`.
-- Where the prose frames the feature as *taking a filter model*, reframe it: the feature takes a
+- Where the prose frames the feature as _taking a filter model_, reframe it: the feature takes a
   list of row predicates, and the filter model supplies one of them through `matcher()`. The two
   are composed by the host, not welded by the library.
 - Keep every claim that is still true. The client story is still the filtering baseline; the server
   story still composes no filtering feature and still serializes its `createFilters()` object into
-  the request. Only the sentence describing *how the model reaches the table* changes.
+  the request. Only the sentence describing _how the model reaches the table_ changes.
 
 Site-specific:
 
@@ -45,7 +45,7 @@ Site-specific:
 - **`server-filtering.mdx:14,16-17`** — `{ manual: true }` is unchanged and still correct; the
   cross-reference at `:17` ("the same `createFilters()` object the client story hands to
   `withFiltering()`") is the part that goes stale. The client story now hands `withFiltering()` a
-  predicate; it hands the *request builder* the filter model. Say that.
+  predicate; it hands the _request builder_ the filter model. Say that.
 - **`fixtures/schema.ts:25,38`** — two JSDoc comments naming their consumer. Terse per the repo's
   JSDoc rule: name the consumer and the composition, nothing more.
 - **`client-filtering-story-host.component.ts:107,110`** — the host's own class-level doc comment.
@@ -86,4 +86,5 @@ Site-specific:
 - [ ] No `.ts` behavior changed by this step
 
 ---
+
 ← [Step 4: Cross-feature specs narrow with bare predicates](step-4-cross-feature-specs.plan.md) | [Step 6: Migrate `create-filters.spec.ts` off `createFilterEvaluator(filters)`](step-6-migrate-evaluator-spec-to-matcher.plan.md) →

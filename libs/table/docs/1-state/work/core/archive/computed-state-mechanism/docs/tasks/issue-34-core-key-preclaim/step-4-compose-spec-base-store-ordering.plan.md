@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — compose-table.spec.ts: base-store-before-fold, core-key collision, unshifted labels"
+title: 'Step 4 — compose-table.spec.ts: base-store-before-fold, core-key collision, unshifted labels'
 type: task-step
 issue: 68
 ---
@@ -55,7 +55,7 @@ Add a `describe('base store before the fold (D4/D8)')` block using the existing
 
 - Keep the `Record<string, unknown>` cast in the helper — the spec deliberately stays untyped
   against `ComposedFeatureMembers` (existing comment explains why).
-- For the "present at factory time" case, read from the *second* argument (`composed`), not
+- For the "present at factory time" case, read from the _second_ argument (`composed`), not
   `core` — the point is that the store object handed to features already carries them.
 
 ## Risks / Watchouts
@@ -77,4 +77,5 @@ Add a `describe('base store before the fold (D4/D8)')` block using the existing
 - [ ] `totalRowCount` override case passes.
 
 ---
+
 ← [Step 3: Fold — base store before features](step-3-fold-base-store-before-features.plan.md)

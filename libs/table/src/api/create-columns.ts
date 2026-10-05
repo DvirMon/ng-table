@@ -34,15 +34,10 @@ declare const ngDevMode: boolean | undefined;
  * ]);
  * ```
  */
-export function createColumns<
-  TRow,
-  TCols extends readonly ColumnDecl<TRow, string, unknown>[],
->(
+export function createColumns<TRow, TCols extends readonly ColumnDecl<TRow, string, unknown>[]>(
   data: () => readonly TRow[] | undefined,
   build: (col: ColumnBuilder<TRow>) => TCols,
-  schema?:
-    | ColumnsSchemaFn<TRow, ColumnIdIn<ColumnValues<TRow, TCols>>>
-    | ColumnSchema<TRow>
+  schema?: ColumnsSchemaFn<TRow, ColumnIdIn<ColumnValues<TRow, TCols>>> | ColumnSchema<TRow>,
 ): ColumnSet<TRow, TCols>;
 
 /**
@@ -55,13 +50,13 @@ export function createColumns<
 export function createColumns<TRow>(): <
   const TCols extends readonly ColumnDefInput<TRow, string>[],
 >(
-  columns: TCols
+  columns: TCols,
 ) => TCols;
 
 export function createColumns<TRow>(
   data?: () => readonly TRow[] | undefined,
   build?: (col: ColumnBuilder<TRow>) => readonly ColumnDecl<TRow, string, unknown>[],
-  schema?: ColumnsSchemaFn<TRow, string> | ColumnSchema<TRow>
+  schema?: ColumnsSchemaFn<TRow, string> | ColumnSchema<TRow>,
 ): unknown {
   const isCurriedForm = build === undefined;
   if (isCurriedForm) {
@@ -80,7 +75,7 @@ export function createColumns<TRow>(
 }
 
 function resolveColumnRules<TRow>(
-  schema: ColumnsSchemaFn<TRow, string> | ColumnSchema<TRow> | undefined
+  schema: ColumnsSchemaFn<TRow, string> | ColumnSchema<TRow> | undefined,
 ): readonly ColumnRule<TRow>[] {
   if (schema === undefined) {
     return [];
@@ -96,7 +91,7 @@ function resolveColumnRules<TRow>(
 // mode — nothing here gates a second time.
 function assertColumnSetIsWellFormed<TRow>(
   columns: readonly ColumnDecl<TRow, string, unknown>[],
-  rules: readonly ColumnRule<TRow>[]
+  rules: readonly ColumnRule<TRow>[],
 ): void {
   assertUniqueColumnIds(columns, 'createColumns');
   assertRuleColumnIdsAreKnown(rules, columns);
@@ -105,12 +100,12 @@ function assertColumnSetIsWellFormed<TRow>(
 
 function assertRuleColumnIdsAreKnown<TRow>(
   rules: readonly ColumnRule<TRow>[],
-  columns: readonly ColumnDecl<TRow, string, unknown>[]
+  columns: readonly ColumnDecl<TRow, string, unknown>[],
 ): void {
   assertDeclarationsAreKnown(
     rules.map((rule) => rule.columnId),
     columns.map((column) => column.id),
-    'createColumns'
+    'createColumns',
   );
 }
 
@@ -132,7 +127,7 @@ function assertMetadataKeysAreUnique<TRow>(rules: readonly ColumnRule<TRow>[]): 
     if (seenKeys.has(rule.key)) {
       throw new Error(
         `[createColumns] Duplicate metadata() registration for column "${rule.columnId}" — ` +
-          'call metadata() at most once per key per column; metadata has no reducer/combine.'
+          'call metadata() at most once per key per column; metadata has no reducer/combine.',
       );
     }
     seenKeys.add(rule.key);
@@ -149,7 +144,7 @@ function createColumnBuilder<TRow>(): ColumnBuilder<TRow> {
 
   function from(
     decl: ColumnDecl<TRow, string, unknown>,
-    opts: Presentation & { id?: string; accessor?: (row: TRow) => unknown }
+    opts: Presentation & { id?: string; accessor?: (row: TRow) => unknown },
   ) {
     return { ...decl, ...opts };
   }

@@ -6,11 +6,11 @@
     </p>
   } @else {
     <p class="story-host__hint">
-      Rows show as text until Edit opens them. Cancel resets the row; Discard removes it — both
-      are separate, clearly-labeled buttons on any open row, no matter how the row was added. Save
-      is pessimistic: the row stays open until the save resolves, so a failure just leaves it open
-      with its draft intact — no rollback needed since nothing closed early. Keyboard: Escape
-      cancels the open row, Enter saves it, Tab stays inside its cells.
+      Rows show as text until Edit opens them. Cancel resets the row; Discard removes it — both are
+      separate, clearly-labeled buttons on any open row, no matter how the row was added. Save is
+      pessimistic: the row stays open until the save resolves, so a failure just leaves it open with
+      its draft intact — no rollback needed since nothing closed early. Keyboard: Escape cancels the
+      open row, Enter saves it, Tab stays inside its cells.
     </p>
   }
 
@@ -38,7 +38,8 @@
           <td class="story-host__cell">
             @if (isEditing) {
               <ng-container *ngpTableRowField="row; from: rows; let field">
-                @let needsUniqueNameFlag = field.name().errors().some((error) => error.kind === 'duplicateName');
+                @let needsUniqueNameFlag =
+                  field.name().errors().some((error) => error.kind === 'duplicateName');
                 <input
                   type="text"
                   [formField]="field.name"
@@ -50,7 +51,10 @@
                   "
                 />
                 @if (needsUniqueNameFlag) {
-                  <span class="story-host__field-hint" [id]="'gated-single-pessimistic-duplicate-hint-' + row.id">
+                  <span
+                    class="story-host__field-hint"
+                    [id]="'gated-single-pessimistic-duplicate-hint-' + row.id"
+                  >
                     another row already uses this name
                   </span>
                 }

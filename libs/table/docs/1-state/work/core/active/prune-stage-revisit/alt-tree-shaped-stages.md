@@ -61,13 +61,15 @@ correctly, and to emit a parent immediately before its descendants.
 
 ```ts
 function pruneUnexpandedDescendants<TRow>(rows, expanded) {
-  if (expanded === undefined) return rows;          // no contributor ⇒ pass-through
+  if (expanded === undefined) return rows; // no contributor ⇒ pass-through
   const hidden = new Set<RowId>();
   return rows.filter((row) => {
     const hasHiddenParent =
-      row.parentId !== undefined &&
-      (hidden.has(row.parentId) || !expanded.has(row.parentId));
-    if (hasHiddenParent) { hidden.add(row.id); return false; }
+      row.parentId !== undefined && (hidden.has(row.parentId) || !expanded.has(row.parentId));
+    if (hasHiddenParent) {
+      hidden.add(row.id);
+      return false;
+    }
     return true;
   });
 }
@@ -86,7 +88,7 @@ export type RenderStages<TRow> = Partial<
 >;
 
 export const CLAIMABLE_RENDER_STAGES = RENDER_ORDER.filter(
-  (stage): stage is Exclude<RenderStage, 'prune'> => stage !== 'prune'
+  (stage): stage is Exclude<RenderStage, 'prune'> => stage !== 'prune',
 );
 
 // runRenderStages' reduce special-cases its own order array:
@@ -132,7 +134,7 @@ export interface RenderNode<TRow> {
   readonly data: TRow | null;
   readonly groupKey?: { columnId: string; value: unknown };
   readonly aggregates?: Record<string, unknown>;
-  readonly children: readonly RenderNode<TRow>[];   // [] for a leaf
+  readonly children: readonly RenderNode<TRow>[]; // [] for a leaf
 }
 ```
 
@@ -142,10 +144,11 @@ derivable from position in the tree, and is stamped during flatten.
 ### The stage signature
 
 ```ts
-export type RenderNodeTransform<TRow> =
-  (nodes: readonly RenderNode<TRow>[]) => readonly RenderNode<TRow>[];
+export type RenderNodeTransform<TRow> = (
+  nodes: readonly RenderNode<TRow>[],
+) => readonly RenderNode<TRow>[];
 
-export const RENDER_ORDER = ['group', 'tree'] as const;   // claimable stages only
+export const RENDER_ORDER = ['group', 'tree'] as const; // claimable stages only
 ```
 
 No `'prune'`, no `Exclude<…>`, no `CLAIMABLE_RENDER_STAGES`, no `expanded` parameter.
@@ -162,7 +165,7 @@ function groupStage(nodes: readonly RenderNode<TRow>[]): readonly RenderNode<TRo
     kind: 'group',
     data: null,
     groupKey: cluster.key,
-    children: cluster.members,      // ← always. Visibility is not grouping's business.
+    children: cluster.members, // ← always. Visibility is not grouping's business.
   }));
 }
 ```
@@ -173,15 +176,11 @@ function groupStage(nodes: readonly RenderNode<TRow>[]): readonly RenderNode<TRo
 // engine/flatten.ts
 export function flattenVisible<TRow>(
   nodes: readonly RenderNode<TRow>[],
-  expanded: ReadonlySet<RowId> | undefined      // undefined = no contributor ⇒ all open
+  expanded: ReadonlySet<RowId> | undefined, // undefined = no contributor ⇒ all open
 ): Omit<RenderRow<TRow>, 'index' | 'sourceIndex'>[] {
   const out: Omit<RenderRow<TRow>, 'index' | 'sourceIndex'>[] = [];
 
-  const walk = (
-    node: RenderNode<TRow>,
-    depth: number,
-    parentId: RowId | undefined
-  ): void => {
+  const walk = (node: RenderNode<TRow>, depth: number, parentId: RowId | undefined): void => {
     const isOpen = expanded === undefined || expanded.has(node.id);
     out.push({
       id: node.id,
@@ -222,21 +221,21 @@ const renderRows = computed(() => {
 
 ## Why the awkward parts disappear
 
-| Today | Here |
-|---|---|
-| `parentId` stamped by each synthesizer; forget it ⇒ silently unprunable row | derived by the walk; cannot be forgotten |
-| `depth` stamped by each synthesizer; can disagree with `parentId` | derived; cannot disagree |
-| "parent emitted immediately before its children" — unchecked, load-bearing | structural; a child is *inside* its parent, so it cannot be mis-ordered |
-| `'prune'` stage + `Exclude` + `CLAIMABLE_RENDER_STAGES` + reduce special-case | none |
-| `hasChildren` a feature must remember to set | `children.length > 0` |
-| Union of contributed sets, read by a filter pass | same union, read by the walk |
+| Today                                                                         | Here                                                                    |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `parentId` stamped by each synthesizer; forget it ⇒ silently unprunable row   | derived by the walk; cannot be forgotten                                |
+| `depth` stamped by each synthesizer; can disagree with `parentId`             | derived; cannot disagree                                                |
+| "parent emitted immediately before its children" — unchecked, load-bearing    | structural; a child is _inside_ its parent, so it cannot be mis-ordered |
+| `'prune'` stage + `Exclude` + `CLAIMABLE_RENDER_STAGES` + reduce special-case | none                                                                    |
+| `hasChildren` a feature must remember to set                                  | `children.length > 0`                                                   |
+| Union of contributed sets, read by a filter pass                              | same union, read by the walk                                            |
 
 Unchanged: collapse state stays in the feature (D3), the contributed `expandedRows` slot still
 accumulates (D4), grouping still never reads expansion.
 
 ## The two collapse models
 
-- **Tree / group collapse** — hides *rows*. Exactly what the walk handles.
+- **Tree / group collapse** — hides _rows_. Exactly what the walk handles.
 - **Detail panel** — never was a render row. `with-expansion.ts` exposes `everExpanded`; the
   consumer gates mounting a panel in their own template. It never entered the prune and never
   enters the flatten. Nothing to support.
@@ -257,6 +256,6 @@ tree keep separate open-id sets; both contribute, the walk reads the union. Iden
 
 ## Open question
 
-Does any future stage need to run *between* synthesis and flatten on already-flat rows? If yes,
+Does any future stage need to run _between_ synthesis and flatten on already-flat rows? If yes,
 that stage sees a tree instead and must recurse. No such stage exists today, and `'paginate'`
 (unclaimed) belongs after flatten either way.

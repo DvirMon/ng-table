@@ -38,8 +38,8 @@ export const createTable = (<TRow>(
       features,
       // The column-schema wiring is an internal composition step, not a consumer feature —
       // passing it separately keeps it off the consumer's own numbering.
-      [wireColumnsSchemaAsync<TRow>(rules)]
-    )
+      [wireColumnsSchemaAsync<TRow>(rules)],
+    ),
   );
 
   return store;

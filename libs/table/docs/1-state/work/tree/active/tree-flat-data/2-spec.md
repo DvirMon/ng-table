@@ -2,7 +2,7 @@
 title: tree-flat-data — spec (#163)
 type: spec
 date: 2026-09-27
-ticket: "#163"
+ticket: '#163'
 decisions: 1-decisions.md
 architecture: 3-architecture.md
 product: ../../../../../0-product/tree.md
@@ -123,7 +123,7 @@ ADR-0028). Summarized here; rationale lives in the decisions file.
 - **Grouping a tree (D13, D14, D15).** With a parent link present, grouping clusters roots only and each subtree follows its root. A group's row count includes every node in it. `aggregateFn` receives every node in the group; roll-up versus own-value parents is the consumer's call inside `aggregateFn`.
 - **Counts (D11).** `totalRowCount` and `selectAllIds()` count every node after filtering, collapsed or not, including context rows.
 - **Directive (D18, D21).** A new feature directive, `ngpTableTreeRow`, binds `data-context-row` as a presence attribute (ADR-0026 rule 1). Core `ngpTableRow` stays on required fields only. The wider tree UI (indentation, `aria-level`, toggle) is #165.
-- **Glossary.** *Context row* — a row shown only because one of its descendants matched the filter.
+- **Glossary.** _Context row_ — a row shown only because one of its descendants matched the filter.
 
 ## Testing Decisions
 

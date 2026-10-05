@@ -112,11 +112,7 @@ export {
   swapRowId,
 } from './mutations/optimistic-mutations';
 export type { PatchEditOptions } from './mutations/optimistic-mutations';
-export {
-  setColumns,
-  reorderColumns,
-  toggleColumnVisibility,
-} from './mutations/update-columns';
+export { setColumns, reorderColumns, toggleColumnVisibility } from './mutations/update-columns';
 export {
   setGroupLevels,
   addGroupLevel,

@@ -37,7 +37,7 @@ chrome-devtools MCP performance trace tools.
 ## Findings
 
 - `t0`: select set to `""`.
-- **+231ms**: the *original* header `<tr>` node is removed
+- **+231ms**: the _original_ header `<tr>` node is removed
   from the DOM (`sameNodeAsInitial: true`), carrying classes
   `ngp-table-row--flip row-leave` at removal time. Matches
   `grouping-editing-flip.css`'s 200ms opacity/padding/

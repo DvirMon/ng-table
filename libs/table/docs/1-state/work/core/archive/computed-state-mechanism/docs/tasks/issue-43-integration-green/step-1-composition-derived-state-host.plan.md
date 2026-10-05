@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — stories/composition/: fixtures + derived-state story host with both derive-block placements"
+title: 'Step 1 — stories/composition/: fixtures + derived-state story host with both derive-block placements'
 type: task-step
 issue: 77
 ---
@@ -83,7 +83,7 @@ feature here.
    - The inner block sees core + `withSelection()`'s own members only (`with-computed.ts`
      doc-comment) — `renderRows` is core, so "hidden by the active filter" is derivable there
      without seeing `withFiltering()`.
-   - The trailing slot reads `store.hiddenSelected` — a derived member declared by an *earlier*
+   - The trailing slot reads `store.hiddenSelected` — a derived member declared by an _earlier_
      argument. That cross-feature read is the second half of AC 4 and the thing to keep.
    - No type arguments anywhere. If the implementer finds one is needed to compile, stop and
      report — that is a library regression, not a host problem.
@@ -93,6 +93,7 @@ feature here.
    - Add `toggleRowSelection(id)` / `isRowSelected(id)` and a `setDeptFilter(value)` that writes
      `this.filters.dept().value.set(...)` / `.reset(null)` for "All". Keep the host lean — no
      event log, no lock buttons; those belong to the selection stories.
+
 3. **Template.** `story-host` block, a hint paragraph, a dept `<select>` bound to the filter,
    a `role="status"` banner reading **both** derived members
    (`{{ table.visibleSelected() }} visible · {{ table.hiddenSelected() }} hidden by filter`),
@@ -140,4 +141,5 @@ feature here.
       `composition/composition-story.css`)
 
 ---
+
 [Step 2: `derived-state.stories.ts` + `derived-state.mdx`](step-2-derived-state-story.plan.md) →

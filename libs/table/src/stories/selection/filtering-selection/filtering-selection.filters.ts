@@ -9,7 +9,7 @@ import { matchesStatus } from '../../filtering/fixtures/utils';
 /** Hoisted so `SelectionCriteria` below names the inferred state without deriving it off the
  * component class. */
 export const selectionInvoiceFilters = (
-  path: FiltersPath<InvoiceRow, ColumnValues<InvoiceRow, typeof narrowColumns.columns>>
+  path: FiltersPath<InvoiceRow, ColumnValues<InvoiceRow, typeof narrowColumns.columns>>,
 ) => ({
   status: filter(path.status, matchesStatus, { emptyValue: '' }),
   customer: contains(path.customer),

@@ -44,7 +44,7 @@ export function stage<TRow, TTransform, TName extends string>(
   handle: StageHandle<TRow, TTransform, TName>,
   // Note: `NoInfer` keeps `TName` inferred from `handle` alone. Without it a wider `name`
   // widens `TName` too, and an unmerged name compiles.
-  opts: StageClaimOpts<TTransform> | StageDeclareOpts<TTransform, NoInfer<TName>>
+  opts: StageClaimOpts<TTransform> | StageDeclareOpts<TTransform, NoInfer<TName>>,
 ): void {
   const rule: StageRule<TTransform> = isStageDeclareOpts(opts)
     ? {
@@ -59,7 +59,7 @@ export function stage<TRow, TTransform, TName extends string>(
 }
 
 function isStageDeclareOpts<TTransform, TName extends string>(
-  opts: StageClaimOpts<TTransform> | StageDeclareOpts<TTransform, TName>
+  opts: StageClaimOpts<TTransform> | StageDeclareOpts<TTransform, TName>,
 ): opts is StageDeclareOpts<TTransform, TName> {
   return 'name' in opts;
 }

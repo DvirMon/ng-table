@@ -17,7 +17,7 @@ pickers). Themes below flag where community pain lines up with one of those deli
 ## Theme 1 — "Select all" / bulk selection breaks under an active filter
 
 The single most-repeated collision across libraries: selecting/deselecting "all" rows while a
-filter is applied either selects the *unfiltered* full set, or silently drops previously-selected
+filter is applied either selects the _unfiltered_ full set, or silently drops previously-selected
 rows outside the current filter.
 
 - MUI X **[#976](https://github.com/mui/mui-x/issues/976)** — "Select All checkbox selects all
@@ -58,7 +58,7 @@ default at least once and is still fielding reports about it.
 ## Theme 2 — Feature requests that resurface and stay open: filter UI/operator power
 
 The clearest "unmet need" signal — long-open, high-👍 feature requests asking for exactly the kind
-of operator/composition surface our internal design deliberately does *not* expose at runtime.
+of operator/composition surface our internal design deliberately does _not_ expose at runtime.
 
 - MUI X **[#4217](https://github.com/mui/mui-x/issues/4217)** — "Support filter group / query
   builder" (AND/OR nesting across columns in the filter panel UI). **Open** since 2022-03-17, 👍 33,
@@ -79,12 +79,12 @@ of operator/composition surface our internal design deliberately does *not* expo
   at 👍 648 — the two highest-reaction filtering asks in the repo — but both are **closed**
   because the feature eventually shipped (201 closed 2021-01-29 after 5 months; 202 closed
   2021-10-11 after ~14 months). Read together with the still-open items above: shipping the
-  *baseline* capability (any column filter at all; a single global quick filter) resolves the
+  _baseline_ capability (any column filter at all; a single global quick filter) resolves the
   loudest demand, but a smaller, persistent minority keeps asking for compositional power (AND/OR
   groups, more operators, `anyOf` in the lightweight UI) that baseline shipping doesn't satisfy.
 
 **Read for our design:** `createFilters()` already models `anyOf`/`hasAny`/`applyWhen` as
-composable primitives at the API level — which is ahead of where MUI X's *primitive* layer sits.
+composable primitives at the API level — which is ahead of where MUI X's _primitive_ layer sits.
 The gap these issues actually point at is UI, not engine: a runtime operator picker and an
 OR/group builder are the two capabilities people keep re-requesting once the basic filter ships.
 Since we deliberately don't ship a runtime operator picker, that's a known, named trade-off — not
@@ -92,7 +92,7 @@ an oversight — but it's the exact shape of what stays open-and-wanted elsewher
 
 ## Theme 3 — Global/quick filter correctness bugs (recurring, cross-library)
 
-A high volume of *closed* but high-reaction bugs cluster around the naive "stringify and
+A high volume of _closed_ but high-reaction bugs cluster around the naive "stringify and
 substring-match every cell" implementation of global/quick filter — precisely the shortcut a
 "quick filter" is expected to take.
 
@@ -124,7 +124,7 @@ substring-match every cell" implementation of global/quick filter — precisely 
   at all under some configuration. Recurrence across major versions suggests fragile/duplicated
   matching logic rather than one bug.
 
-**End-user vs. integrator split:** almost every issue in this theme is filed by an *integrator*
+**End-user vs. integrator split:** almost every issue in this theme is filed by an _integrator_
 (a developer wiring the grid to their data), not an end user — the failure mode is a thrown
 exception or silently-no-op filter caused by a data shape (null, number, nested object) the
 library's naive stringify-and-match didn't anticipate. This is exactly the class of bug a typed
@@ -174,7 +174,7 @@ research is independently working through.
   requests (2016 and 2023) for a plain filtered-count API, each closed once answered/implemented
   rather than because the need was disputed.
 - AG Grid **[#2139](https://github.com/ag-grid/ag-grid/issues/2139)** (also Theme 1) explicitly
-  ties select-all breakage to the combination of filtering *and* pagination together, not either
+  ties select-all breakage to the combination of filtering _and_ pagination together, not either
   alone.
 
 **Read for our design:** "how many rows currently match the filter" (distinct from total row
@@ -205,8 +205,8 @@ Two distinct sub-patterns, both under-addressed:
   keyboard navigation" (open, 👍 2, 2025-01-16) naming the same class at the grid-cell level: a
   cell that is simultaneously an editor and a header-filter target has no agreed keyboard model.
 
-**Read for our design:** the second sub-pattern is a UI-layer risk specific to *filter inputs that
-double as pickers/editors* — not directly in `createFilters()`'s scope, but worth flagging to
+**Read for our design:** the second sub-pattern is a UI-layer risk specific to _filter inputs that
+double as pickers/editors_ — not directly in `createFilters()`'s scope, but worth flagging to
 whatever consumes `withFiltering()` for an editable-column story.
 
 ## Theme 7 — Filtering × virtual scroll / sorting
@@ -215,7 +215,7 @@ Weaker signal than the other collisions — I did not find well-reasoned, verifi
 specifically about virtual-scroll-plus-filter interaction in AG Grid, MUI X, or PrimeNG trackers
 (searches surfaced only generic performance/rendering issues, not filter-scroll interaction
 specifically) — **unverified as a distinct theme**, flagging rather than asserting it. The
-adjacent, verified pattern is filtering combined with *sorting* order stability:
+adjacent, verified pattern is filtering combined with _sorting_ order stability:
 
 - AG Grid **[#13158](https://github.com/ag-grid/ag-grid/issues/13158)** and
   **[#5870](https://github.com/ag-grid/ag-grid/issues/5870)** — group/row order not restored
@@ -227,7 +227,7 @@ adjacent, verified pattern is filtering combined with *sorting* order stability:
 ## Theme 8 — URL/query-string state and undo
 
 - I found **no verifiable, well-reasoned issue** in any of the four trackers specifically about
-  syncing filter state to the URL/query-string as a *library* concern — TanStack Table's own docs
+  syncing filter state to the URL/query-string as a _library_ concern — TanStack Table's own docs
   explicitly punt this to userland (community packages exist, e.g. a third-party "sync TanStack
   Table state with URL parameters" blog post turned up in search, but that is prescriptive
   advice/tooling, not a tracked pain point) and AG Grid/MUI X/PrimeNG expose serializable filter
@@ -235,7 +235,7 @@ adjacent, verified pattern is filtering combined with *sorting* order stability:
   with the URL-sync step left to the integrator. **Read as: this is treated industry-wide as "give
   the consumer a serializable model, not a URL-sync feature" — not a gap, a settled boundary.**
 - **Undo/redo of a filter change specifically** — no verifiable issue found; the only undo-related
-  filtering hits in AG Grid's tracker were about undo/redo not working for *cell edits* made via
+  filtering hits in AG Grid's tracker were about undo/redo not working for _cell edits_ made via
   `valueSetter` (AG Grid **[#6737](https://github.com/ag-grid/ag-grid/issues/6737)**, closed,
   0 reactions) or after column resize (**[#3755](https://github.com/ag-grid/ag-grid/issues/3755)**,
   closed) — filtering itself doesn't appear to participate in any library's undo stack.
@@ -287,7 +287,7 @@ adjacent, verified pattern is filtering combined with *sorting* order stability:
   performance bugs specifically in the distinct-value derivation step, not in the filtering logic
   itself.
 - **Empty-state messaging when a filter matches nothing.** No well-reasoned, verifiable issue found
-  in any of the four trackers specifically about *messaging* (as opposed to rendering) an
+  in any of the four trackers specifically about _messaging_ (as opposed to rendering) an
   all-rows-filtered-out state — **unverified as a distinct theme**. This may mean it's treated as
   purely a consumer-styling concern (all four libraries expose a "no rows" slot/prop for the
   integrator to fill), not a library-level gap.

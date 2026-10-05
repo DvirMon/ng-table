@@ -58,4 +58,5 @@ Insert alongside the existing `export * from` block at the top of the file — k
 - [ ] `nx typecheck shared-design-system` passes
 
 ---
+
 ← [Step 3: NgpTableRowDirective](step-3-ngp-table-row-directive.plan.md) | [Step 5: NgpTableDirective spec](step-5-ngp-table-directive-spec.plan.md) →

@@ -12,15 +12,7 @@
   "capabilityLogPath": "libs/table/docs/decisions/expansion.md",
   "specPath": "libs/table/docs/1-state/work/expansion/active/panel-tree-split/2-spec.md",
   "architecturePath": "libs/table/docs/1-state/work/expansion/active/panel-tree-split/3-architecture.md",
-  "githubIssues": [
-    101,
-    118,
-    119,
-    120,
-    121,
-    122
-  ],
+  "githubIssues": [101, 118, 119, 120, 121, 122],
   "createdAt": "2026-09-20T00:00:00Z",
   "updatedAt": "2026-09-25T00:00:00Z"
 }
-

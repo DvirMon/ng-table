@@ -1,5 +1,5 @@
 ---
-title: "Step 5 — docs: rowsOf on the grouping contract"
+title: 'Step 5 — docs: rowsOf on the grouping contract'
 type: task-step
 issue: 65
 ---
@@ -84,4 +84,5 @@ to run).
 - [ ] No markdown link in the edited files points at a missing anchor or file.
 
 ---
+
 ← [Step 4: Tests](step-4-tests.plan.md)

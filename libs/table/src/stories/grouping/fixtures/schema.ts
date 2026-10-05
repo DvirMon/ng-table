@@ -23,9 +23,7 @@ import type { DealRow } from './types';
 export function sumAmount(rows: DealRow[]): number {
   return rows.reduce((total, row) => {
     if (row.amount < 0) {
-      throw new Error(
-        `[grouping fixtures] amount ${row.amount} is negative and cannot be summed.`
-      );
+      throw new Error(`[grouping fixtures] amount ${row.amount} is negative and cannot be summed.`);
     }
     return total + row.amount;
   }, 0);
@@ -68,11 +66,7 @@ export const groupingConfig = {
 export const BASE_GROUPING_LEVELS = ['region' as const, 'category' as const];
 
 /** Three levels, so collapsing a parent visibly hides a whole subtree. */
-export const COLLAPSIBLE_GROUPING_LEVELS = [
-  'region' as const,
-  'category' as const,
-  'rep' as const,
-];
+export const COLLAPSIBLE_GROUPING_LEVELS = ['region' as const, 'category' as const, 'rep' as const];
 
 /** What `grouping-collapsible/`'s Regroup control swaps to — the same three columns, re-nested, so
  * every group id changes and no previous collapse state can match. */
@@ -89,5 +83,5 @@ export const EXTERNAL_GROUP_ORDER: readonly string[] = ['South', 'Midwest', 'Nor
 /** One text criterion over `rep`, used only by `grouping-selection/` — enough to move a
  * selected row out of view, and to show counts and summaries following the visible rows. */
 export const dealFilters = (
-  path: FiltersPath<DealRow, ColumnValues<DealRow, typeof dealColumnSet.columns>>
+  path: FiltersPath<DealRow, ColumnValues<DealRow, typeof dealColumnSet.columns>>,
 ) => ({ rep: contains(path.rep) });

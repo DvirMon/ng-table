@@ -21,25 +21,25 @@ Evidence column.
 [███████████] 100% (11/11)
 ```
 
-| Status | Count |
-|---|---|
-| ✅ done | 11 |
-| ▶ in progress | 0 |
-| ░ not started | 0 |
+| Status         | Count |
+| -------------- | ----- |
+| ✅ done        | 11    |
+| ▶ in progress | 0     |
+| ░ not started  | 0     |
 
-| # | Decision | Status | Evidence |
-|---|---|---|---|
-| D1 | Enter/exit is consumer-owned (`animate.enter`/`.leave`) | ✅ done | `3c72f70` — grouping-editing story wired with a consumer-owned fade |
-| D2 | FLIP tolerates a leaving row (id-keyed registry) | ✅ done | Now in `ngp-table-row-animation.directive.ts` (relocated from `ngpTable` by Change 1) |
-| D3 | Row animation is opt-in (`ngpTableRowAnimation`) | ✅ done | Change 1 — `libs/table/src/directives/ngp-table-row-animation.directive.ts` |
-| D4 | Rows reach it through an optional token | ✅ done | Change 1 — `NGP_TABLE_ROW_ANIMATION` in `table.tokens.ts`, `ngpTableRow` injects it optionally |
-| D5 | Offset is a CSS custom property; CSS owns the transform | ✅ done | Change 1 — `ngp-table-row.directive.ts` now binds `[style.--ngp-table-row-flip-offset]`, no `[style.transform]` |
-| D6 | Final names (`ngpTableRowAnimation`, `data-row-animation`, …) | ✅ done | Change 1 — names match exactly; CSS export path (`@ngp/table/...`) deferred with D8 |
-| D7 | Aligned with ADR-0026 — `data-row-flipping` attribute, not a class | ✅ done | Change 1 — `[attr.data-row-flipping]`, `row-animation.css` in `@layer ngp-table` with input tokens + reduced-motion branch |
-| D8 | Package manifest — out of scope this pass, ships as relative import | ✅ done | Decided: no publishable build exists (`build` uses `@angular/build:application`, not ng-packagr) — nothing to implement here until that build is wired separately |
-| D9 | Zero-offset check is exact (`=== 0`, no jitter threshold) | ✅ done | Change 1 — `flipOffsetStyle()` computed checks `=== 0` |
-| D10 | Reduced motion stays CSS-only, JS always measures | ✅ done | Change 1 — reduced-motion branch is CSS-only in `row-animation.css`; directive has no `matchMedia` read |
-| D11 | Token typed to the directive class, `useExisting` | ✅ done | Change 1 — matches `NGP_TABLE_STORE`/`NGP_TABLE_ROW` pattern exactly |
+| #   | Decision                                                            | Status  | Evidence                                                                                                                                                          |
+| --- | ------------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Enter/exit is consumer-owned (`animate.enter`/`.leave`)             | ✅ done | `3c72f70` — grouping-editing story wired with a consumer-owned fade                                                                                               |
+| D2  | FLIP tolerates a leaving row (id-keyed registry)                    | ✅ done | Now in `ngp-table-row-animation.directive.ts` (relocated from `ngpTable` by Change 1)                                                                             |
+| D3  | Row animation is opt-in (`ngpTableRowAnimation`)                    | ✅ done | Change 1 — `libs/table/src/directives/ngp-table-row-animation.directive.ts`                                                                                       |
+| D4  | Rows reach it through an optional token                             | ✅ done | Change 1 — `NGP_TABLE_ROW_ANIMATION` in `table.tokens.ts`, `ngpTableRow` injects it optionally                                                                    |
+| D5  | Offset is a CSS custom property; CSS owns the transform             | ✅ done | Change 1 — `ngp-table-row.directive.ts` now binds `[style.--ngp-table-row-flip-offset]`, no `[style.transform]`                                                   |
+| D6  | Final names (`ngpTableRowAnimation`, `data-row-animation`, …)       | ✅ done | Change 1 — names match exactly; CSS export path (`@ngp/table/...`) deferred with D8                                                                               |
+| D7  | Aligned with ADR-0026 — `data-row-flipping` attribute, not a class  | ✅ done | Change 1 — `[attr.data-row-flipping]`, `row-animation.css` in `@layer ngp-table` with input tokens + reduced-motion branch                                        |
+| D8  | Package manifest — out of scope this pass, ships as relative import | ✅ done | Decided: no publishable build exists (`build` uses `@angular/build:application`, not ng-packagr) — nothing to implement here until that build is wired separately |
+| D9  | Zero-offset check is exact (`=== 0`, no jitter threshold)           | ✅ done | Change 1 — `flipOffsetStyle()` computed checks `=== 0`                                                                                                            |
+| D10 | Reduced motion stays CSS-only, JS always measures                   | ✅ done | Change 1 — reduced-motion branch is CSS-only in `row-animation.css`; directive has no `matchMedia` read                                                           |
+| D11 | Token typed to the directive class, `useExisting`                   | ✅ done | Change 1 — matches `NGP_TABLE_STORE`/`NGP_TABLE_ROW` pattern exactly                                                                                              |
 
 ## Changes (implementation checklist, 1-9)
 
@@ -53,23 +53,23 @@ partly implemented.
 [██████████░] 89% (8/9)
 ```
 
-| Status | Count |
-|---|---|
-| ✅ done | 8 |
-| ▶ in progress | 0 |
-| ░ not started | 1 (user-run) |
+| Status         | Count        |
+| -------------- | ------------ |
+| ✅ done        | 8            |
+| ▶ in progress | 0            |
+| ░ not started  | 1 (user-run) |
 
-| # | Change | Status |
-|---|---|---|
-| 1 | `ngpTableRowAnimation` (D3) + row registry (D2) relocated | ✅ done |
-| 2 | New directive spec (2 cases) | ✅ done |
-| 3 | Sorting-editing story adopts the directive | ✅ done |
-| 4 | `grouping-editing-story-host.component.html` | ✅ done |
-| 5 | `grouping-editing-story-host.component.ts` | ✅ done |
-| 6 | `grouping-editing/grouping-editing-flip.css` | ✅ done |
-| 7 | `row-animation.md` rewritten for the opt-in directive | ✅ done |
-| 8 | Grouping-editing `.stories.ts` / mdx (only if needed) | ✅ done (n/a — no "jumping" wording found, left untouched per the plan's own condition) |
-| 9 | Generated files — `npm run llms`, `table:status` | ░ not started (user-run, per the plan's own text and this session's policy — not blocked on anything) |
+| #   | Change                                                    | Status                                                                                                |
+| --- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 1   | `ngpTableRowAnimation` (D3) + row registry (D2) relocated | ✅ done                                                                                               |
+| 2   | New directive spec (2 cases)                              | ✅ done                                                                                               |
+| 3   | Sorting-editing story adopts the directive                | ✅ done                                                                                               |
+| 4   | `grouping-editing-story-host.component.html`              | ✅ done                                                                                               |
+| 5   | `grouping-editing-story-host.component.ts`                | ✅ done                                                                                               |
+| 6   | `grouping-editing/grouping-editing-flip.css`              | ✅ done                                                                                               |
+| 7   | `row-animation.md` rewritten for the opt-in directive     | ✅ done                                                                                               |
+| 8   | Grouping-editing `.stories.ts` / mdx (only if needed)     | ✅ done (n/a — no "jumping" wording found, left untouched per the plan's own condition)               |
+| 9   | Generated files — `npm run llms`, `table:status`          | ░ not started (user-run, per the plan's own text and this session's policy — not blocked on anything) |
 
 Not tracked here: `2-verification-header-exit-enter.md` is a
 recorded observation, already done, not a Change item.

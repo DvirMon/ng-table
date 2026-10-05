@@ -40,11 +40,11 @@ Correct **those four rows' paths** to what is on disk, and add three rows —
 `path-proxy.ts` is undocumented today too, and the two new files belong
 beside it:
 
-| File | Purpose |
-|---|---|
-| `schema/path-proxy.ts` | The key-space-agnostic declare-phase mechanism — `createPathProxy()`, `createRecorderSession()`, `recorderOf()`, `PathRecorder`, `RecordedHandle`. Imports nothing from any consumer (#111); `PathRecorder.record(rule: TRule)` is generic in the rule family, one family per session |
+| File                   | Purpose                                                                                                                                                                                                                                                                                              |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schema/path-proxy.ts` | The key-space-agnostic declare-phase mechanism — `createPathProxy()`, `createRecorderSession()`, `recorderOf()`, `PathRecorder`, `RecordedHandle`. Imports nothing from any consumer (#111); `PathRecorder.record(rule: TRule)` is generic in the rule family, one family per session                |
 | `schema/run-schema.ts` | `runRecordedSchema(buildPath, fn)` — the one body behind every **recording-form** schema fn (`columnSchema()`, `withGrouping()`, `withSorting()`). The declaring form (filtering) keeps its own body in `engine/filters/build.ts` until ADR-0020's `stageSchema` is a second caller (#111 reading B) |
-| `schema/validate.ts` | `assertDeclarationsAreKnown(declaredIds, knownIds, label)` — the one construction-time check that a declared identifier names a real column, shared by every schema form. `label` names the declaring surface in the message |
+| `schema/validate.ts`   | `assertDeclarationsAreKnown(declaredIds, knownIds, label)` — the one construction-time check that a declared identifier names a real column, shared by every schema form. `label` names the declaring surface in the message                                                                         |
 
 Write the rows in the table's existing voice — one row, one purpose, no
 step-by-step. The two-authoring-forms rule itself belongs to
@@ -102,4 +102,5 @@ Keep the edit to those lines. Do not audit the rest of the table.
 - [ ] `npm run llms:check` clean.
 
 ---
+
 ← [Step 5: Spec the shared check](step-5-validate-spec.plan.md)

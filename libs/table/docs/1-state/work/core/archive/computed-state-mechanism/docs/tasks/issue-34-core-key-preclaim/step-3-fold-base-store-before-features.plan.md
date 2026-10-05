@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — compose-table.ts + create-table.ts: base store before the fold, positions unshifted"
+title: 'Step 3 — compose-table.ts + create-table.ts: base store before the fold, positions unshifted'
 type: task-step
 issue: 68
 ---
@@ -30,7 +30,7 @@ is its only caller.
 
 Architecture "Runtime — the fold", steps 1–3: claim core keys, build the base store object
 **once** so `renderRows` and `totalRowCount` exist before any feature runs, then fold features
-onto that same object. Today `totalRowCount` is built *after* `foldFeatures` and `composed` is
+onto that same object. Today `totalRowCount` is built _after_ `foldFeatures` and `composed` is
 spread last over the core members — the shadowing hole D4 closes. A derive block's parameter
 type (#36) includes `renderRows`/`totalRowCount`, so they must be concrete first; this is the
 ordering fix D8 identified.
@@ -49,8 +49,8 @@ internal (ADR-0010); it moves off the consumer's numbering.
    export function composeTable<TRow>(
      config: TableEngineConfig<TRow>,
      features: readonly AnyTableFeature[],
-     internalFeatures: readonly AnyTableFeature[] = []
-   ): TableStore<TRow>
+     internalFeatures: readonly AnyTableFeature[] = [],
+   ): TableStore<TRow>;
    ```
 
    `internalFeatures` fold first (they must — the column-schema wiring's `columnRules` are read
@@ -99,11 +99,9 @@ internal (ADR-0010); it moves off the consumer's numbering.
 Replace the splice with the third parameter:
 
 ```ts
-composeTable<TRow>(
-  { columns, trackBy: config.trackBy, data },
-  config.features ?? [],
-  [wireColumnsSchemaAsync<TRow>(rules)]
-)
+composeTable<TRow>({ columns, trackBy: config.trackBy, data }, config.features ?? [], [
+  wireColumnsSchemaAsync<TRow>(rules),
+]);
 ```
 
 ### `compose-table.spec.ts` (green-keeping only)
@@ -119,7 +117,7 @@ render stage, and editing member) become `feature 1 and feature 2`. No new cases
   (`typescript-conventions.md`).
 - Passing the whole store as `composed` is a superset of today's contract: the second argument
   now also exposes core members. The existing "shows a feature only earlier features' members
-  at factory time" case still holds because later *feature* members are still absent.
+  at factory time" case still holds because later _feature_ members are still absent.
 - The `SlotRegistry` moving out of `foldFeatures` is deliberate: pre-claiming is a
   `composeTable()` concern (it happens before any feature exists), not a fold concern.
 - `handle.core.rows` is a lazy computed; building `totalRowCount` before stages are registered
@@ -133,7 +131,7 @@ render stage, and editing member) become `feature 1 and feature 2`. No new cases
 - **Reconciliation effect, `setup`, `onDestroy`** — untouched; do not reorder them relative to
   the fold.
 - **No shipped feature declares a core key today** (issue AC) — if the feature specs or stories
-  start throwing after this step, a shipped feature *does*, and that is a finding to report, not
+  start throwing after this step, a shipped feature _does_, and that is a finding to report, not
   something to special-case in the fold.
 - Watch `wire-columns-schema.spec.ts`: it calls the wiring directly, not through
   `composeTable`, so it should be unaffected — verify rather than assume.
@@ -161,4 +159,5 @@ render stage, and editing member) become `feature 1 and feature 2`. No new cases
       changes to them.
 
 ---
+
 ← [Step 2: Registry spec — core-key pre-claim](step-2-slots-spec-core-key-preclaim.plan.md) | [Step 4: Compose spec — base-store ordering →](step-4-compose-spec-base-store-ordering.plan.md)

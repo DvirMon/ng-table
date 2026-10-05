@@ -61,4 +61,5 @@ Use `import type` for the directive class references — this file only needs th
 - [ ] `nx typecheck shared-design-system` passes
 
 ---
+
 [Step 2: NgpTableDirective](step-2-ngp-table-directive.plan.md) →

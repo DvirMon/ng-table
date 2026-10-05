@@ -1,5 +1,5 @@
 ---
-title: "Step 6 — Perf findings + docs updates"
+title: 'Step 6 — Perf findings + docs updates'
 type: task-step
 issue: 6
 ---
@@ -68,7 +68,7 @@ budget against.
 - Trim the superseded-sections banner at the top of the file: the **Methods** section and
   single-level-scope text are now fully superseded by shipped code, not just by the decisions
   doc — update the banner's wording accordingly (it currently says "read the decisions first,"
-  which is still true for the *unshipped* parts, D4/D6–D8/D11, but no longer the framing for
+  which is still true for the _unshipped_ parts, D4/D6–D8/D11, but no longer the framing for
   D1/D3/D9, which are now implemented).
 - Do not mark the file `code: shipped` — that's accurate only once #24/#59/#60 also land.
 
@@ -106,4 +106,5 @@ hand-edit `status.md`, it's generated from feature-spec frontmatter). This picks
 - [ ] `docs/status.md` regenerated (not hand-edited) and reflects the frontmatter change.
 
 ---
+
 ← [Step 5: Tests](step-5-tests.plan.md)

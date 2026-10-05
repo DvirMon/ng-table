@@ -12,7 +12,7 @@ parent: ../1-state/architecture.md
 
 ## Executive Summary
 
-`columns` is **core configuration** on `createTable()` — not an opt-in feature. Every table requires it, the same way `trackBy` is required. It is built via `createColumns(data, build, schema?)` — there is no plain-array form (#139). Declarations are static, but the *state* derived from them (visibility, order) is runtime-mutable. `createColumns`'s optional third argument, `schema`, layers a declarative rule DX on top of the same call; see `../2-columns/architecture.md`.
+`columns` is **core configuration** on `createTable()` — not an opt-in feature. Every table requires it, the same way `trackBy` is required. It is built via `createColumns(data, build, schema?)` — there is no plain-array form (#139). Declarations are static, but the _state_ derived from them (visibility, order) is runtime-mutable. `createColumns`'s optional third argument, `schema`, layers a declarative rule DX on top of the same call; see `../2-columns/architecture.md`.
 
 ## Registration
 
@@ -50,7 +50,9 @@ createTable(
     columns: createColumns(
       data,
       (col) => [col('name'), col('status')],
-      (path) => { visible(path.status, { when: () => role() === 'admin' }); },
+      (path) => {
+        visible(path.status, { when: () => role() === 'admin' });
+      },
     ),
   },
   /* ...features */
@@ -70,9 +72,9 @@ required on the declaration, everything else is optional and defaulted at resolu
 ```ts
 interface ColumnDef<TRow = unknown> {
   id: string;
-  accessor: (row: TRow) => unknown;   // function only — no string shorthand
-  visible: boolean;                    // mutated by toggleColumnVisibility()
-  order: number;                       // mutated by reorderColumns()
+  accessor: (row: TRow) => unknown; // function only — no string shorthand
+  visible: boolean; // mutated by toggleColumnVisibility()
+  order: number; // mutated by reorderColumns()
   label: string;
   meta?: ReadonlyMap<ColumnMetaKey<unknown>, unknown>;
 
@@ -96,12 +98,12 @@ type ColumnDefInput<TRow> = Pick<ColumnDef<TRow>, 'id'> & Partial<Omit<ColumnDef
 
 ## Methods
 
-| Method | Description |
-|---|---|
-| `setColumns(defs: readonly ColumnWrite<TRow, TId>[])` | Replace the full column list by id — `ColumnWrite` is `{ id, label?, visible?, accessor? }`; `order` and `meta` are not writable through this path |
+| Method                                                          | Description                                                                                                                                                                                                                                                                                            |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `setColumns(defs: readonly ColumnWrite<TRow, TId>[])`           | Replace the full column list by id — `ColumnWrite` is `{ id, label?, visible?, accessor? }`; `order` and `meta` are not writable through this path                                                                                                                                                     |
 | `updateColumns(updater: (columns: ColumnDef[]) => ColumnDef[])` | Derive the next column list from the current one — the `.update()` counterpart to `setColumns()`'s `.set()`. This is also the method `createColumns`'s schema-argument store-owned reactive/async rules call under the hood (see `../2-columns/reference/ownership-model.md`'s snapshot-diff patcher). |
-| `reorderColumns(ids: string[])` | Re-assign `order` per the given id sequence |
-| `toggleColumnVisibility(id: string)` | Flip a column's `visible` flag |
+| `reorderColumns(ids: string[])`                                 | Re-assign `order` per the given id sequence                                                                                                                                                                                                                                                            |
+| `toggleColumnVisibility(id: string)`                            | Flip a column's `visible` flag                                                                                                                                                                                                                                                                         |
 
 Columns are runtime-mutable — a deliberate choice over static/immutable columns.
 
@@ -120,8 +122,8 @@ table.columns.update(reorderColumns(draggedColumnIds)); // re-apply the user's o
 
 ## `renderColumns` — the render-ready projection
 
-`table.renderColumns()` is a read-only `Signal<ColumnDef[]>` holding the *visible* columns in
-*render order* — the column-side twin of `renderRows` ([#142](https://github.com/DvirMon/ng-table/issues/142)). `store.columns()` stays
+`table.renderColumns()` is a read-only `Signal<ColumnDef[]>` holding the _visible_ columns in
+_render order_ — the column-side twin of `renderRows` ([#142](https://github.com/DvirMon/ng-table/issues/142)). `store.columns()` stays
 unfiltered/unsorted (declaration order, every column including hidden ones); `renderColumns()` is
 what a template loop should actually iterate.
 
@@ -170,7 +172,7 @@ effect(() => {
   const allowed = permission.value();
   if (allowed === undefined) return;
   store.updateColumns((columns) =>
-    columns.map((c) => (c.id === 'salary' ? { ...c, visible: allowed } : c))
+    columns.map((c) => (c.id === 'salary' ? { ...c, visible: allowed } : c)),
   );
 });
 ```
@@ -214,12 +216,12 @@ Other features read `columns` directly rather than declaring a compile-time feat
 
 - [ ] No "reset to default columns" capability exists in this shape — confirm this is acceptable long-term (decided: not needed for now).
 - [x] **Column resize (width) / pinning state — RESOLVED 2026-07-25.** Width defaults to a
-  column-owned config seed (consumer CSS, no store involvement); if made resizable via a drag
-  directive, it's promoted to a dedicated `withColumnSizing()` store feature rather than a
-  `ColumnDef` field. Pinning is **not** a `ColumnDef` field at all — it lives in a
-  `withColumnPinning()` feature's own `columnPinning: { left, right }` state slice, mirroring
-  TanStack's `columnPinningFeature.ts`. Neither is part of this file's State Shape. See
-  `../1-state/architecture.md` (feature stubs) and `../2-columns/reference/tier-2-layout.md`.
+      column-owned config seed (consumer CSS, no store involvement); if made resizable via a drag
+      directive, it's promoted to a dedicated `withColumnSizing()` store feature rather than a
+      `ColumnDef` field. Pinning is **not** a `ColumnDef` field at all — it lives in a
+      `withColumnPinning()` feature's own `columnPinning: { left, right }` state slice, mirroring
+      TanStack's `columnPinningFeature.ts`. Neither is part of this file's State Shape. See
+      `../1-state/architecture.md` (feature stubs) and `../2-columns/reference/tier-2-layout.md`.
 
 ---
 

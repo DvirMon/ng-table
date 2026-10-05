@@ -14,14 +14,20 @@ import { createWritableView } from './engine/writable-view';
 /** Minimal `TableStore<unknown>` stub for directive DI-wiring tests — no real store behavior. */
 export function createMockTableStore(): TableStore<unknown> {
   return {
-    columns: createWritableView<ColumnDef<unknown>[], never>(() => [], () => undefined),
+    columns: createWritableView<ColumnDef<unknown>[], never>(
+      () => [],
+      () => undefined,
+    ),
     rows: signal<unknown[]>([]),
     renderRows: signal<RenderRow<unknown>[]>([]),
     renderColumns: signal<ColumnDef<unknown>[]>([]),
     totalRowCount: signal(0),
     trackBy: () => 'stub-id',
     indexById: signal(new Map<RowId, number>()),
-    value: createWritableView<unknown[], never>(() => [], () => undefined),
+    value: createWritableView<unknown[], never>(
+      () => [],
+      () => undefined,
+    ),
   };
 }
 
@@ -39,7 +45,9 @@ export function mockDataRenderRow(overrides: Partial<RenderRow<unknown>> = {}): 
 }
 
 /** A group `RenderRow` stub, `group-1` at depth 1, with `overrides` applied. */
-export function mockGroupRenderRow(overrides: Partial<RenderRow<unknown>> = {}): RenderRow<unknown> {
+export function mockGroupRenderRow(
+  overrides: Partial<RenderRow<unknown>> = {},
+): RenderRow<unknown> {
   return {
     id: 'group-1',
     depth: 1,
@@ -159,12 +167,15 @@ function mockIndexById<TRow>(rows: TRow[], trackBy: TrackByFn<TRow>): ReadonlyMa
  */
 export function createMockTableStoreWithData<TRow>(
   rows: TRow[],
-  trackBy: TrackByFn<TRow>
+  trackBy: TrackByFn<TRow>,
 ): TableStore<TRow> {
   const data = signal<TRow[]>(rows);
   const indexById = computed(() => mockIndexById(data(), trackBy));
   return {
-    columns: createWritableView<ColumnDef<TRow>[], never>(() => [], () => undefined),
+    columns: createWritableView<ColumnDef<TRow>[], never>(
+      () => [],
+      () => undefined,
+    ),
     rows: signal<TRow[]>(rows),
     renderRows: signal<RenderRow<TRow>[]>([]),
     renderColumns: signal<ColumnDef<TRow>[]>([]),
@@ -173,7 +184,7 @@ export function createMockTableStoreWithData<TRow>(
     trackBy,
     value: createWritableView<TRow[], RowUpdater<TRow>>(
       () => data(),
-      (updater) => data.update((current) => updater(current, { trackBy, indexById: indexById() }))
+      (updater) => data.update((current) => updater(current, { trackBy, indexById: indexById() })),
     ),
   };
 }
@@ -185,7 +196,7 @@ export function createMockTableStoreWithData<TRow>(
  */
 export function createMockTableStoreWithEditing<TRow>(
   rows: TRow[],
-  trackBy: TrackByFn<TRow>
+  trackBy: TrackByFn<TRow>,
 ): TableStore<TRow> & RowEditMembers<TRow> {
   const data = signal<TRow[]>(rows);
   const indexById = computed(() => mockIndexById(data(), trackBy));
@@ -196,7 +207,7 @@ export function createMockTableStoreWithEditing<TRow>(
   });
   const value = createWritableView<TRow[], RowUpdater<TRow>>(
     () => data(),
-    (updater) => data.update((current) => updater(current, { trackBy, indexById: indexById() }))
+    (updater) => data.update((current) => updater(current, { trackBy, indexById: indexById() })),
   );
   const editing = createWritableView<ReadonlySet<RowId>, EditingUpdater<TRow>>(
     () => state().open,
@@ -207,11 +218,14 @@ export function createMockTableStoreWithEditing<TRow>(
           trackBy,
           writeData: (rows) => value.update(() => rows),
           indexById: indexById(),
-        })
-      )
+        }),
+      ),
   );
   return {
-    columns: createWritableView<ColumnDef<TRow>[], never>(() => [], () => undefined),
+    columns: createWritableView<ColumnDef<TRow>[], never>(
+      () => [],
+      () => undefined,
+    ),
     rows: signal<TRow[]>(rows),
     renderRows: signal<RenderRow<TRow>[]>([]),
     renderColumns: signal<ColumnDef<TRow>[]>([]),
@@ -225,7 +239,12 @@ export function createMockTableStoreWithEditing<TRow>(
     pending: computed(() => pendingIds(state())),
     pendingOps: computed(() => pendingOps(state())),
     unconfirmed: computed(() => state().unconfirmed),
-    draft: createDraftRows(() => data(), () => editing(), trackBy, () => indexById()),
+    draft: createDraftRows(
+      () => data(),
+      () => editing(),
+      trackBy,
+      () => indexById(),
+    ),
   };
 }
 

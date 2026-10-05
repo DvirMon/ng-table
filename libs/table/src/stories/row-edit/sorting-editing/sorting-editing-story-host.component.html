@@ -1,9 +1,9 @@
 <div class="story-host">
   <p class="story-host__hint">
     Sorting combined with row editing. Sort by Name or Due Date, then edit a row and change the
-    sorted column's value — today the row jumps to its new sorted position right away (keeping
-    it in place while open isn't supported yet). A blank Due Date always sorts to the end,
-    regardless of sort direction.
+    sorted column's value — today the row jumps to its new sorted position right away (keeping it in
+    place while open isn't supported yet). A blank Due Date always sorts to the end, regardless of
+    sort direction.
   </p>
 
   <ngp-sorting-editing-toolbar
@@ -16,8 +16,8 @@
   @if (movedRow(); as violation) {
     <p class="story-host__error" role="status">
       Row "{{ violation.id }}" was at position {{ violation.indexAtOpen }} when opened, now at
-      {{ violation.currentIndex }} while still open — S-1's row-hold (OQ-3) isn't implemented
-      yet, so this is expected.
+      {{ violation.currentIndex }} while still open — S-1's row-hold (OQ-3) isn't implemented yet,
+      so this is expected.
     </p>
   }
 

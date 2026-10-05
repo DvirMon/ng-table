@@ -22,7 +22,7 @@ After Step 1 no such level can reach either of them — declarations throw
 at construction, and the `grouping` writer throws on `.update()`. G55
 deletes the label tier; AC #5 deletes the read filter.
 
-Leaving them is worse than dead code: both are *silent* degrades. The
+Leaving them is worse than dead code: both are _silent_ degrades. The
 label tier renders a raw identifier into the UI where a human-readable
 label belongs, and the filter drops a level from the public read with no
 signal — a consumer iterating `groupingLevels()` sees fewer levels than
@@ -37,12 +37,12 @@ signal — a consumer iterating `groupingLevels()` sees fewer levels than
 function resolveGroupLabel<TRow>(
   columnId: string,
   columns: ColumnDef<TRow>[],
-  labelByColumn?: ReadonlyMap<string, string>
+  labelByColumn?: ReadonlyMap<string, string>,
 ): string {
   const explicit = labelByColumn?.get(columnId);
   if (explicit) return explicit;
   const column = columns.find((c) => c.id === columnId);
-  return column ? column.label : columnId;   // <- this fallback goes
+  return column ? column.label : columnId; // <- this fallback goes
 }
 ```
 
@@ -61,7 +61,8 @@ third.
 ```ts
 const groupingLevels = computed(() => {
   const columnById = new Map(input.columns().map((c) => [c.id, c]));
-  return appliedGrouping().map((id) => columnById.get(id))
+  return appliedGrouping()
+    .map((id) => columnById.get(id))
     .filter((column): column is ColumnDef<TRow> => column !== undefined);
   //  ^ this filter goes
 });
@@ -72,8 +73,8 @@ invariant rather than as a row to drop.
 
 **3. Update `GroupingMembers.groupingLevels`' doc comment.**
 
-It currently says *"A level naming no known column is omitted here (no
-`ColumnDef` to report) even while applied"*. That sentence is now false.
+It currently says _"A level naming no known column is omitted here (no
+`ColumnDef` to report) even while applied"_. That sentence is now false.
 Keep the other half — a level `when` rejects entirely is still omitted,
 because that is D5's applied/declared distinction, not a missing column.
 
@@ -87,7 +88,7 @@ because that is D5's applied/declared distinction, not a missing column.
   free and removes the last linear scan in the walk.
 - **`isGroupedBy` is unchanged.** It reads a `Set` off `appliedGrouping()`
   and returns `false` for an unknown id — still correct, since an unknown
-  id can no longer *be* applied, and a `false` for a never-declared id is
+  id can no longer _be_ applied, and a `false` for a never-declared id is
   a query answer, not a degrade.
 
 ## Risks / Watchouts
@@ -125,4 +126,5 @@ because that is D5's applied/declared distinction, not a missing column.
       total.
 
 ---
+
 ← [Step 4: `applyAggregate` keys by column id](step-4-apply-aggregate.plan.md) | [Step 6: The two-walks gate spec](step-6-engine-gate-spec.plan.md) →

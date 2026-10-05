@@ -83,7 +83,7 @@ Delete the four-line "Sole generic-erasure boundary" comment above the push
  * and this is a plain accessor.
  */
 export function recorderOf<TRow, TRule>(
-  handle: RecordedHandle<TRow, TRule>
+  handle: RecordedHandle<TRow, TRule>,
 ): PathRecorder<TRow, TRule> {
   return handle[PATH_RECORDER];
 }
@@ -94,12 +94,12 @@ Also fix `createRecorderSession`'s own doc comment (`:34`), which names
 
 Call sites, all mechanical:
 
-| File | Sites |
-|---|---|
-| `columns-schema/metadata.ts` | import `:2`, `:44`, `:71` |
-| `columns-schema/schema.ts` | the re-export on `:15` |
+| File                                   | Sites                                         |
+| -------------------------------------- | --------------------------------------------- |
+| `columns-schema/metadata.ts`           | import `:2`, `:44`, `:71`                     |
+| `columns-schema/schema.ts`             | the re-export on `:15`                        |
 | `api/features/with-grouping/schema.ts` | import `:4`, and `:61`, `:78`, `:116`, `:131` |
-| `columns-schema/schema.spec.ts` | `:69` — the `it(...)` **title string only** |
+| `columns-schema/schema.spec.ts`        | `:69` — the `it(...)` **title string only**   |
 
 ### 3. `columns-schema/types.ts` — `MetadataAsyncRule` goes method-shorthand
 
@@ -168,7 +168,7 @@ the shorthand itself is still required, only the explanation changes.
 
 - **`PathRecorder`'s `TRow` becomes phantom, on purpose.** After the arms
   are dropped nothing in the interface mentions `TRow`, so `PathRecorder<A,
-  R>` and `PathRecorder<B, R>` are structurally identical. Keep the
+R>` and `PathRecorder<B, R>` are structurally identical. Keep the
   parameter: it is part of `ColumnHandle` and `GroupingHandle`'s declared
   shape (`columns-schema/types.ts:26`, `with-grouping/types.ts:84`), which
   AC #8 freezes. Handle-mixing is still rejected, because `TRule` is always
@@ -179,7 +179,7 @@ the shorthand itself is still required, only the explanation changes.
   It erases to `MetadataRule<TRow, unknown>` cleanly.
 - **Why the spec title may be edited.** `columns-schema/schema.spec.ts:69`
   names `assertPathIsCurrent` in an `it(...)` string. AC #8 freezes spec
-  *assertions*, not a test's prose; leaving a title naming a deleted symbol
+  _assertions_, not a test's prose; leaving a title naming a deleted symbol
   is a stale reference nobody will find later. No `expect` in that file
   changes.
 
@@ -220,4 +220,5 @@ the shorthand itself is still required, only the explanation changes.
 - [ ] `nx run shared-table:typecheck-spec` clean.
 
 ---
+
 ← [Step 1: Record reading B](step-1-record-reading.plan.md) | [Step 3: Shared recording runner](step-3-shared-recording-runner.plan.md) →

@@ -65,4 +65,5 @@ carry the value map structurally.
 - [ ] `nx run shared-table:typecheck-spec` clean.
 
 ---
+
 ← [Step 1: Accept a set](step-1-accept-a-set.plan.md) | [Step 3: Move specs off `columnsSchema`](step-3-move-specs-off-columns-schema.plan.md) →

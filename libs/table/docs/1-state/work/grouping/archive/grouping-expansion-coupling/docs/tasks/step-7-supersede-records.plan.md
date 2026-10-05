@@ -9,10 +9,10 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                                               | Action                                       |
+| ------------------------------------------------------------------ | -------------------------------------------- |
 | `libs/shared/table/docs/1-state/work/with-grouping/2-decisions.md` | edit — mark D11 superseded (around line 163) |
-| `libs/shared/table/docs/adr/0011-chained-render-stages.md` | edit — note partial supersession |
+| `libs/shared/table/docs/adr/0011-chained-render-stages.md`         | edit — note partial supersession             |
 
 ## Why This Step Exists
 
@@ -36,7 +36,7 @@ inventing a format.
 **Do not delete D11 or rewrite its reasoning.** The record of what was decided, and why it looked
 right at the time, is the point. Add the marker, name the superseding ADR, date it.
 
-One sentence on *what* changed is worth adding: the stage-order constraint D11 cited was real, but
+One sentence on _what_ changed is worth adding: the stage-order constraint D11 cited was real, but
 it was a consequence of `RenderRow` carrying no parent link — not an independent reason to couple
 the features.
 
@@ -84,4 +84,5 @@ and so the record edits can land whenever the ADR exists rather than blocking on
 - [ ] `docs/status.md` not hand-edited.
 
 ---
+
 ← [Step 6: Feature + type tests](step-6-feature-tests.plan.md)

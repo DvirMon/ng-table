@@ -21,11 +21,7 @@ interface Row {
 // `schema`, and an explicit `ColumnSet<Row, readonly ColumnDecl<Row, string, unknown>[]>` would
 // widen `id` to `string`, breaking that literal `ColumnsPath` access (ADR-0019).
 function makeColumns() {
-  return createColumns(noData<Row>(), (col) => [
-    col('name'),
-    col('status'),
-    col('category'),
-  ]);
+  return createColumns(noData<Row>(), (col) => [col('name'), col('status'), col('category')]);
 }
 
 function makeRows(): Row[] {
@@ -77,8 +73,8 @@ describe('withFiltering', () => {
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withFiltering({ schema: (path) => ({ name: contains(path.name) }) })
-      )
+        withFiltering({ schema: (path) => ({ name: contains(path.name) }) }),
+      ),
     );
 
     store.filters.name().value.set('A');
@@ -91,8 +87,8 @@ describe('withFiltering', () => {
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withFiltering({ schema: (path) => ({ status: equals(path.status) }) })
-      )
+        withFiltering({ schema: (path) => ({ status: equals(path.status) }) }),
+      ),
     );
 
     store.filters.status().value.set('open');
@@ -107,8 +103,8 @@ describe('withFiltering', () => {
         { trackBy: 'id', columns: makeColumns() },
         withFiltering({
           schema: (path) => ({ status: equals(path.status), category: equals(path.category) }),
-        })
-      )
+        }),
+      ),
     );
 
     store.filters.status().value.set('open');
@@ -124,8 +120,8 @@ describe('withFiltering', () => {
         { trackBy: 'id', columns: makeColumns() },
         withFiltering({
           schema: (path) => ({ status: equals(path.status), category: equals(path.category) }),
-        })
-      )
+        }),
+      ),
     );
 
     expect(store.rows()).toHaveLength(3);
@@ -133,7 +129,7 @@ describe('withFiltering', () => {
 
   it('contributes no members beyond the core store surface when no schema is given', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withFiltering())
+      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withFiltering()),
     );
 
     expect('filters' in store).toBe(false);
@@ -144,8 +140,8 @@ describe('withFiltering', () => {
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withFiltering({ schema: (path) => ({ status: equals(path.status) }) })
-      )
+        withFiltering({ schema: (path) => ({ status: equals(path.status) }) }),
+      ),
     );
 
     expect(store.rows()).toHaveLength(3);
@@ -165,8 +161,8 @@ describe('withFiltering', () => {
         { trackBy: 'id', columns: makeColumns() },
         withFiltering({
           schema: (path) => ({ status: equals(path.status, { source: () => wantedStatus() }) }),
-        })
-      )
+        }),
+      ),
     );
 
     expect(store.rows().map((row) => row.id)).toEqual(['r1', 'r3']);
@@ -180,8 +176,8 @@ describe('withFiltering', () => {
       createTable(
         signal<Row[]>(makeRows()), // 3 rows: a per-row call would be 3
         { trackBy: 'id', columns: makeColumns() },
-        withFiltering({ schema: (path) => ({ status: equals(path.status) }) })
-      )
+        withFiltering({ schema: (path) => ({ status: equals(path.status) }) }),
+      ),
     );
 
     store.filters.status().value.set('open');
@@ -198,9 +194,9 @@ describe('withFiltering', () => {
         { trackBy: 'id', columns: makeColumns() },
         withFiltering(
           { schema: (path) => ({ status: equals(path.status) }) },
-          withComputed((s) => ({ visibleCount: computed(() => s.rows().length) }))
-        )
-      )
+          withComputed((s) => ({ visibleCount: computed(() => s.rows().length) })),
+        ),
+      ),
     );
 
     store.filters.status().value.set('open');
@@ -217,8 +213,8 @@ describe('withFiltering', () => {
         createTable(
           signal<Row[]>(rawRows),
           { trackBy: 'id', columns: makeColumns() },
-          withFiltering({ schema: (path) => ({ status: equals(path.status) }), manual: true })
-        )
+          withFiltering({ schema: (path) => ({ status: equals(path.status) }), manual: true }),
+        ),
       );
 
       store.filters.status().value.set('open');
@@ -243,12 +239,12 @@ describe('withFiltering', () => {
                   () => {
                     throw new Error('boom');
                   },
-                  { emptyValue: false, isEmpty: () => false }
+                  { emptyValue: false, isEmpty: () => false },
                 ),
                 category: equals(path.category),
               }),
-            })
-          )
+            }),
+          ),
         );
 
         store.filters.category().value.set('b');
@@ -284,11 +280,11 @@ describe('withFiltering', () => {
                     }
                     return name === 'Ann';
                   },
-                  { emptyValue: false, isEmpty: () => false }
+                  { emptyValue: false, isEmpty: () => false },
                 ),
               }),
-            })
-          )
+            }),
+          ),
         );
 
         // r2 (Bob) is decided false before the throw and stays excluded. r3 (Cid) throws and
@@ -310,8 +306,8 @@ describe('withFiltering', () => {
           { trackBy: 'id', columns: makeColumns() },
           withFiltering({
             schema: (path) => ({ status: equals(path.status), category: equals(path.category) }),
-          })
-        )
+          }),
+        ),
       );
 
       store.filters().value.set({ status: 'open', category: 'b' });
@@ -328,8 +324,8 @@ describe('withFiltering', () => {
           { trackBy: 'id', columns: makeColumns() },
           withFiltering({
             schema: (path) => ({ status: equals(path.status), category: equals(path.category) }),
-          })
-        )
+          }),
+        ),
       );
 
       store.filters.status().value.set('open');
@@ -342,8 +338,8 @@ describe('withFiltering', () => {
         createTable(
           signal<Row[]>(makeRows()),
           { trackBy: 'id', columns: makeColumns() },
-          withFiltering({ schema: (path) => ({ status: equals(path.status) }) })
-        )
+          withFiltering({ schema: (path) => ({ status: equals(path.status) }) }),
+        ),
       );
 
       expect(store.filters().isActive()).toBe(false);
@@ -361,8 +357,8 @@ describe('withFiltering', () => {
           { trackBy: 'id', columns: makeColumns() },
           withFiltering({
             schema: (path) => ({ status: equals(path.status, { source: () => sourceStatus() }) }),
-          })
-        )
+          }),
+        ),
       );
 
       store.filters.status().value.set('open');
@@ -379,8 +375,8 @@ describe('withFiltering', () => {
         createTable(
           signal<Row[]>(makeRows()),
           { trackBy: 'id', columns: makeColumns() },
-          withFiltering({ schema: (path) => ({ status: equals(path.status) }) })
-        )
+          withFiltering({ schema: (path) => ({ status: equals(path.status) }) }),
+        ),
       );
 
       store.filters.status().value.set('closed');
@@ -394,8 +390,8 @@ describe('withFiltering', () => {
         createTable(
           signal<Row[]>(makeRows()),
           { trackBy: 'id', columns: makeColumns() },
-          withFiltering({ schema: (path) => ({ status: equals(path.status) }) })
-        )
+          withFiltering({ schema: (path) => ({ status: equals(path.status) }) }),
+        ),
       );
 
       expect(store.filters.status().criterion()).toBeUndefined();
@@ -412,8 +408,8 @@ describe('withFiltering', () => {
           { trackBy: 'id', columns: makeColumns() },
           withFiltering({
             schema: (path) => ({ status: equals(path.status), category: equals(path.category) }),
-          })
-        )
+          }),
+        ),
       );
 
       store.filters.category().value.set('b');
@@ -429,8 +425,8 @@ describe('withFiltering', () => {
           { trackBy: 'id', columns: makeColumns() },
           withFiltering({
             schema: (path) => ({ status: equals(path.status), category: equals(path.category) }),
-          })
-        )
+          }),
+        ),
       );
 
       store.filters.status().value.set('open');
@@ -450,9 +446,9 @@ describe('withFiltering', () => {
           createTable(
             signal<Row[]>(makeRows()),
             { trackBy: 'id', columns: makeWidenedColumns() },
-            withFiltering({ schema: (path) => ({ territory: equals(path['territory']) }) })
-          )
-        )
+            withFiltering({ schema: (path) => ({ territory: equals(path['territory']) }) }),
+          ),
+        ),
       ).toThrow(/\[withFiltering\].*"territory"/);
     });
 
@@ -466,9 +462,9 @@ describe('withFiltering', () => {
               schema: (path) => ({
                 search: anyOf([contains(path['name']), contains(path['territory'])]),
               }),
-            })
-          )
-        )
+            }),
+          ),
+        ),
       ).toThrow(/\[withFiltering\].*"territory"/);
     });
   });
@@ -482,8 +478,8 @@ describe('withFiltering', () => {
         createTable(
           signal<AccessorRow[]>(makeAccessorRows()),
           { trackBy: 'id', columns },
-          withFiltering({ schema: (path) => ({ doubled: equals(path.doubled) }) })
-        )
+          withFiltering({ schema: (path) => ({ doubled: equals(path.doubled) }) }),
+        ),
       );
 
       store.filters.doubled().value.set(200);
@@ -499,8 +495,8 @@ describe('withFiltering', () => {
         createTable(
           signal<AccessorRow[]>(makeAccessorRows()),
           { trackBy: 'id', columns },
-          withFiltering({ schema: (path) => ({ total: equals(path.total) }) })
-        )
+          withFiltering({ schema: (path) => ({ total: equals(path.total) }) }),
+        ),
       );
 
       store.filters.total().value.set(300);
@@ -517,8 +513,8 @@ describe('withFiltering', () => {
           { trackBy: 'id', columns: makeColumns() },
           withFiltering({
             schema: (path) => ({ search: anyOf([contains(path.name), contains(path.status)]) }),
-          })
-        )
+          }),
+        ),
       );
 
       store.filters.search().value.set('Ann');
@@ -538,7 +534,11 @@ describe('withFiltering', () => {
   describe('types', () => {
     it('withFiltering() and withFiltering({ manual: true }) with no schema contribute {} — recovered exactly as TableStore<Row>, never widened to any', () => {
       const store = inContext(() =>
-        createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withFiltering())
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering(),
+        ),
       );
 
       expectTypeOf(store).toEqualTypeOf<RowStore>();
@@ -548,8 +548,8 @@ describe('withFiltering', () => {
         createTable(
           signal<Row[]>(makeRows()),
           { trackBy: 'id', columns: makeColumns() },
-          withFiltering({ manual: true })
-        )
+          withFiltering({ manual: true }),
+        ),
       );
 
       expectTypeOf(manualStore).toEqualTypeOf<RowStore>();
@@ -563,9 +563,9 @@ describe('withFiltering', () => {
           { trackBy: 'id', columns: makeColumns() },
           withFiltering(
             undefined,
-            withComputed((s) => ({ visibleCount: computed(() => s.rows().length) }))
-          )
-        )
+            withComputed((s) => ({ visibleCount: computed(() => s.rows().length) })),
+          ),
+        ),
       );
 
       expectTypeOf(store.visibleCount).toEqualTypeOf<Signal<number>>();
@@ -588,8 +588,8 @@ describe('withFiltering', () => {
             schema: (path) => ({ name: contains(path.name) }),
             includeDescendants: options.includeDescendants,
             manual: options.manual,
-          })
-        )
+          }),
+        ),
       );
     }
 

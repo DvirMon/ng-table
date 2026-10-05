@@ -121,4 +121,5 @@ grouping, so re-grep before writing the new list.
       Steps 4 and 5 need it.
 
 ---
+
 [Step 2: Move the checks into `createColumns`](step-2-relocate-into-create-columns.plan.md) →

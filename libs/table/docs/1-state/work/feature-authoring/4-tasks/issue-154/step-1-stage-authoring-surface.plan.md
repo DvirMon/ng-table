@@ -7,6 +7,7 @@ files:
   - libs/table/src/schema/stage-schema.ts (new)
   - libs/table/src/schema/stage-rules.ts (new)
 ---
+
 # Step 1 — Stage authoring surface (stageSchema + stage)
 
 This step adds the recording-form schema and rule that a
@@ -68,8 +69,13 @@ Recorded rule shape:
 ```ts
 type StageRule<TTransform> =
   | { anchor: string; run: TTransform }
-  | { anchor: string; name: string; placement: 'before' | 'after';
-      synthesizesRows?: boolean; run: TTransform };
+  | {
+      anchor: string;
+      name: string;
+      placement: 'before' | 'after';
+      synthesizesRows?: boolean;
+      run: TTransform;
+    };
 ```
 
 ## Watch out
@@ -101,4 +107,5 @@ tdd-planner review concluded "no seam of its own," covered
 later through the fold plus the refactored features.
 
 ---
+
 [Step 2: Pipeline anchors + registry](step-2-pipeline-anchors-registry.plan.md) →

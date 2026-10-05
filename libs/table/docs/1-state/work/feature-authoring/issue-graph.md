@@ -5,14 +5,14 @@ open registration for in-house pipeline/render stages (ADR-0020).
 
 ## Nodes
 
-| # | Title | Slice slug | Depends on | Blocks |
-|---|---|---|---|---|
-| [#152](https://github.com/DvirMon/ng-table/issues/152) | Table: export the feature-author surface from @ngp/table | export-author-surface | — | 157 |
-| [#153](https://github.com/DvirMon/ng-table/issues/153) | Table: probe stage-registry declaration merging through ngc + barrel | registry-merge-probe | — | 155 |
-| [#154](https://github.com/DvirMon/ng-table/issues/154) | Table: stage rule form replaces the object form for built-in claims | stage-rule-claims | — | 155, 156 |
-| [#155](https://github.com/DvirMon/ng-table/issues/155) | Table: declared stages — anchors, ordering and dev checks | declared-stages | 153, 154 | 157 |
-| [#156](https://github.com/DvirMon/ng-table/issues/156) | Table: runtime row-id checks on render stages | runtime-row-id-checks | 154 | 157 |
-| [#157](https://github.com/DvirMon/ng-table/issues/157) | Table: feature-authoring guide and stage-doc amendments | feature-authoring-guide | 152, 155, 156 | — |
+| #                                                      | Title                                                                | Slice slug              | Depends on    | Blocks   |
+| ------------------------------------------------------ | -------------------------------------------------------------------- | ----------------------- | ------------- | -------- |
+| [#152](https://github.com/DvirMon/ng-table/issues/152) | Table: export the feature-author surface from @ngp/table             | export-author-surface   | —             | 157      |
+| [#153](https://github.com/DvirMon/ng-table/issues/153) | Table: probe stage-registry declaration merging through ngc + barrel | registry-merge-probe    | —             | 155      |
+| [#154](https://github.com/DvirMon/ng-table/issues/154) | Table: stage rule form replaces the object form for built-in claims  | stage-rule-claims       | —             | 155, 156 |
+| [#155](https://github.com/DvirMon/ng-table/issues/155) | Table: declared stages — anchors, ordering and dev checks            | declared-stages         | 153, 154      | 157      |
+| [#156](https://github.com/DvirMon/ng-table/issues/156) | Table: runtime row-id checks on render stages                        | runtime-row-id-checks   | 154           | 157      |
+| [#157](https://github.com/DvirMon/ng-table/issues/157) | Table: feature-authoring guide and stage-doc amendments              | feature-authoring-guide | 152, 155, 156 | —        |
 
 The slice slug is what `/to-tasks` uses in the issue's branch
 name, `<type>/<NN>-<slice-slug>`.

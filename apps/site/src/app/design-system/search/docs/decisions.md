@@ -54,7 +54,7 @@ Closes out the remaining open items from `docs/gaps-ngp-reference.md` (9, 10, 11
 16, 17). Item 6 stays open (a11y sign-off only, no code change needed or made).
 
 - **Item 9 (input-row well):** `.search-input-row` gained its own margin, `border-radius:
-  var(--ngpt-sys-shape-corner-extra-small)`, and background. No existing token is an exact
+var(--ngpt-sys-shape-corner-extra-small)`, and background. No existing token is an exact
   "lighter than panel" surface — reused `--ngpt-bg-active` (0.24) rather than inventing a
   literal, since it's the nearest existing token lighter than the panel's `--ngpt-bg-elevated`
   (0.2) and already used elsewhere in this DS for "hover on an elevated surface." The
@@ -140,7 +140,7 @@ a background," not a new color value. Paired with a new `--ngpt-text-on-accent`.
 
 **Revised 2026-08-24, accent re-hue to magenta 328.** The alias now points at
 `var(--ngpt-accent-surface)` (`oklch(0.55 0.25 328)`), not `var(--ngpt-accent)`: the accent is now
-the *text* tier at `oklch(0.68 0.22 328)`, too light to carry white text (3.21:1). The pairing
+the _text_ tier at `oklch(0.68 0.22 328)`, too light to carry white text (3.21:1). The pairing
 inverts with it — `--ngpt-text-on-accent` is now **white** at 5.60:1 over the fill, where the
 near-black neutral it replaces would land at 3.51:1. Under the previous orange accent the result
 ran the other way (white ~3.9:1, near-black ~5.1:1), which is why this token was a dark neutral
@@ -212,7 +212,7 @@ The entry immediately above ("overlay input row gains the same focus-icon treatm
 **reverted**. `docs/gaps-ngp-reference.md` item 7 was corrected after this decision was made:
 live-tested `.focus()`/`.blur()` on the reference's overlay input produces zero computed-style
 change anywhere (no ring, no icon-color shift) — the reference genuinely has no focus
-indicator on the overlay input, confirming the *original* spec line ("no border or ring on the
+indicator on the overlay input, confirming the _original_ spec line ("no border or ring on the
 input itself — the panel is already the focused surface") was correct all along. Removed
 `.search-input-row:focus-within .search-input-row__icon { color: var(--ngpt-accent); }` from
 `search-overlay.css` and the now-unused `search-input-row__icon` class from the leading
@@ -438,7 +438,7 @@ wrong semantics.
 
 The leading `lucideSearch` icon, the "Search docs" placeholder span, and the `⌘K` `<kbd>` chip
 remain in `search-field.html` — only the wrapping `<button>` was deleted. This is a pre-composed
-widget, not a generic styling wrapper: that fixed content *is* the field's identity, there is
+widget, not a generic styling wrapper: that fixed content _is_ the field's identity, there is
 nothing for a consumer to project, and the glyph is chosen by the component, so the local
 `viewProviders: [provideIcons({ lucideSearch })]` registration stays (ADR-0004). This is the
 difference from `icon-button`, which lost its `icon` input and its icon registry precisely because
@@ -462,7 +462,7 @@ loses `pressed: output<void>()` — consumers bind the native `(click)`"). Keepi
 `(click)` and `(open)` both work and both correct, with nothing declaring which is the contract.
 
 If a later round gives activation real semantics (e.g. the field owning debounce, or opening on
-focus as well as click, per `Search.md`'s "clicking *or focusing* it opens the overlay"), that is
+focus as well as click, per `Search.md`'s "clicking _or focusing_ it opens the overlay"), that is
 the point to reintroduce a named output — it would then carry meaning `(click)` cannot.
 
 ### `aria-label="Search docs"` stays fixed, on the host

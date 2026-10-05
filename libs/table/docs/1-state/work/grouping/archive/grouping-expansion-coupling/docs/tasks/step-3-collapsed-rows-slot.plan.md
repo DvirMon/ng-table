@@ -9,20 +9,20 @@
 
 ## Files
 
-| File | Action |
-|---|---|
-| `libs/shared/table/src/engine/types.ts` | edit — add the slot to `TableFeatureSpec` |
-| `libs/shared/table/src/engine/compose-table.ts` | edit — collect contributions during the fold |
-| `libs/shared/table/src/engine/core.ts` | edit — hold the contributions on `TableCoreHandle` |
-| `libs/shared/table/src/api/create-table-feature.ts` | edit — add to `PIPELINE_BEHAVIOR_KEYS`, pass through |
-| `libs/shared/table/src/api/features/with-expansion.ts` | edit — declare the slot |
+| File                                                   | Action                                               |
+| ------------------------------------------------------ | ---------------------------------------------------- |
+| `libs/shared/table/src/engine/types.ts`                | edit — add the slot to `TableFeatureSpec`            |
+| `libs/shared/table/src/engine/compose-table.ts`        | edit — collect contributions during the fold         |
+| `libs/shared/table/src/engine/core.ts`                 | edit — hold the contributions on `TableCoreHandle`   |
+| `libs/shared/table/src/api/create-table-feature.ts`    | edit — add to `PIPELINE_BEHAVIOR_KEYS`, pass through |
+| `libs/shared/table/src/api/features/with-expansion.ts` | edit — declare the slot                              |
 
 ## Why This Step Exists
 
 The prune (Step 4) needs a source for its collapsed set, and that source is a new kind of slot —
 the engine's first accumulating one. Landing the registration path separately from the pass that
-consumes it keeps two distinct review questions apart: *is this the right contract shape* here,
-and *is the pass correct* in Step 4.
+consumes it keeps two distinct review questions apart: _is this the right contract shape_ here,
+and _is the pass correct_ in Step 4.
 
 Gated on Step 1 because the ADR decides whether features contribute an **expanded** set or a
 **collapsed** one. That answer changes the member's name, its type, and the prune's rule.
@@ -115,4 +115,5 @@ its shape rather than inventing a different one.
 - [ ] `nx run shared-table:typecheck` clean — re-run after fixing any `.ts` error.
 
 ---
+
 ← [Step 2: `RenderRow.parentId`](step-2-parent-id.plan.md) | [Step 4: `'prune'` stage](step-4-prune-stage.plan.md) →

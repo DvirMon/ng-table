@@ -1,5 +1,5 @@
 ---
-title: "Step 8 — re-derive grouping coverage marks and register the cluster in stories.md"
+title: 'Step 8 — re-derive grouping coverage marks and register the cluster in stories.md'
 type: task-step
 plan: ../../1-gap-analysis.md
 ---
@@ -32,15 +32,15 @@ once Steps 4–7 land, most of those become ✅ and the rest need an explicit, s
 ## What To Do
 
 1. **`0-product/grouping.md`** — re-derive every story's mark **from the shipped stories**, not from
-   this plan's predictions. ✅ only where the story demonstrates the behavior *including its failure
-   path*; 🟡 where the mechanism ships and the affordance does not; ❌ unchanged where nothing
+   this plan's predictions. ✅ only where the story demonstrates the behavior _including its failure
+   path_; 🟡 where the mechanism ships and the affordance does not; ❌ unchanged where nothing
    renders. Replace the blanket ❌ paragraph and the superseded correction note with the new state.
    Named exceptions that must stay explicit, not silently marked covered:
    - 2.2 expand-all — shipped as an honest regression (S4/S5, OQ-3).
    - 2.3 initial expansion depth — still blocked on S6.
    - 4.1 / 4.2 blank and object group keys — regression demos (S7/S8), the story is the bug report.
    - 4.4's third criterion — a dropped level is still unannounced (the missing half of D14).
-   Update the frontmatter `status:` block and `date:`.
+     Update the frontmatter `status:` block and `date:`.
 2. **`3-ui/stories.md`** — add the `grouping/fixtures/*` cluster to the shared-fixtures table and
    the three new folders to Reference implementations. The doc currently describes the set as "the
    8 stories in `src/stories/`" — correct the count.
@@ -59,7 +59,7 @@ once Steps 4–7 land, most of those become ✅ and the rest need an explicit, s
 ## Risks / Watchouts
 
 - Do not mark X-G1 covered beyond what Step 6 renders: the cascade is consumer-owned, so the story
-  proves the *recipe*, not a library guarantee.
+  proves the _recipe_, not a library guarantee.
 
 ## Non-Goals
 
@@ -75,4 +75,5 @@ once Steps 4–7 land, most of those become ✅ and the rest need an explicit, s
 - [ ] `npm run table:status` named as pending if any frontmatter moved.
 
 ---
+
 ← [Step 7: async grouping rule](step-7-async-grouping-rule.plan.md)

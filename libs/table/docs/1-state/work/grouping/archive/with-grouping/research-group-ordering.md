@@ -16,7 +16,7 @@ A real user scenario needs group order driven by an external explicit list (a ca
 UI's own drag-and-drop order) or by a computed criterion (row-count-per-group, descending). This is
 additive to the existing "Grouping & aggregation" comparison in
 [../state-feature-competitive-audit/audit.md](../../../meta/archive/state-feature-competitive-audit/audit.md), which
-covers aggregation functions and correctness but not group *order*.
+covers aggregation functions and correctness but not group _order_.
 
 Every claim below was read from published package sources (versions pinned per row), not from
 memory. Tarballs pulled with `npm pack` and read from `dist`/`src`, same method as
@@ -24,17 +24,17 @@ memory. Tarballs pulled with `npm pack` and read from `dist`/`src`, same method 
 
 ## Findings
 
-| Library | Version read | Where it lives | Shape |
-|---|---|---|---|
-| TanStack Table v8 | `@tanstack/table-core@8.21.3` (`src/utils/getGroupedRowModel.ts`, `src/utils/getSortedRowModel.ts`) | **No dedicated group-order API.** Default order = `Map` insertion order (first-occurrence). The only override is the existing `sorting` state, applied **recursively** to both the top-level (group) rows and each group's `subRows`, via the same `sortingFn` | reuse of `SortingState`, not a grouping concept |
-| TanStack Table v9 | `@tanstack/table-core@9.2.4` (`dist/features/column-grouping/createGroupedRowModel.js`, `dist/core/row-models/coreRowModelsFeature.utils.js`) | Same — own doc comment states it outright: *"Sorting runs after grouping, so this aliases `table.getGroupedRowModel()`."* Grouping split into its own `column-grouping` feature (separate from a new `row-aggregation` feature) but order behavior unchanged | same |
-| Material React Table | `material-react-table@3.2.1` (`dist/index.d.ts`) | Imports `GroupingState`/`SortingState` directly from `@tanstack/react-table` — no `MRT_*` grouping-order type exists in its export list | none; inherits TanStack unchanged |
-| AG Grid | `ag-grid-community@36.1.0` (`dist/types/src/entities/gridOptions.d.ts:2076`, `:1254`; `dist/types/src/interfaces/iCallbackParams.d.ts:287`) — **row grouping is Enterprise-only** (`RowGroupingModule`; confirmed zero references to that module in the actual Community runtime bundle, only in the shared `.d.ts` types package) | Dedicated config: `initialGroupOrderComparator?: (params: {nodeA, nodeB}) => number` sets default group order. Separate `groupMaintainOrder: boolean` (`@default false`) decouples "user clicked sort on a data column" from "groups get reordered" | comparator over **full `IRowNode` pairs** (`nodeA.allLeafChildren`, `.childrenAfterGroup` — count-based ordering is directly expressible) + one boolean flag |
-| PrimeNG `p-table` | `primeng@22.1.1` (`fesm2022/primeng-table.mjs:1448`, `:2033-2035`; `types/primeng-table.d.ts:792,812`) | `groupRowsBy: string` + `groupRowsByOrder: number` (default `1`). Row grouping is implemented by **sorting the whole dataset** by `groupRowsBy`/`groupRowsByOrder` through the same single-sort code path, then rendering contiguous runs as a group header/rowspan — not a separate stage at all | plain asc/desc int, no comparator, no group-specific hook |
+| Library              | Version read                                                                                                                                                                                                                                                                                                                       | Where it lives                                                                                                                                                                                                                                                                                    | Shape                                                                                                                                                        |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| TanStack Table v8    | `@tanstack/table-core@8.21.3` (`src/utils/getGroupedRowModel.ts`, `src/utils/getSortedRowModel.ts`)                                                                                                                                                                                                                                | **No dedicated group-order API.** Default order = `Map` insertion order (first-occurrence). The only override is the existing `sorting` state, applied **recursively** to both the top-level (group) rows and each group's `subRows`, via the same `sortingFn`                                    | reuse of `SortingState`, not a grouping concept                                                                                                              |
+| TanStack Table v9    | `@tanstack/table-core@9.2.4` (`dist/features/column-grouping/createGroupedRowModel.js`, `dist/core/row-models/coreRowModelsFeature.utils.js`)                                                                                                                                                                                      | Same — own doc comment states it outright: _"Sorting runs after grouping, so this aliases `table.getGroupedRowModel()`."_ Grouping split into its own `column-grouping` feature (separate from a new `row-aggregation` feature) but order behavior unchanged                                      | same                                                                                                                                                         |
+| Material React Table | `material-react-table@3.2.1` (`dist/index.d.ts`)                                                                                                                                                                                                                                                                                   | Imports `GroupingState`/`SortingState` directly from `@tanstack/react-table` — no `MRT_*` grouping-order type exists in its export list                                                                                                                                                           | none; inherits TanStack unchanged                                                                                                                            |
+| AG Grid              | `ag-grid-community@36.1.0` (`dist/types/src/entities/gridOptions.d.ts:2076`, `:1254`; `dist/types/src/interfaces/iCallbackParams.d.ts:287`) — **row grouping is Enterprise-only** (`RowGroupingModule`; confirmed zero references to that module in the actual Community runtime bundle, only in the shared `.d.ts` types package) | Dedicated config: `initialGroupOrderComparator?: (params: {nodeA, nodeB}) => number` sets default group order. Separate `groupMaintainOrder: boolean` (`@default false`) decouples "user clicked sort on a data column" from "groups get reordered"                                               | comparator over **full `IRowNode` pairs** (`nodeA.allLeafChildren`, `.childrenAfterGroup` — count-based ordering is directly expressible) + one boolean flag |
+| PrimeNG `p-table`    | `primeng@22.1.1` (`fesm2022/primeng-table.mjs:1448`, `:2033-2035`; `types/primeng-table.d.ts:792,812`)                                                                                                                                                                                                                             | `groupRowsBy: string` + `groupRowsByOrder: number` (default `1`). Row grouping is implemented by **sorting the whole dataset** by `groupRowsBy`/`groupRowsByOrder` through the same single-sort code path, then rendering contiguous runs as a group header/rowspan — not a separate stage at all | plain asc/desc int, no comparator, no group-specific hook                                                                                                    |
 
 ## Reading
 
-### 1. Three of four libraries have no group-order concept — they reuse column sort, or *are* column sort
+### 1. Three of four libraries have no group-order concept — they reuse column sort, or _are_ column sort
 
 TanStack and MRT apply the existing `sorting` state recursively to group rows and their `subRows`
 alike:
@@ -80,21 +80,22 @@ unconditionally.
 
 ### 3. The "AG Grid defaults to alphabetical" anecdote does not match this version's source
 
-AG Grid's own doc string for `groupMaintainOrder` states the *unflagged* default is **data-insertion
+AG Grid's own doc string for `groupMaintainOrder` states the _unflagged_ default is **data-insertion
 order, or `initialGroupOrderComparator` if configured** — not alphabetical. No alphabetical default
-was found anywhere in the grouping-related `.d.ts` surface. The library whose behavior actually *is*
+was found anywhere in the grouping-related `.d.ts` surface. The library whose behavior actually _is_
 "sort the data by the group field" (which reads as alphabetical for a string category field with no
 explicit order) is **PrimeNG**, via `groupRowsBy`/`groupRowsByOrder`. Flagging this as a likely
 source mix-up rather than asserting AG Grid changed — not verified against older AG Grid versions.
 
-### 4. Count-based group ordering has real precedent, but needs row/child access the group *key* alone doesn't carry
+### 4. Count-based group ordering has real precedent, but needs row/child access the group _key_ alone doesn't carry
 
 AG Grid's comparator receives full `IRowNode` objects, not bare group values:
 
 ```ts
 // iCallbackParams.d.ts:287-291
-export type InitialGroupOrderComparator<TData = any, TContext = any> =
-  (params: InitialGroupOrderComparatorParams<TData, TContext>) => number;
+export type InitialGroupOrderComparator<TData = any, TContext = any> = (
+  params: InitialGroupOrderComparatorParams<TData, TContext>,
+) => number;
 export interface InitialGroupOrderComparatorParams<TData = any, TContext = any>
   extends AgGridCommon<TData, TContext> {
   nodeA: IRowNode<TData>;
@@ -105,7 +106,7 @@ export interface InitialGroupOrderComparatorParams<TData = any, TContext = any>
 `IRowNode` exposes `allLeafChildren: IRowNode[] | null` and `childrenAfterGroup: IRowNode[] | null`
 (`iRowNode.d.ts:200,204`) — `nodeA.allLeafChildren.length - nodeB.allLeafChildren.length` is a
 real, directly-expressible count comparator. No other library offers this at all (TanStack/MRT only
-offer it indirectly, by sorting on an aggregate *column's* value per finding 1).
+offer it indirectly, by sorting on an aggregate _column's_ value per finding 1).
 
 ### 5. External-explicit-list ordering has no dedicated construct anywhere — always "supply your own comparator"
 
@@ -122,7 +123,7 @@ right shape."
   `compareGroups` puts us ahead of TanStack/MRT/PrimeNG's free tiers and matches AG Grid's paid
   tier — a legitimate differentiator, not an obvious/required feature to copy.
 - **Our sketched shape is under-powered relative to the only working precedent.** `compareGroups?:
-  (a: GroupKey, b: GroupKey) => number` with `GroupKey = { columnId, value }` cannot express the
+(a: GroupKey, b: GroupKey) => number` with `GroupKey = { columnId, value }` cannot express the
   count-based case the user actually asked for — there's no row count on a bare key. AG Grid's
   comparator works because it receives full nodes with child access. Our comparator needs the same:
   either the cluster's rows, or its already-computed `aggregates` (from `aggregateFn`), not just the
@@ -130,7 +131,7 @@ right shape."
   computed aggregates (couples comparator timing to aggregation having run first).
 - **Our fixed pipeline may already have AG Grid's `groupMaintainOrder: true` behavior baked in,
   for free.** `grouping.md` already specifies `sort` running after `group` and reordering only
-  *within* each cluster (clustering stays contiguous because sort is stable) — that's the
+  _within_ each cluster (clustering stays contiguous because sort is stable) — that's the
   non-default, opt-in AG Grid behavior, as our only behavior. Unlike TanStack/PrimeNG, a column sort
   in our pipeline was never going to reorder groups in the first place. Worth stating explicitly in
   the spec as a deliberate consequence of the fixed `filter → group → sort → expand` order, not an

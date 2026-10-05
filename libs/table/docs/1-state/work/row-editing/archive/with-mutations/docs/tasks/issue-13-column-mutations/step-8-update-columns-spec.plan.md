@@ -57,4 +57,5 @@ Mirror `engine/columns.spec.ts`'s style. Test against a minimal fake — `signal
 - All new tests pass; `create-table.spec.ts` (post Step 7) and `engine/columns.spec.ts` still pass.
 
 ---
+
 ← [Step 7: remove stale store-method tests](step-7-remove-stale-tests.plan.md) | [Step 9: `table/CLAUDE.md` sync](step-9-claude-md-sync.plan.md) →

@@ -86,6 +86,7 @@ change what ships.
 Ranked by consequence.
 
 ### 1. Forty-three undefined tokens — I read the value out of the prose table and inlined it
+
 - **Needed:** a definition for every `var(--ngpt-*)` a component spec cites.
 - **Chose:** treated the "Value" column as authoritative and the token name as decorative. High confidence
   in the values (every citation prints one), zero confidence in the names.
@@ -99,12 +100,12 @@ Ranked by consequence.
 
 Undefined anywhere (43):
 
-| Group | Tokens |
-| --- | --- |
-| Spacing (9) | `--ngpt-sys-space-600`, `-700`, `-700-alt`, `-700-b`, `-700-ish`, `-900`, `-1000-alt`, `-350-alt`, `-250-alt` |
-| Type (4) | `--ngpt-sys-typescale-label-large-sm`, `-label-large-medium`, `-label-small-2`, `-label-small-nested` |
-| Color (21) | `--ngpt-text-base`, `--ngpt-comp-row-divider`, `-footer-text`, `-toc-nested-text`, `-code-gutter-text`, `-nav-text-default`, `-pagination-title-default`, `-pagination-border`, `-link-hover`, `-menu-text-disabled`, `-dropdown-text`, `-tab-track-bg`, `-tab-text-inactive`, `-select-placeholder`, `-callout-note-bg`, `-note-border`, `-note-accent`, `-warning-bg`, `-warning-border`, `-tip-bg`, `-tip-border` |
-| Layout / size (9) | `--ngpt-sys-font-family-base`, `--ngpt-sys-layout-grid-columns`, `-content-max-width`, `-sidebar-width`, `-toc-width`, `-drawer-width`, `--ngpt-comp-navbar-height`, `-navbar-logo-size`, `-navbar-dot-size` |
+| Group             | Tokens                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Spacing (9)       | `--ngpt-sys-space-600`, `-700`, `-700-alt`, `-700-b`, `-700-ish`, `-900`, `-1000-alt`, `-350-alt`, `-250-alt`                                                                                                                                                                                                                                                                                                        |
+| Type (4)          | `--ngpt-sys-typescale-label-large-sm`, `-label-large-medium`, `-label-small-2`, `-label-small-nested`                                                                                                                                                                                                                                                                                                                |
+| Color (21)        | `--ngpt-text-base`, `--ngpt-comp-row-divider`, `-footer-text`, `-toc-nested-text`, `-code-gutter-text`, `-nav-text-default`, `-pagination-title-default`, `-pagination-border`, `-link-hover`, `-menu-text-disabled`, `-dropdown-text`, `-tab-track-bg`, `-tab-text-inactive`, `-select-placeholder`, `-callout-note-bg`, `-note-border`, `-note-accent`, `-warning-bg`, `-warning-border`, `-tip-bg`, `-tip-border` |
+| Layout / size (9) | `--ngpt-sys-font-family-base`, `--ngpt-sys-layout-grid-columns`, `-content-max-width`, `-sidebar-width`, `-toc-width`, `-drawer-width`, `--ngpt-comp-navbar-height`, `-navbar-logo-size`, `-navbar-dot-size`                                                                                                                                                                                                         |
 
 Plus, same category, smaller: `--ngpt-comp-navbar-dot-border`, `-nav-border-width`, `-icon-btn-size`,
 `-tab-item-px`, `-select-px`, `-code-gutter-width`, `-toc-nested-indent`, `-pagination-arrow-shift`,
@@ -122,6 +123,7 @@ front-matter `tokens:` list (`-display-large`, `-headline-marketing`); four the 
 manifest promises is "enough context for one component", so it needs to be complete.
 
 ### 2. The page list — I built four pages and stopped
+
 - **Needed:** the tree. `Content Model.md` § Seed tree gives one root entry and two sections (1 and 3),
   and says plainly it is incomplete: "Sections 2 and 4+ are referenced by the numbering but their entries
   are unknown."
@@ -133,6 +135,7 @@ manifest promises is "enough context for one component", so it needs to be compl
   Also, section numbering with a hole (1, 3) reads as a bug to a visitor.
 
 ### 3. Pagination card titles — the deferral has no destination
+
 - **Needed:** whether a card shows `entry.label` or a composed `section + label` string.
   `Content Model.md` § Seed tree explicitly defers: "see `Pagination Footer.md` for whether it composes or
   uses `label` alone. **Unresolved.**" `Pagination Footer.md` does not mention it. The frame
@@ -144,6 +147,7 @@ manifest promises is "enough context for one component", so it needs to be compl
   model was written to stop.
 
 ### 4. The eyebrow on the docs root
+
 - **Needed:** `category-badge` text for `/docs` ("Overview"), whose `section` is `null`.
   `Routing and Page State.md` § Page state defines `eyebrow` as `entry.eyebrow ?? section.label`;
   `pages/Doc Article.md` slot 4.1 makes the eyebrow unconditional ("Text = the sidebar section name,
@@ -154,6 +158,7 @@ manifest promises is "enough context for one component", so it needs to be compl
   but nobody can tell today whether the omission is intended.
 
 ### 5. Content column width between 1024 and 1439px
+
 - **Needed:** what gives when the 3-column grid is narrower than its parts.
   `foundations/Responsive and Breakpoints.md` § Layout collapse keeps 270 / 1fr / 220 down to 1024px;
   `layout/Content Column.md` § Container sets max-width 760px with 40px side padding. At 1024px the
@@ -166,6 +171,7 @@ manifest promises is "enough context for one component", so it needs to be compl
   the fix (drop the TOC earlier, or narrow the sidebar) is a design decision, not a tweak.
 
 ### 6. Home's navbar contents
+
 - **Needed:** which links the marketing navbar holds. `pages/Home.md` § Slots specifies treatment
   ("Links are unfilled — translucent white pill on hover only") but never the set;
   `layout/Top Navbar.md` § Right group specifies search + Sponsor pill + status dot + Discord + GitHub.
@@ -179,15 +185,16 @@ manifest promises is "enough context for one component", so it needs to be compl
 
 Each of these is a state named somewhere and specified nowhere. I guessed and noted it.
 
-| # | State | Where it is named | What I chose | Should own it |
-| --- | --- | --- | --- | --- |
-| 7 | `prev-only` / `next-only` pagination | `Pagination Footer.md` front-matter `states:` | Single card at full width, kept on its own side | `Pagination Footer.md` § Build spec |
-| 8 | Icon Button copy **failure** | Invented by `pages/Home.md` § Install command row (three states, incl. `failed`); `Icon Button.md` § Confirmation variant has two | Home's amber/red glyph treatment, applied only on Home | `Icon Button.md` |
-| 9 | A page with 0–1 H2s on an archetype whose TOC "always renders" | `pages/API Reference.md`, `pages/Examples Gallery.md` § Differences vs `pages/Doc Article.md` § Page-only rules | Doc Article's rule wins; TOC drops | the two archetype files |
-| 10 | An empty section, or a section whose entries are all `hidden` | `Content Model.md` § Shape allows it; nothing renders it | Omit the section label entirely | `layout/Sidebar Navigation.md` |
-| 11 | Long-label overflow in sidebar / TOC / pagination card | nowhere | Wrap, never truncate | `Sidebar Nav Item.md`, `layout/TOC Column.md` |
+| #   | State                                                          | Where it is named                                                                                                                 | What I chose                                           | Should own it                                 |
+| --- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------- |
+| 7   | `prev-only` / `next-only` pagination                           | `Pagination Footer.md` front-matter `states:`                                                                                     | Single card at full width, kept on its own side        | `Pagination Footer.md` § Build spec           |
+| 8   | Icon Button copy **failure**                                   | Invented by `pages/Home.md` § Install command row (three states, incl. `failed`); `Icon Button.md` § Confirmation variant has two | Home's amber/red glyph treatment, applied only on Home | `Icon Button.md`                              |
+| 9   | A page with 0–1 H2s on an archetype whose TOC "always renders" | `pages/API Reference.md`, `pages/Examples Gallery.md` § Differences vs `pages/Doc Article.md` § Page-only rules                   | Doc Article's rule wins; TOC drops                     | the two archetype files                       |
+| 10  | An empty section, or a section whose entries are all `hidden`  | `Content Model.md` § Shape allows it; nothing renders it                                                                          | Omit the section label entirely                        | `layout/Sidebar Navigation.md`                |
+| 11  | Long-label overflow in sidebar / TOC / pagination card         | nowhere                                                                                                                           | Wrap, never truncate                                   | `Sidebar Nav Item.md`, `layout/TOC Column.md` |
 
 ### 12. Line-number toggle
+
 - **Needed:** the mechanism. `pages/Doc Article.md` § Page-only rules: line numbers at 5+ lines, "otherwise
   gutter is omitted". `Code Block.md` § Line numbers is a CSS counter on `.line` with no off switch.
 - **Chose:** a class on the block. Low confidence — this may be intended as a fence-meta flag, which is a
@@ -195,6 +202,7 @@ Each of these is a state named somewhere and specified nowhere. I guessed and no
 - **Should own it:** `Code Block.md`.
 
 ### 13. Copy affordance for a standalone code block
+
 - **Needed:** whether a code block outside a Preview Window can be copied. `Code Block.md` § Ownership
   boundary says the copy affordance is "**Not here** — lives in the Preview Window toolbar", but the same
   file's front matter lists states `hover (copy button appears)` and `copied`, and its `a11y` line
@@ -203,6 +211,7 @@ Each of these is a state named somewhere and specified nowhere. I guessed and no
 - **Breaks if wrong:** the single most-used affordance on a docs page is missing from most code on the site.
 
 ### 14. Home's responsive mechanism
+
 - **Needed:** reconciliation. `pages/Home.md` § Section rhythm: "**No media queries.** … The collapse is
   therefore continuous rather than stepped." Three blocks in the same file then specify stepped behavior:
   Feature grid "3 columns × 2 rows at `lg`, 2 columns at `md`, 1 below", Logo row "Wraps to two rows below
@@ -212,6 +221,7 @@ Each of these is a state named somewhere and specified nowhere. I guessed and no
 - **Should own it:** `pages/Home.md` — delete the breakpoint language or the no-media-query claim.
 
 ### 15. Framework
+
 - **Needed:** what this is built in. `foundations/Iconography.md` § Setup prescribes ng-icons with an
   Angular `app.config.ts`; nothing else names a stack, and `Routing and Page State.md` § does_not_own
   disclaims "server, framework, or router implementation".
@@ -288,7 +298,7 @@ here)`. **The front matter wins.** This is not cosmetic: contradiction 2 is a re
 **11. TOC presence.**
 `pages/API Reference.md` and `pages/Examples Gallery.md` § Differences: TOC "Always renders".
 `pages/Doc Article.md` § Page-only rules: no TOC below 2 H2s — and both files are `composes_only: true`
-declaring only *differences* from Doc Article. **Doc Article's rule wins** unless the two archetypes say
+declaring only _differences_ from Doc Article. **Doc Article's rule wins** unless the two archetypes say
 they override it, which is what they need to say.
 
 **12. Content Model vs. Doc Article on the eyebrow.**
@@ -352,13 +362,13 @@ sRGB conversion from oklch, WCAG 2.1 ratios. AA = 4.5:1 for text below 18.66px b
 
 **Failures that need a decision:**
 
-| Pair | Ratio | Where |
-| --- | --- | --- |
-| `--ngpt-accent` on `--ngpt-accent-bg` | **4.28** | `Sidebar Nav Item.md` § Build spec — active accent item, 13.5px. The most important state in the sidebar. |
-| `--ngpt-comp-footer-text` (0.5) on `--ngpt-bg-app` | **3.24** | `layout/Page Footer.md` § Container, 13px |
-| `--ngpt-comp-toc-nested-text` (0.5) on `--ngpt-bg-app` | **3.24** | `layout/TOC Column.md` § Nested items — 12.5px interactive links |
-| white on `oklch(1 0 0 / 0.14)` over the accent band | **3.84** | `pages/Home.md` § Hero, navbar link hover pill. The same file argues this exact failure two paragraphs later for the announcement pill and fixes it by darkening; the nav pill still lightens. |
-| `--ngpt-comp-code-gutter-text` (0.42) on `--ngpt-bg-deep` | **2.42** | `Code Block.md` § Line numbers. Defensible as decorative — unless prose ever says "line 12". |
+| Pair                                                      | Ratio    | Where                                                                                                                                                                                          |
+| --------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--ngpt-accent` on `--ngpt-accent-bg`                     | **4.28** | `Sidebar Nav Item.md` § Build spec — active accent item, 13.5px. The most important state in the sidebar.                                                                                      |
+| `--ngpt-comp-footer-text` (0.5) on `--ngpt-bg-app`        | **3.24** | `layout/Page Footer.md` § Container, 13px                                                                                                                                                      |
+| `--ngpt-comp-toc-nested-text` (0.5) on `--ngpt-bg-app`    | **3.24** | `layout/TOC Column.md` § Nested items — 12.5px interactive links                                                                                                                               |
+| white on `oklch(1 0 0 / 0.14)` over the accent band       | **3.84** | `pages/Home.md` § Hero, navbar link hover pill. The same file argues this exact failure two paragraphs later for the announcement pill and fixes it by darkening; the nav pill still lightens. |
+| `--ngpt-comp-code-gutter-text` (0.42) on `--ngpt-bg-deep` | **2.42** | `Code Block.md` § Line numbers. Defensible as decorative — unless prose ever says "line 12".                                                                                                   |
 
 **`--ngpt-text-muted` (0.55) is below AA everywhere it is used:** 4.00 on `bg-app`, 3.94 on `bg-raised`
 (the search field's placeholder), 3.73 on `bg-elevated` (search group labels and every result's second

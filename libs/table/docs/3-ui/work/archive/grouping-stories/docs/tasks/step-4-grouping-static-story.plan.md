@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — grouping-static/: the grouped table, always fully shown"
+title: 'Step 4 — grouping-static/: the grouped table, always fully shown'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: B
@@ -30,7 +30,7 @@ node: B
 Node B. The static grouped table is its own product (product doc §Scope), not a degraded
 collapsible one — so it composes `withGrouping()` + `withFiltering()` and deliberately **no**
 `withExpansion()`: nothing renders a control that does nothing. Filtering is inherent, not
-adjacent: product stories 1.2 and 1.3 are *about* the filtered count and the filtered summary.
+adjacent: product stories 1.2 and 1.3 are _about_ the filtered count and the filtered summary.
 
 Covers product stories 1.1, 1.2, 1.3 (+ its failure path), 1.4, 2.4, 3.1, 3.2 (+ duplicate-level
 no-op), 3.3 (+ throwing comparator), 3.4, 4.1, 4.2, 4.3, 4.4, F-G1, and P5b indentation.
@@ -50,14 +50,14 @@ no-op), 3.3 (+ throwing comparator), 3.4, 4.1, 4.2, 4.3, 4.4, F-G1, and P5b inde
      show a parent total that is the sum of the subtree.
 3. Indentation off `data-depth` — one CSS offset multiplier. `grouping-story.css` already ships
    `--grouping-indent` and the `[data-depth='n']` rules; use them, don't add new ones.
-4. A filter input, proving the count and the summary are of *visible* rows, and that a group whose
+4. A filter input, proving the count and the summary are of _visible_ rows, and that a group whose
    rows all filter out disappears (F-G1).
 5. Level control, conventional shapes only (P4/P4b):
    - per-column-header **"Group by this column" / "Ungroup"** → `addGroupLevel` / `removeGroupLevel`;
    - a persistent **pill list** of the active levels in order, made interactive — `◀ ▶` to reorder
      (`reorderGroupLevels`), `×` to remove;
    - **Reset levels** → `setGroupLevels`.
-   All four import from the library root (Step 1), never from `mutations/` by path.
+     All four import from the library root (Step 1), never from `mutations/` by path.
 6. `groupedColumnMode` arg (`keep` / `hide` / `move-to-front`) over the already-exported
    `toggleColumnVisibility` / `reorderColumns` — P12 is four libraries with four defaults and U2 is
    open, so the story renders all three rather than picking one.
@@ -94,7 +94,7 @@ no-op), 3.3 (+ throwing comparator), 3.4, 4.1, 4.2, 4.3, 4.4, F-G1, and P5b inde
 - Read `docs/3-ui/stories.md` before writing — it is the story convention SSOT (separate template
   file always, `Component` suffix on the host class, doc-comment names the decision the story
   proves, on-canvas buttons over the actions panel).
-- The doc-comment opens by naming *why this composition* — static mode as its own product, and why
+- The doc-comment opens by naming _why this composition_ — static mode as its own product, and why
   no `withExpansion()`.
 - Per-cell/per-row markup with its own internal shape (the group header row) goes in its own
   `ng-template` or sub-component if it grows — `extract-encapsulated-logic.md`.
@@ -123,4 +123,5 @@ no-op), 3.3 (+ throwing comparator), 3.4, 4.1, 4.2, 4.3, 4.4, F-G1, and P5b inde
 - [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
+
 ← [Step 3: grouping fixtures — transport](step-3-grouping-fixtures-transport.plan.md) | [Step 5: grouping-collapsible/](step-5-grouping-collapsible-story.plan.md) →

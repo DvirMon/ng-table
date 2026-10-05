@@ -9,11 +9,11 @@ numbers. The run itself is the user's.
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                            | Action                                                                            |
+| ------------------------------- | --------------------------------------------------------------------------------- |
 | `apps/table-bench/project.json` | edit — `bench` target (`nx:run-commands`, `dependsOn: ["build"]`, `cache: false`) |
-| `package.json` | edit — `table:bench:prod` script, mirroring `table:bench`'s `Tee-Object` log |
-| `.gitignore` | edit — `dist/table-bench/` traces are already under `dist/`; add the log file |
+| `package.json`                  | edit — `table:bench:prod` script, mirroring `table:bench`'s `Tee-Object` log      |
+| `.gitignore`                    | edit — `dist/table-bench/` traces are already under `dist/`; add the log file     |
 
 ## What To Do
 
@@ -28,5 +28,5 @@ numbers. The run itself is the user's.
 ## Acceptance Checks
 
 - [ ] User runs `npx nx run table-bench:bench` on a quiet machine (Storybook and other heavy
-  apps closed) and pastes the report.
+      apps closed) and pastes the report.
 - [ ] Verdict and interval at N=1000 recorded in `progress.md`.

@@ -1,5 +1,5 @@
 ---
-title: "Step 6 — CLAUDE.md: kill the false composed claim, add withComputed() and composeFeatures()"
+title: 'Step 6 — CLAUDE.md: kill the false composed claim, add withComputed() and composeFeatures()'
 type: task-step
 issue: 78
 ---
@@ -89,4 +89,5 @@ into generated code — higher blast radius than any other file in this issue.
 - [ ] No implementation status, no issue numbers as status markers
 
 ---
+
 ← [Step 5: row-editing shared-store rationale](step-5-row-editing-shared-store-rationale.plan.md) | [Step 7: call-shape sweep](step-7-call-shape-sweep.plan.md) →

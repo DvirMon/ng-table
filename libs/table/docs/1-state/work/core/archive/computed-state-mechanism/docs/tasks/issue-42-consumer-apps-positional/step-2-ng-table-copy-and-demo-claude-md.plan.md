@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — apps/ng-table home copy + apps/demo/CLAUDE.md off the deleted builder"
+title: 'Step 2 — apps/ng-table home copy + apps/demo/CLAUDE.md off the deleted builder'
 type: task-step
 issue: 76
 ---
@@ -46,19 +46,19 @@ Routing an implementer agent at it would load the wrong conventions; the main th
    table, phrase against that.
 2. `home.content.ts`:
    - Column schema cell: drop `createTableSchema()`. Keep `columnSchema()` and the "define
-     columns once … the table derives the rest" claim. Something like: *"Define columns once
-     in the config object and shape them with columnSchema(); the table derives the rest."*
+     columns once … the table derives the rest" claim. Something like: _"Define columns once
+     in the config object and shape them with columnSchema(); the table derives the rest."_
    - Feature plugins cell: replace "by adding them to the features array" with the positional
-     form — *"by passing them to createTable() after the config — nothing ships you don't
-     use."*
-   Do not add claims (`withComputed()`, `composeFeatures()`, arity numbers) the lib docs
-   don't state.
+     form — _"by passing them to createTable() after the config — nothing ships you don't
+     use."_
+     Do not add claims (`withComputed()`, `composeFeatures()`, arity numbers) the lib docs
+     don't state.
 3. `home/docs/decisions.md`: in the verifiable-claims example list, replace
    `createTableSchema()`/`columnSchema()` with `columnSchema()` alone (or whatever the lib docs
    now name). Nothing else in that doc changes.
 4. `apps/demo/CLAUDE.md` **Structure** block: the `table-demo.store.ts` comment becomes
    roughly `# table config object (trackBy, columns, optional columnsSchema); features compose
-   at the component's createTable() call`. Leave the rest of the file alone.
+at the component's createTable() call`. Leave the rest of the file alone.
 
 ## Implementation Notes
 
@@ -87,4 +87,5 @@ Routing an implementer agent at it would load the wrong conventions; the main th
 - [ ] `git diff --stat` lists only the three files in **Files**
 
 ---
+
 ← [Step 1: `apps/demo`: seven demos on positional `createTable()`](step-1-demo-app-positional.plan.md) | [Step 3: Demo behaviour verification (user-run) and #42 close-out](step-3-demo-verification-closeout.plan.md) →

@@ -73,10 +73,7 @@
               />
             </td>
             @for (column of table.renderColumns(); track column.id; let isFirst = $first) {
-              <td
-                class="story-host__cell"
-                [class.grouping-story__cell--label]="isFirst"
-              >
+              <td class="story-host__cell" [class.grouping-story__cell--label]="isFirst">
                 @if (isFirst) {
                   @if (row.groupKey?.value | isBlankGroup) {
                     <span class="grouping-story__group-label grouping-story__group-label--blank">
@@ -96,10 +93,7 @@
                   type="checkbox"
                   [checked]="table.selectedRows().has(row.id)"
                   [attr.aria-label]="
-                    'Select the ' +
-                    (rowData.amount | dealAmount) +
-                    ' deal for ' +
-                    rowData.rep
+                    'Select the ' + (rowData.amount | dealAmount) + ' deal for ' + rowData.rep
                   "
                   (change)="onToggleRowSelection(row.id)"
                 />

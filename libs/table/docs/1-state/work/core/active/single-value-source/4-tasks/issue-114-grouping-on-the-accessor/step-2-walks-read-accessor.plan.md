@@ -45,8 +45,9 @@ The current body brackets into the row and runs the extractor:
 
 ```ts
 export function readGroupFieldValue<TRow>(
-  row: TRow, key: string,
-  extractValueByColumn?: ReadonlyMap<string, (v: unknown) => unknown>
+  row: TRow,
+  key: string,
+  extractValueByColumn?: ReadonlyMap<string, (v: unknown) => unknown>,
 ): unknown {
   const raw = (row as Record<string, unknown>)[key];
   const extractValue = extractValueByColumn?.get(key);
@@ -62,7 +63,7 @@ export function readGroupValue<TRow>(
   columnId: string,
   columnById: ReadonlyMap<string, ColumnDef<TRow>>,
   reportedColumns: Set<string>,
-  extractValueByColumn?: ReadonlyMap<string, (v: unknown) => unknown>
+  extractValueByColumn?: ReadonlyMap<string, (v: unknown) => unknown>,
 ): unknown {
   const column = columnById.get(columnId);
   const raw = column ? readAccessor(column, row, reportedColumns) : undefined;
@@ -168,4 +169,5 @@ accessor lambda it hands `buildClusters`.
       trees to before — the default accessor makes this step a no-op there.
 
 ---
+
 ← [Step 1: Grouping ids validate at construction and on the writer](step-1-grouping-id-check.plan.md) | [Step 3: Re-key the grouping surface to `TId`](step-3-rekey-to-tid.plan.md) →

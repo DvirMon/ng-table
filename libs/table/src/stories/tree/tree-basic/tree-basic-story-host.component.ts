@@ -41,7 +41,7 @@ export class TreeBasicStoryHostComponent {
     withTree({
       parentId: (row) => row.parentId,
       initial: TreeBasicStoryHostComponent.INITIAL_OPEN,
-    })
+    }),
   );
 
   /** Readout of tree expansion state: 'all', 'some', or 'none'. */

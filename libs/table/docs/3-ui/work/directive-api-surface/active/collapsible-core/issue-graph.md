@@ -6,9 +6,9 @@ toggles; the tree toggle is retrofitted onto it.
 
 ## Nodes
 
-| # | Title | Slice slug | Depends on | Blocks |
-|---|---|---|---|---|
-| [#215](https://github.com/DvirMon/ng-table/issues/215) | Table: tree toggle runs on a shared collapsible core | tree-toggle-on-collapsible-core | — | — |
+| #                                                      | Title                                                | Slice slug                      | Depends on | Blocks |
+| ------------------------------------------------------ | ---------------------------------------------------- | ------------------------------- | ---------- | ------ |
+| [#215](https://github.com/DvirMon/ng-table/issues/215) | Table: tree toggle runs on a shared collapsible core | tree-toggle-on-collapsible-core | —          | —      |
 
 The slice slug is what `/to-tasks` uses in the issue's branch name,
 `<type>/<NN>-<slice-slug>`.

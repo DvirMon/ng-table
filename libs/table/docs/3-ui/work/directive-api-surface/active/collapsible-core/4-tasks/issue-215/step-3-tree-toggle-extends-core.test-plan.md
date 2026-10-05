@@ -4,6 +4,7 @@ Step: [step-3-tree-toggle-extends-core.plan.md](step-3-tree-toggle-extends-core.
 Spec file: `libs/table/src/directives/ngp-table-tree-toggle.directive.spec.ts`
 
 ## Stubs (red phase)
+
 None. The tests import only `NgpTableTreeToggleDirective`, which
 already exists. They assert rendered attributes only, never core
 members. Against today's toggle (no core, no `type` binding, leaf
@@ -11,7 +12,9 @@ omits `aria-expanded`), all three seams fail on an assertion, so
 the red phase is real without a stub.
 
 ## Seams — in red-green order
+
 ### A. Template with no `type` → rendered toggle has `type="button"`
+
 - Test: `it('renders the toggle as type="button" when the template sets no type')`
 - Setup: `setup(TreeHost)`. `TOGGLE_TABLE_TEMPLATE` already has
   no `type`, so no new host is needed.
@@ -26,6 +29,7 @@ the red phase is real without a stub.
   inherited binding exists at all.
 
 ### B. Template `type="submit"` → rendered toggle still `type="button"`
+
 - Test: `it('forces type="button" even when the template sets type="submit"')`
 - Setup: new `SubmitTypeHost`, built like the existing check
   hosts: `checksTemplate('<button ngpTableTreeToggle aria-label="Toggle row" type="submit"></button>')`
@@ -43,6 +47,7 @@ the red phase is real without a stub.
   place; then the binding must override the consumer's attribute.
 
 ### C. Leaf row → toggle is `aria-expanded="false"`, still disabled and hidden
+
 - Test: rename the existing
   `it('disables and hides the toggle on a row without children, with no aria-expanded')`
   to
@@ -64,11 +69,13 @@ the red phase is real without a stub.
   `aria-expanded` binding, not on `type`.
 
 ## Types phase (written in red, proven by green's typecheck)
+
 None. This step has no public type surface. `isOpen`/`toggle`
 become protected `override`s, and the directive's public shape
 does not change.
 
 ## Not tested
+
 - Kept unchanged, no new test: open/close on click
   (`aria-expanded` `'true'`/`'false'`, `data-expanded`
   `''`/absent), group header collapse under `withGrouping()` +
@@ -92,6 +99,7 @@ does not change.
 - JSDoc text: documentation, not logic.
 
 ## Open questions
+
 - None. Step 2 keeps `checksTemplate`, `createCheckTable`,
   `CHECK_ROWS`, `CHECK_IMPORTS` and `renderChecks`, so seam B's
   helpers are in place.

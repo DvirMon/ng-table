@@ -20,7 +20,7 @@ type ClaimedCoreKey = Exclude<keyof TableStore<unknown>, OverridableCoreKey>;
 // core member. `satisfies` checks each entry, not the list's completeness. Adding a
 // non-overridable `TableStore` member without listing it below stops this call compiling.
 function exhaustiveCoreMemberKeys<const Keys extends readonly ClaimedCoreKey[]>(
-  keys: Exclude<ClaimedCoreKey, Keys[number]> extends never ? Keys : never
+  keys: Exclude<ClaimedCoreKey, Keys[number]> extends never ? Keys : never,
 ): Keys {
   return keys;
 }
@@ -71,7 +71,7 @@ export class SlotRegistry {
     owners: Map<TKey, string>,
     key: TKey,
     claimant: string,
-    describeCollision: (currentOwner: string, claimant: string) => string
+    describeCollision: (currentOwner: string, claimant: string) => string,
   ): void {
     const currentOwner = owners.get(key);
     const isAlreadyClaimed = currentOwner !== undefined;
@@ -93,7 +93,7 @@ export class SlotRegistry {
       feature,
       (currentOwner, claimant) =>
         `[createTable] ${currentOwner} and ${claimant} both provide the "${stage}" ` +
-        'pipeline stage. Only one feature may provide each stage.'
+        'pipeline stage. Only one feature may provide each stage.',
     );
   }
 
@@ -109,7 +109,7 @@ export class SlotRegistry {
       feature,
       (currentOwner, claimant) =>
         `[createTable] ${currentOwner} and ${claimant} both provide the "${stage}" ` +
-        'render stage. Only one feature may provide each render stage.'
+        'render stage. Only one feature may provide each render stage.',
     );
   }
 
@@ -124,7 +124,7 @@ export class SlotRegistry {
       feature,
       (currentOwner, claimant) =>
         `[createTable] ${currentOwner} and ${claimant} both provide the "${key}" ` +
-        'store member. Only one feature may provide each member.'
+        'store member. Only one feature may provide each member.',
     );
   }
 
@@ -137,7 +137,7 @@ export class SlotRegistry {
     if (isAlreadyClaimed) {
       throw new Error(
         `[createTable] ${currentOwner} and ${feature} both provide the parent link. ` +
-          'Only one feature may provide a parent link.'
+          'Only one feature may provide a parent link.',
       );
     }
     this.parentLinkOwner = feature;

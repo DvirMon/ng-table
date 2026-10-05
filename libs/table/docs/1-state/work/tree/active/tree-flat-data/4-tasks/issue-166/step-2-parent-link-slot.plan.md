@@ -10,6 +10,7 @@ files:
   - libs/table/src/engine/core.ts
   - libs/table/src/engine/compose-table.spec.ts
 ---
+
 # Step 2 — `parentLink` slot, claimed once
 
 This step adds a single-claim `parentLink` slot that a feature
@@ -68,4 +69,5 @@ Decisions: [D6](../../1-decisions.md), [A3](../../3-architecture.md), [ADR-0028]
       off too.
 
 ---
+
 ← [Step 1: Stage context through both runners](step-1-stage-context.plan.md) | [Step 3: parentLink through composeFeatures() and derive blocks](step-3-compose-parent-link.plan.md) →

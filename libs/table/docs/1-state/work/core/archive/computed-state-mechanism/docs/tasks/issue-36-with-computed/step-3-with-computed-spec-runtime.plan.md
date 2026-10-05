@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — with-computed.spec.ts: runtime behaviour in both placements, construction errors, evaluation reporting"
+title: 'Step 3 — with-computed.spec.ts: runtime behaviour in both placements, construction errors, evaluation reporting'
 type: task-step
 issue: 70
 ---
@@ -112,4 +112,5 @@ Shipped `with-*` features are **not** used (unconverted until #38–#40).
 - [ ] No test asserts on `SlotRegistry` internals or fold call counts.
 
 ---
+
 ← [Step 2: with-computed.ts — withComputed()](step-2-with-computed.plan.md) | [Step 4: create-table.spec.ts — type assertions](step-4-create-table-spec-types.plan.md) →

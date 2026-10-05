@@ -30,7 +30,7 @@ consumer's element (`button[acmeDropdown]`, `input[acmeAutocompleteInput]`,
 `li[acmeDropdownOption]`) and `libs/shared/table` does the same (`table[ngpTable]`,
 `td[ngpTableCell]`) under a locked invariant: attribute-only, never insert or reorder DOM.
 
-`@ng-icons` is not the cause. `NgIcon` renders an `<svg>` — it *is* content, with no native element
+`@ng-icons` is not the cause. `NgIcon` renders an `<svg>` — it _is_ content, with no native element
 to sit on — so it is a legitimate component. It was an enabler: modelling the glyph as
 `icon: input<string>()` made a component look necessary, because a directive cannot inject that
 child. Consumers author the `<ng-icon>` instead (see Consequences).
@@ -82,7 +82,7 @@ set by the consumer on the element. Inputs carry only what is genuinely the prim
   `ng-primitives` despite it being a repo dependency; that gap is tracked separately.
 - **`prose` still needs `ViewEncapsulation.None`.** Moving to `article[ngptProse]` fixes the
   non-semantic host, but emulated encapsulation still cannot reach projected content — projected
-  nodes carry the *declaring* component's encapsulation id, so `:host h2` would never match.
+  nodes carry the _declaring_ component's encapsulation id, so `:host h2` would never match.
   CONVENTIONS.md #9 survives; only its host element changes.
 - Consumers author their own `<ng-icon>` children, so `icon-button` loses `icon: input<string>()`
   and its 13-icon `provideIcons` registry, and loses `pressed: output<void>()` — consumers bind the
@@ -92,7 +92,7 @@ set by the consumer on the element. Inputs carry only what is genuinely the prim
 
 ## Corollary: opt-in behavior is a consumer-placed directive, never `hostDirectives`
 
-`icon-button` currently owns both the button's styling *and* the copy-confirmation state machine —
+`icon-button` currently owns both the button's styling _and_ the copy-confirmation state machine —
 clipboard write, the 1400ms hold, per-state `aria-label`, the live region. That machine is already
 duplicated verbatim in `code-block` and `install-row` (two `1400` literals, two `revertTimer`
 fields, two `clearRevertTimeout()` methods), while every non-copying icon button — navbar menu
@@ -105,14 +105,14 @@ component on the same element:
 <button ngptIconButton ngptCopyConfirm [text]="command()" failedLabel="…">…</button>
 ```
 
-Legal because Angular forbids only *component + component* on one host; a component plus any number
+Legal because Angular forbids only _component + component_ on one host; a component plus any number
 of directives composes freely. `icon-button` does not need demoting to a `@Directive` for this.
 
 **Not `hostDirectives`.** Host-composing it into `icon-button` is statically resolved, so it would
 apply to every icon button in the app, defeat tree-shaking, and force `icon-button` to re-declare
 `text`/`idleLabel`/`failedLabel` in its own metadata — leaking copy concerns into the generic
 button's API. This is the rule `libs/shared/table/CLAUDE.md` already states: `hostDirectives` is for
-*unconditional* behavior; opt-in behavior gets its own public directive the consumer places.
+_unconditional_ behavior; opt-in behavior gets its own public directive the consumer places.
 Consumer-placed is also the more reusable of the two — it can sit on a `<button ngptPillButton>`, a
 bare `<button>`, or an `<a>`, whereas host-composed it is reachable only through `icon-button`.
 
@@ -131,7 +131,7 @@ copy today and `icon-button` silently overrides it with a hardcoded string.
 A separate refactor is landing `ng-primitives` directives into some of these same components. The
 conversion is therefore split rather than deferred:
 
-**Converted now.** Tier 1 is a *prerequisite* for that work, not a conflict: every `ng-primitives`
+**Converted now.** Tier 1 is a _prerequisite_ for that work, not a conflict: every `ng-primitives`
 directive needs a native host (`NgpButton` is `[ngpButton]` on a `<button>`; `NgpSelect` sits on the
 consumer's `<button>`), and today's element wrappers provide none. Converting first creates the
 hosts. Alongside it, the three array-driven domains with no primitive equivalent — `pagination`,
@@ -140,13 +140,13 @@ hosts. Alongside it, the three array-driven domains with no primitive equivalent
 **Held until the `ng-primitives` pass lands**, because each maps 1:1 onto a primitive that would
 replace hand-written behavior:
 
-| Domain | Primitive |
-|---|---|
-| `tab-switcher` | `NgpTabset` — roving tabindex, keyboard |
-| `dropdown-menu` | `NgpMenu` — keyboard, typeahead, outside-click |
+| Domain           | Primitive                                       |
+| ---------------- | ----------------------------------------------- |
+| `tab-switcher`   | `NgpTabset` — roving tabindex, keyboard         |
+| `dropdown-menu`  | `NgpMenu` — keyboard, typeahead, outside-click  |
 | `select-trigger` | `NgpSelect` — the `acme-dropdown` shape exactly |
-| `dropdown-pill` | `NgpMenu` trigger |
-| `search-overlay` | `NgpDialog` — focus trap, scrim, Esc |
+| `dropdown-pill`  | `NgpMenu` trigger                               |
+| `search-overlay` | `NgpDialog` — focus trap, scrim, Esc            |
 
 Hand-rolling roving tabindex and menu keyboard handling into content-queried child directives now,
 only to delete it when `NgpTabset`/`NgpMenu` arrive, is waste. These convert on top of the

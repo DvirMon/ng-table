@@ -1,5 +1,5 @@
 ---
-title: "Step 8 — /audit-docs gate, decisions-log check, and close-out of #44 and #33"
+title: 'Step 8 — /audit-docs gate, decisions-log check, and close-out of #44 and #33'
 type: task-step
 issue: 78
 ---
@@ -67,7 +67,7 @@ assuming it, and only writes if the check fails.
   the #33 close-out comment so they are not lost, and create issues only if the user asks:
   - The six-line overload-dispatch prologue duplicated across `withSelection`, `withExpansion`,
     `withRowEdit` and (near-verbatim) `withOptimistic` — one `defineFeature(displayName, factory,
-    derive?)` in `create-table-feature.ts` absorbs all four. Found by the #40 review, deliberately
+derive?)` in `create-table-feature.ts` absorbs all four. Found by the #40 review, deliberately
     left out of scope there.
   - `.storybook/preview.ts:13` implicit-`any` ×2, and the 24 `Parsing error: Unexpected token <`
     lint errors from story-host `.html` files matched by the TS parser. Both pre-existing, both
@@ -79,7 +79,7 @@ assuming it, and only writes if the check fails.
 
 - `/audit-docs` reports across the whole library, including docs untouched by this ticket. Do not
   let unrelated findings expand #44's scope — list them, close the issue, let the user decide.
-- The `work/` folders are historical records (plans, probes, decision logs) and are *expected* to
+- The `work/` folders are historical records (plans, probes, decision logs) and are _expected_ to
   contain the old call shape. Every grep excludes them; an audit finding inside `work/` is not a
   finding.
 
@@ -99,4 +99,5 @@ assuming it, and only writes if the check fails.
 - [ ] `progress.md` reads 8 / 8
 
 ---
+
 ← [Step 7: call-shape sweep](step-7-call-shape-sweep.plan.md)

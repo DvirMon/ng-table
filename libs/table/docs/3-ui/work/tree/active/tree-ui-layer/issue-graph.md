@@ -6,12 +6,12 @@ row depth variable; no stylesheet, table stays `role="table"`.
 
 ## Nodes
 
-| # | Title | Slice slug | Depends on | Blocks |
-|---|---|---|---|---|
-| [#182](https://github.com/DvirMon/ng-table/issues/182) | Table: rows carry --ngp-table-row-depth, drop row aria-expanded | core-row-depth | — | #184 |
-| [#183](https://github.com/DvirMon/ng-table/issues/183) | Table: tree directive pair — row hooks + ngpTableTreeToggle | tree-directive-pair | — | #184, #189 |
-| [#184](https://github.com/DvirMon/ng-table/issues/184) | Table: tree styling recipe | tree-styling-recipe | #182, #183 | #189 |
-| [#189](https://github.com/DvirMon/ng-table/issues/189) | Table: Tree story entry — flat data, filtered tree, broken link | tree-stories | #183, #184, #169 | — |
+| #                                                      | Title                                                           | Slice slug          | Depends on       | Blocks     |
+| ------------------------------------------------------ | --------------------------------------------------------------- | ------------------- | ---------------- | ---------- |
+| [#182](https://github.com/DvirMon/ng-table/issues/182) | Table: rows carry --ngp-table-row-depth, drop row aria-expanded | core-row-depth      | —                | #184       |
+| [#183](https://github.com/DvirMon/ng-table/issues/183) | Table: tree directive pair — row hooks + ngpTableTreeToggle     | tree-directive-pair | —                | #184, #189 |
+| [#184](https://github.com/DvirMon/ng-table/issues/184) | Table: tree styling recipe                                      | tree-styling-recipe | #182, #183       | #189       |
+| [#189](https://github.com/DvirMon/ng-table/issues/189) | Table: Tree story entry — flat data, filtered tree, broken link | tree-stories        | #183, #184, #169 | —          |
 
 [#169](https://github.com/DvirMon/ng-table/issues/169) ("Table:
 filter reveal opens context rows") is an external blocker (epic

@@ -11,7 +11,10 @@ export const PAGINATION_NEXT_MOCK: PaginationEntry = {
 };
 
 /** Both sides present — the common case. */
-export const PAGINATION_BOTH_SIDES_MOCK: { readonly prev: PaginationEntry; readonly next: PaginationEntry } = {
+export const PAGINATION_BOTH_SIDES_MOCK: {
+  readonly prev: PaginationEntry;
+  readonly next: PaginationEntry;
+} = {
   prev: PAGINATION_PREV_MOCK,
   next: PAGINATION_NEXT_MOCK,
 };

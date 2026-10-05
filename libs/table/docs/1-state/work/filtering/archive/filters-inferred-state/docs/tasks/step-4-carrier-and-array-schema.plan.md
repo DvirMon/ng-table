@@ -8,8 +8,8 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                              | Action                   |
+| ------------------------------------------------- | ------------------------ |
 | `libs/shared/table/src/filters/create-filters.ts` | rewrite signature + body |
 
 `buildFiltersPath` moves into this file from `recorder.ts`. After Step 3 it has exactly one caller —
@@ -66,6 +66,7 @@ that does not match its type.
 
       Throw. The message must carry the array form — the whole-body mistake is the one a reader
       migrating from the previous shape will make, and the fix has to be in the message.
+
    4. Flatten `declared` into `FilterRuleRecord<TRow>[]`, recursing through nested arrays and
       through a conditional node's children — the runtime mirror of `StateOf`'s `Flatten`. A
       conditional's children come out as individual records tagged `kind: 'conditional'` carrying
@@ -140,4 +141,5 @@ that does not match its type.
 - [ ] `nx run shared-table:typecheck` is clean
 
 ---
+
 ← [Step 3: Rules return their records](step-3-rules-return-records.plan.md) | [Step 5: Delete the ambient recorder](step-5-delete-recorder.plan.md) →

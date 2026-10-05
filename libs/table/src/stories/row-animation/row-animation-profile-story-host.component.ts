@@ -25,8 +25,8 @@ const PROFILE_TABLE_CONFIG: TableConfig<MockRow> = {
   template: `
     <div class="story-host">
       <p class="story-host__hint">
-        Reverse moves every row: rows on screen slide out to the screen edge and the new ones
-        slide in from it. Use it to record a profile. "Move first row down 3" shows a short glide.
+        Reverse moves every row: rows on screen slide out to the screen edge and the new ones slide
+        in from it. Use it to record a profile. "Move first row down 3" shows a short glide.
       </p>
       <div class="story-host__toolbar">
         <button type="button" (click)="reverseRows()">Reverse {{ rowCount }} rows</button>

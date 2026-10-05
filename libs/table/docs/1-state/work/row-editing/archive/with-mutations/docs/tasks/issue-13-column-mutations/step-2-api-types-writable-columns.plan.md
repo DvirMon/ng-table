@@ -51,4 +51,5 @@ together — a public `TableStore.columns: Signal<...>` next to an engine-intern
 - `ColumnsUpdater<TRow>` unchanged.
 
 ---
+
 ← [Step 1: `engine/core.ts` + `engine/types.ts`](step-1-core-writable-columns.plan.md) | [Step 3: `api/update-columns.ts` — the free functions](step-3-update-columns-free-functions.plan.md) →

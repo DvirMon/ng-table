@@ -4,9 +4,7 @@ import type { RenderNode } from './render-stages';
 /** Pure row-identity and render-row helpers. No signals, no Angular. */
 
 /** Collapses the `keyof TRow | fn` config into a single call shape, once at construction. */
-export function normalizeTrackBy<TRow>(
-  trackBy: TrackByConfig<TRow>
-): TrackByFn<TRow> {
+export function normalizeTrackBy<TRow>(trackBy: TrackByConfig<TRow>): TrackByFn<TRow> {
   if (typeof trackBy === 'function') {
     return trackBy;
   }
@@ -17,17 +15,16 @@ export function normalizeTrackBy<TRow>(
       return value;
     }
     throw new Error(
-      `trackBy key "${String(key)}" must resolve to a string or number RowId, got ${typeof value}`
+      `trackBy key "${String(key)}" must resolve to a string or number RowId, got ${typeof value}`,
     );
   };
 }
 
 /** 1:1 wrap, no grouping — the render-node seed every render stage chain starts from. */
 export function buildDefaultRenderNodes<TRow>(
-  trackBy: TrackByFn<TRow>
+  trackBy: TrackByFn<TRow>,
 ): (rows: TRow[]) => RenderNode<TRow>[] {
-  return (rows) =>
-    rows.map((row) => ({ id: trackBy(row), kind: 'row', data: row, children: [] }));
+  return (rows) => rows.map((row) => ({ id: trackBy(row), kind: 'row', data: row, children: [] }));
 }
 
 /**
@@ -40,7 +37,7 @@ export function buildDefaultRenderNodes<TRow>(
 export function resolveIndex<TRow>(
   rows: TRow[],
   id: RowId,
-  { trackBy, indexById }: { trackBy: TrackByFn<TRow>; indexById: ReadonlyMap<RowId, number> }
+  { trackBy, indexById }: { trackBy: TrackByFn<TRow>; indexById: ReadonlyMap<RowId, number> },
 ): number {
   const at = indexById.get(id);
   const isFreshCacheHit = at !== undefined && trackBy(rows[at]) === id;
@@ -51,10 +48,7 @@ export function resolveIndex<TRow>(
 }
 
 /** Ids present in `previous` but not `current` — what left `data` this recompute. */
-export function diffRemovedIds(
-  previous: ReadonlySet<RowId>,
-  current: ReadonlySet<RowId>
-): RowId[] {
+export function diffRemovedIds(previous: ReadonlySet<RowId>, current: ReadonlySet<RowId>): RowId[] {
   const removed: RowId[] = [];
   for (const id of previous) {
     if (!current.has(id)) {
@@ -79,7 +73,7 @@ export function unionIdSets(sources: readonly (() => ReadonlySet<RowId>)[]): Set
 // unlike `instanceof Set`, which TS can't use to exclude `ReadonlySet` from the other arm
 // (it isn't a structural subtype of `Set`, only a supertype of it).
 function isMapContainer(
-  container: ReadonlyMap<RowId, unknown> | ReadonlySet<RowId>
+  container: ReadonlyMap<RowId, unknown> | ReadonlySet<RowId>,
 ): container is ReadonlyMap<RowId, unknown> {
   return 'get' in container;
 }
@@ -93,17 +87,17 @@ function isMapContainer(
 export function pruneByIds<V>(
   container: ReadonlyMap<RowId, V>,
   removedIds: readonly RowId[],
-  keep?: (value: V) => boolean
+  keep?: (value: V) => boolean,
 ): ReadonlyMap<RowId, V>;
 export function pruneByIds<V extends RowId = RowId>(
   container: ReadonlySet<RowId>,
   removedIds: readonly RowId[],
-  keep?: (id: V) => boolean
+  keep?: (id: V) => boolean,
 ): ReadonlySet<RowId>;
 export function pruneByIds(
   container: ReadonlyMap<RowId, unknown> | ReadonlySet<RowId>,
   removedIds: readonly RowId[],
-  keep?: (value: unknown) => boolean
+  keep?: (value: unknown) => boolean,
 ): ReadonlyMap<RowId, unknown> | ReadonlySet<RowId> {
   if (isMapContainer(container)) {
     let next: Map<RowId, unknown> | undefined;

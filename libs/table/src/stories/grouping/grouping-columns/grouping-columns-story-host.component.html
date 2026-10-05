@@ -25,16 +25,16 @@
 
   @if (hiddenColumnLabels().length > 0) {
     <p class="grouping-story__notice">
-      Hidden because they are levels: <strong>{{ hiddenColumnLabels().join(', ') }}</strong>. The
-      column is untouched in <code>table.columns()</code> — the disposition only filters what is
-      rendered, so toggling the level back restores it.
+      Hidden because they are levels: <strong>{{ hiddenColumnLabels().join(', ') }}</strong
+      >. The column is untouched in <code>table.columns()</code> — the disposition only filters what
+      is rendered, so toggling the level back restores it.
     </p>
   }
 
   <p class="grouping-story__notice">
     <code>columns()</code> is the folded list, not a render order: it carries
-    <code>visible</code> and <code>order</code> and leaves the reading to whoever renders it.
-    That is why <code>move-to-front</code> reorders the rendered list rather than writing to
+    <code>visible</code> and <code>order</code> and leaves the reading to whoever renders it. That
+    is why <code>move-to-front</code> reorders the rendered list rather than writing to
     <code>order</code> — the user's own layout survives every mode switch.
   </p>
 

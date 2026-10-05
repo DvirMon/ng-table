@@ -86,8 +86,7 @@ const dealColumns = createColumns(
   (col) => [
     col('region', { label: 'Region' }),
     col('amount'),
-    col('owner', { label: 'Owner',
-                   accessor: (row) => row.owner.name }),
+    col('owner', { label: 'Owner', accessor: (row) => row.owner.name }),
     col('selected', { visible: false }),
   ],
   (path) => {
@@ -96,8 +95,7 @@ const dealColumns = createColumns(
   },
 );
 
-createTable(this.deals, { trackBy: 'id',
-                          columns: dealColumns }, withSorting());
+createTable(this.deals, { trackBy: 'id', columns: dealColumns }, withSorting());
 ```
 
 What the consumer gets:
@@ -139,7 +137,7 @@ What the consumer gets:
   metadata key registered twice on one column — all throw at
   construction, all stripped from production builds.
 - **A carrier column is one option.** `col('selected',
-  { visible: false })` — no object literal, no widening.
+{ visible: false })` — no object literal, no widening.
 
 Sharing one column set across two live tables is supported:
 the rules compile once, and every async rule is instantiated
@@ -194,7 +192,7 @@ per table inside that table's own injection context.
     back to `unknown`.
 14. As an app developer, I want the accessor parameter typed
     without an annotation, so that writing `(row) =>
-    row.owner.name` needs nothing else.
+row.owner.name` needs nothing else.
 15. As an app developer, I want a column whose id names no
     row field to still be declarable, so that a synthesized
     or aggregate-only column remains possible.
@@ -328,25 +326,15 @@ The shapes below come from the design brief's compiled probes
 and encode the decisions more precisely than prose:
 
 ```ts
-declare function createColumns<
-  TRow,
-  TCols extends readonly AnyDecl<TRow>[],
->(
+declare function createColumns<TRow, TCols extends readonly AnyDecl<TRow>[]>(
   data: () => readonly TRow[] | undefined,
   build: (col: ColumnBuilder<TRow>) => TCols,
-  schema?:
-    | ColumnsSchemaFn<TRow, ColumnIdIn<ValuesOf<TCols>>>
-    | ColumnSchema<TRow>,
+  schema?: ColumnsSchemaFn<TRow, ColumnIdIn<ValuesOf<TCols>>> | ColumnSchema<TRow>,
 ): ColumnSet<TRow, TCols>;
 
-declare function createColumns<
-  TRow,
-  TCols extends readonly AnyDecl<TRow>[],
->(
+declare function createColumns<TRow, TCols extends readonly AnyDecl<TRow>[]>(
   build: (col: ColumnBuilder<TRow>) => TCols,
-  schema?:
-    | ColumnsSchemaFn<TRow, ColumnIdIn<ValuesOf<TCols>>>
-    | ColumnSchema<TRow>,
+  schema?: ColumnsSchemaFn<TRow, ColumnIdIn<ValuesOf<TCols>>> | ColumnSchema<TRow>,
 ): ColumnSet<TRow, TCols>;
 
 interface ColumnBuilder<TRow> {
@@ -357,9 +345,7 @@ interface ColumnBuilder<TRow> {
   <K extends string>(
     id: K,
     opts?: Presentation,
-  ): ColumnDecl<
-    TRow, K, K extends keyof TRow ? TRow[K] : unknown
-  >;
+  ): ColumnDecl<TRow, K, K extends keyof TRow ? TRow[K] : unknown>;
 }
 
 interface ColumnSet<TRow, TCols> {
@@ -437,7 +423,7 @@ gets an accessor matching its new id instead of silently
 reading the original field.
 
 **D7 — `ColumnDecl` carries a type-only brand: a `unique
-symbol` key, declared and never assigned, as a *required*
+symbol` key, declared and never assigned, as a _required_
 member.** Nine libraries were surveyed. The real-symbol-
 versus-type-only split tracks exactly one variable — whether
 the library must answer "is this mine?" about an unknown
@@ -445,7 +431,7 @@ value at runtime. `createColumns` receives its declarations
 from its own builder inside its own call; there is no
 unknown to sort and nothing asks for a runtime predicate, so
 the brand is a phantom. The member is required, not optional:
-an optional member is a type *carrier* and rejects nothing,
+an optional member is a type _carrier_ and rejects nothing,
 and no surveyed library uses one for nominality. Correction
 recorded alongside it: this repo's existing optional phantom
 members are carriers, not brands.
@@ -455,7 +441,7 @@ spread; `col.from(decl, opts)` is the sanctioned spelling.**
 Spreading a declaration and overriding its id copies the
 brand, so it passes every check, while the overridden id sits
 in an object literal whose contextual type is `string` and
-therefore widens. The map then types *confidently wrong*
+therefore widens. The map then types _confidently wrong_
 rather than merely degrading, which is worse than plain
 widening because the surviving brand makes the result look
 validated. No branding mechanism closes this — not a symbol,
@@ -496,7 +482,7 @@ window.** Every in-repo caller lives inside the library's own
 source tree — specs, story hosts and fixtures — and the docs
 site names the factory only in prose. So a window has no
 in-repo beneficiary, and it is not free: keeping a plain
-array *typed* means building a literal-preserving default
+array _typed_ means building a literal-preserving default
 that exists solely to be deprecated. Reopens only if a
 repository outside this one already builds against the
 published package. Keeping both surfaces permanently was
@@ -578,7 +564,7 @@ ticket is what makes the distinction load-bearing.
 **D18 (E12) — the shared check's message stops naming the
 `columns` array.** It currently reads "no column with this id
 exists in the `columns` array"; after D11 there is no such
-array. The label parameter names the *declaring* surface, not
+array. The label parameter names the _declaring_ surface, not
 the source of truth, so no call site fixes this. One string
 edit, inside the same step as D14/D16.
 **Shipped (2026-09-24, #132).** Message is now: `` `[${label}] Unknown column id
@@ -616,8 +602,8 @@ list still typechecks — which the shipped grouping-degrades-
 on-column-removal ruling depends on. **`setColumns` cannot
 add a column, and that is structural.** Confirmed against the
 closest comparable framework, which has neither an add-field
-nor a remove-field API: its structure follows the *data*,
-while ours follows the *declaration*, and literal keys and a
+nor a remove-field API: its structure follows the _data_,
+while ours follows the _declaration_, and literal keys and a
 growable key set are mutually exclusive by construction.
 Rejected: builder-built declarations on the write path (a
 builder must be in hand, so either the declaring call is
@@ -693,9 +679,9 @@ first.
 
 **D25 — the Signal-Forms contrast behind the two-tier
 resolver rule is wrong as written; the rule itself stands.**
-Verified against published framework source that its *schema
-path* names a type-level slot, the same cross-section shape
-as ours — only its *field tree* names instances. The two-tier
+Verified against published framework source that its _schema
+path_ names a type-level slot, the same cross-section shape
+as ours — only its _field tree_ names instances. The two-tier
 rule survives on its own evidence, an inventory of every
 consumer callback across all four schemas, not on that
 contrast. Noted here because it is in the same settled set;
@@ -751,7 +737,7 @@ Two files, plus small edits to what already exists.
 - `{ ...col('x'), id: 'y' }` widens. **This claim is
   reasoned from TypeScript's rules and has not been probed;
   this spec is what settles it.** If the probe comes back
-  showing it does *not* widen, D8's `col.from` is still
+  showing it does _not_ widen, D8's `col.from` is still
   wanted as the sanctioned spelling, but the severity
   argument behind it changes and the finding gets recorded.
 - The value map resolves a declared accessor's return type.

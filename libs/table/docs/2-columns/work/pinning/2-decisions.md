@@ -13,8 +13,8 @@ Companion to
 evidence, the eight-library comparison and the source table. This file records only what was
 decided from it.
 
-**Nothing here commits the library to building pinning.** These decisions say *where it would
-live* if built, and what is still unanswered.
+**Nothing here commits the library to building pinning.** These decisions say _where it would
+live_ if built, and what is still unanswered.
 
 ---
 
@@ -34,9 +34,9 @@ live* if built, and what is still unanswered.
   Handsontable / Syncfusion as a count integer (`fixedColumnsStart`, `frozenColumns`). Only AG
   Grid and DevExtreme are per-column.
 
-  Why it did not change the decision: that evidence is about *storage scope within the column
-  layer*, not about the column/data split. No surveyed library's pinning reads row data. The
-  count-integer form is in fact *less* expressive — it only pins a prefix of the column order —
+  Why it did not change the decision: that evidence is about _storage scope within the column
+  layer_, not about the column/data split. No surveyed library's pinning reads row data. The
+  count-integer form is in fact _less_ expressive — it only pins a prefix of the column order —
   and adopting a per-column enum forecloses exactly that one shipped design, deliberately.
 
 - **P2 (2026-09-18) — total pinned width does not make pinning a feature.**
@@ -55,7 +55,6 @@ live* if built, and what is still unanswered.
 - **P3 — the pinned render model, and this is the one that matters.**
 
   Two shipped shapes:
-
   - **Single row, sticky cells** — left/middle/right cells inside one row element (MUI X,
     PrimeNG). Composes with a spanning group row cleanly; no conflict at all.
   - **Region-split** — pinned columns in separate scroll regions (AG Grid, Handsontable's
@@ -73,7 +72,6 @@ live* if built, and what is still unanswered.
 - **P4 — where does pinned-region order come from?**
 
   Two answers shipped, each with a stated price:
-
   - **From the stored array** — MUI X pays by **forbidding reorder of pinned columns**.
   - **From global column order** — AG Grid pays nothing extra.
 
@@ -106,4 +104,4 @@ have to open that one to know what is soft:
 - MUI X source claims read at `master`, not at the `v9.14.0` tag.
 - The brief said TanStack v8; `@tanstack/table-core` latest is 9.2.4. Version framing in the
   comparison table is the registry's, not v8's.
-</content>
+  </content>

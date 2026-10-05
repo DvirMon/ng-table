@@ -37,7 +37,7 @@ Wiring accessibility is never part of the consumer's normal job.
 
 9. **Reduced motion:** motion recipes respect `prefers-reduced-motion`, and directives that time animations honour it.
 
-State hooks (`data-*`) for anything the consumer styles, e.g. focus visible and open/closed, per the existing "state as data-* attributes" invariant.
+State hooks (`data-*`) for anything the consumer styles, e.g. focus visible and open/closed, per the existing "state as data-\* attributes" invariant.
 
 ## Why
 

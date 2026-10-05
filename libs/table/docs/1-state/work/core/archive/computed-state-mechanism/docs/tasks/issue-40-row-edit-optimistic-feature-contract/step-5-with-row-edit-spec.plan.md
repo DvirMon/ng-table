@@ -1,5 +1,5 @@
 ---
-title: "Step 5 — with-row-edit.spec.ts + optimistic-mutations.spec.ts composed cases: positional form, trailing block, ADR-0006 prune"
+title: 'Step 5 — with-row-edit.spec.ts + optimistic-mutations.spec.ts composed cases: positional form, trailing block, ADR-0006 prune'
 type: task-step
 issue: 74
 ---
@@ -83,4 +83,5 @@ and contain no explicit row type argument"; open edits pruned when rows leave `d
 - [ ] Runtime green (`vitest run` on both files) — the user runs it.
 
 ---
+
 ← [Step 4: with-optimistic.spec.ts](step-4-with-optimistic-spec.plan.md) | [Step 6: finding — order the two features vs keep the shared store](step-6-shared-store-finding.plan.md) →

@@ -6,6 +6,7 @@ Spec file: `libs/table/src/engine/compose-table.spec.ts`
 after `describe('declared stages (#155)')`)
 
 ## Stubs (red phase)
+
 - None. The step creates no new exported symbol.
   `runRenderStages` already exists, and the tests reach it only
   through `composeTable`. Red fails on assertions:
@@ -13,13 +14,14 @@ after `describe('declared stages (#155)')`)
 
 Fixtures to add next to the existing render fixtures
 (`groupWrappingStage`, `renderTaggingStage`):
+
 - `duplicatingStage()` claims `s.tree`.
   `run: (nodes) => [...nodes, ...nodes]`.
 - `inventingStage()` claims `s.tree` and appends one real row
   (`id: 'x'`, `data` a full `Row`, `children: []`).
 - `wrapAndInventStage()` claims `s.group` and returns
   `[{ id: 'group-1', kind: 'group', data: null,
-  children: [...nodes, invented] }]`.
+children: [...nodes, invented] }]`.
 - Keep `invented` in one module-level const.
 
 Spy pattern, from `engine/cells.spec.ts`:
@@ -32,6 +34,7 @@ one evaluation. Existing helpers: `makeRows` (:52, rows r1/r2),
 ## Seams — in red-green order
 
 ### A. A stage emits duplicate ids → one report, output passed through
+
 - Test: `it('reports a stage emitting duplicate ids once and still renders its output')`
 - Asserts: `composeWithRows(makeRows(), [duplicatingStage()])`
   does not throw. The spy has exactly 1 call. The first argument
@@ -48,6 +51,7 @@ one evaluation. Existing helpers: `makeRows` (:52, rows r1/r2),
   seam asserts through.
 
 ### B. A stage invents a real row → one report, row still renders
+
 - Test: `it('reports a stage inventing a real row id once and still renders it')`
 - Asserts: `composeWithRows(makeRows(), [inventingStage()])`.
   The spy has exactly 1 call. The message contains
@@ -60,9 +64,10 @@ one evaluation. Existing helpers: `makeRows` (:52, rows r1/r2),
   reuses A's report path.
 
 ### C. An invented id nested under a header is found, and only its stage is blamed
+
 - Test: `it('finds an invented id nested under a made-up row and reports only the stage that added it')`
 - Asserts: compose with `[wrapAndInventStage(),
-  renderTaggingStage('tree', 'tree>')]`. The spy has exactly 1
+renderTaggingStage('tree', 'tree>')]`. The spy has exactly 1
   call. The message contains `'"group"'` and does not contain
   `'"tree"'`. The ids in `renderRows` equal
   `['group-1', 'r1', 'r2', 'x']`.
@@ -78,9 +83,10 @@ one evaluation. Existing helpers: `makeRows` (:52, rows r1/r2),
   stages).
 
 ### D. Made-up header rows are exempt; a later inventor is still reported
+
 - Test: `it('does not report a made-up data:null row, only a later stage that invents a real row')`
 - Asserts: compose with `[groupWrappingStage('group-1'),
-  inventingStage()]`. The spy has exactly 1 call. The message
+inventingStage()]`. The spy has exactly 1 call. The message
   contains `'"tree"'` and does not contain `'"group"'`. The
   `renderRows` ids include `'x'`.
 - Why this seam: pins the `data === null` exemption (ruling
@@ -91,6 +97,7 @@ one evaluation. Existing helpers: `makeRows` (:52, rows r1/r2),
 - Order reason: builds on B (same check, plus the exemption).
 
 ### E. Reports still fire with ngDevMode off
+
 - Test: `it('reports duplicate ids even when ngDevMode is false')`
 - Asserts: inside the `getNgDevMode`/`setNgDevMode(false)`
   try/finally pattern (as in
@@ -103,9 +110,11 @@ one evaluation. Existing helpers: `makeRows` (:52, rows r1/r2),
 - Order reason: builds on A (same fixture, gate off).
 
 ## Types phase (written in red, proven by green's typecheck)
+
 None — no public type surface in this step.
 
 ## Not tested
+
 - Walking each output only once and reusing the set as the next
   input: a performance choice with no visible behaviour. Seam C
   pins the correctness it must keep.

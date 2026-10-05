@@ -10,7 +10,7 @@ doc still linking one: `adr/0022-render-row-cell-values.md:18` cites `grouping-s
 
 Everything else that names `grouping-static/`, `grouping-regressions/` or `grouping-crud/` is
 either an episodic work/task plan (`1-state/work/**`, `3-ui/work/**/docs/tasks/**`) or
-`3-lesson-audit.md`, the document that *decided* the deletions. Those references are historical
+`3-lesson-audit.md`, the document that _decided_ the deletions. Those references are historical
 by design and are left alone — rewriting a task plan to match a later decision destroys the
 record of what was true when it ran.
 

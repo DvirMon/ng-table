@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — Engine: sortClusters resolves its comparator per column"
+title: 'Step 3 — Engine: sortClusters resolves its comparator per column'
 type: task-step
 issue: 87
 ---
@@ -60,10 +60,9 @@ export function sortClusters<T, TRow>(
   nodes: ClusterNode<T>[],
   groupOrderByColumn: ReadonlyMap<string, GroupOrder<TRow>> | undefined,
   toRows: (items: T[]) => TRow[],
-  reported: { done: boolean }
+  reported: { done: boolean },
 ): ClusterNode<T>[] {
-  const comparator =
-    nodes.length > 0 ? groupOrderByColumn?.get(nodes[0].columnId) : undefined;
+  const comparator = nodes.length > 0 ? groupOrderByColumn?.get(nodes[0].columnId) : undefined;
   const ordered = comparator
     ? orderWithComparator(nodes, comparator, toRows, reported)
     : partitionByAdmission(nodes);
@@ -79,7 +78,7 @@ function orderWithComparator<T, TRow>(
   nodes: ClusterNode<T>[],
   comparator: GroupOrder<TRow>,
   toRows: (items: T[]) => TRow[],
-  reported: { done: boolean }
+  reported: { done: boolean },
 ): ClusterNode<T>[] {
   try {
     const summaries = nodes.map((node) => ({
@@ -138,7 +137,7 @@ they already take `opts?: ClusterOpts<TRow>` and just forward the field through.
   call, not once per level and not once per column. Do not key it by `columnId`; that's
   `admitClusters`'s `reportedColumns` pattern (admission), a different dedupe granularity for a
   different callback (D15 vs the admission table in `2-decisions.md`).
-- **A comparator that throws still falls back to *that level's* pre-sort order only** — the
+- **A comparator that throws still falls back to _that level's_ pre-sort order only** — the
   `catch` returns `nodes` (this list), and recursion into `children` continues independently per
   child list, each resolving its own comparator by its own `columnId`. This is unchanged behavior,
   just now keyed per-column instead of applying to a single global comparator.
@@ -179,4 +178,5 @@ they already take `opts?: ClusterOpts<TRow>` and just forward the field through.
       exports match the new signature by reading the diff, not by a clean whole-project run.
 
 ---
+
 ← [Step 2: applyGroupOrder schema sugar](step-2-apply-group-order-sugar.plan.md) | [Step 4: Wire into withGrouping()](step-4-wire-with-grouping.plan.md) →

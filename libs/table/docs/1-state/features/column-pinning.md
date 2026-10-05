@@ -23,7 +23,7 @@ because its column model is centralized internally either way; this table follow
 `createColumns`'s schema argument's `applyPinned` therefore **seeds this feature's initial
 state** and writes nothing onto `ColumnDef`.
 
-The feature answers one question — *which rail is this column in, and where in it?* Sticky
+The feature answers one question — _which rail is this column in, and where in it?_ Sticky
 positioning, offsets, rail shadows and horizontal scroll are UI layer.
 
 ## State Shape (sketch — not locked)
@@ -57,9 +57,9 @@ rather than semantics. See the open question about collapsing them to sets.
 
 ```ts
 interface ColumnPinningMembers<TRow> {
-  leftColumns:   Signal<ColumnDef<TRow>[]>;   // pinned left,  visible, ordered
-  centerColumns: Signal<ColumnDef<TRow>[]>;   // unpinned,     visible, ordered
-  rightColumns:  Signal<ColumnDef<TRow>[]>;   // pinned right, visible, ordered
+  leftColumns: Signal<ColumnDef<TRow>[]>; // pinned left,  visible, ordered
+  centerColumns: Signal<ColumnDef<TRow>[]>; // unpinned,     visible, ordered
+  rightColumns: Signal<ColumnDef<TRow>[]>; // pinned right, visible, ordered
 }
 ```
 
@@ -83,21 +83,21 @@ three rails; asking a template to partition the column list itself would put the
 - **`reorderColumns()` stays pinning-unaware.** It writes `order` on `baseColumns` as it
   does today. The regions recompute because they read `columns()`. No coordination, no new
   coupling in `mutations/update-columns.ts` — this is the payoff of not duplicating order.
-  Reordering a column *across* a rail boundary is a UI concern (a drop target decides both
+  Reordering a column _across_ a rail boundary is a UI concern (a drop target decides both
   the new `order` and the new pin, and issues two updates).
 - **Does not reshape rows.** No pipeline stage, no render stage. render stages operate on
-  `RenderRow[]`; pinning partitions *columns* and never touches row count, row order or row
+  `RenderRow[]`; pinning partitions _columns_ and never touches row count, row order or row
   identity.
 
 ## Methods
 
-| Method | Description |
-|---|---|
-| `pinColumn(id: string, side: PinSide)` | Move a column into a rail; exclusive; no-op for an unknown id |
-| `unpinColumn(id: string)` | Remove from whichever rail holds it |
-| `isColumnPinned(id: string): PinSide \| false` | TanStack's `column_getIsPinned` shape |
-| `pinnedIndex(id: string): number` | Position within its rail (`-1` when unpinned) — the index the UI needs for cumulative offsets |
-| `resetColumnPinning()` | Empty both rails |
+| Method                                         | Description                                                                                   |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `pinColumn(id: string, side: PinSide)`         | Move a column into a rail; exclusive; no-op for an unknown id                                 |
+| `unpinColumn(id: string)`                      | Remove from whichever rail holds it                                                           |
+| `isColumnPinned(id: string): PinSide \| false` | TanStack's `column_getIsPinned` shape                                                         |
+| `pinnedIndex(id: string): number`              | Position within its rail (`-1` when unpinned) — the index the UI needs for cumulative offsets |
+| `resetColumnPinning()`                         | Empty both rails                                                                              |
 
 ## Feature Plugin Shape
 
@@ -140,21 +140,21 @@ order-restore bug). Ids absent from the current `columns()` are dropped on resto
 ## Open questions
 
 - [ ] **Keep arrays, or collapse to sets?** With order derived, `{ left: string[]; right:
-  string[] }` carries no information a `Set<string>` + a `PinSide` map wouldn't. Arrays are
-  retained for TanStack shape familiarity and stable serialization; whether that is worth an
-  ordered container whose order is meaningless is unresolved.
+string[] }` carries no information a `Set<string>` + a `PinSide` map wouldn't. Arrays are
+      retained for TanStack shape familiarity and stable serialization; whether that is worth an
+      ordered container whose order is meaningless is unresolved.
 - [ ] **No column-removal reconciliation hook exists** — shared with
-  [column-sizing.md](./column-sizing.md). `setColumns()` can drop a pinned column and leave
-  a dead id in `columnPinning`. Generalise ADR-0006's diff-and-prune to column ids, or
-  filter lazily on read? Undecided, and it should be decided once for both features.
+      [column-sizing.md](./column-sizing.md). `setColumns()` can drop a pinned column and leave
+      a dead id in `columnPinning`. Generalise ADR-0006's diff-and-prune to column ids, or
+      filter lazily on read? Undecided, and it should be decided once for both features.
 - [ ] **Header/column groups.** `2-columns` treats column groups as declarative only. If a
-  group is pinned, is every member pinned, and can a member be pinned to the opposite rail?
-  No group runtime API exists to hang this on today.
+      group is pinned, is every member pinned, and can a member be pinned to the opposite rail?
+      No group runtime API exists to hang this on today.
 - [ ] **Row pinning is a separate capability.** Frozen top/bottom rows share the vocabulary
-  but not the state — they reshape `RenderRow[]` and would claim a render stage. Not in
-  scope here; not specced anywhere yet.
+      but not the state — they reshape `RenderRow[]` and would claim a render stage. Not in
+      scope here; not specced anywhere yet.
 - [ ] **Not yet drilled.** `spec: drafted` — no decisions session has validated any shape
-  above.
+      above.
 
 ## Competitive position
 

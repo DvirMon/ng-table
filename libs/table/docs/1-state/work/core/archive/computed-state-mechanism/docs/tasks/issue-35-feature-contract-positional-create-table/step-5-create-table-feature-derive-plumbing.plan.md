@@ -1,5 +1,5 @@
 ---
-title: "Step 5 — create-table-feature.ts: re-typed to Feature<In, Out>, trailing derive-block plumbing"
+title: 'Step 5 — create-table-feature.ts: re-typed to Feature<In, Out>, trailing derive-block plumbing'
 type: task-step
 issue: 69
 ---
@@ -36,9 +36,13 @@ plumbing themselves.
 1. **Signature** (the verified probe shape, generalized):
 
    ```ts
-   export function createTableFeature<In extends Shape, Out extends object, D extends DerivedDict = {}>(
+   export function createTableFeature<
+     In extends Shape,
+     Out extends object,
+     D extends DerivedDict = {},
+   >(
      factory: (input: In) => TableFeatureSpec<RowOf<In>, Out>,
-     derive?: Feature<In & Out, D>
+     derive?: Feature<In & Out, D>,
    ): Feature<In, Out & D>;
    ```
 
@@ -120,4 +124,5 @@ plumbing themselves.
       comment.
 
 ---
+
 ← [Step 4: create-table.ts — positional signature](step-4-positional-create-table.plan.md) | [Step 6: specs — fold runtime + createTable runtime and type assertions](step-6-specs-fold-and-create-table-types.plan.md) →

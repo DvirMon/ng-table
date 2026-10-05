@@ -10,6 +10,7 @@ files:
   - libs/table/src/engine/compose-table.spec.ts
   - libs/table/src/engine/types.types.spec.ts
 ---
+
 # Step 2 — Engine read of context rows
 
 This step lets a feature read the engine's union of context rows through `ctx.contextRows()`.
@@ -47,4 +48,5 @@ Decisions: [D27](../../1-decisions.md), [A2](../../3-architecture.md), ADR-0028
 - [ ] `ctx.contextRows()` returns an empty set when nothing contributes.
 
 ---
+
 ← [Step 1: Split with-tree into a folder](step-1-split-with-tree-folder.plan.md) | [Step 3: table.tree.contextRowIds](step-3-context-row-ids.plan.md) →

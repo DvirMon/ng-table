@@ -1,5 +1,5 @@
 ---
-title: "Step 6 — finding on #40: order the two editing features (row-edit before optimistic) vs keep the shared editing store"
+title: 'Step 6 — finding on #40: order the two editing features (row-edit before optimistic) vs keep the shared editing store'
 type: task-step
 issue: 74
 ---
@@ -55,7 +55,7 @@ Write the comment under these headings, from the code as it stands after Steps 1
    `editing` member has a single provider by construction rather than by throw.
 
 4. **Finding.** State it in one sentence. Expected (verify, do not assume): keep the shared
-   store; the new rationale is *ownership* — `withRowEdit()` is a superset feature that builds
+   store; the new rationale is _ownership_ — `withRowEdit()` is a superset feature that builds
    the editing store itself and adds `open`/`draft`; `withOptimistic()` builds the same store
    when composed alone; composing both is a collision, not an ordering — and order independence
    is no longer the reason. If the look turns up the opposite, say so with the same specificity.
@@ -86,4 +86,5 @@ Windows is unreliable).
 - [ ] Progress file updated; issue #40's last acceptance box can be ticked.
 
 ---
+
 ← [Step 5: with-row-edit.spec.ts + optimistic-mutations.spec.ts](step-5-with-row-edit-spec.plan.md)

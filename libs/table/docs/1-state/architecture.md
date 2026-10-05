@@ -24,11 +24,11 @@ Applies to every state-layer decision, not one feature.
 **Prefer one general, composable mechanism plus optional defaults, over an API that enumerates
 every scenario.** When a cluster of edge cases shows up, the first move is not to add a config flag
 per case — it is to ask what single operation they are all instances of, and whether the engine can
-expose *that* instead.
+expose _that_ instead.
 
 This usually means building **more** into the engine, not less. Reaching a mechanism general enough
 for consumers to compose against can require reworking engine internals; that is the work, not
-something to avoid. The thing being minimized is the *enumerated surface area*, not the engine.
+something to avoid. The thing being minimized is the _enumerated surface area_, not the engine.
 
 ### The reference case — `updateRows`
 
@@ -38,7 +38,7 @@ scenarios were add, remove, update, duplicate, bulk delete, import, and an open-
 than shipping a method per scenario, the API is:
 
 ```ts
-updateRows(table, updater)          // the one general operation
+updateRows(table, updater); // the one general operation
 ```
 
 with a handful of pure updaters shipped as **convenience, not as the contract** — D19 ships exactly
@@ -87,34 +87,34 @@ open?" check ([`features/expansion.md`](features/expansion.md)), single-open and
 
 ## Core Config
 
-| Reference | Status |
-|---|---|
-| [`columns`](columns.md) — column definitions, runtime-mutable order/visibility | ✅ Drilled |
+| Reference                                                                                                                                                                                                                                                | Status       |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| [`columns`](columns.md) — column definitions, runtime-mutable order/visibility                                                                                                                                                                           | ✅ Drilled   |
 | [`createColumns`'s schema argument](../2-columns/architecture.md) — declarative column schema DX (bare-named rules, e.g. `visible`/`sortNulls`/`grouping`) layered on `columns` core config; detail in [`2-columns/reference/`](../2-columns/reference/) | 📝 Spec only |
 
 `createColumns`'s schema argument can seed the initial state of the two not-yet-drilled `withColumnPinning()` / `withColumnSizing()` features below (via `applyPinned` / `applyWidth`+`applyFlex`) — see [2-columns/reference/tier-2-layout.md](../2-columns/reference/tier-2-layout.md).
 
 ## Features — Drilled
 
-| Feature | Reference | Summary |
-|---|---|---|
-| `withSorting()` | [with-sorting.md](features/sorting.md) | Multi-column, three-state toggle, additive by click order |
-| `withGrouping()` | [with-grouping.md](features/grouping.md) | Single-level, `aggregate` declared through `schema`; collapse via `withTree()` when composed (optional, not required — revised 2026-07-31, re-pointed from `withExpansion()` to `withTree()` by [ADR-0012](../adr/0012-split-expansion-into-panel-and-tree.md)) |
-| `withExpansion()` | [with-expansion.md](features/expansion.md) | Detail panel — open/closed id tracking only, no row synthesis, standalone (no dependencies). Split from the tree-grid case by [ADR-0012](../adr/0012-split-expansion-into-panel-and-tree.md) |
-| `withTree()` | [with-tree.md](features/tree.md) | Tree-grid — real row tree, expanding a parent reveals its children as rows sharing the same columns, at any depth; real-row parents only, linked by a flat `parentId` (#167). Claims the `'tree'` render stage only when `parentId` is supplied; omitted gives the collapse-only instance `withGrouping()` composes. Split from the detail-panel case by [ADR-0012](../adr/0012-split-expansion-into-panel-and-tree.md) |
-| `withFiltering()` | [with-filtering.md](features/filtering.md) | ⚠️ Superseded (2026-09-09) — imperative `setColumnFilter()`/`setGlobalFilter()` design walked back mid-grill; redirected to a standalone `createFilters()` primitive, see [work/with-filtering/design-options-hybrid-api.md](work/with-filtering/design-options-hybrid-api.md) |
-| `withSelection()` | [with-selection.md](features/selection.md) | Flat id set, no scope concept (D1); single-select is a rule on the write verbs via `enableMultiRowSelection`, never stored mode state (D2); standalone (no dependencies) |
+| Feature           | Reference                                  | Summary                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ----------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `withSorting()`   | [with-sorting.md](features/sorting.md)     | Multi-column, three-state toggle, additive by click order                                                                                                                                                                                                                                                                                                                                                               |
+| `withGrouping()`  | [with-grouping.md](features/grouping.md)   | Single-level, `aggregate` declared through `schema`; collapse via `withTree()` when composed (optional, not required — revised 2026-07-31, re-pointed from `withExpansion()` to `withTree()` by [ADR-0012](../adr/0012-split-expansion-into-panel-and-tree.md))                                                                                                                                                         |
+| `withExpansion()` | [with-expansion.md](features/expansion.md) | Detail panel — open/closed id tracking only, no row synthesis, standalone (no dependencies). Split from the tree-grid case by [ADR-0012](../adr/0012-split-expansion-into-panel-and-tree.md)                                                                                                                                                                                                                            |
+| `withTree()`      | [with-tree.md](features/tree.md)           | Tree-grid — real row tree, expanding a parent reveals its children as rows sharing the same columns, at any depth; real-row parents only, linked by a flat `parentId` (#167). Claims the `'tree'` render stage only when `parentId` is supplied; omitted gives the collapse-only instance `withGrouping()` composes. Split from the detail-panel case by [ADR-0012](../adr/0012-split-expansion-into-panel-and-tree.md) |
+| `withFiltering()` | [with-filtering.md](features/filtering.md) | ⚠️ Superseded (2026-09-09) — imperative `setColumnFilter()`/`setGlobalFilter()` design walked back mid-grill; redirected to a standalone `createFilters()` primitive, see [work/with-filtering/design-options-hybrid-api.md](work/with-filtering/design-options-hybrid-api.md)                                                                                                                                          |
+| `withSelection()` | [with-selection.md](features/selection.md) | Flat id set, no scope concept (D1); single-select is a rule on the write verbs via `enableMultiRowSelection`, never stored mode state (D2); standalone (no dependencies)                                                                                                                                                                                                                                                |
 
 ## Features — Not Yet Drilled
 
-| Feature | Reference | Known from Overview |
-|---|---|---|
-| `withPagination()` | [with-pagination.md](features/pagination.md) | `{ pageIndex, pageSize, totalRows }` |
-| `withInfiniteScroll()` | [with-infinite-scroll.md](features/infinite-scroll.md) | `{ hasMore, isLoading }` |
-| `withDragDrop()` | [with-drag-drop.md](features/drag-drop.md) | `{ dragState }` |
-| `withColumnPinning()` | not yet started | `{ columnPinning: { left: string[]; right: string[] } }` — TanStack-modeled, plus start/center/end region derivation. Seedable via `createColumns`'s schema argument's `applyPinned`. |
-| `withColumnSizing()` | not yet started | Per-column resizable width/flex state, only when sizing is runtime-resizable (static width stays column-owned CSS). Seedable via `createColumns`'s schema argument's `applyWidth`/`applyFlex`. |
-| `withVirtualScroll()` | [with-virtual-scroll.md](features/virtual-scroll.md) | Windowed rendering over `renderRows()`; no dependency on grouping/expansion/tree — added 2026-07-31 alongside the `renderRows` render-layer design |
+| Feature                | Reference                                              | Known from Overview                                                                                                                                                                            |
+| ---------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `withPagination()`     | [with-pagination.md](features/pagination.md)           | `{ pageIndex, pageSize, totalRows }`                                                                                                                                                           |
+| `withInfiniteScroll()` | [with-infinite-scroll.md](features/infinite-scroll.md) | `{ hasMore, isLoading }`                                                                                                                                                                       |
+| `withDragDrop()`       | [with-drag-drop.md](features/drag-drop.md)             | `{ dragState }`                                                                                                                                                                                |
+| `withColumnPinning()`  | not yet started                                        | `{ columnPinning: { left: string[]; right: string[] } }` — TanStack-modeled, plus start/center/end region derivation. Seedable via `createColumns`'s schema argument's `applyPinned`.          |
+| `withColumnSizing()`   | not yet started                                        | Per-column resizable width/flex state, only when sizing is runtime-resizable (static width stays column-owned CSS). Seedable via `createColumns`'s schema argument's `applyWidth`/`applyFlex`. |
+| `withVirtualScroll()`  | [with-virtual-scroll.md](features/virtual-scroll.md)   | Windowed rendering over `renderRows()`; no dependency on grouping/expansion/tree — added 2026-07-31 alongside the `renderRows` render-layer design                                             |
 
 ---
 
@@ -142,23 +142,18 @@ Features are trailing positional arguments to `createTable()`. No feature call c
 type — it is inferred from `data` and recovered inside the feature as `RowOf<In>`:
 
 ```ts
-createTable(
-  this.departments,
-  { trackBy: 'id', columns },
-  withExpansion(),
-  withSorting(),
-);
+createTable(this.departments, { trackBy: 'id', columns }, withExpansion(), withSorting());
 ```
 
 Three rules govern what a feature can see, and they are easy to conflate:
 
 **1. The base store is built before the fold.** `composeTable()` builds core first, then folds
-features left to right, handing each one the store *as accumulated so far*. A feature sees the
+features left to right, handing each one the store _as accumulated so far_. A feature sees the
 core members plus every feature to its **left**, and none to its right.
 
 **2. Member visibility follows argument order. Pipeline execution order does not.** The pipeline
 runs the fixed anchor order `filter → group → sort`, plus any stages a feature declares,
-regardless of how the consumer ordered the arguments. Reordering arguments changes what each feature can *read*; it never
+regardless of how the consumer ordered the arguments. Reordering arguments changes what each feature can _read_; it never
 changes what runs when.
 
 **3. Types are stricter than runtime.** The store is one shared object reference, so a read

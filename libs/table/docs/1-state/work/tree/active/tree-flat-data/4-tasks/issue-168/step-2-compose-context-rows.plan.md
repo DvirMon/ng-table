@@ -9,6 +9,7 @@ files:
   - libs/table/src/api/features/compose-features.spec.ts
   - libs/table/src/api/create-table.spec.ts
 ---
+
 # Step 2 — Compose context rows
 
 This step makes `composeFeatures` merge inner `contextRows` into one composite signal.
@@ -40,4 +41,5 @@ Decisions: [A2](../../3-architecture.md)
 - [ ] A feature's own `contextRows` survives a derive block.
 
 ---
+
 ← [Step 1: Context-rows engine slot](step-1-context-rows-slot.plan.md) | [Step 3: Tree retention](step-3-tree-retention.plan.md) →

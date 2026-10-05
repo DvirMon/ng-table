@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — withSelection() colocated spec"
+title: 'Step 2 — withSelection() colocated spec'
 type: task-step
 issue: 55
 ---
@@ -56,7 +56,7 @@ Step 1 — needs `withSelection()`'s public members to exist.
 ## Risks / Watchouts
 
 - Don't let the "no-op emits nothing" tests become flaky by asserting `emissions.length === 0` only at test end without a synchronous-emission guarantee — RxJS `Subject.next()` is synchronous, so a plain array-push subscriber is sufficient; no need for `fakeAsync`/`tick()`.
-- The "subscriber attached immediately after construction sees nothing from `initialSelection`" test must subscribe *after* `makeStore()` returns (mirroring real consumer timing) — subscribing before construction would trivially pass for the wrong reason (nothing has run yet either way pre-construction), so this test only means something if the subscribe happens post-construction, pre-any-write.
+- The "subscriber attached immediately after construction sees nothing from `initialSelection`" test must subscribe _after_ `makeStore()` returns (mirroring real consumer timing) — subscribing before construction would trivially pass for the wrong reason (nothing has run yet either way pre-construction), so this test only means something if the subscribe happens post-construction, pre-any-write.
 
 ## Non-Goals
 
@@ -71,4 +71,5 @@ Step 1 — needs `withSelection()`'s public members to exist.
 - [ ] `npm run test` (or the project's scoped equivalent for this package) passes — user runs this, per this repo's "never run tests unprompted" convention; report what's worth verifying instead of running it.
 
 ---
+
 ← [Step 1: withSelection() feature plugin](step-1-with-selection-plugin.plan.md) | [Step 3: enableRowSelection() write-path gate (D58)](step-3-enable-row-selection-gate.plan.md) →

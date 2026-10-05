@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — Agent-run static gates: type-check + lint across the library and both apps"
+title: 'Step 4 — Agent-run static gates: type-check + lint across the library and both apps'
 type: task-step
 issue: 77
 ---
@@ -48,6 +48,7 @@ unit suites and Storybook build are Step 5.
    ```
 
    Filter output: `2>&1 | grep -E "error TS" | head -40`.
+
 3. Lint:
 
    ```bash
@@ -82,4 +83,5 @@ unit suites and Storybook build are Step 5.
 - [ ] `progress.md` carries the six result lines
 
 ---
+
 ← [Step 3: `stories.md` layout tree + fixtures table](step-3-stories-doc-composition-folder.plan.md) | [Step 5: User-run gates and #43 close-out](step-5-user-gates-closeout.plan.md) →

@@ -16,10 +16,10 @@ export { createRecorderSession, recorderOf } from '../schema/path-proxy';
  * it never reads real column data.
  */
 export function buildColumnsPath<TRow, TId extends string, TRule = ColumnRule<TRow>>(
-  recorder: PathRecorder<TRow, TRule>
+  recorder: PathRecorder<TRow, TRule>,
 ): ColumnsPath<TRow, TId, TRule> {
   return createPathProxy(
-    (id): ColumnHandle<TRow, string, TRule> => ({ id, [PATH_RECORDER]: recorder })
+    (id): ColumnHandle<TRow, string, TRule> => ({ id, [PATH_RECORDER]: recorder }),
   ) as ColumnsPath<TRow, TId, TRule>;
 }
 
@@ -30,11 +30,11 @@ export function buildColumnsPath<TRow, TId extends string, TRule = ColumnRule<TR
  * to the same internal `ColumnRule[]` shape.
  */
 export function runColumnsSchemaFn<TRow, TId extends string, TRule = ColumnRule<TRow>>(
-  fn: (path: ColumnsPath<TRow, TId, TRule>) => void
+  fn: (path: ColumnsPath<TRow, TId, TRule>) => void,
 ): readonly TRule[] {
   return runRecordedSchema<TRow, TRule, ColumnsPath<TRow, TId, TRule>>(
     (recorder) => buildColumnsPath<TRow, TId, TRule>(recorder),
-    fn
+    fn,
   );
 }
 
@@ -48,7 +48,7 @@ export function runColumnsSchemaFn<TRow, TId extends string, TRule = ColumnRule<
  * attached.
  */
 export function columnSchema<TRow, TId extends string = string>(
-  fn: ColumnsSchemaFn<TRow, TId>
+  fn: ColumnsSchemaFn<TRow, TId>,
 ): ColumnSchema<TRow> {
   return {
     kind: 'column-schema',

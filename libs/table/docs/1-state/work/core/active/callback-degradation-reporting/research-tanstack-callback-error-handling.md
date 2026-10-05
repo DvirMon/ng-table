@@ -7,12 +7,12 @@ report" needs an observable report channel, or whether `console.error` is the ri
 
 Read **published package source**, not branches or recalled API knowledge.
 
-| Package | Version | How read | Ships |
-|---|---|---|---|
-| `@tanstack/table-core` | **8.21.3** | npm tarball, extracted | `src/` (TypeScript) |
+| Package                | Version              | How read               | Ships                    |
+| ---------------------- | -------------------- | ---------------------- | ------------------------ |
+| `@tanstack/table-core` | **8.21.3**           | npm tarball, extracted | `src/` (TypeScript)      |
 | `@tanstack/table-core` | **9.2.4** (`latest`) | npm tarball, extracted | `dist/` only — no `src/` |
-| `@tanstack/query-core` | **5.102.8** | npm tarball, extracted | `src/` |
-| `@angular/material` | **22.1.6** | npm tarball, extracted | `fesm2022/table.mjs` |
+| `@tanstack/query-core` | **5.102.8**          | npm tarball, extracted | `src/`                   |
+| `@angular/material`    | **22.1.6**           | npm tarball, extracted | `fesm2022/table.mjs`     |
 
 v9 dist-tags at time of reading: `latest: 9.2.4`, `beta: 9.0.0-beta.80`, `alpha: 9.0.0-alpha.54`.
 
@@ -20,7 +20,7 @@ v9 dist-tags at time of reading: `latest: 9.2.4`, `beta: 9.0.0-beta.80`, `alpha:
 made about it here.
 
 **Correction against a false negative:** an initial grep for guarding in `@angular/material` hit a
-*non-existent path* (Material is not installed in this repo) and returned empty. Empty output from a
+_non-existent path_ (Material is not installed in this repo) and returned empty. Empty output from a
 missing file is not evidence. The package was then fetched from npm and re-grepped; the findings
 below are from the real file.
 
@@ -35,11 +35,18 @@ v8.21.3 `src/` contains exactly **two** matches for `try`/`catch`, and neither g
 - `src/features/ColumnSizing.ts:558` — `passiveEventSupported()`, DOM feature detection:
   ```ts
   try {
-    const options = { get passive() { supported = true; return false } }
-    const noop = () => {}
-    window.addEventListener('test', noop, options)
-    window.removeEventListener('test', noop)
-  } catch (err) { supported = false }
+    const options = {
+      get passive() {
+        supported = true;
+        return false;
+      },
+    };
+    const noop = () => {};
+    window.addEventListener('test', noop, options);
+    window.removeEventListener('test', noop);
+  } catch (err) {
+    supported = false;
+  }
   ```
 - `src/core/table.ts:349` — a `Promise.prototype.catch` on the notify microtask queue, which
   **re-throws** rather than swallowing:
@@ -59,7 +66,7 @@ It propagates. Row models are built inside memoized getters (`getSortedRowModel`
 `getFilteredRowModel`, `getGroupedRowModel`) called during render. A throw escapes to React, which
 unmounts the subtree — recoverable only by a consumer-placed error boundary, which is React-level
 infrastructure, not a table feature. The memo boundary does not contain the blast radius; it only
-decides *when* the throwing code re-runs.
+decides _when_ the throwing code re-runs.
 
 This is the same failure our ADR-0014 describes as "the entire table goes blank" — TanStack simply
 accepts it.
@@ -68,22 +75,23 @@ accepts it.
 
 Every `throw new Error` in v8 is construction- or lookup-time, never data-dependent:
 
-| Site | Trigger | Class |
-|---|---|---|
-| `core/column.ts:120` | column has an `accessorFn` (or non-string header) but no `id` | construction |
-| `core/table.ts:403` | `getRow` called with an unknown id | lookup |
-| `features/RowSorting.ts:348` | null-column guard in `getSortingFn` | lookup |
-| `features/ColumnGrouping.ts:321` | null-column guard in `getAggregationFn` | lookup |
+| Site                             | Trigger                                                       | Class        |
+| -------------------------------- | ------------------------------------------------------------- | ------------ |
+| `core/column.ts:120`             | column has an `accessorFn` (or non-string header) but no `id` | construction |
+| `core/table.ts:403`              | `getRow` called with an unknown id                            | lookup       |
+| `features/RowSorting.ts:348`     | null-column guard in `getSortingFn`                           | lookup       |
+| `features/ColumnGrouping.ts:321` | null-column guard in `getAggregationFn`                       | lookup       |
 
 This **matches our split exactly** — construction throws, runtime does not. TanStack reached the
 same classification ADR-0014 did; it just stops there and never adds the runtime half.
 
 One notable idiom — the message is stripped in production to save bundle size:
+
 ```ts
 if (process.env.NODE_ENV !== 'production') {
-  throw new Error(`Columns require an id when using an accessorFn`)
+  throw new Error(`Columns require an id when using an accessorFn`);
 }
-throw new Error()
+throw new Error();
 ```
 
 ### A4 — Dev-only warning channel
@@ -91,20 +99,23 @@ throw new Error()
 Every `console.warn` / `console.error` in table-core is **dev-gated**, and v9 tightened the gate.
 
 v8 uses `process.env.NODE_ENV !== 'production'` — so it also fires under `test`:
+
 - `core/column.ts:104` — a deep `accessorKey` segment resolved to `undefined`
 - `utils/getFilteredRowModel.ts:42` — no valid `column.filterFn` for a filtered column
 - `core/table.ts:512` — `getColumn` called with an id that does not exist
 
-v9 uses `process.env.NODE_ENV === "development"` — strictly dev, silent in test *and* prod:
+v9 uses `process.env.NODE_ENV === "development"` — strictly dev, silent in test _and_ prod:
+
 ```js
-if (process.env.NODE_ENV === "development")
+if (process.env.NODE_ENV === 'development')
   console.warn(`sortFn '${sortFnName}' (auto) for column '${column.id}' is not registered`);
 ```
+
 (`features/row-sorting/rowSortingFeature.utils.js:100`; same shape in
 `column-filtering/…utils.js:54`, and `row-aggregation/…utils.js` wraps it in a local `warn()` helper.)
 
 **This directly contradicts ADR-0014's "report in production too, not dev-only."** Note the warnings
-are about *unresolvable configuration* (a filterFn name that isn't registered), not about a callback
+are about _unresolvable configuration_ (a filterFn name that isn't registered), not about a callback
 that threw — because no callback throw is ever observed.
 
 ### A5 — Consumer-facing error or report surface
@@ -137,9 +148,9 @@ distinct** consumer-facing surfaces:
 TanStack does not have one house style. It splits on **whether failure is an expected domain
 outcome**:
 
-- **Query** — a `queryFn` hitting the network *is expected to fail*. Failure is a first-class
+- **Query** — a `queryFn` hitting the network _is expected to fail_. Failure is a first-class
   domain state with a retry policy, so it gets both per-operation state and a global hook.
-- **Table** — a `sortingFn` is *pure local computation over data you already hold*. A throw there is
+- **Table** — a `sortingFn` is _pure local computation over data you already hold_. A throw there is
   a programming error, not a domain outcome. It gets nothing.
 
 Our five callbacks (`accessor`, `sortFn`, `aggregateFn`, filter predicates, `groupOrder`) are all in
@@ -157,9 +168,10 @@ let valueA = this.sortingDataAccessor(a, active);
 let valueB = this.sortingDataAccessor(b, active);
 
 // :1102
-this.filteredData = this.filter == null || this.filter === ''
-  ? data
-  : data.filter(obj => this.filterPredicate(obj, this.filter));
+this.filteredData =
+  this.filter == null || this.filter === ''
+    ? data
+    : data.filter((obj) => this.filterPredicate(obj, this.filter));
 ```
 
 One `console.` call in the whole file. No error channel.
@@ -174,7 +186,8 @@ table implementations in existence. Nobody has forced a `try` into that hot loop
 
 **Read honestly, this cuts both ways:**
 
-*Against ADR-0014 (over-engineering risk):*
+_Against ADR-0014 (over-engineering risk):_
+
 - The failure mode is real but evidently rare enough that no major library has paid for it.
 - A `try`/`catch` per filter-evaluation is a real cost in the hottest loop the library has.
 - React consumers already have error boundaries; ours is Angular, but the equivalent argument holds —
@@ -182,15 +195,16 @@ table implementations in existence. Nobody has forced a `try` into that hot loop
 - If this mattered at the frequency ADR-0014 implies, v9 — a ground-up rewrite shipped this year —
   was the moment to add it. It did not.
 
-*For ADR-0014 (genuine differentiator):*
+_For ADR-0014 (genuine differentiator):_
+
 - Prior art's silence is not validation; three libraries sharing an omission is one data point about
-  convention, not three about correctness. TanStack's own v8 warnings show they *knew* about
+  convention, not three about correctness. TanStack's own v8 warnings show they _knew_ about
   misconfigured `filterFn`s and chose a dev-only warn.
 - The blast radii differ. TanStack blanks a React subtree recoverable by an error boundary. Our
   callbacks run inside `computed()`, so the throw surfaces at whatever reads `rows()` and **stays
   failed until an input changes** — a stickier failure than React's.
 - Our R21/R27 exposure is genuinely worse than TanStack's: `filter(path, predicate)` hands the
-  consumer an unguarded cell *by design*, and criteria are revived from `localStorage` under a schema
+  consumer an unguarded cell _by design_, and criteria are revived from `localStorage` under a schema
   that may predate the predicate. TanStack's built-in `filterFns` guard their own nulls and its
   criteria are not persisted by the library. We built a sharper edge; guarding it is consistent.
 
@@ -201,14 +215,14 @@ the `computed()` stickiness and the R27 unguarded-cell design as the reasons we 
 ### Does the prior art expose a report channel? No — and this is the stronger finding.
 
 Zero consumer-visible error surface in table-core v8 or v9, or in Material. The only reporting is
-dev-gated `console.warn`, and v9 *narrowed* the gate from "not production" to "development only" —
+dev-gated `console.warn`, and v9 _narrowed_ the gate from "not production" to "development only" —
 moving away from ADR-0014's "report in production too," not toward it.
 
 **This supports the current leaning.** The evidence says: keep `console.error` as the floor, do not
 build a cross-cutting `onDegrade` surface across five callbacks for one demo consumer.
 
 The distinction that matters — and TanStack's own split proves it is a real one — is that
-**catching and reporting are separate decisions**. Query catches *and* reports, because network
+**catching and reporting are separate decisions**. Query catches _and_ reports, because network
 failure is a domain outcome. Table does neither, because a throwing comparator is a bug. We are
 proposing to sit in between: catch (justified above by `computed()` stickiness) but not publish
 (unjustified by any demand except a story host). That middle position is coherent, and it is the
@@ -216,7 +230,7 @@ one the evidence best supports.
 
 ### On the one consumer that did need it
 
-The `console.error` monkey-patch in `client-filtering-story-host.component.ts:346` is a *story host* —
+The `console.error` monkey-patch in `client-filtering-story-host.component.ts:346` is a _story host_ —
 library code demonstrating library behavior, not an application. Building public API for it is
 scope inversion. Give the demo a supported seam if it needs one; do not promote it to a table-wide
 contract.

@@ -1,5 +1,5 @@
 ---
-title: "Step 2: Fix `beginEdit` no-op invariant comment"
+title: 'Step 2: Fix `beginEdit` no-op invariant comment'
 ---
 
 ← [Step 1: Rename `addRow` → `insertRow`](step-1-rename-addrow-to-insertrow.plan.md) | [Step 3: Update rename docs](step-3-update-rename-docs.plan.md) →
@@ -16,6 +16,7 @@ overlapping edits; no logical dependency otherwise).
 **Scaffolding agent:** angular-implementer
 
 **Files:**
+
 - `libs/shared/table/src/api/row-edit-mutations.ts` — header comment only (lines 13-19 as read
   pre-Step-1)
 
@@ -65,4 +66,5 @@ State plainly that this is a misuse case the types don't prevent, not a supporte
 - `npx nx typecheck shared-table` passes (comment-only change, should be a no-op build-wise).
 
 ---
+
 ← [Step 1: Rename `addRow` → `insertRow`](step-1-rename-addrow-to-insertrow.plan.md) | [Step 3: Update rename docs](step-3-update-rename-docs.plan.md) →

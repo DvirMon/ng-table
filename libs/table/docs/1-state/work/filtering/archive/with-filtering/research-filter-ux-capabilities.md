@@ -7,7 +7,7 @@ audience: product, developers
 issue: null
 ---
 
-# What a person can *do* with row filtering — capability inventory across grid libraries
+# What a person can _do_ with row filtering — capability inventory across grid libraries
 
 Product-side input for `withFiltering()` / `createFilters()` user stories. Same four libraries
 and same method as the sibling `research-grouping-ux-capabilities.md`, focused on **row
@@ -28,13 +28,13 @@ export, a GeeksforGeeks reference, a GitHub issue evidencing a UI element by dis
 customization) is used and flagged as such. Anything neither source confirmed is marked
 **unverified** rather than guessed.
 
-| Library | Version read | Filtering tier |
-|---|---|---|
-| AG Grid | `ag-grid-community@36.1.0` / enterprise docs (registry `latest`) | Text/Number/Date filters + AND/OR condition combining: **Community**. Set Filter, Multi Filter, Floating-filter-in-toolbar, Advanced Filter: **Enterprise** |
-| TanStack Table | v8 line (`8.21.3` pinned by the sibling grouping research) | Free, headless — **no filter UI of any kind**, including no global-filter input |
-| MUI X Data Grid | `@mui/x-data-grid-premium@9.13.0` (registry `latest`) | Single-column filtering + Quick Filter: **Community**. Multi-filter (AND/OR across/within columns) + Header Filters: **Pro**. Filtering is otherwise not further gated in Premium |
-| PrimeNG `p-table` | `primeng@22.1.1` (registry `latest`) | Free — no paid tier exists |
-| Material React Table | `material-react-table@3.2.1` (registry `latest`) | Free; TanStack v8 underneath, adds the entire UI layer TanStack omits |
+| Library              | Version read                                                     | Filtering tier                                                                                                                                                                    |
+| -------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AG Grid              | `ag-grid-community@36.1.0` / enterprise docs (registry `latest`) | Text/Number/Date filters + AND/OR condition combining: **Community**. Set Filter, Multi Filter, Floating-filter-in-toolbar, Advanced Filter: **Enterprise**                       |
+| TanStack Table       | v8 line (`8.21.3` pinned by the sibling grouping research)       | Free, headless — **no filter UI of any kind**, including no global-filter input                                                                                                   |
+| MUI X Data Grid      | `@mui/x-data-grid-premium@9.13.0` (registry `latest`)            | Single-column filtering + Quick Filter: **Community**. Multi-filter (AND/OR across/within columns) + Header Filters: **Pro**. Filtering is otherwise not further gated in Premium |
+| PrimeNG `p-table`    | `primeng@22.1.1` (registry `latest`)                             | Free — no paid tier exists                                                                                                                                                        |
+| Material React Table | `material-react-table@3.2.1` (registry `latest`)                 | Free; TanStack v8 underneath, adds the entire UI layer TanStack omits                                                                                                             |
 
 Docs roots: [ag-grid.com filtering-overview](https://www.ag-grid.com/angular-data-grid/filtering-overview/),
 [tanstack.com/table/v8 column-filtering](https://tanstack.com/table/v8/docs/guide/column-filtering),
@@ -68,7 +68,7 @@ Docs roots: [ag-grid.com filtering-overview](https://www.ag-grid.com/angular-dat
   which stays synchronized with the panel rather than replacing it.
   [Filtering](https://mui.com/x/react-data-grid/filtering/) ·
   [Header filters](https://mui.com/x/react-data-grid/filtering/header-filters/)
-- **PrimeNG**: `p-columnFilter` has two `display` modes on the *same* component — `"row"`
+- **PrimeNG**: `p-columnFilter` has two `display` modes on the _same_ component — `"row"`
   (default): the input renders inline inside the header row itself; `"menu"`: a filter icon opens
   an overlay panel with match-mode dropdown, value input, and Apply/Clear buttons. Both are free.
   [Table docs](https://primeng.dev/table) ·
@@ -79,7 +79,7 @@ Docs roots: [ag-grid.com filtering-overview](https://www.ag-grid.com/angular-dat
   [Column Filtering guide](https://www.material-react-table.com/docs/guides/column-filtering)
 
 **Where they disagree.** Every UI-bearing library independently reinvented the same two shapes —
-*inline row under/in the header* vs *icon opens a popup* — and three of the four (AG Grid,
+_inline row under/in the header_ vs _icon opens a popup_ — and three of the four (AG Grid,
 PrimeNG, MRT) ship **both** as a configurable choice, while MUI X ships the popup by default and
 gates the inline row behind Pro. TanStack is the odd one out by design: it is the only library
 where "how does a person discover a column is filterable" has no answer at all until a consumer
@@ -108,7 +108,7 @@ differentiator, not a UI nicety.
 - **PrimeNG**: **user-changeable**, free, via `matchModeOptions` shown as a dropdown in menu mode.
   Confirmed member set — text: `startsWith, contains, notContains, endsWith, equals, notEquals`;
   numeric: `equals, notEquals, lt, lte, gt, gte`; date: `dateIs, dateIsNot, dateBefore,
-  dateAfter` — from `FilterMatchMode` and cross-checked against the columnFilter docs.
+dateAfter` — from `FilterMatchMode` and cross-checked against the columnFilter docs.
   [Match modes reference](https://www.geeksforgeeks.org/angular-js/angular-primeng-table-match-modes/)
 - **MRT**: **user-changeable**, free — "enable column filter modes" opens a dropdown of available
   filter functions per column, reached via an icon in the filter text field itself.
@@ -133,11 +133,11 @@ narrower-than-market position, not an oversight.
   checkbox list, a Select-All checkbox, and optional Apply/Clear/Reset/Cancel buttons. Set Filter
   also has a `treeList` mode presenting values hierarchically (e.g. year → month → day).
   [Set filter](https://www.ag-grid.com/angular-data-grid/filter-set/)
-- **TanStack v8**: none built. `inNumberRange` exists as a *comparator*, but the two-input range
+- **TanStack v8**: none built. `inNumberRange` exists as a _comparator_, but the two-input range
   UI, calendar widget, and boolean control are 100% consumer markup. **Faceting** APIs
   (`getFacetedUniqueValues()`, `getFacetedMinMaxValues()`, and the table-wide
   `getGlobalFacetedUniqueValues()`) exist purely to hand a consumer the distinct-value list or
-  min/max pair to *build* a set-style dropdown or a range slider — explicitly "the wiring and UI
+  min/max pair to _build_ a set-style dropdown or a range slider — explicitly "the wiring and UI
   rendering are entirely your responsibility."
   [Column Faceting guide](https://tanstack.com/table/v8/docs/guide/column-faceting) ·
   [Global Faceting guide](https://tanstack.com/table/v8/docs/guide/global-faceting)
@@ -204,7 +204,7 @@ ships one, everyone else (including the internal design, by stated omission) lea
 consumer. Second, **match ranking**: AG Grid/PrimeNG/MUI X all do exact substring/word matching;
 MRT alone defaults to fuzzy, relevance-ranked matching via `match-sorter`. Nobody treats the
 combination of quick filter + column filters as anything but a plain AND of two independent
-layers — no library lets the *end user* pick how the two interact.
+layers — no library lets the _end user_ pick how the two interact.
 
 ## 5. Active-filter visibility
 
@@ -225,7 +225,7 @@ layers — no library lets the *end user* pick how the two interact.
 - **MRT**: not documented in the fetched pages; **unverified**.
 
 **Where they disagree.** Only MUI X documents a granular, per-filter clear affordance
-(delete icon per row) *and* a bulk "remove all," and it is the only one of the five with any
+(delete icon per row) _and_ a bulk "remove all," and it is the only one of the five with any
 confirmed visibility mechanism beyond the filter's own input showing its current value. The other
 four leave "can the user tell what's currently filtered, in one glance, without opening a menu" to
 the consumer — which product should treat as a real gap most competitors also leave unfilled,
@@ -237,7 +237,7 @@ not as a settled non-requirement.
   (default 2, developer-raisable) constraints with a join-operator (AND/OR) dropdown the **end
   user** operates at runtime — confirmed free/Community on the Text Filter page. **Across
   columns**, every active column filter is implicitly AND'd; there is no cross-column OR/AND
-  toggle exposed to the user. **Multi Filter** (Enterprise) layers *different filter types* (e.g.
+  toggle exposed to the user. **Multi Filter** (Enterprise) layers _different filter types_ (e.g.
   Text + Set) on one column, navigated via tabs/accordion, not a boolean combinator.
   [Filter conditions](https://www.ag-grid.com/angular-data-grid/filter-conditions/) ·
   [Multi filter](https://www.ag-grid.com/angular-data-grid/filter-multi/)
@@ -248,7 +248,7 @@ not as a settled non-requirement.
   lets a user click **Add Filter** to add rows across (and, per docs, potentially within) columns,
   each joined by a `GridLogicOperator` (`And`/`Or`) the **end user changes via a dropdown** shown
   next to each condition after the first — this is the one library confirmed to expose a runtime
-  AND/OR *toggle in the UI itself*, not just as a config default.
+  AND/OR _toggle in the UI itself_, not just as a config default.
   [Multi-filters](https://mui.com/x/react-data-grid/filtering/multi-filters/)
 - **PrimeNG**: `p-columnFilter` supports `operator` (`"and" | "or"`, default `and`) **per field**,
   with `showOperator` controlling whether the end user sees and can change it, and
@@ -262,7 +262,7 @@ not as a settled non-requirement.
 AND/OR from the UI — everyone else treats cross-column combination as implicit-and-fixed AND, and
 reserves any user-facing operator toggle for **multiple constraints on the same column** (AG
 Grid's Filter Conditions, PrimeNG's per-field `operator`). This maps directly onto the internal
-design's `anyOf` primitive: `anyOf` is a *developer-authored* OR-group, matching how every library
+design's `anyOf` primitive: `anyOf` is a _developer-authored_ OR-group, matching how every library
 except MUI X treats OR — as something the developer wires, not something the end user toggles at
 runttime.
 
@@ -292,7 +292,7 @@ runttime.
   disables `getFilteredRowModel()` entirely, handing the developer full control. MUI X:
   `filterMode="server"` + `onFilterModelChange`. PrimeNG: `lazy` + `onLazyLoad` receives filter
   state alongside sort/pagination for the developer to apply server-side. None of the four
-  document any tier gating specific to *filtering* in server mode (though AG Grid's Server-Side
+  document any tier gating specific to _filtering_ in server mode (though AG Grid's Server-Side
   Row Model as a whole, and MUI X's, carry their own broader tier considerations not specific to
   filtering).
 - **Empty-state messaging**: AG Grid has a distinct **no-matching-rows overlay** separate from the
@@ -305,7 +305,7 @@ runttime.
   variant is documented separately. TanStack/MRT: not documented — **unverified**.
 
 **Where they disagree.** The filtered-selection interaction is the sharpest finding: MUI X
-silently auto-deselects rows a filter hides, and it's the *only* library saying anything about
+silently auto-deselects rows a filter hides, and it's the _only_ library saying anything about
 this at all — the internal design has to make an explicit call here (auto-deselect, keep
 selection but hide it, or block/warn) with zero-to-one library's worth of prior art to lean on.
 The empty-state overlay is near-universal (AG Grid, MUI X both ship one, distinct from the
@@ -332,7 +332,7 @@ prop hiding the overlay) — a signal this is an easy trap, not an edge case.
   example, not a built-in.
   [State](https://mui.com/x/react-data-grid/state/)
 - **PrimeNG**: the only library with a **named, built-in storage target**. `stateStorage: 'session'
-  | 'local'` tells `p-table` to serialize its state to `sessionStorage`/`localStorage` **itself**,
+| 'local'` tells `p-table` to serialize its state to `sessionStorage`/`localStorage` **itself**,
   automatically, without the developer wiring an event handler or a storage call. Exactly which
   filter fields (constraints, match modes, operator, value) are included in that serialized state
   was not confirmed from the docs page fetched — **partially unverified**, but the mechanism
@@ -342,29 +342,29 @@ prop hiding the overlay) — a signal this is an easy trap, not an edge case.
   model since it sits on the same state primitives. **Unverified** whether MRT adds any
   convenience layer on top.
 
-**Where they disagree.** This is a three-way split rather than two: TanStack/MRT ship *nothing*
+**Where they disagree.** This is a three-way split rather than two: TanStack/MRT ship _nothing_
 (the consumer's own state, no export helper at all); AG Grid/MUI X ship an **export/import API**
 but explicitly no storage (the developer still writes the `localStorage`/URL glue, shown as a
 "here's how" example rather than a config flag); PrimeNG alone ships **actual automatic
 persistence** — set one string option and the browser storage write/read happens without any
-handler code. The internal design's "fully consumer-owned" stance matches the *majority* position
+handler code. The internal design's "fully consumer-owned" stance matches the _majority_ position
 (3 of 5 have zero built-in storage-writing) but diverges from PrimeNG's proof that a table library
 can own storage without controversy — worth naming explicitly as the road not taken.
 
 ## 9. Tier splits
 
-| Capability | AG Grid | MUI X | PrimeNG | TanStack / MRT |
-|---|---|---|---|---|
-| Text/Number/Date filter + runtime operator picker | Free | Free | Free | n/a (no UI) |
-| Filter-icon or inline-row entry point | Free | Free | Free | n/a |
-| Floating filter row (always-visible input) | **Free** | **Pro** (Header Filters) | Free (`display="row"`) | n/a |
-| Quick/global filter box | Free (bring-your-own input); pre-built toolbar item Enterprise | Free, with built-in debounce | Free | Free (MRT); no UI at all (TanStack) |
-| Set/multi-select filter with auto-computed distinct values | **Enterprise** (Set Filter) | n/a (`singleSelect` needs dev-supplied options at any tier) | n/a (MultiSelect needs dev-supplied options) | **Free** (MRT `select`/`multi-select` via faceting) |
-| Multiple constraints per column, user-toggled AND/OR | Free (Filter Conditions) | **Pro** (multi-filter) | Free (`operator`/`showOperator`) | n/a |
-| Cross-column AND/OR toggle exposed to the end user | Not exposed (implicit AND) | **Pro** | Not exposed (implicit AND) | Not exposed |
-| Combining two *different* filter types on one column | **Enterprise** (Multi Filter) | n/a | n/a | n/a |
-| Filter state export/import API | Likely free (unverified) | Free | Free (with automatic storage) | Consumer-owned |
-| Grid-native automatic persistence (no handler code) | No | No | **Yes** | No |
+| Capability                                                 | AG Grid                                                        | MUI X                                                       | PrimeNG                                      | TanStack / MRT                                      |
+| ---------------------------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------- | --------------------------------------------------- |
+| Text/Number/Date filter + runtime operator picker          | Free                                                           | Free                                                        | Free                                         | n/a (no UI)                                         |
+| Filter-icon or inline-row entry point                      | Free                                                           | Free                                                        | Free                                         | n/a                                                 |
+| Floating filter row (always-visible input)                 | **Free**                                                       | **Pro** (Header Filters)                                    | Free (`display="row"`)                       | n/a                                                 |
+| Quick/global filter box                                    | Free (bring-your-own input); pre-built toolbar item Enterprise | Free, with built-in debounce                                | Free                                         | Free (MRT); no UI at all (TanStack)                 |
+| Set/multi-select filter with auto-computed distinct values | **Enterprise** (Set Filter)                                    | n/a (`singleSelect` needs dev-supplied options at any tier) | n/a (MultiSelect needs dev-supplied options) | **Free** (MRT `select`/`multi-select` via faceting) |
+| Multiple constraints per column, user-toggled AND/OR       | Free (Filter Conditions)                                       | **Pro** (multi-filter)                                      | Free (`operator`/`showOperator`)             | n/a                                                 |
+| Cross-column AND/OR toggle exposed to the end user         | Not exposed (implicit AND)                                     | **Pro**                                                     | Not exposed (implicit AND)                   | Not exposed                                         |
+| Combining two _different_ filter types on one column       | **Enterprise** (Multi Filter)                                  | n/a                                                         | n/a                                          | n/a                                                 |
+| Filter state export/import API                             | Likely free (unverified)                                       | Free                                                        | Free (with automatic storage)                | Consumer-owned                                      |
+| Grid-native automatic persistence (no handler code)        | No                                                             | No                                                          | **Yes**                                      | No                                                  |
 
 **Where they disagree.** The clearest paywall signal in this whole inventory: AG Grid puts
 **auto-computed distinct values** (Set Filter) behind Enterprise, while MRT gives the visually

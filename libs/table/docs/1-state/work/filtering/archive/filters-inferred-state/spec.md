@@ -1,5 +1,5 @@
 ---
-title: "createFilters: infer TState from the schema"
+title: 'createFilters: infer TState from the schema'
 type: spec
 status: ready-for-issues
 date: 2026-09-14
@@ -191,7 +191,7 @@ table already takes a predicate list and nothing else.
   `as` and the positional key, and make every call restate in a property name what the path
   already says.
 - **A third `model` argument was rejected.** Signal Forms needs no return channel because its model
-  *is* its type. Filters have two key spaces — rules read row paths and write criterion keys, and
+  _is_ its type. Filters have two key spaces — rules read row paths and write criterion keys, and
   the row does not determine the criterion. A model would state every key a second time with
   nothing cross-checking the two.
 - **`path` stays a callback parameter (R38).** Rest arguments over a free-standing path token
@@ -204,7 +204,7 @@ table already takes a predicate list and nothing else.
 
 ### The row carrier
 
-- **`createFilters(rows, schema)` takes a wide first slot (R35).** Data *or* a row-type token. One
+- **`createFilters(rows, schema)` takes a wide first slot (R35).** Data _or_ a row-type token. One
   argument serves both modes, with no named carrier or evidence type. Accepted: an array, a
   readonly array, a signal, a writable signal, a signal of `rows | undefined`, a bare accessor
   returning rows, and the token. Non-row values are rejected.
@@ -299,7 +299,7 @@ point of this change is that the mechanism moved while the semantics did not.
 1. **Runtime** — the existing filters spec. Declaration through to narrowed rows: criteria read
    and written, source defaults, empty criteria skipped, groups OR'd, gates applied, resets,
    dirtiness, and the construction throws. Every existing case must keep passing with only its
-   schema rewritten to the array form; a case that needs its *assertion* changed is a semantic
+   schema rewritten to the array form; a case that needs its _assertion_ changed is a semantic
    regression and must be justified against the decisions doc, not accommodated.
 2. **Types** — a new compiled type spec, a sibling of the runtime spec. Type facts only, asserted
    with the test runner's type-assertion helper and expected-error comments. This seam is new and
@@ -309,7 +309,7 @@ point of this change is that the mechanism moved while the semantics did not.
 **The type spec is enforced by the project typecheck, not the test runner.** The runner does not
 typecheck assertions — they are inert when executed. The file must therefore be picked up by the
 spec typecheck configuration; naming it so it matches the existing spec glob is preferred to
-widening the configuration.  Existing prior art: the type-assertion block at the end of the
+widening the configuration. Existing prior art: the type-assertion block at the end of the
 current filters spec, and the equivalent block in the table feature's spec, both of which carry
 the same note about which tool enforces them.
 

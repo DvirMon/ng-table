@@ -1,7 +1,12 @@
 import { Component, input, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { beginEdit, createRow, endEdit } from '../../../mutations/row-edit-mutations';
-import { discardEdit, releaseEdit, revertEdit, swapRowId } from '../../../mutations/optimistic-mutations';
+import {
+  discardEdit,
+  releaseEdit,
+  revertEdit,
+  swapRowId,
+} from '../../../mutations/optimistic-mutations';
 import { patchRow } from '../../../mutations/row-mutations';
 import { NgpTableRowFieldDirective } from '../../../directives/ngp-table-row-field.directive';
 import type { RowId } from '../../../api/types';
@@ -38,7 +43,11 @@ export class GatedBulkOptimisticStoryHostComponent {
   private readonly rowEditApi = injectRowEditApi();
 
   protected readonly data = signal<EditRow[]>(EDIT_ROWS_MOCK);
-  protected readonly table = createTable(this.data, editTableConfig, withRowEdit({ multiple: () => true }));
+  protected readonly table = createTable(
+    this.data,
+    editTableConfig,
+    withRowEdit({ multiple: () => true }),
+  );
   /** Gated mode's commit boundary is the row (OQ-3) — `form()` writes into `table.draft` instead
    * of `data`. */
   protected readonly rows = form(this.table.draft, editRowsSchema);
@@ -98,7 +107,10 @@ export class GatedBulkOptimisticStoryHostComponent {
       this.table.editing.update(endEdit<EditRow>(id, rowsById.get(id)));
     }
 
-    const options: RowEditRequestOptions = { forceFailure: this.forceFailure(), latencyMs: this.latencyMs() };
+    const options: RowEditRequestOptions = {
+      forceFailure: this.forceFailure(),
+      latencyMs: this.latencyMs(),
+    };
     this.rowEditApi.saveBulk(payload, options).subscribe({
       next: (saved) => {
         ids.forEach((id, index) => {

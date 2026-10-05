@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — withGrouping(): drop config.groupOrder, collect per-column comparators"
+title: 'Step 4 — withGrouping(): drop config.groupOrder, collect per-column comparators'
 type: task-step
 issue: 87
 ---
@@ -99,4 +99,5 @@ map."
       typecheck stays red until Step 5 fixes the one broken call site.
 
 ---
+
 ← [Step 3: Engine — per-column ordering](step-3-engine-per-column-ordering.plan.md) | [Step 5: Migrate grouping-regressions story](step-5-migrate-grouping-regressions-story.plan.md) →

@@ -183,4 +183,5 @@ verbatim; only the spelling moves.
       bare `withTree()`.
 
 ---
+
 [Step 2: The collapse cases move to the tree's spec](step-2-collapse-cases-move-to-tree-spec.plan.md) →

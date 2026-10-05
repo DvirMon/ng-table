@@ -9,7 +9,8 @@ export interface FocusLockState {
 }
 
 export function openFocusLock(): FocusLockState {
-  const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const previouslyFocused =
+    document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const previousBodyOverflow = document.body.style.overflow;
   document.body.style.overflow = 'hidden';
   return { previouslyFocused, previousBodyOverflow };

@@ -10,7 +10,7 @@ import type { AnyTableFeature, RowId } from '../types';
 import type { ComposeFeaturesOverloads } from './compose-features.overloads';
 
 function runInOrder<Args extends unknown[]>(
-  callbacks: readonly ((...args: Args) => void)[]
+  callbacks: readonly ((...args: Args) => void)[],
 ): (...args: Args) => void {
   return (...args: Args) => {
     for (const callback of callbacks) {
@@ -23,7 +23,7 @@ function claimInnerStages<TRow>(
   spec: TableFeatureSpec<TRow>,
   label: string,
   registry: SlotRegistry,
-  into: StageRule<RowTransform<TRow>>[]
+  into: StageRule<RowTransform<TRow>>[],
 ): void {
   if (!spec.stages) {
     return;
@@ -42,7 +42,7 @@ function claimInnerRenderStages<TRow>(
   spec: TableFeatureSpec<TRow>,
   label: string,
   registry: SlotRegistry,
-  into: StageRule<RenderNodeTransform<TRow>>[]
+  into: StageRule<RenderNodeTransform<TRow>>[],
 ): void {
   if (!spec.renderStages) {
     return;
@@ -61,7 +61,7 @@ function claimInnerRenderStages<TRow>(
 function foldInnerFeatures(
   features: readonly AnyTableFeature[],
   input: Record<string, unknown>,
-  ctx: StageContext<unknown>
+  ctx: StageContext<unknown>,
 ): TableFeatureSpec<unknown, Record<string, unknown>> {
   const registry = new SlotRegistry();
   registry.claimCoreMembers();
@@ -176,9 +176,7 @@ function foldInnerFeatures(
  *
  * @see docs/1-state/architecture.md
  */
-export const composeFeatures = ((
-  ...features: readonly AnyTableFeature[]
-): AnyTableFeature => {
+export const composeFeatures = ((...features: readonly AnyTableFeature[]): AnyTableFeature => {
   const composite: AnyTableFeature = (input, ctx) => foldInnerFeatures(features, input, ctx);
   return Object.assign(composite, { displayName: 'composeFeatures' });
 }) as ComposeFeaturesOverloads;

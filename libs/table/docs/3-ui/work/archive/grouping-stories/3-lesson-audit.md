@@ -19,11 +19,11 @@ are the analysis that fed it and are not updated as decisions land.
 
 **Keep**, renamed, with **three** lessons split out rather than two:
 
-| Split out | Goes to |
-|---|---|
-| table-wide `when` + per-column `when` | `grouping-when` (§3.6) |
-| `groupedColumnMode` | `grouping-columns` (§3.5) |
-| **`aggregateFn` totals at depth** | **`grouping-aggregates` (new — D1a)** |
+| Split out                             | Goes to                               |
+| ------------------------------------- | ------------------------------------- |
+| table-wide `when` + per-column `when` | `grouping-when` (§3.6)                |
+| `groupedColumnMode`                   | `grouping-columns` (§3.5)             |
+| **`aggregateFn` totals at depth**     | **`grouping-aggregates` (new — D1a)** |
 
 `BlankRegionsFlat` and `TwoLevelsWithThresholds` removed as arg presets; they
 become `grouping-when`'s Controls.
@@ -31,7 +31,7 @@ become `grouping-when`'s Controls.
 **D1a — aggregates get their own story.** Subtree totals are their own lesson, not
 scenery on the baseline: a parent total is the sum of its own leaves at every
 depth, it is post-filter by construction (`filter` precedes `group` in
-`PIPELINE_ORDER`), and `aggregateFn` is a *column-schema* option rather than a
+`PIPELINE_ORDER`), and `aggregateFn` is a _column-schema_ option rather than a
 `withGrouping()` one — which is exactly the kind of thing a reader mis-attributes
 when it only ever appears inside someone else's story.
 
@@ -51,27 +51,27 @@ here and nowhere else — a reason not to touch it.
 
 ### D3 — `SilentDegradation` removed as a canvas; both cases relocate
 
-| Case | Disposition |
-|---|---|
-| Break one group's summary (`aggregateFn` throws) | Moves to **`grouping-aggregates`** as a control |
-| Group by a field that is not a column | Moves to **`grouping-keys`** as `label`'s third step |
+| Case                                             | Disposition                                          |
+| ------------------------------------------------ | ---------------------------------------------------- |
+| Break one group's summary (`aggregateFn` throws) | Moves to **`grouping-aggregates`** as a control      |
+| Group by a field that is not a column            | Moves to **`grouping-keys`** as `label`'s third step |
 
 **The premise the canvas was built on is stale.** Its text, the `.mdx` paragraph
 and `fixtures/schema.ts`'s `sumAmount` comment all claim the whole table goes down
-when `aggregateFn` throws, citing an issue #79 that in this repo is a *filtering
-docs* issue, closed 2026-09-17 — the link in the `.mdx` points at `DvirMon/acme`,
+when `aggregateFn` throws, citing an issue #79 that in this repo is a _filtering
+docs_ issue, closed 2026-09-17 — the link in the `.mdx` points at `DvirMon/acme`,
 not `DvirMon/ng-table`.
 
 The ADR-0014 retrofit shipped with the restructure. Three wraps exist today:
 
-| Callback | Site | Fallback |
-|---|---|---|
-| `aggregateFn` | `engine/grouping/render.ts:43` | `undefined` for that column only; reported once per column per evaluation (`reportedColumns` dedupes across every group in one pass) |
-| `when` predicate | `engine/grouping/clusters.ts:138` | cluster is **admitted**; reported once per column per evaluation |
-| `groupOrder` comparator | `engine/grouping/clusters.ts:269` | stable first-occurrence order for the affected levels; reported once per evaluation |
+| Callback                | Site                              | Fallback                                                                                                                             |
+| ----------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `aggregateFn`           | `engine/grouping/render.ts:43`    | `undefined` for that column only; reported once per column per evaluation (`reportedColumns` dedupes across every group in one pass) |
+| `when` predicate        | `engine/grouping/clusters.ts:138` | cluster is **admitted**; reported once per column per evaluation                                                                     |
+| `groupOrder` comparator | `engine/grouping/clusters.ts:269` | stable first-occurrence order for the affected levels; reported once per evaluation                                                  |
 
 So the summary case is not a bug demo — it is the aggregate-side twin of
-`ThrowingGroupOrder`, and the same verdict applies to both: a *designed*
+`ThrowingGroupOrder`, and the same verdict applies to both: a _designed_
 degradation is a control on the story of the thing it protects. D1a gives
 aggregates their own story, so that is where it goes.
 
@@ -99,13 +99,13 @@ longer happens:
 `ThrowingGroupOrder` stops being a canvas; the whole `groupOrder` select moves to a
 new story that `applyGroupOrder` owns. Five options, one canvas:
 
-| Option | Shows |
-|---|---|
-| `first-occurrence` | the no-comparator baseline — sibling order as clustering produced it |
-| `by-label` | `localeCompare` on the group key |
-| `by-count` | `b.rows.length - a.rows.length` — ordering by a cluster's size |
-| `external-list` | a caller-supplied ranking (`EXTERNAL_GROUP_ORDER`); unlisted values sort last |
-| `throwing` | the ADR-0014 fallback — stable first-occurrence order, reported once per evaluation |
+| Option             | Shows                                                                               |
+| ------------------ | ----------------------------------------------------------------------------------- |
+| `first-occurrence` | the no-comparator baseline — sibling order as clustering produced it                |
+| `by-label`         | `localeCompare` on the group key                                                    |
+| `by-count`         | `b.rows.length - a.rows.length` — ordering by a cluster's size                      |
+| `external-list`    | a caller-supplied ranking (`EXTERNAL_GROUP_ORDER`); unlisted values sort last       |
+| `throwing`         | the ADR-0014 fallback — stable first-occurrence order, reported once per evaluation |
 
 Keeps today's single-closure-reading-a-signal shape: `withGrouping()` takes exactly
 one comparator per level, so a comparator per mode would teach a shape a consumer
@@ -127,12 +127,12 @@ types become `grouping-order`'s, minus the two buttons D3 relocated.
 
 Remove from the host:
 
-| Removed | Why |
-|---|---|
-| `withComputed()` block (`:69-75`) | Its own JSDoc documents it as the *non*-default. A story should teach the default: read `expandedRows().has(row.id)` in the template for `kind: 'group'` rows. It also composed a fourth feature into a story about two |
-| `withSorting()` | Present only to give the "a sort toggle does not disturb collapse state" attack something to drive |
+| Removed                           | Why                                                                                                                                                                                                                     |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `withComputed()` block (`:69-75`) | Its own JSDoc documents it as the _non_-default. A story should teach the default: read `expandedRows().has(row.id)` in the template for `kind: 'group'` rows. It also composed a fourth feature into a story about two |
+| `withSorting()`                   | Present only to give the "a sort toggle does not disturb collapse state" attack something to drive                                                                                                                      |
 
-**An invariant that something does *not* break is a test, not a story.** The sort
+**An invariant that something does _not_ break is a test, not a story.** The sort
 claim is a regression assertion with nothing to look at — the observable outcome is
 that the screen is unchanged. It belongs in `with-grouping`'s spec, asserted
 directly, where it fails loudly instead of requiring someone to notice a
@@ -145,7 +145,7 @@ What the story keeps:
   cannot reach a group header
 - collapse and expand over a real chevron, three levels deep
 - **Regroup** — `setGroupLevels` to a re-nested order, so every group id changes at
-  once. This one *is* worth watching: the outline visibly rebuilds, which is a
+  once. This one _is_ worth watching: the outline visibly rebuilds, which is a
   state change, not the absence of one
 - **Refetch** — borderline by the same test. Kept for now because the rows visibly
   replace; if the only point being made is "collapse state survived", it is a spec
@@ -180,7 +180,7 @@ control survives D5's revisit, which is the only other thing using it.
 
 ### D7 — `grouping-selection` keeps; `cascade` drops to two options
 
-Keeps its shape — one canvas, and the `cascade` control *is* the lesson (D16: the
+Keeps its shape — one canvas, and the `cascade` control _is_ the lesson (D16: the
 library ships no cascade, so all peer defaults are ordinary consumer code over one
 `rowsOf()` call).
 
@@ -201,7 +201,7 @@ sentence, instead of being a control that demonstrates its own absence.
 Result: `cascade` is `'self' | 'descendants'`.
 
 **Keep `selectedGroupHeaderCount`** — the always-0 readout. Convention 5 governs
-*controls*; this is a passive readout that costs nothing to ignore. Its job is to
+_controls_; this is a passive readout that costs nothing to ignore. Its job is to
 tell someone copying the cascade code that they need not filter header ids out of
 the selection, because none ever get in. That is teaching, not asserting.
 
@@ -215,12 +215,12 @@ D5's sort case and D6's failed-refresh case.
 per group, with a category dropdown that renames and deletes categories — turns out
 to exercise almost no grouping API:
 
-| What it does | Whose API |
-|---|---|
-| Add / update / delete a row | `insertRow`/`patchRow`/`removeRow` — **core** row mutations |
-| Rename a category, delete a category | the same core mutations, applied to a set |
-| Get the set to write to | `rowsOf(group)` — grouping's, but already `grouping-selection`'s primitive |
-| Rows re-cluster, headers merge or vanish | engine behaviour, **no call site at all** |
+| What it does                             | Whose API                                                                  |
+| ---------------------------------------- | -------------------------------------------------------------------------- |
+| Add / update / delete a row              | `insertRow`/`patchRow`/`removeRow` — **core** row mutations                |
+| Rename a category, delete a category     | the same core mutations, applied to a set                                  |
+| Get the set to write to                  | `rowsOf(group)` — grouping's, but already `grouping-selection`'s primitive |
+| Rows re-cluster, headers merge or vanish | engine behaviour, **no call site at all**                                  |
 
 So it is a consumer pattern, not an API lesson (convention 2). The behaviour is
 real; it is just better stated than shown.
@@ -245,30 +245,30 @@ survive the cut and belong in the docs prose or the spec, not in a canvas:
   evaluation. "Rename a group" and "delete a group" have no direct target — both
   are writes to the rows, and the header follows.
 - **Deleting a category must never delete rows.** A taxonomy delete asks where its
-  rows go: *reassign* (rows move; a name collision merges the two groups) or
-  *leave uncategorized* (clear the field; rows land in a blank-key cluster, and go
+  rows go: _reassign_ (rows move; a name collision merges the two groups) or
+  _leave uncategorized_ (clear the field; rows land in a blank-key cluster, and go
   flat only if a `when` predicate rejects blank keys — a `grouping-when`
   dependency, not free). Deleting the records is a separate, explicitly
   destructive action that pairs with selection.
 
 ### D9 — `grouping-keys` carries a source fix: widen the empty-rule guard
 
-**The framing to teach, first.** `initial` answers *which fields are levels, in
-what nesting order*. `applyGrouping` answers *everything else about one field* —
+**The framing to teach, first.** `initial` answers _which fields are levels, in
+what nesting order_. `applyGrouping` answers _everything else about one field_ —
 split by what the option decides, not by dynamic vs. static:
 
-| Option | Decides | Dynamic? |
-|---|---|---|
-| `enable` | is this field a level right now | yes |
-| `when` | which clusters survive | yes |
-| `extractValue` | what the group key is | no |
-| `label` | what the header says | no |
+| Option         | Decides                         | Dynamic? |
+| -------------- | ------------------------------- | -------- |
+| `enable`       | is this field a level right now | yes      |
+| `when`         | which clusters survive          | yes      |
+| `extractValue` | what the group key is           | no       |
+| `label`        | what the header says            | no       |
 
 Most tables need only `initial` — because they need none of the four, not because
 they are "static". A static table wanting a group header that differs from its
 column header needs `applyGrouping` too.
 
-> Earlier drafts of this decision said "`schema` is for grouping that *changes*".
+> Earlier drafts of this decision said "`schema` is for grouping that _changes_".
 > That is wrong: two of the four options are static. Corrected here; the same
 > wording may survive elsewhere in the docs and should be fixed on sight.
 
@@ -285,7 +285,7 @@ than an ADR, which is why it is easy to forget it was ever discussed.
 **The bug this audit found.** The guard (`feature.ts:91-93`) is
 
 ```ts
-isGroupingRule(rule) && !rule.enable && !rule.when
+isGroupingRule(rule) && !rule.enable && !rule.when;
 ```
 
 — it never looks at `label` or `extractValue`. So a rule carrying only one of those
@@ -293,10 +293,10 @@ throws, although both are documented as standalone options with nothing to do wi
 activation:
 
 ```ts
-applyGrouping(path.closedAt, { extractValue: (d) => monthOf(d) });  // throws today
+applyGrouping(path.closedAt, { extractValue: (d) => monthOf(d) }); // throws today
 ```
 
-An oversight, not a decision: Step 3's stated target was the *empty* rule, and a
+An oversight, not a decision: Step 3's stated target was the _empty_ rule, and a
 label-only rule is not empty. Untested too — `feature.spec.ts` has no
 `applyGrouping` call carrying only `label` or `extractValue`.
 
@@ -306,8 +306,8 @@ should read differently from its column header.
 ```ts
 withGrouping({
   initial: ['dueDate'],
-  schema: (path) => applyGrouping(path.dueDate, { label: 'Due' }),  // throws today
-})
+  schema: (path) => applyGrouping(path.dueDate, { label: 'Due' }), // throws today
+});
 ```
 
 Putting the label on a `ColumnDef` with id `dueDate` avoids the rule, but only
@@ -334,7 +334,7 @@ array when any entry reads `undefined`:
 ```ts
 for (const entry of entries) {
   const value = entry.result();
-  if (value === undefined) return [...levels];   // declared, not current
+  if (value === undefined) return [...levels]; // declared, not current
   results.set(entry.columnId, value);
 }
 return levels.filter((id) => results.get(id) !== false);
@@ -343,16 +343,16 @@ return levels.filter((id) => results.get(id) !== false);
 So a pending rule does not freeze the status quo — it **discards every other rule's
 resolved `false`** and short-circuits, never reading the entries after it.
 
-| | `region: false` (resolved) | `category: undefined` (pending) | Applied |
-|---|---|---|---|
-| Expected | stays off | no change | `['category']` |
-| Actual | **comes back** | — | `['region', 'category']` |
+|          | `region: false` (resolved) | `category: undefined` (pending) | Applied                  |
+| -------- | -------------------------- | ------------------------------- | ------------------------ |
+| Expected | stays off                  | no change                       | `['category']`           |
+| Actual   | **comes back**             | —                               | `['region', 'category']` |
 
 Decided as whole-set abstain in **D13** (2026-09-10,
 `archive/with-grouping/2-decisions.md:199`) and restated as **D4** (2026-09-17,
 `active/grouping-config-simplification/2-decisions.md:62`). Its stated purpose —
 hold the declared grouping rather than flash ungrouped while a rule resolves — is
-true at **first paint**, when nothing has resolved and declared *is* intended. It
+true at **first paint**, when nothing has resolved and declared _is_ intended. It
 stops being true once some rules have already resolved `false`.
 
 The alternative already exists in the codebase: `buildAsyncGroupingRuleEntry` holds
@@ -372,15 +372,15 @@ The first-paint case is unchanged, and this is what reconciles D11 with D13/D4: 
 entry that has **never** resolved has nothing to hold, so it still reads
 `undefined` and the whole set still abstains. That is the case D13 was actually
 defending — a table holding its declared levels instead of flashing flat. The
-divergence only appears *after* first resolution, which neither decision
+divergence only appears _after_ first resolution, which neither decision
 considered.
 
-| Entry state | `result()` | Effect on other levels |
-|---|---|---|
-| never resolved, pending | `undefined` | whole set abstains — declared passes through |
-| resolved, now pending | last boolean | **none** |
-| resolved `true` / `false` | that boolean | none |
-| threw | `false`, reported once | none |
+| Entry state               | `result()`             | Effect on other levels                       |
+| ------------------------- | ---------------------- | -------------------------------------------- |
+| never resolved, pending   | `undefined`            | whole set abstains — declared passes through |
+| resolved, now pending     | last boolean           | **none**                                     |
+| resolved `true` / `false` | that boolean           | none                                         |
+| threw                     | `false`, reported once | none                                         |
 
 **Where the fix goes: the entry, not the mask.** `buildAsyncGroupingRuleEntry`
 already holds `previous?.value` across a reload (`rules.ts:77-87`); the sync
@@ -424,26 +424,26 @@ user's call; the decisions-doc amendment is the floor.
 
 Surface taken from `api/features/with-grouping/{feature,schema,types}.ts`.
 
-| API concept | Where it lives | Covered by | Verdict |
-|---|---|---|---|
-| `initial` — array order *is* nesting order | `WithGroupingConfig.initial` | Static | ✅ |
-| `when` — table-wide cluster admission | `WithGroupingConfig.when` | Static | ✅ |
-| `applyGrouping({ when })` — per-column admission, AND'd | `schema.ts` | Static | ✅ |
-| `applyGrouping({ enable })` — level activation, tri-state | `schema.ts` | — | ❌ **none** |
-| `applyGrouping({ extractValue })` — group-key derivation | `schema.ts` | — | ❌ **none** |
-| `applyGrouping({ label })` — explicit header label | `schema.ts` | — | ❌ **none** |
-| `applyGroupingAsync()` — server-decided level | `schema.ts` | Async Rule | ✅ |
-| `applyGroupOrder()` — sibling ordering | `schema.ts` | Regressions (as misuse) | 🟡 **miscast** |
-| `grouping` reads applied / writes declared (D5) | `GroupingMembers` | — | ❌ none |
-| `rowsOf(group)` | `GroupingMembers` | Selection, CRUD | ✅ |
-| `groupIds()` | `GroupingMembers` | Collapsible | ✅ |
-| `groupingLevels()` | `GroupingMembers` | CRUD | ✅ |
-| `isGroupedBy(id)` | `GroupingMembers` | Static | ✅ |
-| Group updaters (`add`/`remove`/`reorder`/`setGroupLevels`) | `index.ts` | Static, Collapsible | ✅ |
-| `aggregateFn` totals at every depth | column schema | Static, CRUD | ✅ |
-| Collapse (`withExpansion()` + `'prune'`) | composition | Collapsible | ✅ |
-| Row mutations under grouping | composition | CRUD | ✅ |
-| Selection cascade over `rowsOf()` | composition | Selection | ✅ |
+| API concept                                                | Where it lives               | Covered by              | Verdict        |
+| ---------------------------------------------------------- | ---------------------------- | ----------------------- | -------------- |
+| `initial` — array order _is_ nesting order                 | `WithGroupingConfig.initial` | Static                  | ✅             |
+| `when` — table-wide cluster admission                      | `WithGroupingConfig.when`    | Static                  | ✅             |
+| `applyGrouping({ when })` — per-column admission, AND'd    | `schema.ts`                  | Static                  | ✅             |
+| `applyGrouping({ enable })` — level activation, tri-state  | `schema.ts`                  | —                       | ❌ **none**    |
+| `applyGrouping({ extractValue })` — group-key derivation   | `schema.ts`                  | —                       | ❌ **none**    |
+| `applyGrouping({ label })` — explicit header label         | `schema.ts`                  | —                       | ❌ **none**    |
+| `applyGroupingAsync()` — server-decided level              | `schema.ts`                  | Async Rule              | ✅             |
+| `applyGroupOrder()` — sibling ordering                     | `schema.ts`                  | Regressions (as misuse) | 🟡 **miscast** |
+| `grouping` reads applied / writes declared (D5)            | `GroupingMembers`            | —                       | ❌ none        |
+| `rowsOf(group)`                                            | `GroupingMembers`            | Selection, CRUD         | ✅             |
+| `groupIds()`                                               | `GroupingMembers`            | Collapsible             | ✅             |
+| `groupingLevels()`                                         | `GroupingMembers`            | CRUD                    | ✅             |
+| `isGroupedBy(id)`                                          | `GroupingMembers`            | Static                  | ✅             |
+| Group updaters (`add`/`remove`/`reorder`/`setGroupLevels`) | `index.ts`                   | Static, Collapsible     | ✅             |
+| `aggregateFn` totals at every depth                        | column schema                | Static, CRUD            | ✅             |
+| Collapse (`withExpansion()` + `'prune'`)                   | composition                  | Collapsible             | ✅             |
+| Row mutations under grouping                               | composition                  | CRUD                    | ✅             |
+| Selection cascade over `rowsOf()`                          | composition                  | Selection               | ✅             |
 
 Three schema options have **zero** on-screen coverage: `enable`, `extractValue`,
 `label`. All three are `applyGrouping`'s own options — the declarative entry point
@@ -455,27 +455,27 @@ the feature is built around.
 
 ### `grouping-static` — 3 canvases, 3 lessons, and a wrong name
 
-| Export | Lesson | Verdict |
-|---|---|---|
-| `Static` | `initial` + aggregates + level editing over the updaters | **Keep**, renamed and stripped |
-| `BlankRegionsFlat` | `keepBlankRegionsFlat: true` | **Remove** — one arg off `Static` |
-| `TwoLevelsWithThresholds` | both toggles on | **Remove** — two args off `Static` |
+| Export                    | Lesson                                                   | Verdict                            |
+| ------------------------- | -------------------------------------------------------- | ---------------------------------- |
+| `Static`                  | `initial` + aggregates + level editing over the updaters | **Keep**, renamed and stripped     |
+| `BlankRegionsFlat`        | `keepBlankRegionsFlat: true`                             | **Remove** — one arg off `Static`  |
+| `TwoLevelsWithThresholds` | both toggles on                                          | **Remove** — two args off `Static` |
 
 Both removals are already reachable from `Static`'s Controls, and the `.mdx`
 documents only `Static` — so the two extra canvases are already invisible in the
 docs stream and exist only in the sidebar.
 
 **The name is wrong.** This is the baseline — "the one to copy", per the `.mdx`
-itself. `Static` reads as the opposite of `applyGroupingAsync`, i.e. as a *variant*,
+itself. `Static` reads as the opposite of `applyGroupingAsync`, i.e. as a _variant_,
 which is the one thing it is not. Rename to `grouping-basic`.
 
 **And it is not yet basic.** One host currently teaches four things:
 
-| Riding on the host | Belongs to |
-|---|---|
+| Riding on the host                                        | Belongs to               |
+| --------------------------------------------------------- | ------------------------ |
 | `initial`, aggregates at depth, add/remove/reorder levels | the baseline — **stays** |
-| table-wide `when` + per-column `when`, AND-combined | its own story — see §3.6 |
-| `groupedColumnMode` (`keep`/`hide`/`move-to-front`) | its own story — see §3.5 |
+| table-wide `when` + per-column `when`, AND-combined       | its own story — see §3.6 |
+| `groupedColumnMode` (`keep`/`hide`/`move-to-front`)       | its own story — see §3.5 |
 
 Stripping it is what makes the rename true: a first-read story should compose
 `withGrouping({ initial })` and nothing else, with no predicate and no `effect` +
@@ -489,17 +489,17 @@ others should match. **Keep as-is.**
 
 ### `grouping-regressions` — miscast, split
 
-The folder is named for bugs but contains the *only* coverage of a shipped feature.
+The folder is named for bugs but contains the _only_ coverage of a shipped feature.
 
-| Export / control | What it actually is | Verdict |
-|---|---|---|
-| `groupOrder: by-label` | `applyGroupOrder` — legitimate | **Promote** to a group-order story |
-| `groupOrder: by-count` | `applyGroupOrder` — legitimate | **Promote** |
-| `groupOrder: external-list` | `applyGroupOrder` — legitimate | **Promote** |
-| `groupOrder: first-occurrence` | the no-comparator baseline | **Promote** (as the default) |
-| `ThrowingGroupOrder` | ADR-0014 degrade contract | **Move** — one control on the group-order story, not its own canvas |
-| `SilentDegradation` → missing level | D7: a level naming no field clusters to one phantom group | **Remove** |
-| `SilentDegradation` → broken summary | [#79](https://github.com/DvirMon/ng-table/issues/79), an **open bug** | **Remove** |
+| Export / control                     | What it actually is                                                   | Verdict                                                             |
+| ------------------------------------ | --------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `groupOrder: by-label`               | `applyGroupOrder` — legitimate                                        | **Promote** to a group-order story                                  |
+| `groupOrder: by-count`               | `applyGroupOrder` — legitimate                                        | **Promote**                                                         |
+| `groupOrder: external-list`          | `applyGroupOrder` — legitimate                                        | **Promote**                                                         |
+| `groupOrder: first-occurrence`       | the no-comparator baseline                                            | **Promote** (as the default)                                        |
+| `ThrowingGroupOrder`                 | ADR-0014 degrade contract                                             | **Move** — one control on the group-order story, not its own canvas |
+| `SilentDegradation` → missing level  | D7: a level naming no field clusters to one phantom group             | **Remove**                                                          |
+| `SilentDegradation` → broken summary | [#79](https://github.com/DvirMon/ng-table/issues/79), an **open bug** | **Remove**                                                          |
 
 `SilentDegradation` documents two things the library does not yet do correctly.
 A bug tracker and a spec hold those; a docs page that teaches them teaches the
@@ -508,17 +508,17 @@ arithmetic — the library reports nothing — so the canvas is not even showing
 library behavior, it is showing the story compensating for its absence.
 
 `ThrowingGroupOrder` is different in kind: the degrade-and-report fallback is
-*designed* behavior (ADR-0014), not a gap. It belongs next to the comparator it
+_designed_ behavior (ADR-0014), not a gap. It belongs next to the comparator it
 protects, as one more option in the same select.
 
 Net: the folder disappears; its legitimate half becomes `grouping-order`.
 
 ### `grouping-collapsible` — 2 canvases, second one is expansion's lesson
 
-| Export | Lesson | Verdict |
-|---|---|---|
-| `Collapsible` | `groupIds()` feeding `expandAll()`; collapse survives refetch/sort, resets on regroup | **Keep** |
-| `CollapsibleRefreshFailure` | a failed refetch leaves collapse state untouched | **Remove** |
+| Export                      | Lesson                                                                                | Verdict    |
+| --------------------------- | ------------------------------------------------------------------------------------- | ---------- |
+| `Collapsible`               | `groupIds()` feeding `expandAll()`; collapse survives refetch/sort, resets on regroup | **Keep**   |
+| `CollapsibleRefreshFailure` | a failed refetch leaves collapse state untouched                                      | **Remove** |
 
 The failure canvas is `forceFailure: true` — one arg off `Collapsible`, same as the
 two `grouping-static` extras. Its lesson is also not a grouping lesson: it is
@@ -531,7 +531,7 @@ already composing three. It reads as reference wiring rather than a lesson.
 
 ### `grouping-selection` — clean
 
-One canvas, one lesson, and the `cascade` control *is* the argument (D16: the
+One canvas, one lesson, and the `cascade` control _is_ the argument (D16: the
 library ships no cascade, so all three peer defaults are consumer code over
 `rowsOf()`). **Keep as-is.**
 
@@ -616,8 +616,8 @@ Inherits today's `keepBlankRegionsFlat` / `applyMinCategorySize` /
 `minCategoryRowCount` controls verbatim — the two removed canvases in §2 become
 this story's Controls rather than disappearing.
 
-Note the pairing with §3.1: `when` decides *admission of a cluster*, `enable`
-decides *activation of a level*. They are adjacent enough to be confused and are
+Note the pairing with §3.1: `when` decides _admission of a cluster_, `enable`
+decides _activation of a level_. They are adjacent enough to be confused and are
 the strongest argument for one story each rather than one host carrying both.
 
 ---
@@ -628,23 +628,23 @@ Settled by D1–D8. Read in this order; the first is the one to copy.
 
 **`withGrouping()`'s own surface**
 
-| Story | Lesson | Origin |
-|---|---|---|
-| `grouping-basic` | `initial` — nesting order, editing the level set, `groupingLevels()` | renamed + stripped from `grouping-static` (D1, D8) |
-| `grouping-when` | `when` admission — table-wide AND per-column; a rejected cluster renders flat | split out of `grouping-static` (D1) |
-| `grouping-enable` | `enable` — level activation, and `undefined` abstaining the whole set | new (§3.1) |
-| `grouping-keys` | `extractValue` + `label` — what the key is, what the header says, and that a level names a **row field**, not a column | new (§3.3) + D3 |
-| `grouping-order` | `applyGroupOrder` — four comparators, plus the throw fallback as the fifth option | promoted from `grouping-regressions` (D4) |
-| `grouping-async-rule` | `applyGroupingAsync` — server-decided level, the pending window, `onError`'s required boolean | unchanged (D2) |
-| `grouping-aggregates` | `aggregateFn` — subtree totals at every depth, post-filter by construction, plus the throw fallback as a control | split out of `grouping-static` (D1a) + D3 |
+| Story                 | Lesson                                                                                                                 | Origin                                             |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `grouping-basic`      | `initial` — nesting order, editing the level set, `groupingLevels()`                                                   | renamed + stripped from `grouping-static` (D1, D8) |
+| `grouping-when`       | `when` admission — table-wide AND per-column; a rejected cluster renders flat                                          | split out of `grouping-static` (D1)                |
+| `grouping-enable`     | `enable` — level activation, and `undefined` abstaining the whole set                                                  | new (§3.1)                                         |
+| `grouping-keys`       | `extractValue` + `label` — what the key is, what the header says, and that a level names a **row field**, not a column | new (§3.3) + D3                                    |
+| `grouping-order`      | `applyGroupOrder` — four comparators, plus the throw fallback as the fifth option                                      | promoted from `grouping-regressions` (D4)          |
+| `grouping-async-rule` | `applyGroupingAsync` — server-decided level, the pending window, `onError`'s required boolean                          | unchanged (D2)                                     |
+| `grouping-aggregates` | `aggregateFn` — subtree totals at every depth, post-filter by construction, plus the throw fallback as a control       | split out of `grouping-static` (D1a) + D3          |
 
 **Compositions**
 
-| Story | Lesson | Origin |
-|---|---|---|
-| `grouping-columns` | what happens to a column once it becomes a level | split out of `grouping-static` (D1) |
-| `grouping-collapsible` | collapse over `groupIds()`, `withGrouping()` + `withExpansion()` only | stripped (D5, D6) |
-| `grouping-selection` | cascade over `rowsOf()`, tri-state derived not stored | `cascade` trimmed to two options (D7) |
+| Story                  | Lesson                                                                | Origin                                |
+| ---------------------- | --------------------------------------------------------------------- | ------------------------------------- |
+| `grouping-columns`     | what happens to a column once it becomes a level                      | split out of `grouping-static` (D1)   |
+| `grouping-collapsible` | collapse over `groupIds()`, `withGrouping()` + `withExpansion()` only | stripped (D5, D6)                     |
+| `grouping-selection`   | cascade over `rowsOf()`, tri-state derived not stored                 | `cascade` trimmed to two options (D7) |
 
 Ten stories, ten lessons, one canvas each.
 
@@ -659,34 +659,34 @@ filed under "do not copy", and one folder absent from the docs page.
 
 Deferred deliberately — audited in one pass at the end rather than chased per step.
 
-| Doc | Why it is suspect |
-|---|---|
-| `docs/0-product/grouping.md` | carries per-story coverage marks against the old set |
-| `d8b2434` "grouping-crud coverage sweep, six-story reindex" | indexes six stories including `grouping-crud`, now deleted (D8) |
-| `76432ee` "close #88 — single-row/missing-value grouping answers" | written against the pre-split stories |
-| `docs/work/grouping-doc-audit/`, `docs/work/spec-coverage-audit/` | untracked at the time of this audit; unknown overlap |
-| `grouping-regressions` references anywhere in docs | the folder disappears in step 3 |
+| Doc                                                               | Why it is suspect                                               |
+| ----------------------------------------------------------------- | --------------------------------------------------------------- |
+| `docs/0-product/grouping.md`                                      | carries per-story coverage marks against the old set            |
+| `d8b2434` "grouping-crud coverage sweep, six-story reindex"       | indexes six stories including `grouping-crud`, now deleted (D8) |
+| `76432ee` "close #88 — single-row/missing-value grouping answers" | written against the pre-split stories                           |
+| `docs/work/grouping-doc-audit/`, `docs/work/spec-coverage-audit/` | untracked at the time of this audit; unknown overlap            |
+| `grouping-regressions` references anywhere in docs                | the folder disappears in step 3                                 |
 
 ### 4a. Spec assertions this audit hands to `with-grouping`
 
 Behaviour that left a canvas and must not leave the codebase. All seven now land in
 `api/features/with-grouping/feature.spec.ts`.
 
-| From | Assertion | Where |
-|---|---|---|
-| D5 | A sort toggle does not disturb collapse state | `collapse state across a sort` |
-| D6 | Replacing every row object with an equal-id copy leaves `expandedRows` untouched | `collapse state across a row replacement` |
-| D7 | No group id ever enters selection state | `rowsOf` → cascade recipe |
-| D8 | Patching a row's group field moves it between clusters | `writes target rows; clustering re-derives` |
-| D8 | Patching to a name a sibling holds merges the two clusters | same |
-| D8 | Removing a cluster's last leaf removes its header | same |
-| D8 | An appended row lands under the cluster its field values name | same |
+| From | Assertion                                                                        | Where                                       |
+| ---- | -------------------------------------------------------------------------------- | ------------------------------------------- |
+| D5   | A sort toggle does not disturb collapse state                                    | `collapse state across a sort`              |
+| D6   | Replacing every row object with an equal-id copy leaves `expandedRows` untouched | `collapse state across a row replacement`   |
+| D7   | No group id ever enters selection state                                          | `rowsOf` → cascade recipe                   |
+| D8   | Patching a row's group field moves it between clusters                           | `writes target rows; clustering re-derives` |
+| D8   | Patching to a name a sibling holds merges the two clusters                       | same                                        |
+| D8   | Removing a cluster's last leaf removes its header                                | same                                        |
+| D8   | An appended row lands under the cluster its field values name                    | same                                        |
 
 Two were narrowed while writing them, and the narrowing is the honest half:
 
 - **D6's failure path is consumer wiring, not library behaviour.** A failed refetch means the
   consumer's `linkedSignal` holds its previous value, so the data signal never changes and there
-  is nothing for the library to get wrong. What the library owes is the *success* case — same
+  is nothing for the library to get wrong. What the library owes is the _success_ case — same
   ids, new object identities, same group ids — which is what the canvas was actually showing.
 - **D8's "no write names a group id" is not separately assertable.** It is a property of the
   other three: every updater in them takes a `RowId` or a row, and none takes a group. Written as
@@ -697,7 +697,7 @@ Two were narrowed while writing them, and the narrowing is the honest half:
 ## 5. The convention this implies
 
 Worth recording once the set above settles — as an ADR (it changes what a story is
-*for*), with the operational half in `docs/3-ui/stories.md`:
+_for_), with the operational half in `docs/3-ui/stories.md`:
 
 1. **One canvas per story export.** A second canvas that differs from the first by
    one `args` value is a Control, not a story. (Removes 3 of today's 10.)
@@ -706,7 +706,7 @@ Worth recording once the set above settles — as an ADR (it changes what a stor
 3. **A story's lesson must be the feature's own.** If the sentence describing it
    names another feature's contract, it belongs to that feature's page.
 4. **Open bugs are not stories.** A gap goes in the tracker and in the spec. A
-   *designed* degradation (ADR-0014 fallbacks) is a control on the story of the
+   _designed_ degradation (ADR-0014 fallbacks) is a control on the story of the
    thing it protects, never its own canvas and never its own folder.
 5. **An invariant that something does not break is a test, not a story.** If the
    observable outcome of a control is that the screen is unchanged, there is

@@ -56,4 +56,5 @@ consumer's raw `WritableSignal`. This step is the engine-layer half of that chan
 - Typecheck passes for `engine/` in isolation (downstream breakage in `api/`/`directives/` is expected until later steps land).
 
 ---
+
 [Step 2: `api/types.ts` — public `TableStore` mirrors the writable-columns change](step-2-api-types-writable-columns.plan.md) →

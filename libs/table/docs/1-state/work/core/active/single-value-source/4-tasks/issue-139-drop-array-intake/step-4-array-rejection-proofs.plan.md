@@ -28,7 +28,7 @@ array form must now be a compile error.
 1. **Case 13** → rename to "the array form is a compile error".
    Keep one `createTable(data, { trackBy: 'id', columns: <array> })`
    under `// @ts-expect-error — TableConfig.columns takes a
-   ColumnSet only (#139)`. Keep the directive on the `columns`
+ColumnSet only (#139)`. Keep the directive on the `columns`
    line so it pins the right error. Follow the file's
    "own `it` + re-assert the surrounding call" pattern (`:111`,
    `:233`).
@@ -64,4 +64,5 @@ array form must now be a compile error.
 - [ ] `nx run shared-table:typecheck` clean, **run twice**.
 
 ---
+
 ← [Step 3: Generator constraint, regenerated](step-3-generator-constraint.plan.md) | [Step 5: Record the ruling](step-5-record-the-ruling.plan.md) →

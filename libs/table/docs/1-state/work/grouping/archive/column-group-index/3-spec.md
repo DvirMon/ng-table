@@ -128,7 +128,7 @@ factories. These two members are read-only projections.
 particular placement rule.
 
 **D3 — `isGroupedBy(): boolean`, not `groupIndexOf(): number | undefined`.** Every existing call
-site asks *is this column a level*, never *which*. `groupingLevels()` already answers "which" by
+site asks _is this column a level_, never _which_. `groupingLevels()` already answers "which" by
 position. Adding `groupIndexOf` later stays available and is not part of this scope.
 
 **D4 — Both derive from the resolved level list, not from `grouping()`.** The id list is resolved
@@ -201,7 +201,7 @@ construction helpers and fixtures.
 
 - `groupingLevels()` returns the level columns in level order, outermost first, as `ColumnDef`s
   carrying the real `label`.
-- Positional agreement: entry *i* is the column named by resolved level *i*.
+- Positional agreement: entry _i_ is the column named by resolved level _i_.
 - Ungrouped table: `groupingLevels()` is `[]`; `isGroupedBy(anyId)` is `false`.
 - `isGroupedBy` is `true` for every level id and `false` for a non-level column id and for an
   unknown id.

@@ -35,7 +35,7 @@ first paint is a surprise, not a lesson.
 **Template** — line 72 is currently bare:
 
 ```html
-<table class="story-host__table grouping-story__table">
+<table class="story-host__table grouping-story__table"></table>
 ```
 
 Add the conditional class:
@@ -44,7 +44,7 @@ Add the conditional class:
 <table
   class="story-host__table grouping-story__table"
   [class.grouping-story__table--sticky]="stickyHeaders()"
->
+></table>
 ```
 
 **`.stories.ts`** — mirror the existing `showCount` pair exactly:
@@ -62,11 +62,11 @@ args: {
 
 ## What this does and does not prove
 
-The CSS targets `[data-row-kind='group'] > .story-host__cell` — the *group* header rows, not
+The CSS targets `[data-row-kind='group'] > .story-host__cell` — the _group_ header rows, not
 `<thead>`. That is what §2.4 asks for: "the group header stays visible while any of its rows are
 on screen."
 
-Every depth pins to `top: 0`, so with nested groups an inner header lands *on* its parent rather
+Every depth pins to `top: 0`, so with nested groups an inner header lands _on_ its parent rather
 than stacking beneath it. §2.4's second and third criteria (the full path visible, a clean
 hand-off) stay unmet, which is UI-layer gap **U5**. **§2.4 returns to 🟡, not ✅.** Do not claim
 otherwise in step 5, and do not attempt the per-depth offset here — it needs a decision and it

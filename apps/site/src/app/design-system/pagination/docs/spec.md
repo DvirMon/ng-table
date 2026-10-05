@@ -5,23 +5,38 @@ atomic: Molecule
 spec: specs/Pagination Footer.md
 frame: components/Pagination Footer.dc.html
 owns:
-  - "Prev/next card pair at the end of the content column: border, radius, eyebrow, title, arrow shift on hover"
+  - 'Prev/next card pair at the end of the content column: border, radius, eyebrow, title, arrow shift on hover'
 does_not_own:
-  - "The site-wide footer — see layout/Page Footer.md"
+  - 'The site-wide footer — see layout/Page Footer.md'
 depends_on:
-  - "foundations/Color.md (color)"
-  - "foundations/Radius and Elevation.md (shape)"
-  - "foundations/Motion.md (motion)"
-  - "foundations/Typography.md (typography)"
+  - 'foundations/Color.md (color)'
+  - 'foundations/Radius and Elevation.md (shape)'
+  - 'foundations/Motion.md (motion)'
+  - 'foundations/Typography.md (typography)'
 states:
-  - "default"
-  - "hover (arrow shifts)"
-  - "focus-visible"
-  - "prev-only"
-  - "next-only"
+  - 'default'
+  - 'hover (arrow shifts)'
+  - 'focus-visible'
+  - 'prev-only'
+  - 'next-only'
 a11y:
-  - "nav element with aria-label=\"Pagination\" (set by nav[ngptPagination] as a host attribute); the eyebrow gives the direction in text"
-tokens: [--ngpt-sys-space-400, --ngpt-sys-space-350, --ngpt-sys-space-450, --ngpt-sys-shape-corner-small-alt, --ngpt-comp-pagination-border, --ngpt-sys-typescale-label-small-2, --ngpt-text-muted, --ngpt-sys-space-100, --ngpt-sys-typescale-body-medium, --ngpt-comp-pagination-title-default, --ngpt-accent, --ngpt-bg-hover, --ngpt-comp-pagination-arrow-shift]
+  - 'nav element with aria-label="Pagination" (set by nav[ngptPagination] as a host attribute); the eyebrow gives the direction in text'
+tokens:
+  [
+    --ngpt-sys-space-400,
+    --ngpt-sys-space-350,
+    --ngpt-sys-space-450,
+    --ngpt-sys-shape-corner-small-alt,
+    --ngpt-comp-pagination-border,
+    --ngpt-sys-typescale-label-small-2,
+    --ngpt-text-muted,
+    --ngpt-sys-space-100,
+    --ngpt-sys-typescale-body-medium,
+    --ngpt-comp-pagination-title-default,
+    --ngpt-accent,
+    --ngpt-bg-hover,
+    --ngpt-comp-pagination-arrow-shift,
+  ]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
@@ -38,10 +53,10 @@ Previous/Next link cards at the bottom of a docs page. Title text is neutral by 
 Attribute-hosted pair (ADR-0005) — the consumer authors the markup, the primitives style it. No
 array/object inputs; nothing here inserts, removes or reorders DOM.
 
-| Primitive | Selector | Inputs | Content |
-|---|---|---|---|
-| container | `nav[ngptPagination]` | — (static host `aria-label="Pagination"`) | the cards |
-| card | `a[ngptPaginationLink]` | `side: input.required<PaginationSide>()` → host `data-side` | the card **title** only |
+| Primitive | Selector                | Inputs                                                      | Content                 |
+| --------- | ----------------------- | ----------------------------------------------------------- | ----------------------- |
+| container | `nav[ngptPagination]`   | — (static host `aria-label="Pagination"`)                   | the cards               |
+| card      | `a[ngptPaginationLink]` | `side: input.required<PaginationSide>()` → host `data-side` | the card **title** only |
 
 `href` is native, set by the consumer. The eyebrow (arrow glyph + "Previous"/"Next") is rendered by
 the card from `side` — it is spec-fixed copy, not consumer content. `PaginationSide` and
@@ -51,7 +66,9 @@ typed shape a docs page's content constants use.
 ```html
 <nav ngptPagination>
   <a ngptPaginationLink side="prev" href="/docs/getting-started">Getting Started</a>
-  <a ngptPaginationLink side="next" href="/docs/state-layer-architecture">State Layer Architecture</a>
+  <a ngptPaginationLink side="next" href="/docs/state-layer-architecture"
+    >State Layer Architecture</a
+  >
 </nav>
 ```
 
@@ -65,29 +82,28 @@ keeps its half of the row — it places itself via `grid-column`, keyed on `data
 
 ## States
 
-| State | Trigger | Visual change |
-|---|---|---|
-| Default | — | Neutral title text, no bg |
-| Hover | Pointer anywhere in card | Bg lifts, title turns accent, arrow shifts 3px toward its direction |
+| State   | Trigger                  | Visual change                                                       |
+| ------- | ------------------------ | ------------------------------------------------------------------- |
+| Default | —                        | Neutral title text, no bg                                           |
+| Hover   | Pointer anywhere in card | Bg lifts, title turns accent, arrow shifts 3px toward its direction |
 
 ## Build spec
 
-| Property | Value | Token |
-|---|---|---|
-| Layout | flex row, 16px gap, two equal-width cards | `--ngpt-sys-space-400` |
-| Card padding | 14px 18px | `--ngpt-sys-space-350 --ngpt-sys-space-450` |
-| Card radius | 10px | `--ngpt-sys-shape-corner-small-alt` |
-| Card border | 1px solid oklch(0.28 0.005 260) | `--ngpt-comp-pagination-border` |
-| Eyebrow font | 12.5px | `--ngpt-sys-typescale-label-small-2` |
-| Eyebrow color | oklch(0.55 0.01 260) | `--ngpt-text-muted` |
-| Eyebrow-to-title gap | 4px | `--ngpt-sys-space-100` |
-| Title font (default) | 14.5px / 600 | `--ngpt-sys-typescale-title-small` |
-| Title color (default) | oklch(0.9 0.005 260) | `--ngpt-comp-pagination-title-default` |
-| Title color (hover) | oklch(0.68 0.22 328) | `--ngpt-accent` |
-| Card bg (hover) | oklch(0.2 0.005 260) | `--ngpt-bg-hover` |
-| Arrow transform (hover) | translateX(±3px), fast / standard | `--ngpt-comp-pagination-arrow-shift` + `foundations/Motion.md` |
-| Alignment | Previous card left-aligned; Next card right-aligned | `—` |
-
+| Property                | Value                                               | Token                                                          |
+| ----------------------- | --------------------------------------------------- | -------------------------------------------------------------- |
+| Layout                  | flex row, 16px gap, two equal-width cards           | `--ngpt-sys-space-400`                                         |
+| Card padding            | 14px 18px                                           | `--ngpt-sys-space-350 --ngpt-sys-space-450`                    |
+| Card radius             | 10px                                                | `--ngpt-sys-shape-corner-small-alt`                            |
+| Card border             | 1px solid oklch(0.28 0.005 260)                     | `--ngpt-comp-pagination-border`                                |
+| Eyebrow font            | 12.5px                                              | `--ngpt-sys-typescale-label-small-2`                           |
+| Eyebrow color           | oklch(0.55 0.01 260)                                | `--ngpt-text-muted`                                            |
+| Eyebrow-to-title gap    | 4px                                                 | `--ngpt-sys-space-100`                                         |
+| Title font (default)    | 14.5px / 600                                        | `--ngpt-sys-typescale-title-small`                             |
+| Title color (default)   | oklch(0.9 0.005 260)                                | `--ngpt-comp-pagination-title-default`                         |
+| Title color (hover)     | oklch(0.68 0.22 328)                                | `--ngpt-accent`                                                |
+| Card bg (hover)         | oklch(0.2 0.005 260)                                | `--ngpt-bg-hover`                                              |
+| Arrow transform (hover) | translateX(±3px), fast / standard                   | `--ngpt-comp-pagination-arrow-shift` + `foundations/Motion.md` |
+| Alignment               | Previous card left-aligned; Next card right-aligned | `—`                                                            |
 
 ## One side only
 
@@ -98,7 +114,7 @@ stretching across it, so the direction stays readable at a glance.
 
 ## HTML/CSS mock
 
-> Reference render of the *visual* contract. The authoring shape is the API section above — the
+> Reference render of the _visual_ contract. The authoring shape is the API section above — the
 > `.page-card--prev`/`--next` classes are `data-side` in the implementation, and the outer
 > `.pagination-footer` wrapper's divider/top padding is page-composition context, not this
 > molecule (see `decisions.md`).
@@ -117,7 +133,12 @@ stretching across it, so the direction stays readable at a glance.
 ```
 
 ```css
-.pagination-footer { display: flex; gap: 16px; padding-top: 24px; border-top: 1px solid var(--ngpt-comp-row-divider); }
+.pagination-footer {
+  display: flex;
+  gap: 16px;
+  padding-top: 24px;
+  border-top: 1px solid var(--ngpt-comp-row-divider);
+}
 .page-card {
   flex: 1;
   border: 1px solid var(--ngpt-comp-pagination-border);
@@ -125,7 +146,9 @@ stretching across it, so the direction stays readable at a glance.
   padding: 14px 18px;
   text-decoration: none;
 }
-.page-card--next { text-align: right; }
+.page-card--next {
+  text-align: right;
+}
 .page-card__eyebrow {
   display: flex;
   align-items: center;
@@ -134,7 +157,9 @@ stretching across it, so the direction stays readable at a glance.
   color: var(--ngpt-text-muted);
   margin-bottom: 4px;
 }
-.page-card--next .page-card__eyebrow { justify-content: flex-end; }
+.page-card--next .page-card__eyebrow {
+  justify-content: flex-end;
+}
 .page-card__title {
   font: var(--ngpt-sys-typescale-title-small);
   color: var(--ngpt-comp-pagination-title-default);
@@ -143,8 +168,16 @@ stretching across it, so the direction stays readable at a glance.
   display: inline-block;
   transition: transform var(--ngpt-sys-motion-duration-fast) var(--ngpt-sys-motion-easing-standard);
 }
-.page-card:hover { background: var(--ngpt-bg-hover); }
-.page-card:hover .page-card__title { color: var(--ngpt-accent); }
-.page-card--prev:hover .arrow { transform: translateX(calc(-1 * var(--ngpt-comp-pagination-arrow-shift))); }
-.page-card--next:hover .arrow { transform: translateX(var(--ngpt-comp-pagination-arrow-shift)); }
+.page-card:hover {
+  background: var(--ngpt-bg-hover);
+}
+.page-card:hover .page-card__title {
+  color: var(--ngpt-accent);
+}
+.page-card--prev:hover .arrow {
+  transform: translateX(calc(-1 * var(--ngpt-comp-pagination-arrow-shift)));
+}
+.page-card--next:hover .arrow {
+  transform: translateX(var(--ngpt-comp-pagination-arrow-shift));
+}
 ```

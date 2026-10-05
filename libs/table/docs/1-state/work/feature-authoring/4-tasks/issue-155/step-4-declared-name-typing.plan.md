@@ -11,6 +11,7 @@ files:
   - libs/table/src/engine/compose-table.spec.ts
   - libs/table/src/api/features/compose-features.spec.ts
 ---
+
 # Step 4 — Declared names typed to the registries
 
 Types a declared stage's `name` to the layer's own registry
@@ -62,4 +63,5 @@ key union.
       [step-4-declared-name-typing.test-plan.md](step-4-declared-name-typing.test-plan.md).
 
 ---
+
 ← [Step 2: Run the resolved order](step-2-run-resolved-order.plan.md) | [Step 5: Drop stale #155 notes](step-5-drop-stale-155-notes.plan.md) →

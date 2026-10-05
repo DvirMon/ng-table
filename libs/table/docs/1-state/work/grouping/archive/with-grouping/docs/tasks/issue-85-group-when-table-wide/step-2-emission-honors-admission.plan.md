@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — emission honours admission (dissolution)"
+title: 'Step 2 — emission honours admission (dissolution)'
 type: task-step
 issue: 119
 ---
@@ -91,7 +91,7 @@ This is what keeps `expandAll(table.groupIds())` (#97) from seeding an id that n
 
 A dissolved cluster's id is never minted, so no `rowsOf(group)` call can name it and the existing
 "id matching no cluster returns `[]`" degrade already covers it (Q3, recommendation: correct as-is
-— the *parent's* `rowsOf` still includes those rows, because dissolution changes depth, not
+— the _parent's_ `rowsOf` still includes those rows, because dissolution changes depth, not
 membership). Confirm by reading, do not add a guard.
 
 ## Implementation Notes
@@ -106,7 +106,7 @@ membership). Confirm by reading, do not add a guard.
 - **Row sorting is unaffected.** `sort` runs after `group` in `PIPELINE_ORDER` and the `'group'`
   render stage re-clusters after it, so rows inside a flat region sort exactly like grouped rows
   (S-G2, D5). Nothing in this step touches that.
-- **The prune stage (ADR-0017) needs nothing.** A dissolved cluster's rows carry the *parent's*
+- **The prune stage (ADR-0017) needs nothing.** A dissolved cluster's rows carry the _parent's_
   id as `parentId`, so collapsing the parent hides them, which is correct — they are still that
   parent's rows.
 
@@ -119,7 +119,7 @@ membership). Confirm by reading, do not add a guard.
   half-applied Q1 renders a row twice at ambiguous depth — the counter-case that was checked and
   rejected when Q1 was decided.
 - **`buildGroupRenderRows`'s null-data throw must stay reachable.** The dissolved-node early return
-  comes *after* the tree is built, so the accessor guard still runs on every row.
+  comes _after_ the tree is built, so the accessor guard still runs on every row.
 
 ## Non-Goals
 
@@ -144,4 +144,5 @@ membership). Confirm by reading, do not add a guard.
       locally; the byte-identical claim above is unverified until it passes.
 
 ---
+
 ← [Step 1: ClusterSummary and the admitted flag](step-1-cluster-summary-admission-flag.plan.md) | [Step 3: Wire config.groupWhen](step-3-wire-group-when-config.plan.md) →

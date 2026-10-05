@@ -11,7 +11,9 @@ const transformDocsSource: SourceParameters['transform'] = (source, { parameters
 
 const preview: Preview = {
   loaders: [mswLoader()],
-  decorators: [applicationConfig({ providers: [provideZonelessChangeDetection(), provideHttpClient()] })],
+  decorators: [
+    applicationConfig({ providers: [provideZonelessChangeDetection(), provideHttpClient()] }),
+  ],
   initialGlobals: {
     backgrounds: { value: 'dark' },
   },

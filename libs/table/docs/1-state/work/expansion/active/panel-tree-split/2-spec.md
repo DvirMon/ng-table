@@ -2,7 +2,7 @@
 title: Spec — split withExpansion() into a detail-panel feature and withTree()
 type: spec
 capability: expansion
-ticket: "101"
+ticket: '101'
 date: 2026-09-20
 audience: developers
 ---
@@ -15,7 +15,7 @@ contract [ADR-0012](../../../../adr/0012-split-expansion-into-panel-and-tree.md)
 architecture (types, paths, call-site checklist): [`3-architecture.md`](3-architecture.md).
 
 Written against source as of #107/#108 — the tree-shaped render IR and the uniform
-`isExpanded` stamping have already landed, so this issue *moves* an already-nesting stage
+`isExpanded` stamping have already landed, so this issue _moves_ an already-nesting stage
 rather than rewriting one (#105 F1).
 
 ## Problem Statement
@@ -31,14 +31,14 @@ What a consumer hits today:
    means composing the feature that claims the `'tree'` render stage and ships a recursive
    children walk. The stage is single-claim, so the cost is not only bundle size.
 2. **Collapsible group headers arrive through the wrong door.** A consumer who wants
-   collapsible grouping composes the *detail-panel-named* feature, then discovers its
+   collapsible grouping composes the _detail-panel-named_ feature, then discovers its
    `expandAll()` cannot reach a group header at all — auto-discovery walks
    `childrenAccessor`, and a header is not a row. The documented spelling is
    `expandAll(table.groupIds())`, a workaround the API shape forces.
 3. **Composing panel and tree on one table is impossible, twice over.** Both want
    `expandedRows` / `toggleExpanded` / `rowExpanded`, so `claimMember()` throws. And even
    with distinct keys the engine unions every contributed open-id set before the flatten
-   walk reads it — so opening a *panel* on row X would reveal X's *tree children*. ADR-0012
+   walk reads it — so opening a _panel_ on row X would reveal X's _tree children_. ADR-0012
    claimed separate store instances prevented this; they do not.
 4. **Three verb names over two operations, and the one write nobody has.**
    `toggleExpanded` / `expandAll` / `collapseAll`, where `expandAll(ids)` and `collapseAll()`
@@ -64,7 +64,7 @@ Split the feature along the ADR's test, and settle the three things the ADR got 
   render stage — and, new in this spec, **no contribution to the render union**. Panel
   markup is gated on the slice directly; a panel never changes which rows render.
 - **`withTree()` is new** and owns rows: an optional `childrenAccessor`, `isExpandable`, the
-  `'tree'` render stage *when an accessor is supplied*, the tri-state `state()`, and the
+  `'tree'` render stage _when an accessor is supplied_, the tri-state `state()`, and the
   only contribution to the render union. Omitting the accessor gives a collapse-only
   instance — the shape a collapsible-grouping consumer composes.
 - **`createExpansionStore()`** holds the open-id machinery both features share. A factory,
@@ -91,7 +91,7 @@ Public contract direction is unchanged: flat `data` in, flat `RenderRow<TRow>[]`
    never invoke.
 2. As an app developer, I want to open any number of detail panels at once, so that a person
    can compare two records side by side without one closing the other.
-3. As an app developer, I want to know which rows have *ever* been opened, so that I can
+3. As an app developer, I want to know which rows have _ever_ been opened, so that I can
    mount a panel lazily and keep it mounted, making its collapse a class flip instead of a
    teardown.
 4. As an app developer, I want opening a detail panel to leave the rendered row set
@@ -194,14 +194,14 @@ Public contract direction is unchanged: flat `data` in, flat `RenderRow<TRow>[]`
 
 ### Modules
 
-| Module | Change |
-|---|---|
-| `createExpansionStore()` | **new** — the shared open-id state; a factory, not a feature |
-| `withExpansion()` | narrowed to the panel: keeps the name, loses the accessor, the stage and the union contribution |
-| `withTree()` | **new** — row tree and collapse |
-| `withGrouping()` | unchanged structurally; its JSDoc and doc references to `expandAll(table.groupIds())` re-point at `withTree()` |
-| engine feature contract | unchanged — `TableFeatureSpec.expandedRows` stays accumulating; this issue changes who contributes |
-| public barrel | `withTree` and its config type added; `WithExpansionConfig` loses two fields |
+| Module                   | Change                                                                                                         |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `createExpansionStore()` | **new** — the shared open-id state; a factory, not a feature                                                   |
+| `withExpansion()`        | narrowed to the panel: keeps the name, loses the accessor, the stage and the union contribution                |
+| `withTree()`             | **new** — row tree and collapse                                                                                |
+| `withGrouping()`         | unchanged structurally; its JSDoc and doc references to `expandAll(table.groupIds())` re-point at `withTree()` |
+| engine feature contract  | unchanged — `TableFeatureSpec.expandedRows` stays accumulating; this issue changes who contributes             |
+| public barrel            | `withTree` and its config type added; `WithExpansionConfig` loses two fields                                   |
 
 ### The shared store — `createExpansionStore()`
 
@@ -277,7 +277,7 @@ interface WithTreeConfig<TRow> {
 
 - **Real-row parents only.** Every node of the tree is an entry in the flat `data()` array.
   There is no `getDataPath`, no `row.children` fallback, and no levels API — a declared-axis
-  hierarchy with invented parents *is* `withGrouping()`'s mechanism (D1/D11, E5/E15).
+  hierarchy with invented parents _is_ `withGrouping()`'s mechanism (D1/D11, E5/E15).
 - **The accessor is optional.** Omitted means collapse-only: no row tree, and the `'tree'`
   render stage is **not claimed**, so a future stage claimant is not blocked for nothing
   (D9/E13). Supplied means the stage is claimed and children nest beneath their parent.
@@ -303,7 +303,7 @@ open with `isExpanded` unstamped — today's behavior for an expansion-free tabl
 
 Collapsible grouping is `createTable(config, withGrouping(schema), withTree())`, and the
 toolbar spelling becomes `table.tree.collapse()` / `table.tree.expand(table.groupIds())`.
-`groupIds()` keeps its reason to exist: expanding *only* headers is still a legitimate ask,
+`groupIds()` keeps its reason to exist: expanding _only_ headers is still a legitimate ask,
 and the discovery walk cannot reach one.
 
 ### Error policy
@@ -316,17 +316,17 @@ dedupe. Reported in production too, not dev-only (D12/E16).
 
 ### Breaking changes
 
-| Today | After |
-|---|---|
-| `withExpansion({ childrenAccessor, isExpandable })` | `withTree({ childrenAccessor, isExpandable })` |
-| `table.expandedRows()` | `table.expansion()` or `table.tree()` — whichever the consumer meant |
-| `table.toggleExpanded(id)` | `table.expansion.toggle(id)` / `table.tree.toggle(id)` |
-| `table.expandAll()` | `table.tree.expand()` |
-| `table.expandAll(ids)` | `table.tree.expand(ids)` |
-| `table.collapseAll()` | `table.tree.collapse()` / `table.expansion.collapse()` |
-| `table.everExpanded()` | `table.expansion.everExpanded()` |
-| `table.rowExpanded` (per-id) | `table.expansion.changed` / `table.tree.changed` (`{ added, removed }`, once per write, E18) |
-| `withGrouping()` + `withExpansion()` for collapse | `withGrouping()` + `withTree()` |
+| Today                                               | After                                                                                        |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `withExpansion({ childrenAccessor, isExpandable })` | `withTree({ childrenAccessor, isExpandable })`                                               |
+| `table.expandedRows()`                              | `table.expansion()` or `table.tree()` — whichever the consumer meant                         |
+| `table.toggleExpanded(id)`                          | `table.expansion.toggle(id)` / `table.tree.toggle(id)`                                       |
+| `table.expandAll()`                                 | `table.tree.expand()`                                                                        |
+| `table.expandAll(ids)`                              | `table.tree.expand(ids)`                                                                     |
+| `table.collapseAll()`                               | `table.tree.collapse()` / `table.expansion.collapse()`                                       |
+| `table.everExpanded()`                              | `table.expansion.everExpanded()`                                                             |
+| `table.rowExpanded` (per-id)                        | `table.expansion.changed` / `table.tree.changed` (`{ added, removed }`, once per write, E18) |
+| `withGrouping()` + `withExpansion()` for collapse   | `withGrouping()` + `withTree()`                                                              |
 
 No in-repo consumer composes the tree path; the one in-repo consumer is the collapsible
 grouping story, which is a collapse-only case. Everything above is a public export, so the
@@ -374,7 +374,7 @@ today's expansion spec already uses.
   the degrading accessor and its once-per-evaluation report, and the
   `[withGrouping(), withTree()]` composition — including the migrated collapse cases below.
 - **`with-grouping/feature.spec.ts` (existing, decoupled)** — keeps what breaks when
-  *grouping* changes: clusters, headers, aggregates, `groupIds()`, and "composed alone, every
+  _grouping_ changes: clusters, headers, aggregates, `groupIds()`, and "composed alone, every
   group renders open and no collapse verb exists". The ~15 cases whose subject is "a
   collapsed id hides its descendants" move to `with-tree.spec.ts`, which owns descendant
   visibility. A spec asserts its own domain.

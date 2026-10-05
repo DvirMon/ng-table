@@ -3,7 +3,8 @@
   align-items: center;
   gap: var(--ngpt-sys-space-300);
   max-width: 360px;
-  padding: var(--ngpt-sys-space-350) var(--ngpt-sys-space-350) var(--ngpt-sys-space-350) var(--ngpt-sys-space-450);
+  padding: var(--ngpt-sys-space-350) var(--ngpt-sys-space-350) var(--ngpt-sys-space-350)
+    var(--ngpt-sys-space-450);
   background: var(--ngpt-bg-deep);
   border: 1px solid var(--ngpt-border-subtle);
   border-radius: var(--ngpt-sys-shape-corner-small-alt);

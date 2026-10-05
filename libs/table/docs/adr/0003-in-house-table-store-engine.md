@@ -41,16 +41,16 @@ signals. **Features declare what they contribute; the engine wires it.**
 
 ```ts
 export interface TableFeatureSpec<TRow, Members extends object = object> {
-  members?: Members;                      // signals + methods merged onto the store
-  stages?: PipelineStages<TRow>;          // pure row transforms
-  renderRows?: RenderRowsBuilder<TRow>;   // at most one feature may provide this
+  members?: Members; // signals + methods merged onto the store
+  stages?: PipelineStages<TRow>; // pure row transforms
+  renderRows?: RenderRowsBuilder<TRow>; // at most one feature may provide this
   onInit?: () => void;
   onDestroy?: () => void;
 }
 
 export type TableFeature<TRow, Members extends object = object> = (
   core: TableCore<TRow>,
-  composed: Record<string, unknown>
+  composed: Record<string, unknown>,
 ) => TableFeatureSpec<TRow, Members>;
 ```
 
@@ -80,14 +80,14 @@ Specific choices:
 
 ### Removed outright
 
-| Removed | Why it existed |
-|---|---|
-| `_pipeline`, `_buildRenderRows` store props | the only way to inject a stage under ngrx |
-| `RenderRowsBuilderSlot` and its `.current` container | survived ngrx's per-feature shallow copy of the store |
-| `_rowExpandedSource`, `_sortChangedSource` | now closure variables, never store members |
-| `OmitPrivate` in `table.types.ts` | nothing private is left on the store to strip |
-| `ColumnsSchemaFeatureInput` | ngrx-shaped `{ state, props, methods }` input wrapper |
-| The runtime `reduce` fold and its `SignalStoreFeature<any, any>` cast | `signalStore()` had no array/rest overload |
+| Removed                                                               | Why it existed                                        |
+| --------------------------------------------------------------------- | ----------------------------------------------------- |
+| `_pipeline`, `_buildRenderRows` store props                           | the only way to inject a stage under ngrx             |
+| `RenderRowsBuilderSlot` and its `.current` container                  | survived ngrx's per-feature shallow copy of the store |
+| `_rowExpandedSource`, `_sortChangedSource`                            | now closure variables, never store members            |
+| `OmitPrivate` in `table.types.ts`                                     | nothing private is left on the store to strip         |
+| `ColumnsSchemaFeatureInput`                                           | ngrx-shaped `{ state, props, methods }` input wrapper |
+| The runtime `reduce` fold and its `SignalStoreFeature<any, any>` cast | `signalStore()` had no array/rest overload            |
 
 Dropping `OmitPrivate` is deliberate and reversible: it guarded exactly the four members above.
 Reinstating it is six lines if a future feature wants a private member.
@@ -114,7 +114,7 @@ feature, which none do today.
 
 - Edge cases in state merging and teardown are now owned in-house.
 - No ecosystem familiarity for outside contributors.
-- The child injector removed by this ADR was a place store-scoped providers *could* have been
+- The child injector removed by this ADR was a place store-scoped providers _could_ have been
   registered. Nothing registered any; restoring it is one `Injector.create` call.
 
 ### Not changed
@@ -132,11 +132,11 @@ called before it receives the core, leaving its call site nothing to infer from.
 `docs/1-state/architecture.md` records as "the one surviving direction" —
 
 ```ts
-features: (t) => [withExpansion(t), withSorting(t)]
+features: (t) => [withExpansion(t), withSorting(t)];
 ```
 
 — was blocked under ngrx on needing a phantom typed placeholder, because features composed at
-store-*class* build time. **This ADR dissolves that blocker**: `composeTable()` builds core
+store-_class_ build time. **This ADR dissolves that blocker**: `composeTable()` builds core
 before folding features, so a real `TableCore<TRow>` exists to pass.
 
 It is still deferred, because its gains are DX plus a modest correctness win (a mismatched
@@ -161,8 +161,8 @@ than from a `ctx` handle the consumer threads by hand.
 
 **Why the functional surface made it typable.** The deferral's blocker was that building every spec
 inside one expression leaves `composed` empty at factory time. The positional fold does not have
-that problem. The base store is built before the fold, and each feature is handed the store *as
-accumulated so far*, so a later argument sees the members of every earlier argument. Argument
+that problem. The base store is built before the fold, and each feature is handed the store _as
+accumulated so far_, so a later argument sees the members of every earlier argument. Argument
 order, not a `ctx` closure, is what makes the seam typable — and the seam stays open rather than
 half-closing.
 

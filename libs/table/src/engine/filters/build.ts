@@ -1,6 +1,12 @@
 import { buildCriterionOfContext, type FiltersInternal } from './evaluator';
 import { buildFilterState, buildFiltersObject, gateByCondition } from './state';
-import type { AnyRule, FilterHandle, FilterRuleRecord, FilterValueOfContext, StateOf } from './types';
+import type {
+  AnyRule,
+  FilterHandle,
+  FilterRuleRecord,
+  FilterValueOfContext,
+  StateOf,
+} from './types';
 import type { Filters, FiltersPath, FilterNode } from '../../api/features/with-filtering/types';
 import type { ColumnDef, ColumnValueMap } from '../../api/types';
 import { createPathProxy } from '../../schema/path-proxy';
@@ -12,7 +18,7 @@ import { pathsOf, validateRecords } from './validate';
 function keyRules<TRow>(declared: Record<string, AnyRule>): FilterRuleRecord<TRow>[] {
   return Object.entries(declared).map(
     ([key, rule]) =>
-      ({ ...(rule as Omit<FilterRuleRecord<TRow>, 'key'>), key }) satisfies FilterRuleRecord<TRow>
+      ({ ...(rule as Omit<FilterRuleRecord<TRow>, 'key'>), key }) satisfies FilterRuleRecord<TRow>,
   );
 }
 
@@ -30,7 +36,7 @@ function buildFiltersPath<TRow, TValues extends ColumnValueMap>(): FiltersPath<T
   return createPathProxy(
     (id): FilterHandle<TRow, Extract<keyof TValues, string>> => ({
       id: id as Extract<keyof TValues, string>,
-    })
+    }),
   ) as unknown as FiltersPath<TRow, TValues>;
 }
 
@@ -47,10 +53,10 @@ function buildFiltersPath<TRow, TValues extends ColumnValueMap>(): FiltersPath<T
 export function buildFilterModel<
   TRow,
   TValues extends ColumnValueMap,
-  S extends Record<string, AnyRule>
+  S extends Record<string, AnyRule>,
 >(
   schema: (path: FiltersPath<TRow, TValues>) => S,
-  columns: () => readonly ColumnDef<TRow>[]
+  columns: () => readonly ColumnDef<TRow>[],
 ): Filters<TRow, StateOf<S>> {
   const path = buildFiltersPath<TRow, TValues>();
   const declared = schema(path);
@@ -61,7 +67,7 @@ export function buildFilterModel<
     throw new Error(
       '[withFiltering] The schema function must return its rules as an object literal. A body ' +
         'that calls rules as statements declares nothing — return an object: ' +
-        '(path) => ({ status: equals(path.status) })'
+        '(path) => ({ status: equals(path.status) })',
     );
   }
 
@@ -70,7 +76,7 @@ export function buildFilterModel<
   assertDeclarationsAreKnown(
     records.flatMap((record) => pathsOf(record)),
     columns().map((column) => column.id),
-    'withFiltering'
+    'withFiltering',
   );
 
   const nodesByKey = new Map<string, FilterNode<unknown>>();

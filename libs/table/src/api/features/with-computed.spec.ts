@@ -19,12 +19,12 @@ interface MakeStore {
   (data: WritableSignal<MockRow[]>): TableStore<MockRow>;
   <O1 extends object>(
     data: WritableSignal<MockRow[]>,
-    f1: Feature<TableStore<MockRow>, O1>
+    f1: Feature<TableStore<MockRow>, O1>,
   ): TableStore<MockRow> & O1;
   <O1 extends object, O2 extends object>(
     data: WritableSignal<MockRow[]>,
     f1: Feature<TableStore<MockRow>, O1>,
-    f2: Feature<TableStore<MockRow> & O1, O2>
+    f2: Feature<TableStore<MockRow> & O1, O2>,
   ): TableStore<MockRow> & O1 & O2;
 }
 
@@ -43,13 +43,16 @@ type CreateTableVariadic = (
 /** Wraps `TestBed.runInInjectionContext(() => createTable(data, { trackBy, columns }, ...features))`
  * for this file's fixed `trackBy`/`columns` — the caller supplies the data signal so tests can
  * mutate it afterward via `data.set(...)`. */
-const makeStore = ((data: WritableSignal<MockRow[]>, ...features: AnyTableFeature[]): TableStore<MockRow> =>
+const makeStore = ((
+  data: WritableSignal<MockRow[]>,
+  ...features: AnyTableFeature[]
+): TableStore<MockRow> =>
   TestBed.runInInjectionContext(() =>
     (createTable as unknown as CreateTableVariadic)(
       data,
       { trackBy: mockTrackBy, columns: makeColumns() },
-      ...features
-    )
+      ...features,
+    ),
   )) as MakeStore;
 
 type WithA = { a: Signal<number> };
@@ -84,7 +87,7 @@ describe('withComputed', () => {
       const data = signal([...mockRows]);
       const store = makeStore(
         data,
-        withComputed((s) => ({ n: computed(() => s.rows().length) }))
+        withComputed((s) => ({ n: computed(() => s.rows().length) })),
       );
 
       expect(store.n()).toBe(3);
@@ -95,7 +98,7 @@ describe('withComputed', () => {
       const store = makeStore(
         data,
         fA(),
-        withComputed((s) => ({ n: computed(() => s.a()) }))
+        withComputed((s) => ({ n: computed(() => s.a()) })),
       );
 
       expect(store.n()).toBe(30);
@@ -106,7 +109,7 @@ describe('withComputed', () => {
       const store = makeStore(
         data,
         withComputed((s) => ({ n: computed(() => s.rows().length) })),
-        fB()
+        fB(),
       );
 
       expect(store.b()).toBe('n=3');
@@ -122,7 +125,7 @@ describe('withComputed', () => {
             evalCount++;
             return s.rows().length;
           }),
-        }))
+        })),
       );
 
       expect(store.n()).toBe(3);
@@ -140,14 +143,16 @@ describe('withComputed', () => {
   describe('trailing argument placement', () => {
     it('sees the feature it derives from at construction and contributes twice = a * 2', () => {
       const spy = vi.fn();
-      const feature: Feature<TableStore<MockRow>, WithA & { twice: Signal<number> }> =
-        createTableFeature(
-          fAFactory,
-          withComputed((s) => {
-            spy(s.a());
-            return { twice: computed(() => s.a() * 2) };
-          })
-        );
+      const feature: Feature<
+        TableStore<MockRow>,
+        WithA & { twice: Signal<number> }
+      > = createTableFeature(
+        fAFactory,
+        withComputed((s) => {
+          spy(s.a());
+          return { twice: computed(() => s.a() * 2) };
+        }),
+      );
 
       const data = signal([...mockRows]);
       const store = makeStore(data, feature);
@@ -161,7 +166,7 @@ describe('withComputed', () => {
   describe('construction errors', () => {
     it('throws naming the feature position and the colliding core key', () => {
       const shadowsRows: Feature<TableStore<MockRow>, { rows: Signal<unknown[]> }> = withComputed(
-        () => ({ rows: signal([]) })
+        () => ({ rows: signal([]) }),
       );
       const attempt = () => makeStore(signal([...mockRows]), shadowsRows);
 
@@ -195,7 +200,7 @@ describe('withComputed', () => {
       // Cast defeats the `DerivedDict` type constraint — a JS consumer could return this too,
       // so the runtime assertion is exercised directly.
       const nonSignal: Feature<TableStore<MockRow>, { n: Signal<number> }> = withComputed(
-        () => ({ n: 42 }) as unknown as { n: Signal<number> }
+        () => ({ n: 42 }) as unknown as { n: Signal<number> },
       );
       const attempt = () => makeStore(signal([...mockRows]), nonSignal);
 
@@ -235,7 +240,7 @@ describe('withComputed', () => {
             return 1;
           }),
           ok: computed(() => 1),
-        }))
+        })),
       );
 
       expect(store.bad()).toBe(1);
@@ -247,7 +252,7 @@ describe('withComputed', () => {
       expect(errorSpy).toHaveBeenCalledTimes(1);
       expect(errorSpy).toHaveBeenCalledWith(
         expect.stringContaining('derived member "bad"'),
-        expect.any(Error)
+        expect.any(Error),
       );
 
       // Same dependency value, no change — cached, spy stays at one call.
@@ -265,7 +270,7 @@ describe('withComputed', () => {
 
   describe('persistence', () => {
     it.todo(
-      'derived members are excluded from a persistence snapshot — assert once state-persistence.md owns a slice (#44)'
+      'derived members are excluded from a persistence snapshot — assert once state-persistence.md owns a slice (#44)',
     );
   });
 });

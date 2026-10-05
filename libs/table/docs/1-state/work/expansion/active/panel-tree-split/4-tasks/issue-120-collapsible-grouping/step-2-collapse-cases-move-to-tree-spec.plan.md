@@ -17,7 +17,7 @@ step reads another's artifact.
 ## Why This Step Exists
 
 **A spec asserts its own domain.** `with-grouping/feature.spec.ts`
-should hold what breaks when *grouping* changes. It currently holds
+should hold what breaks when _grouping_ changes. It currently holds
 ~15 cases whose subject is "a collapsed id hides its descendants" —
 which is descendant visibility, owned by whatever feature contributes
 the expanded set, never by the clustering. They only lived there
@@ -102,7 +102,7 @@ becomes `tree.collapse()`.
    **The premise flips and the comment must be rewritten.** The
    current comment says "withExpansion() starts every group collapsed
    by default"; under collapse-only `withTree()` the contributed set is
-   simply *empty*, which renders identically. The assertion is
+   simply _empty_, which renders identically. The assertion is
    unchanged — `groupIds()` derives from the cluster tree, not from
    `renderRows()`.
 
@@ -124,9 +124,9 @@ becomes `tree.collapse()`.
    only the outer one opens — the transitive hidden-accumulator case
    (ADR-0017 decision 8). **This is the multiple-nesting-depth case
    the issue's AC names explicitly; do not drop it.**
-7. + 8. The `either order (D25)` pair — tree composed first, and
-   grouping composed first, each asserting the same `toShape()` output
-   before and after toggling US.
+7. - 8. The `either order (D25)` pair — tree composed first, and
+        grouping composed first, each asserting the same `toShape()` output
+        before and after toggling US.
 
 **`describe('collapse state across a sort')`** (2426-2470), both
 cases:
@@ -289,4 +289,5 @@ it from the import and add it to `with-tree.spec.ts`'s own import of
       clustering.
 
 ---
+
 ← [Step 1: The collapsible grouping story composes `withTree()`](step-1-collapsible-story-composes-with-tree.plan.md) | [Step 3: The documented spelling](step-3-documented-spelling.plan.md) →

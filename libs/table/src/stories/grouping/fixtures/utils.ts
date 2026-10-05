@@ -41,14 +41,14 @@ export function formatAmount(value: unknown): string {
 
 /** Current criterion of the "rep" filter, for rendering an input's value. */
 export function readRepCriterion(
-  filters: Filters<DealRow, StateOf<ReturnType<typeof dealFilters>>>
+  filters: Filters<DealRow, StateOf<ReturnType<typeof dealFilters>>>,
 ): string {
   return filters.rep().value();
 }
 
 /** The "rep" filter's node, for writing a new criterion via `.value.set(...)`. */
 export function repFilterNode(
-  filters: Filters<DealRow, StateOf<ReturnType<typeof dealFilters>>>
+  filters: Filters<DealRow, StateOf<ReturnType<typeof dealFilters>>>,
 ): FilterNode<string> {
   return filters.rep();
 }

@@ -5,16 +5,17 @@ atomic: Token
 spec: specs/foundations/Responsive and Breakpoints.md
 frame: null
 owns:
-  - "Breakpoint tokens"
-  - "How the 3-column grid collapses at each breakpoint"
-  - "The mobile sidebar mechanism (slide-over drawer)"
+  - 'Breakpoint tokens'
+  - 'How the 3-column grid collapses at each breakpoint'
+  - 'The mobile sidebar mechanism (slide-over drawer)'
 does_not_own:
-  - "Per-component responsive tweaks — those live in the component spec"
+  - 'Per-component responsive tweaks — those live in the component spec'
 depends_on:
-  - "foundations/Radius and Elevation.md (shape)"
+  - 'foundations/Radius and Elevation.md (shape)'
 states: []
 a11y: []
-tokens: [--ngpt-sys-breakpoint-sm, --ngpt-sys-breakpoint-md, --ngpt-sys-breakpoint-lg, --ngpt-bg-app]
+tokens:
+  [--ngpt-sys-breakpoint-sm, --ngpt-sys-breakpoint-md, --ngpt-sys-breakpoint-lg, --ngpt-bg-app]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
@@ -26,20 +27,20 @@ This is a documentation website: the responsive contract only needs to resolve t
 
 ## Breakpoint tokens
 
-| Token | Value | Behavior |
-| --- | --- | --- |
-| --ngpt-sys-breakpoint-sm | 640px | Mobile — further padding/density reductions within the single-column + drawer layout established at md |
-| --ngpt-sys-breakpoint-md | 1024px | Tablet and below — TOC drops AND sidebar collapses into the slide-over drawer |
-| --ngpt-sys-breakpoint-lg | 1440px | Desktop — full 3-column grid, matches the grid max-width |
+| Token                    | Value  | Behavior                                                                                               |
+| ------------------------ | ------ | ------------------------------------------------------------------------------------------------------ |
+| --ngpt-sys-breakpoint-sm | 640px  | Mobile — further padding/density reductions within the single-column + drawer layout established at md |
+| --ngpt-sys-breakpoint-md | 1024px | Tablet and below — TOC drops AND sidebar collapses into the slide-over drawer                          |
+| --ngpt-sys-breakpoint-lg | 1440px | Desktop — full 3-column grid, matches the grid max-width                                               |
 
 ## Layout collapse behavior
 
-| Viewport | Behavior |
-| --- | --- |
-| ≥ 1440px (lg) | Full 3-column grid: 270px sidebar / flexible content / 220px TOC, centered at 1440px max-width. |
-| 1024–1439px | Full 3-column grid, not yet at max-width: 270px sidebar / flexible content / 220px TOC. |
-| 640–1023px (< md) | TOC column drops AND sidebar collapses behind a hamburger icon (left of navbar) into the slide-over drawer. Content becomes a single column at full width. |
-| < 640px (sm) | Same single-column + drawer layout as above; navbar right-side items (Discord/GitHub labels) collapse to icon-only; content padding reduces from 40px to ~20px. |
+| Viewport          | Behavior                                                                                                                                                        |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ≥ 1440px (lg)     | Full 3-column grid: 270px sidebar / flexible content / 220px TOC, centered at 1440px max-width.                                                                 |
+| 1024–1439px       | Full 3-column grid, not yet at max-width: 270px sidebar / flexible content / 220px TOC.                                                                         |
+| 640–1023px (< md) | TOC column drops AND sidebar collapses behind a hamburger icon (left of navbar) into the slide-over drawer. Content becomes a single column at full width.      |
+| < 640px (sm)      | Same single-column + drawer layout as above; navbar right-side items (Discord/GitHub labels) collapse to icon-only; content padding reduces from 40px to ~20px. |
 
 ## Confirmed: mobile sidebar mechanism
 
@@ -68,11 +69,17 @@ Below the `md` breakpoint (1024px), a left-edge **slide-over drawer** replaces t
 
 /* Drawer markup exists at every width; only the md query ever reveals it. */
 .sidebar-drawer,
-.sidebar-drawer-overlay { display: none; }
+.sidebar-drawer-overlay {
+  display: none;
+}
 
 @media (max-width: 1023px) {
-  .page-grid { grid-template-columns: 1fr; }
-  .toc-column { display: none; }
+  .page-grid {
+    grid-template-columns: 1fr;
+  }
+  .toc-column {
+    display: none;
+  }
   .sidebar-drawer.is-open {
     display: flex;
     flex-direction: column;
@@ -93,7 +100,9 @@ Below the `md` breakpoint (1024px), a left-edge **slide-over drawer** replaces t
 }
 
 @media (max-width: 639px) {
-  main { padding: 20px; }
+  main {
+    padding: 20px;
+  }
 }
 ```
 

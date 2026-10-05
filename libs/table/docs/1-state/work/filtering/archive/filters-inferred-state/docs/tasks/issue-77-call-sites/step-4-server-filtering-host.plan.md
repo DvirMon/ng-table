@@ -8,11 +8,11 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                                                                                | Action                                                         |
+| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | `libs/shared/table/src/stories/filtering/server-filtering/server-filtering-story-host.component.ts` | edit — array schema, `rowOf<InvoiceRow>()`, inline form schema |
-| `libs/shared/table/src/stories/filtering/fixtures/schema.ts` | edit — delete `serverFilterFormSchema` |
-| `libs/shared/table/src/stories/filtering/fixtures/types.ts` | edit — delete `ServerInvoiceFilterState` |
+| `libs/shared/table/src/stories/filtering/fixtures/schema.ts`                                        | edit — delete `serverFilterFormSchema`                         |
+| `libs/shared/table/src/stories/filtering/fixtures/types.ts`                                         | edit — delete `ServerInvoiceFilterState`                       |
 
 The only site where `rowOf()` is the right answer rather than a fallback, which makes it the
 reference example a reader is sent to. Treat the call and its comment as the deliverable, not as a
@@ -27,7 +27,7 @@ between them, but they touch one file — sequence them if they run as separate 
 A token whose only documentation is its own doc comment is a token nobody finds.
 
 Server mode is the case it exists for: filters are declared before any row has been fetched, so
-there is no data to infer from. This host holds `rows = signal<InvoiceRow[]>([])` — an *empty*
+there is no data to infer from. This host holds `rows = signal<InvoiceRow[]>([])` — an _empty_
 array at construction. Passing it would be worse than wrong: an empty untyped array is exactly the
 shape `#76`'s guard rejects, and here it would look like data.
 
@@ -72,6 +72,7 @@ becomes concrete at the `form(this.filters().value, …)` call inside the host.
 
    The JSDoc currently above `serverFilterFormSchema` explains why only this story debounces —
    a keystroke costs a request here and nowhere else. Move it, do not drop it.
+
 5. Delete `ServerInvoiceFilterState` from `filtering/fixtures/types.ts`, and the `customer` /
    `as: 'search'` comment above it — the rename is now visible in the schema itself.
 
@@ -83,11 +84,11 @@ becomes concrete at the `form(this.filters().value, …)` call inside the host.
   its signature alone.
 - The keys `status`, `search`, `amount`, `excludedTags` are unchanged, so the template's
   `[formField]="searchForm.search"` and every `filters.<key>()` read keep working.
-- `this.rows` remains the `createTable()` data source. Only the *filters* carrier becomes `rowOf()`.
+- `this.rows` remains the `createTable()` data source. Only the _filters_ carrier becomes `rowOf()`.
 
 ## Risks / Watchouts
 
-- **`form()`'s second parameter.** Confirm it accepts a schema *callback* and not only a
+- **`form()`'s second parameter.** Confirm it accepts a schema _callback_ and not only a
   `schema()`-wrapped value in the installed `@angular/forms/signals`. If it does not, keep
   `schema<…>()` and derive its type argument from the filters instance rather than reinstating a
   hand-written alias — and say so in the step's report.
@@ -115,4 +116,5 @@ becomes concrete at the `form(this.filters().value, …)` call inside the host.
 - [ ] `nx run shared-table:typecheck` reports no error in the three files this step touched
 
 ---
+
 ← [Step 3: The selection filtering host](step-3-selection-filtering-host.plan.md) | [Step 5: The grouping fixtures](step-5-grouping-fixtures.plan.md) →

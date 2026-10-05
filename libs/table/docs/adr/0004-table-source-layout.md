@@ -56,12 +56,12 @@ Alongside the move, three code changes that the move made obvious:
 
 ## Alternatives considered
 
-| Option | Why not |
-|---|---|
-| **Stay flat** (NgRx signals ships 18 flat files, `signal-store.ts` at 49 KB) | Works at NgRx's scale, but the double-declared `PIPELINE_ORDER` and the untestable column logic are defects at any file count, and the roadmap doubles the file count |
+| Option                                                                                                                                   | Why not                                                                                                                                                                                                                                        |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Stay flat** (NgRx signals ships 18 flat files, `signal-store.ts` at 49 KB)                                                             | Works at NgRx's scale, but the double-declared `PIPELINE_ORDER` and the untestable column logic are defects at any file count, and the roadmap doubles the file count                                                                          |
 | **TanStack Table v9** — `core/` + `features/<name>/`, each feature split five ways (`.ts` / `.types.ts` / `.utils.ts` / row-model / fns) | Pre-splits features that are 150 lines. Angular's own `api/rules/disabled.ts` is 3 KB in one file; only the rule that outgrew a file (`validation/`) got a folder. We follow that: `with-sorting.ts` and `with-expansion.ts` stay single files |
-| **TanStack's pipeline model** — no order constant; each stage reads a named `getPreSortedRowModel()` predecessor | Forces every feature to know its neighbours, the opposite of the declare-don't-mutate model ADR-0003 chose |
-| **Folders named for the doc streams** (`state/`, `columns/`, `3-ui/`) | Stronger internal consistency with `docs/`, but diverges from the layout another developer or agent would recognize |
+| **TanStack's pipeline model** — no order constant; each stage reads a named `getPreSortedRowModel()` predecessor                         | Forces every feature to know its neighbours, the opposite of the declare-don't-mutate model ADR-0003 chose                                                                                                                                     |
+| **Folders named for the doc streams** (`state/`, `columns/`, `3-ui/`)                                                                    | Stronger internal consistency with `docs/`, but diverges from the layout another developer or agent would recognize                                                                                                                            |
 
 AG Grid was checked as a third reference: it has the same ordered stage constant
 (`ClientSideRowModelSteps`) with each stage a class implementing `IRowNodeStage`. That confirmed
@@ -79,7 +79,7 @@ remove it.
 - **Per-folder barrels** — `api/`, `engine/` and `directives/` have none. `index.ts` is the single
   explicit public surface (Angular's `public_api.ts` role). Unused barrels are dead code, and two
   places defining the surface is how it drifts. See the 2026-09 amendment below: the rule is one
-  barrel per *domain*, and a folder is not a domain.
+  barrel per _domain_, and a folder is not a domain.
 
 ## Consequences
 
@@ -111,7 +111,7 @@ remove it.
 `index.ts`. That is not a per-folder barrel, and it is not a retraction of the rule above.
 
 The rejection stands on "two places defining the surface is how it drifts". That argument bites
-when two files define *the same* surface. `filters/index.ts` defines a different one: its rules,
+when two files define _the same_ surface. `filters/index.ts` defines a different one: its rules,
 matchers and public types are usable with no table at all, and the domain has no import edge to
 the table in either direction — `with-filtering.ts` imports from `filters/`, never the reverse.
 (In server mode `withFiltering({ manual: true, schema })` is still composed, per the table-owned
@@ -145,10 +145,10 @@ nothing outside `withFiltering()` reaches.
 
 Split by lifecycle phase, same as everything else:
 
-| File | Lands in |
-|---|---|
+| File                                                                                              | Lands in                       |
+| ------------------------------------------------------------------------------------------------- | ------------------------------ |
 | `rules.ts`, `matchers.ts`, public types (`Filters`, `FilterNode`, `FilterOptions`, `FiltersPath`) | `api/features/with-filtering/` |
-| model builder (`create-filters.ts`), `state.ts`, `evaluator.ts`, `validate.ts`, internal types | `engine/filters/` |
+| model builder (`create-filters.ts`), `state.ts`, `evaluator.ts`, `validate.ts`, internal types    | `engine/filters/`              |
 
 `api/features/with-filtering/` mirrors `engine/columns-schema/`'s declare / compile / run split
 internally: `feature.ts` (declare — `withFiltering()`) calls `engine/filters/create-filters.ts`
@@ -164,7 +164,7 @@ through `FilterValueOfContext` (engine-internal), and `FilterRuleRecord.options`
 (engine-internal) is typed as `FilterOptions` (public). Both files stay `import type` on the
 cross edge, same invariant as the original pair.
 
-The independence test from the previous amendment still stands as the test for the *next*
+The independence test from the previous amendment still stands as the test for the _next_
 folder — it just resolved "no" for this one, one release after resolving "yes". Extracting
 filtering to its own package remains a move away if a second consumer ever shows up; today nothing
 does.

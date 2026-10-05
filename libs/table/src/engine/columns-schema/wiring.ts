@@ -16,15 +16,11 @@ import type {
  * running `composeTable()` under the owner's).
  */
 
-export function isMetadataRule<TRow>(
-  rule: ColumnRule<TRow>
-): rule is MetadataRule<TRow> {
+export function isMetadataRule<TRow>(rule: ColumnRule<TRow>): rule is MetadataRule<TRow> {
   return rule.kind === 'metadata';
 }
 
-export function isMetadataAsyncRule<TRow>(
-  rule: ColumnRule<TRow>
-): rule is MetadataAsyncRule<TRow> {
+export function isMetadataAsyncRule<TRow>(rule: ColumnRule<TRow>): rule is MetadataAsyncRule<TRow> {
   return rule.kind === 'metadata-async';
 }
 
@@ -36,7 +32,7 @@ export function isMetadataAsyncRule<TRow>(
  */
 export function buildMetadataEntries<TRow>(
   ctx: ColumnRuleContext<TRow>,
-  rules: readonly MetadataRule<TRow>[]
+  rules: readonly MetadataRule<TRow>[],
 ): ColumnRuleEntry<TRow>[] {
   return rules.map((rule) => ({
     columnId: rule.columnId,
@@ -44,7 +40,7 @@ export function buildMetadataEntries<TRow>(
     result: computed(() =>
       typeof rule.logic === 'function'
         ? (rule.logic as (ctx: ColumnRuleContext<TRow>) => unknown)(ctx)
-        : rule.logic
+        : rule.logic,
     ),
   }));
 }
@@ -57,7 +53,7 @@ export function buildMetadataEntries<TRow>(
  */
 export function buildAsyncMetadataEntry<TRow>(
   ctx: ColumnRuleContext<TRow>,
-  rule: MetadataAsyncRule<TRow>
+  rule: MetadataAsyncRule<TRow>,
 ): ColumnRuleEntry<TRow> {
   const params = computed(() => rule.params(ctx));
   const resourceRef = rule.factory(params);

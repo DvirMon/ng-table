@@ -39,9 +39,9 @@ One declarator per concern, and static level config on `initial`:
 withGrouping({
   initial: [{ key: 'closedAt', label: 'Closed' }, 'region'],
   schema: (path) => {
-    applyGrouping(path.region, { enable, when });       // activation
-    applyGroupKey(path.closedAt, (d) => monthOf(d));    // key derivation (NEW)
-    applyGroupOrder(path.region, compareGroups);        // sibling order
+    applyGrouping(path.region, { enable, when }); // activation
+    applyGroupKey(path.closedAt, (d) => monthOf(d)); // key derivation (NEW)
+    applyGroupOrder(path.region, compareGroups); // sibling order
   },
 });
 ```
@@ -157,7 +157,7 @@ JSDoc stays terse; link `D9`, do not restate its rationale.
 
 ---
 
-### Step 2 — declarators — *Depends on: Step 1. Parallel-safe with: Step 3*
+### Step 2 — declarators — _Depends on: Step 1. Parallel-safe with: Step 3_
 
 `libs/table/src/api/features/with-grouping/schema.ts`
 
@@ -167,7 +167,7 @@ JSDoc stays terse; link `D9`, do not restate its rationale.
   ```ts
   export function applyGroupKey<TRow, K extends Extract<keyof TRow, string>>(
     path: GroupingHandle<TRow, K>,
-    extractValue: (fieldValue: TRow[K]) => unknown
+    extractValue: (fieldValue: TRow[K]) => unknown,
   ): void {
     assertPathIsCurrent<TRow, AnyGroupingRule<TRow>>(path).record({
       kind: 'grouping-key',
@@ -196,7 +196,7 @@ JSDoc stays terse; link `D9`, do not restate its rationale.
 
 ---
 
-### Step 3 — collectors — *Depends on: Step 1. Parallel-safe with: Step 2*
+### Step 3 — collectors — _Depends on: Step 1. Parallel-safe with: Step 2_
 
 `libs/table/src/engine/grouping/rules.ts`
 
@@ -207,7 +207,7 @@ JSDoc stays terse; link `D9`, do not restate its rationale.
 
   ```ts
   export function collectGroupKeys<TRow>(
-    rules: readonly AnyGroupingRule<TRow>[]
+    rules: readonly AnyGroupingRule<TRow>[],
   ): Map<string, (fieldValue: unknown) => unknown> {
     const extractors = new Map<string, (fieldValue: unknown) => unknown>();
     for (const rule of rules) {
@@ -231,7 +231,7 @@ JSDoc stays terse; link `D9`, do not restate its rationale.
 
 ---
 
-### Step 4 — feature wiring — *Depends on: Steps 1, 2, 3*
+### Step 4 — feature wiring — _Depends on: Steps 1, 2, 3_
 
 `libs/table/src/api/features/with-grouping/feature.ts`
 
@@ -244,12 +244,13 @@ JSDoc stays terse; link `D9`, do not restate its rationale.
 
   ```ts
   function normalizeGroupingLevels<TRow>(
-    levels: readonly (ColumnId<TRow> | GroupingLevel<TRow>)[]
-  ): { keys: string[]; labelByKey: Map<string, string> }
+    levels: readonly (ColumnId<TRow> | GroupingLevel<TRow>)[],
+  ): { keys: string[]; labelByKey: Map<string, string> };
   ```
 
   Keys feed `signal<string[]>` at `:100` exactly as before; `labelByKey` feeds
   `clusterOpts.labelByColumn`.
+
 - Swap `collectExtractValue` → `collectGroupKeys` (`:118`, import at `:12`).
 - Delete the `collectGroupLabels` call (`:119`) and its import (`:9`); source
   `labelByColumn` (`:126`) from the normalizer's map instead. Keep the uniform
@@ -266,7 +267,7 @@ source changes. `render.ts`, `queries.ts` and `pipeline.ts` need no edits.
 
 ---
 
-### Step 5 — non-primitive report wording — *Depends on: Step 3. Parallel-safe with: Steps 4, 6*
+### Step 5 — non-primitive report wording — _Depends on: Step 3. Parallel-safe with: Steps 4, 6_
 
 - `libs/table/src/engine/grouping/clusters.ts:51-62` —
   `reportNonPrimitiveGroupValue`'s message says "Declare extractValue on that
@@ -277,7 +278,7 @@ source changes. `render.ts`, `queries.ts` and `pipeline.ts` need no edits.
 
 ---
 
-### Step 6 — public barrel — *Depends on: Steps 1, 2. Parallel-safe with: Steps 4, 5*
+### Step 6 — public barrel — _Depends on: Steps 1, 2. Parallel-safe with: Steps 4, 5_
 
 `libs/table/src/index.ts`
 
@@ -288,10 +289,10 @@ source changes. `render.ts`, `queries.ts` and `pipeline.ts` need no edits.
 
 ---
 
-### Step 7 — specs — *Depends on: Steps 4, 5, 6. Parallel-safe with: Step 8*
+### Step 7 — specs — _Depends on: Steps 4, 5, 6. Parallel-safe with: Step 8_
 
 - `api/features/with-grouping/schema.spec.ts:48` — `it('records extractValue
-  and label when supplied')` splits: one test that `applyGroupKey` records a
+and label when supplied')` splits: one test that `applyGroupKey` records a
   `kind: 'grouping-key'` rule carrying its extractor, and deletion of the
   `label` assertion (no longer a rule field). The remaining 8 tests in that
   describe are `enable`/`when`-only and stand.
@@ -305,15 +306,15 @@ source changes. `render.ts`, `queries.ts` and `pipeline.ts` need no edits.
   `message.toContain('extractValue')` at `:97`; retarget to `applyGroupKey`.
   Rename `:158`'s `it('stays quiet when a declared extractValue …')`.
 - `engine/grouping/render.spec.ts:165` — `describe('extractValue and label
-  resolution (D7)')`. Both tests drive the engine through hand-built
+resolution (D7)')`. Both tests drive the engine through hand-built
   `ClusterOpts` maps, so the assertions stand; rename the describe and check
   whether `:180`'s three-tier label test still describes the chain correctly
-  (the tiers are unchanged, only the first tier's *source* moved).
+  (the tiers are unchanged, only the first tier's _source_ moved).
   Preserve the truthiness guard's behavior at `render.ts:64` — `label: ''`
   falls through to the column tier.
 - `api/features/with-grouping/feature.spec.ts` — all 87 existing `initial:`
   sites stay as-is. Add coverage inside `describe('initial + schema in one
-  call (#84)')` (`:1512`) for: the object form of `initial`; a mixed
+call (#84)')` (`:1512`) for: the object form of `initial`; a mixed
   string/object array; an `initial` label winning over a matching column's
   label; and a level declared object-form with no label falling through to the
   column tier.
@@ -323,7 +324,7 @@ source changes. `render.ts`, `queries.ts` and `pipeline.ts` need no edits.
 
 ---
 
-### Step 8 — docs — *Depends on: Steps 4, 5. Parallel-safe with: Step 7*
+### Step 8 — docs — _Depends on: Steps 4, 5. Parallel-safe with: Step 7_
 
 Permanent docs only. Leave everything under `docs/**/work/**/archive/**`.
 
@@ -346,7 +347,7 @@ Permanent docs only. Leave everything under `docs/**/work/**/archive/**`.
 
 ---
 
-### Step 9 — generated artifacts — *Depends on: Step 8*
+### Step 9 — generated artifacts — _Depends on: Step 8_
 
 `npm run llms` then `npm run llms:check` (root `CLAUDE.md` requires the check
 stay clean). `docs/status.md` needs no regeneration — no frontmatter field

@@ -24,7 +24,7 @@ function reportAggregateError(columnId: string): void {
   // runtime-degradation logging abstraction to reuse in this codebase yet.
   console.error(
     `[withGrouping] aggregateFn threw for column "${columnId}". Falling back to an undefined ` +
-      'aggregate value for the affected group(s) in this evaluation.'
+      'aggregate value for the affected group(s) in this evaluation.',
   );
 }
 
@@ -44,7 +44,7 @@ function reportAggregateError(columnId: string): void {
 export function reportOrphanedGroupingColumn(
   columnId: string,
   consequence: string,
-  reported: Set<string>
+  reported: Set<string>,
 ): void {
   if (reported.has(columnId)) {
     return;
@@ -54,7 +54,7 @@ export function reportOrphanedGroupingColumn(
   // runtime-degradation logging abstraction to reuse in this codebase yet.
   console.error(
     `[withGrouping] No column declares id "${columnId}" — it was likely removed via ` +
-      `setColumns() while still an active grouping level. ${consequence}`
+      `setColumns() while still an active grouping level. ${consequence}`,
   );
 }
 
@@ -65,7 +65,7 @@ export function reportOrphanedGroupingColumn(
 function computeAggregates<TRow>(
   rows: TRow[],
   aggregateByColumn: ReadonlyMap<string, (rows: TRow[]) => unknown> | undefined,
-  reportedColumns: Set<string>
+  reportedColumns: Set<string>,
 ): Record<string, unknown> {
   const aggregates: Record<string, unknown> = {};
   if (!aggregateByColumn) {
@@ -93,7 +93,7 @@ function resolveGroupLabel<TRow>(
   columnId: string,
   columnById: ReadonlyMap<string, ColumnDef<TRow>>,
   reportedLabels: Set<string>,
-  labelByColumn?: ReadonlyMap<string, string>
+  labelByColumn?: ReadonlyMap<string, string>,
 ): string {
   const explicit = labelByColumn?.get(columnId);
   if (explicit) {
@@ -104,7 +104,7 @@ function resolveGroupLabel<TRow>(
     reportOrphanedGroupingColumn(
       columnId,
       'Falling back to the raw id as the label for the affected group(s) in this evaluation.',
-      reportedLabels
+      reportedLabels,
     );
     return columnId;
   }
@@ -123,7 +123,7 @@ function buildGroupNodes<TRow>(
   reportedColumns: Set<string>,
   reportedLabels: Set<string>,
   labelByColumn: ReadonlyMap<string, string> | undefined,
-  aggregateByColumn: ReadonlyMap<string, (rows: TRow[]) => unknown> | undefined
+  aggregateByColumn: ReadonlyMap<string, (rows: TRow[]) => unknown> | undefined,
 ): RenderNode<TRow>[] {
   return nodes.flatMap((node) => {
     if (!node.admitted) {
@@ -142,7 +142,7 @@ function buildGroupNodes<TRow>(
       aggregates: computeAggregates(
         node.items.map((item) => item.data).filter(isRowData),
         aggregateByColumn,
-        reportedColumns
+        reportedColumns,
       ),
       children:
         node.children.length > 0
@@ -153,7 +153,7 @@ function buildGroupNodes<TRow>(
               reportedColumns,
               reportedLabels,
               labelByColumn,
-              aggregateByColumn
+              aggregateByColumn,
             )
           : node.items,
     };
@@ -172,7 +172,7 @@ export function buildGroupRenderRows<TRow>(
   rows: readonly RenderNode<TRow>[],
   grouping: readonly string[],
   columns: ColumnDef<TRow>[],
-  opts?: ClusterOpts<TRow>
+  opts?: ClusterOpts<TRow>,
 ): readonly RenderNode<TRow>[] {
   if (grouping.length === 0) {
     return rows;
@@ -184,10 +184,16 @@ export function buildGroupRenderRows<TRow>(
     if (!isRowData(item.data)) {
       throw new Error(
         '[withGrouping] buildGroupRenderRows received a row with null data — render anchor ' +
-          "'group' must run before any stage that synthesizes rows."
+          "'group' must run before any stage that synthesizes rows.",
       );
     }
-    return readGroupValue(sourceOf(item.data), columnId, columnById, reportedColumns, opts?.extractValueByColumn);
+    return readGroupValue(
+      sourceOf(item.data),
+      columnId,
+      columnById,
+      reportedColumns,
+      opts?.extractValueByColumn,
+    );
   });
   const toRows = (items: RenderNode<TRow>[]): TRow[] =>
     items.map((item) => item.data).filter(isRowData);
@@ -199,7 +205,7 @@ export function buildGroupRenderRows<TRow>(
     opts?.columnWhen,
     () => columns,
     opts?.knownIds ?? new Set(columns.map((column) => column.id)),
-    opts?.label ?? 'withGrouping'
+    opts?.label ?? 'withGrouping',
   );
   const ordered = sortClusters(admitted, opts?.groupOrderByColumn, toRows, { done: false });
   return buildGroupNodes(
@@ -209,6 +215,6 @@ export function buildGroupRenderRows<TRow>(
     new Set(),
     new Set(),
     opts?.labelByColumn,
-    opts?.aggregateByColumn
+    opts?.aggregateByColumn,
   );
 }

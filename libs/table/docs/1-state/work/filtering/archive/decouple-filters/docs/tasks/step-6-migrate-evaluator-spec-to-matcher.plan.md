@@ -8,9 +8,9 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
-| `libs/shared/table/src/api/create-filters.spec.ts` | `:4` import | edit — drop `createFilterEvaluator` |
+| File                                               | Line                                                   | Action                                |
+| -------------------------------------------------- | ------------------------------------------------------ | ------------------------------------- |
+| `libs/shared/table/src/api/create-filters.spec.ts` | `:4` import                                            | edit — drop `createFilterEvaluator`   |
 | `libs/shared/table/src/api/create-filters.spec.ts` | `:358`, `:372`, `:386`, `:397`, `:408`, `:429`, `:474` | edit — 7 evaluator construction sites |
 
 ## Why This Step Exists
@@ -83,4 +83,5 @@ Then drop `createFilterEvaluator` from the import at `:4`, leaving `createFilter
 - [ ] No source file changes in this step
 
 ---
+
 ← [Step 5: Update the prose that describes the old config shape](step-5-update-prose.plan.md) | [Step 7: Delete the coupled filtering surface](step-7-delete-coupled-surface.plan.md) →

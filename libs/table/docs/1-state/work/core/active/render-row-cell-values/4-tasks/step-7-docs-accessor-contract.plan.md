@@ -10,16 +10,16 @@
 
 ## Files
 
-| File | Action |
-|---|---|
-| `libs/table/docs/2-columns/reference/tier-1-intrinsic.md` | edit — new `accessor` section |
-| `libs/table/docs/1-state/columns.md` | edit — `cells` named in the state shape |
+| File                                                      | Action                                  |
+| --------------------------------------------------------- | --------------------------------------- |
+| `libs/table/docs/2-columns/reference/tier-1-intrinsic.md` | edit — new `accessor` section           |
+| `libs/table/docs/1-state/columns.md`                      | edit — `cells` named in the state shape |
 
 ## Why This Step Exists
 
 `accessor` is the oldest field on `ColumnDef` and has never been documented as anything. It is
 mentioned twice in `docs/2-columns/reference/`, both times in passing as an example of a field
-that defaults (`ownership-model.md:18`, `tier-1-intrinsic.md:50`). Nothing says what it *means*.
+that defaults (`ownership-model.md:18`, `tier-1-intrinsic.md:50`). Nothing says what it _means_.
 
 That gap is what produced #80's S8: grouping keyed on `column.accessor(row)`, and an accessor
 returning a primitive silently doubled as the group label — a load-bearing contract nobody had
@@ -50,12 +50,13 @@ Cover, in the file's existing voice — claim, then constraint, no narration:
 
   ```html
   @for (column of visibleColumns(); track column.id) {
-    <td>{{ row.cells[column.id] | dealAmount }}</td>
+  <td>{{ row.cells[column.id] | dealAmount }}</td>
   }
   ```
 
   and say plainly that calling `column.accessor(rowData)` in a template is the pattern `cells`
   replaces — unmemoised, once per cell per change-detection pass. Link ADR-0022.
+
 - **Values are raw.** Formatting is a pipe's job (D6). `grouping-story.pipes.ts` is the worked
   example: one pure pipe per concern, each taking `unknown` because `accessor`'s return type is
   erased.
@@ -67,7 +68,7 @@ Cover, in the file's existing voice — claim, then constraint, no narration:
   under `ngDevMode`. Two columns sharing an `accessor` under different ids stays legal and is the
   supported way to show one field twice.
 - **`accessor` is not in the grouping path.** Since grouping's D7 (ADR-0021), a grouping level
-  names a *row field* and reads it by bracket access; value narrowing there is the rule's own
+  names a _row field_ and reads it by bracket access; value narrowing there is the rule's own
   `extractValue`, not the column's `accessor`. Say this explicitly — the old "accessor is today's
   label contract" reading is what #80 inherited and it is no longer true.
 
@@ -130,4 +131,5 @@ ADR-0022 and `decisions.md`, which it links to.
 - [ ] `npm run llms:check` clean.
 
 ---
+
 ← [Step 6: Grouping report test](step-6-grouping-report-test.plan.md) | [Step 8: Migrate the grouping story hosts](step-8-migrate-grouping-story-hosts.plan.md) →

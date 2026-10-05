@@ -131,7 +131,7 @@ only, enforced by `typecheck-spec` rather than by the runner.
 - **Case 8's wording is a decision, not an accident.** `'none'` for an
   empty denominator is spelled out in `TreeSlice.state`'s own doc; the
   assertion is there so a later "tidy-up" to `openCount ===
-  expandable.length` does not flip it to `'all'`.
+expandable.length` does not flip it to `'all'`.
 - **Case 1 asserts a throw, so assert on the message too** — the
   collision text comes from `engine/slots.ts`, and a bare `toThrow()`
   would also pass on an unrelated construction error.
@@ -170,4 +170,5 @@ only, enforced by `typecheck-spec` rather than by the runner.
       or a line of source behind it.
 
 ---
+
 ← [Step 2: The inherited row-tree behavior](step-2-tree-behavior-spec.plan.md)

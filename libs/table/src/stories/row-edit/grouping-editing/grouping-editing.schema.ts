@@ -12,7 +12,7 @@ import type { GroupEditRow } from './grouping-editing.types';
  */
 export function compareCategoryGroups(
   a: GroupSummary<GroupEditRow>,
-  b: GroupSummary<GroupEditRow>
+  b: GroupSummary<GroupEditRow>,
 ): number {
   const isOnlyAFlat = !a.admitted && b.admitted;
   const isOnlyBFlat = a.admitted && !b.admitted;
@@ -34,5 +34,5 @@ export const groupEditTableConfig: TableConfig<GroupEditRow> = { trackBy: 'id', 
 export const groupEditRowsSchema = schema<GroupEditRow[]>((path) =>
   applyEach(path, (row) => {
     debounce(row.category, 0);
-  })
+  }),
 );

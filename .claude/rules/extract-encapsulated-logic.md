@@ -1,11 +1,11 @@
 ---
 globs:
-  - "libs/**/*.ts"
-  - "apps/**/*.ts"
-  - "apps/**/*.html"
-  - "libs/**/*.html"
-  - "apps/**/*.tsx"
-  - "libs/**/*.tsx"
+  - 'libs/**/*.ts'
+  - 'apps/**/*.ts'
+  - 'apps/**/*.html'
+  - 'libs/**/*.html'
+  - 'apps/**/*.tsx'
+  - 'libs/**/*.tsx'
 ---
 
 > **Codified globally** (generalized, glob frontmatter stripped) in `~/.claude/rules/extract-encapsulated-logic.md` (2026-08-30) — this is now the acme-specific glob-scoped copy, kept for that reason.
@@ -59,11 +59,12 @@ to hold in your head, or does it just relocate the same three lines behind an in
 reader now has to chase?
 
 Signals you've gone too far:
+
 - Reading one flow now means opening 3+ files/functions with no independent reasoning of their
   own — each is a thin pass-through, not a scope.
 - The extracted piece takes most of the host's state as parameters — it never had its own scope,
   extraction just added a call boundary.
-- You extracted because the block was *long*, not because it *owned* something (state,
+- You extracted because the block was _long_, not because it _owned_ something (state,
   lifecycle, a name worth reasoning about independently). Length alone is not the test in this
   rule — the state/lifecycle/reasoning test above is.
 
@@ -79,6 +80,6 @@ functions/components that all say "look elsewhere."
   once the extracted piece has inputs/state of its own worth naming at the file level, or per
   `file-organization.md`'s concern-to-filename mapping.
 
-`file-organization.md` governs *where a file goes once something is worth its own file*. This
-rule governs the earlier question — *whether something should be pulled out of its host's scope
-at all*, file or no file.
+`file-organization.md` governs _where a file goes once something is worth its own file_. This
+rule governs the earlier question — _whether something should be pulled out of its host's scope
+at all_, file or no file.

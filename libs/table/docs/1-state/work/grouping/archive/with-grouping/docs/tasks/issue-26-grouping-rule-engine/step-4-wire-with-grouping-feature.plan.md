@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — wire the base/overlay fold into withGrouping()"
+title: 'Step 4 — wire the base/overlay fold into withGrouping()'
 type: task-step
 issue: 60
 ---
@@ -25,8 +25,8 @@ issue: 60
 
 This is D6/D7 landing: today `table.grouping` is a `WritableView` that reads `baseGrouping`
 directly (issue #7 shipped only the base, deliberately deferring the overlay — see this file's own
-`WithGroupingConfig` doc comment: *"the D6 base+overlay fold (`groupingRule`) is issue #26, out of
-scope here"*). This step removes that scope note by actually building the fold, and switches every
+`WithGroupingConfig` doc comment: _"the D6 base+overlay fold (`groupingRule`) is issue #26, out of
+scope here"_). This step removes that scope note by actually building the fold, and switches every
 internal reader (`stages.group`, `renderStages.group`, `rowsOf`) from `baseGrouping()` to the
 folded `grouping()` value — otherwise a `groupingRule` config would compute correctly but never
 reach the pipeline.
@@ -60,8 +60,11 @@ export interface WithGroupingConfig<TRow> {
 
 ```ts
 export function withGrouping<TRow = unknown>(
-  configOrSchemaFn: WithGroupingConfig<TRow> | GroupingSchemaFn<TRow> = {}
-): (core: GroupingInput<TRow>, composed: Record<string, unknown>) => TableFeatureSpec<TRow, GroupingMembers<TRow>> {
+  configOrSchemaFn: WithGroupingConfig<TRow> | GroupingSchemaFn<TRow> = {},
+): (
+  core: GroupingInput<TRow>,
+  composed: Record<string, unknown>,
+) => TableFeatureSpec<TRow, GroupingMembers<TRow>> {
   const config: WithGroupingConfig<TRow> =
     typeof configOrSchemaFn === 'function'
       ? { rules: [...runColumnsSchemaFn<TRow, AnyGroupingRule<TRow>>(configOrSchemaFn)] }
@@ -106,7 +109,7 @@ const grouping = computed(() => groupingRuleResult() ?? baseGrouping());
 
 const groupingView = createWritableView<string[], GroupingUpdater<TRow>>(
   () => grouping(),
-  (updater) => baseGrouping.update(updater)
+  (updater) => baseGrouping.update(updater),
 );
 ```
 
@@ -124,7 +127,13 @@ return {
   renderStages: {
     group: (rows) => {
       /* unchanged expandedRows read */
-      return buildGroupRenderRows(rows, grouping(), core.columns(), config.groupOrder, expandedRows);
+      return buildGroupRenderRows(
+        rows,
+        grouping(),
+        core.columns(),
+        config.groupOrder,
+        expandedRows,
+      );
     },
   },
 };
@@ -185,4 +194,5 @@ current behavior).
 - [ ] `tsc --noEmit` passes.
 
 ---
+
 ← [Step 3: Declarative sugar functions](step-3-declarative-sugar-functions.plan.md) | [Step 5: Tests →](step-5-tests.plan.md)

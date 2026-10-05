@@ -3,12 +3,12 @@
 **Issue:** [#113](https://github.com/DvirMon/ng-table/issues/113)
 **Status:** 4 / 4 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | `TId` survives on the store shape | ✅ done | — |
-| 2 | The generator carries `TId` into every slot | ✅ done | — |
-| 3 | The literal-union guard | ✅ done | — |
-| 4 | Record the escape-hatch decision | ✅ done | — |
+| Step | Title                                       | Status  | PR  |
+| ---- | ------------------------------------------- | ------- | --- |
+| 1    | `TId` survives on the store shape           | ✅ done | —   |
+| 2    | The generator carries `TId` into every slot | ✅ done | —   |
+| 3    | The literal-union guard                     | ✅ done | —   |
+| 4    | Record the escape-hatch decision            | ✅ done | —   |
 
 ## Graph
 

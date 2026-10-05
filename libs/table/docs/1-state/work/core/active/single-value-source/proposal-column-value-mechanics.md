@@ -29,10 +29,10 @@ hoisted, and a compile error when that spelling is forgotten.
 
 Two designs are proposed. Two more compiled and are not proposed; see "Compiled, not proposed".
 
-| | Proposal | Breaking | What the consumer writes | Missed capture |
-|---|---|---|---|---|
-| **B1** | **Literal-preserving `id` type** — `ColumnDefInput`'s `TId` defaults to `(keyof TRow & string) \| (string & {})` instead of `string` | no | inline arrays: nothing. A hoisted array: `satisfies ColumnDefInput<Row>[]`, which the fixture already writes; its six `as const` go | loud at the first `path.<id>` read, message names the fix |
-| **A1** | **Builder-function columns** — `createColumns(data, (col) => [col('region'), col('owner', { accessor: (r) => r.owner.name })], schema?)`; the column schema fn moves into this call | yes | one call per column; nothing annotated when `data` is passed, one `ColumnBuilder<Row>` annotation otherwise | impossible once the result is branded |
+|        | Proposal                                                                                                                                                                            | Breaking | What the consumer writes                                                                                                            | Missed capture                                            |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| **B1** | **Literal-preserving `id` type** — `ColumnDefInput`'s `TId` defaults to `(keyof TRow & string) \| (string & {})` instead of `string`                                                | no       | inline arrays: nothing. A hoisted array: `satisfies ColumnDefInput<Row>[]`, which the fixture already writes; its six `as const` go | loud at the first `path.<id>` read, message names the fix |
+| **A1** | **Builder-function columns** — `createColumns(data, (col) => [col('region'), col('owner', { accessor: (r) => r.owner.name })], schema?)`; the column schema fn moves into this call | yes      | one call per column; nothing annotated when `data` is passed, one `ColumnBuilder<Row>` annotation otherwise                         | impossible once the result is branded                     |
 
 **Direction (2026-09-22).** A1 in its full form — `createColumns()` taking the data signal, the
 builder and the column schema fn, with the accessor staying on the column — is the design being
@@ -71,7 +71,7 @@ is a structural "nothing to forget".
 `isLiteralOfContextualType(candidate, contextualType)` (:85341) returns true. That function returns
 true for a union or intersection if **any** member does, and a member qualifies when its flags
 include `StringLiteral`, `Index` (that is, `keyof T`), `TemplateLiteral` or `StringMapping`. The
-test is on the *candidate's kind*, never on membership: `id: 'selected'` is preserved against
+test is on the _candidate's kind_, never on membership: `id: 'selected'` is preserved against
 `keyof DealRow | (string & {})` exactly as `id: 'amount'` is, though `selected` is no row key.
 
 Two consequences shape everything below:
@@ -81,7 +81,7 @@ Two consequences shape everything below:
   `string` is present). Preservation comes from the `keyof TRow` member.
 - `satisfies X` supplies `X` as the contextual type and returns the expression's own type
   (`getContextualType` case `SatisfiesExpression`, :78175; `checkSatisfiesExpressionWorker`,
-  :82686). So `[...] satisfies ColumnDefInput<DealRow>[]` is a literal context *if*
+  :82686). So `[...] satisfies ColumnDefInput<DealRow>[]` is a literal context _if_
   `ColumnDefInput<DealRow>['id']` is one. Today it is `string`, which is the entire reason the
   fixture carries six `as const` (probe P0c: widened to `string`).
 
@@ -100,7 +100,10 @@ const dealColumns = [
 ] satisfies ColumnDefInput<DealRow>[];
 
 // Hoisted config: the shape the nine grouping story hosts share.
-export const groupingConfig = { trackBy: 'id', columns: dealColumns } satisfies TableConfig<DealRow>;
+export const groupingConfig = {
+  trackBy: 'id',
+  columns: dealColumns,
+} satisfies TableConfig<DealRow>;
 
 // Inline: nothing at all. Sibling schema fn and feature slots see the literal ids.
 createTable(
@@ -110,7 +113,7 @@ createTable(
     columns: [{ id: 'region' }, { id: 'owner', accessor: (row) => row.owner.name }],
     columnsSchema: (path) => applyVisible(path.region, () => true),
   },
-  withGrouping({ schema: (path) => applyAggregate(path.owner, countBy) })
+  withGrouping({ schema: (path) => applyAggregate(path.owner, countBy) }),
 );
 ```
 
@@ -145,20 +148,20 @@ Not applied in the worktree, part of the same change:
   table in the capture doc gains B1's row above its Option B.
 
 Naming note: ADR-0019 records a retired `ColumnId<TRow>` with a similar shape and a different role
-(a grouping level naming a declared column *or* a row field). The new type is declaration-time only;
+(a grouping level naming a declared column _or_ a row field). The new type is declaration-time only;
 a name that says so (`ColumnIdInput`, as in the diff) avoids reviving the old meaning.
 
 ### Where a capture is lost, and what happens
 
-| Form | Outcome |
-|---|---|
-| Inline `columns: [...]` in `createTable` | captured (P1b) |
-| Hoisted `[...] satisfies ColumnDefInput<Row>[]` | captured (P1a); `row` typed, no `as const` |
-| Hoisted `{ … } satisfies TableConfig<Row>` | captured (P1c) |
-| Carrier id not in `keyof Row` | captured, `unknown` value (P1h) |
-| Hoisted with **no** `satisfies` and no annotation | widened. First `path.<id>` read errors with the guard key as the message; a table that never names a column still compiles (P1e) |
-| Annotated `: ColumnDefInput<Row>[]` or a factory `(): ColumnDef<Row>[]` | widened. Same guard (P1e). The annotation erased the literal before TypeScript could see it; no design recovers that |
-| `withGrouping({ initial: ['x'] })` on a widened table | `string[]`, not compile-checked; `assertDeclarationsAreKnown` throws at construction, as today |
+| Form                                                                    | Outcome                                                                                                                          |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Inline `columns: [...]` in `createTable`                                | captured (P1b)                                                                                                                   |
+| Hoisted `[...] satisfies ColumnDefInput<Row>[]`                         | captured (P1a); `row` typed, no `as const`                                                                                       |
+| Hoisted `{ … } satisfies TableConfig<Row>`                              | captured (P1c)                                                                                                                   |
+| Carrier id not in `keyof Row`                                           | captured, `unknown` value (P1h)                                                                                                  |
+| Hoisted with **no** `satisfies` and no annotation                       | widened. First `path.<id>` read errors with the guard key as the message; a table that never names a column still compiles (P1e) |
+| Annotated `: ColumnDefInput<Row>[]` or a factory `(): ColumnDef<Row>[]` | widened. Same guard (P1e). The annotation erased the literal before TypeScript could see it; no design recovers that             |
+| `withGrouping({ initial: ['x'] })` on a widened table                   | `string[]`, not compile-checked; `assertDeclarationsAreKnown` throws at construction, as today                                   |
 
 **Guard placement.** Two variants compiled. The path-level guard (recommended) fires only where a
 widened id space would have misled someone; its fallout on the real spec suite is the three lines
@@ -236,7 +239,7 @@ value map is `{ [C in TCols[number] as C['id']]: … }` over an array-of-union �
 - P3c: **without the brand, a plain object literal in the array is accepted** — `{ id, accessor }`
   is structurally a `ColumnDecl`, its `id` widens, and the map degrades silently. With the brand it
   is rejected at that element. The brand is not optional.
-- P3d: `columnsSchema` written *before* `columns` in the same literal fails. A `columns` callback is
+- P3d: `columnsSchema` written _before_ `columns` in the same literal fails. A `columns` callback is
   context-sensitive, so it is checked in the second pass in source order (see "Limits shared").
 
 ### Costs
@@ -244,7 +247,7 @@ value map is `{ [C in TCols[number] as C['id']]: … }` over an array-of-union �
 - Every `columns:` site migrates: 5 inline arrays, ~20 spec factories, 5 story fixtures, and every
   story host that spreads a fixture. `resolveColumnDefs` accepts the branded declaration (a runtime
   `Symbol` on each entry, or a `WeakSet` the builder registers into).
-- What it buys that B1 does not: the accessor's return type is visible to the *same column's* other
+- What it buys that B1 does not: the accessor's return type is visible to the _same column's_ other
   options (a future `format: (v: number) => string`, a per-column `sortFn` typed by `V`) — MUI X's
   in-literal `V`, TanStack's `createColumnHelper`, without the curry.
 - Precedent: no surveyed library ships the array form. Drizzle's `pgTable(name, (t) => ({…}))`
@@ -287,11 +290,11 @@ createTable(this.deals, { trackBy: 'id', columns: createColumns((col) => [...]) 
 declare function createColumns<TRow, TCols extends readonly AnyDecl<TRow>[]>(
   data: TableDataInput<TRow>,
   build: (col: ColumnBuilder<TRow>) => TCols,
-  schema?: ColumnsSchemaFn<TRow, ColumnIdIn<ValuesOf<TCols>>> | ColumnSchema<TRow>
+  schema?: ColumnsSchemaFn<TRow, ColumnIdIn<ValuesOf<TCols>>> | ColumnSchema<TRow>,
 ): ColumnSet<TRow, TCols>;
 declare function createColumns<TRow, TCols extends readonly AnyDecl<TRow>[]>(
   build: (col: ColumnBuilder<TRow>) => TCols,
-  schema?: ColumnsSchemaFn<TRow, ColumnIdIn<ValuesOf<TCols>>> | ColumnSchema<TRow>
+  schema?: ColumnsSchemaFn<TRow, ColumnIdIn<ValuesOf<TCols>>> | ColumnSchema<TRow>,
 ): ColumnSet<TRow, TCols>;
 // TableConfig: { trackBy; columns: ColumnSet<TRow, TCols> } — no columnsSchema.
 ```
@@ -331,7 +334,7 @@ const dealColumns = createColumns((col) => [
 createTable(this.deals, {
   trackBy: 'id',
   columns: dealColumns,
-  values: { owner: (row) => row.owner.name },   // keys autocomplete from dealColumns
+  values: { owner: (row) => row.owner.name }, // keys autocomplete from dealColumns
 });
 ```
 
@@ -354,7 +357,7 @@ declaration ever becomes a requirement.
 
 1. **Sibling order when `columns` is context-sensitive.** An unannotated accessor makes the whole
    `config` literal context-sensitive, so its members are checked in the second inference pass in
-   source order. A `columnsSchema` written *above* such a `columns` sees the widened fallback
+   source order. A `columnsSchema` written _above_ such a `columns` sees the widened fallback
    (P1i, P3d, P4d). Written below it, or with the accessor annotated, or with no accessor, order is
    free (P1b, P1k). Feature slots are separate arguments and are never affected (P1b, P3b, P4b).
    Document "columns first" and move on; the fixture form (`satisfies` on a hoisted const) never hits
@@ -372,21 +375,21 @@ declaration ever becomes a requirement.
 
 ## Constraint matrix
 
-| # | Constraint | B1 | A1 |
-|---|---|---|---|
-| 1 | Declared-id keying (ADR-0019) | ✓ | ✓ |
-| 2 | Accessor is the value source (ADR-0024) | ✓ | ✓ |
-| 3 | Filtering regains typed criteria via the map | ✓ | ✓ |
-| 4 | No partial type-argument inference | ✓ no type args | ✓ |
-| 5 | `id` contextual type widens | fixed: literal context | n/a: call argument |
-| 6 | Carrier ids outside `keyof TRow` | ✓ kind check | ✓ `K extends string` |
-| 7 | One declaration, many tables | ✓ `satisfies` on the const | ✓ a value; row type from `data` or one annotation |
-| 8 | No consumer incantation | inline: nothing. Hoisted: `satisfies`, loud if forgotten | one call per column; nothing annotated when `data` is passed |
-| 9 | Missed capture is loud | at first `path.<id>` | impossible (brand) |
-| 10 | Array index carries order | ✓ | ✓ |
-| 11 | No bare `as` in consumer code | ✓ | ✓ |
-| — | Breaking | no (3 spec lines) | yes |
-| — | Verified on the real library | lib + spec typecheck | model probe |
+| #   | Constraint                                   | B1                                                       | A1                                                           |
+| --- | -------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------ |
+| 1   | Declared-id keying (ADR-0019)                | ✓                                                        | ✓                                                            |
+| 2   | Accessor is the value source (ADR-0024)      | ✓                                                        | ✓                                                            |
+| 3   | Filtering regains typed criteria via the map | ✓                                                        | ✓                                                            |
+| 4   | No partial type-argument inference           | ✓ no type args                                           | ✓                                                            |
+| 5   | `id` contextual type widens                  | fixed: literal context                                   | n/a: call argument                                           |
+| 6   | Carrier ids outside `keyof TRow`             | ✓ kind check                                             | ✓ `K extends string`                                         |
+| 7   | One declaration, many tables                 | ✓ `satisfies` on the const                               | ✓ a value; row type from `data` or one annotation            |
+| 8   | No consumer incantation                      | inline: nothing. Hoisted: `satisfies`, loud if forgotten | one call per column; nothing annotated when `data` is passed |
+| 9   | Missed capture is loud                       | at first `path.<id>`                                     | impossible (brand)                                           |
+| 10  | Array index carries order                    | ✓                                                        | ✓                                                            |
+| 11  | No bare `as` in consumer code                | ✓                                                        | ✓                                                            |
+| —   | Breaking                                     | no (3 spec lines)                                        | yes                                                          |
+| —   | Verified on the real library                 | lib + spec typecheck                                     | model probe                                                  |
 
 Constraint 8 is the one neither column meets in full, for the reason stated at the top of the
 Answer: a hoisted array of plain objects has no zero-spelling capture in TypeScript.
@@ -406,7 +409,7 @@ Its price is the migration of every `columns:` site. It was typechecked against 
 fallout.
 
 What would change this: a decision that per-column options should be typed by that column's own
-value (a `format`, a typed `sortFn` on the declaration). That is a per-column *call* by nature, and
+value (a `format`, a typed `sortFn` on the declaration). That is a per-column _call_ by nature, and
 A1 is the shape for it. Even then, B1 is not wasted — A1's `ColumnDecl` still resolves through the
 same `ColumnValues` map, and the guard stays.
 
@@ -505,68 +508,68 @@ imports the real library through the `@ngp/table` path alias; P1–P4 are self-c
 `@ts-expect-error`. Files live in this session's scratchpad (`…/scratchpad/probe/`); the snippets
 above are lifted from them verbatim.
 
-| Probe | Asserts | Result |
-|---|---|---|
-| P0a | current lib, inline `columns`, no accessor → `ColumnIdOf` | `string` |
-| P0b | current lib, inline + unannotated accessor + feature slot | map keyed by `string`; `path.region` is TS4111 |
-| P0c | current lib, hoisted `satisfies ColumnDefInput<DealRow>[]`, no `as const` | `string` |
-| P0d | current lib, hoisted `satisfies TableConfig<DealRow>` | `string` |
-| P0e | current lib, inline sibling `columnsSchema` | TS4111 |
-| P1a | B1 hoisted `satisfies`: id union literal; map `{ region: string; amount: number; owner: string; selected: unknown }`; `row` typed | pass |
-| P1b | B1 inline + unannotated accessor + sibling `columnsSchema` + slot; typos rejected in both | pass |
-| P1c | B1 hoisted config `satisfies TableConfig<DealRow>` + slot | pass |
-| P1d | B1 hoisted array through a config literal | pass |
-| P1e | B1 bare hoist and annotated array: guard at `path.region`; widened table with no schema compiles | pass |
-| P1f | B1 `createTable`-level guard variant: bare/annotated rejected at the call, literal and empty pass | pass |
-| P1g | B1 `(): ColumnDef<Row>[]` factory still assignable to `columns` | pass |
-| P1h | B1 carrier id `'not-a-row-key'` kept literal | pass |
-| P1i | B1 `columnsSchema` above a context-sensitive `columns` | **fails** (shared limit 1) |
-| P1j | B1 non-callable generic feature after a context-sensitive `columns` | **fails** (shared limit 2) |
-| P1k | B1 `columnsSchema` above an annotated or accessor-less `columns` | pass |
-| P2a–c | previous doc's Option B: intersection-parameter inference; unannotated accessor loud | pass |
-| P3a | A1 hoisted function | pass |
-| P3b | A1 inline, `col` and `row` unannotated, sibling + slot | pass |
-| P3c | A1 plain object literal in the array | accepted without brand; rejected with brand |
-| P3d | A1 `columnsSchema` above `columns` | **fails** (shared limit 1) |
-| P4a | record (not proposed): hoisted, no `satisfies`, accessor annotated | pass |
-| P4b | record: inline, unannotated accessor, sibling + slot | pass |
-| P4c | record: explicit `Record<string, …>` annotation | degrades to `string` silently |
-| P4d | record: `columnsSchema` above a record with an unannotated accessor | **fails** (shared limit 1) |
-| P5a | A1 full form, data first: `col`, `row`, `path` typed; typos rejected in schema and slot; map exact | pass |
-| P5b | A1 full form, builder first with `col` annotated; standalone `columnSchema()` value as 2nd arg | pass |
-| P5c | A1 full form, builder first, `col` unannotated: accessor over `unknown` row | loud (compile error) |
-| P5d | A1 full form inline inside `createTable`, nothing annotated: row type flows back from `data` | pass |
-| P5e | A1 full form: a `DealRow` column set on a table over another row type | rejected |
-| P6a | values field: `row` typed from `data`, map exact, slot path typed | pass |
-| P6b, P6b2 | values field: undeclared key rejected, with and without `row` annotated | pass |
-| P6c | values field absent: every value is `TRow[id]` | pass |
-| P6d | values field: same declaration over a different row type | pass |
-| WT | real library at `c3359c0` + Appendix A diff: `ngc` lib and spec | lib clean; spec: 3 deliberate widened-case lines |
+| Probe     | Asserts                                                                                                                           | Result                                           |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| P0a       | current lib, inline `columns`, no accessor → `ColumnIdOf`                                                                         | `string`                                         |
+| P0b       | current lib, inline + unannotated accessor + feature slot                                                                         | map keyed by `string`; `path.region` is TS4111   |
+| P0c       | current lib, hoisted `satisfies ColumnDefInput<DealRow>[]`, no `as const`                                                         | `string`                                         |
+| P0d       | current lib, hoisted `satisfies TableConfig<DealRow>`                                                                             | `string`                                         |
+| P0e       | current lib, inline sibling `columnsSchema`                                                                                       | TS4111                                           |
+| P1a       | B1 hoisted `satisfies`: id union literal; map `{ region: string; amount: number; owner: string; selected: unknown }`; `row` typed | pass                                             |
+| P1b       | B1 inline + unannotated accessor + sibling `columnsSchema` + slot; typos rejected in both                                         | pass                                             |
+| P1c       | B1 hoisted config `satisfies TableConfig<DealRow>` + slot                                                                         | pass                                             |
+| P1d       | B1 hoisted array through a config literal                                                                                         | pass                                             |
+| P1e       | B1 bare hoist and annotated array: guard at `path.region`; widened table with no schema compiles                                  | pass                                             |
+| P1f       | B1 `createTable`-level guard variant: bare/annotated rejected at the call, literal and empty pass                                 | pass                                             |
+| P1g       | B1 `(): ColumnDef<Row>[]` factory still assignable to `columns`                                                                   | pass                                             |
+| P1h       | B1 carrier id `'not-a-row-key'` kept literal                                                                                      | pass                                             |
+| P1i       | B1 `columnsSchema` above a context-sensitive `columns`                                                                            | **fails** (shared limit 1)                       |
+| P1j       | B1 non-callable generic feature after a context-sensitive `columns`                                                               | **fails** (shared limit 2)                       |
+| P1k       | B1 `columnsSchema` above an annotated or accessor-less `columns`                                                                  | pass                                             |
+| P2a–c     | previous doc's Option B: intersection-parameter inference; unannotated accessor loud                                              | pass                                             |
+| P3a       | A1 hoisted function                                                                                                               | pass                                             |
+| P3b       | A1 inline, `col` and `row` unannotated, sibling + slot                                                                            | pass                                             |
+| P3c       | A1 plain object literal in the array                                                                                              | accepted without brand; rejected with brand      |
+| P3d       | A1 `columnsSchema` above `columns`                                                                                                | **fails** (shared limit 1)                       |
+| P4a       | record (not proposed): hoisted, no `satisfies`, accessor annotated                                                                | pass                                             |
+| P4b       | record: inline, unannotated accessor, sibling + slot                                                                              | pass                                             |
+| P4c       | record: explicit `Record<string, …>` annotation                                                                                   | degrades to `string` silently                    |
+| P4d       | record: `columnsSchema` above a record with an unannotated accessor                                                               | **fails** (shared limit 1)                       |
+| P5a       | A1 full form, data first: `col`, `row`, `path` typed; typos rejected in schema and slot; map exact                                | pass                                             |
+| P5b       | A1 full form, builder first with `col` annotated; standalone `columnSchema()` value as 2nd arg                                    | pass                                             |
+| P5c       | A1 full form, builder first, `col` unannotated: accessor over `unknown` row                                                       | loud (compile error)                             |
+| P5d       | A1 full form inline inside `createTable`, nothing annotated: row type flows back from `data`                                      | pass                                             |
+| P5e       | A1 full form: a `DealRow` column set on a table over another row type                                                             | rejected                                         |
+| P6a       | values field: `row` typed from `data`, map exact, slot path typed                                                                 | pass                                             |
+| P6b, P6b2 | values field: undeclared key rejected, with and without `row` annotated                                                           | pass                                             |
+| P6c       | values field absent: every value is `TRow[id]`                                                                                    | pass                                             |
+| P6d       | values field: same declaration over a different row type                                                                          | pass                                             |
+| WT        | real library at `c3359c0` + Appendix A diff: `ngc` lib and spec                                                                   | lib clean; spec: 3 deliberate widened-case lines |
 
 ## Sources
 
 Checker line numbers are for the installed `typescript@6.0.3` and do not transfer to 5.x (TS 6.0
 renumbered `TypeFlags`). Library reads are pinned.
 
-| | Source | Verified |
-|---|---|---|
-| T1 | `node_modules/typescript/lib/typescript.js:85341` `isLiteralOfContextualType` | read 2026-09-22; union/intersection → `some`; leaf flags `StringLiteral \| Index \| TemplateLiteral \| StringMapping` |
-| T2 | `typescript.js:85359` `checkExpressionForMutableLocation`, `:72406` `getWidenedLiteralLikeTypeForContextualType` | read; the widen-unless gate |
-| T3 | `typescript.js:66057` `removeRedundantLiteralTypes` | read; literals dropped only when a bare `string` is present |
-| T4 | `typescript.js:78175` `getContextualType` (`SatisfiesExpression`), `:82686` `checkSatisfiesExpressionWorker` | read; `satisfies` supplies the contextual type and returns the expression's type |
-| T5 | https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-9.html | `satisfies` "without changing the resulting type of that expression" |
-| T6 | https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html | `const` type parameters affect only expressions "written within the call"; mutable constraint defeats it |
-| T7 | https://github.com/microsoft/TypeScript/wiki/Reference-Checker-Inference | two-pass argument inference: context-sensitive arguments are skipped in the first pass, checked in source order in the second |
-| T8 | https://github.com/microsoft/TypeScript/pull/30215 | generic-function-returning arguments are deferred; the propagation rule's third condition excludes cases where the outer parameters already have inferences |
-| T9 | https://github.com/microsoft/TypeScript/issues/29729 | origin of `T \| (string & {})`; open, 244 👍; the "do not inherit `string & {}`" explanation at `#issuecomment-567871939` |
-| L1 | https://unpkg.com/@tanstack/table-core@8.21.3/src/types.ts, `src/core/column.ts` | `accessorKey: (string & {}) \| keyof TData` shipped; `ColumnDefResolved.accessorKey?: string` and `CoreColumn.id: string` re-widen it — autocomplete only, never consumed |
-| L2 | https://unpkg.com/type-fest@5.10.0/source/literal-union.d.ts | `LiteralUnion` documents itself as a workaround for #29729 |
-| L3 | `node_modules/vite@8.2.1/types/customEvent.d.ts:75-81`, `types/hot.d.ts:27-38` | the one installed consumer of `keyof T \| (string & {})` on a key slot; `any` on the escape branch |
-| L4 | https://unpkg.com/ag-grid-community@36.2.0/dist/types/src/entities/colDef.d.ts; https://unpkg.com/@mui/x-data-grid@9.14.0/models/colDef/gridColDef.d.ts | `colId?: string`, `field: string` — neither vendor types its id field as a literal context |
-| L5 | https://unpkg.com/drizzle-orm@0.45.3/pg-core/table.d.ts, `relations.d.ts` | callback overload `columns: (columnTypes: PgColumnsBuilders) => TColumnsMap`; returns an object map |
-| L6 | https://unpkg.com/@pothos/core@4.15.1/dts/types/builder-options.d.ts | `fields: (t) => FieldMap` with `FieldMap = Record<string, GenericFieldRef<unknown>>` — the map is deliberately erased |
-| L7 | https://unpkg.com/kysely@0.29.6/dist/schema/create-table-builder.d.ts | `addColumn<CN extends string>(…): CreateTableBuilder<TB, C \| CN>` keeps ordered literal keys; `ColumnBuilderCallback` is non-generic, value type lost |
-| L8 | `node_modules/@angular/forms@22.1.2/types/_structure-chunk.d.ts:1524,1644` | `SchemaFn<TModel> = (p: SchemaPathTree<TModel>) => void`; `schema()` exists to hoist a module-level callback |
-| L9 | `node_modules/zod@4.4.3/v4/classic/schemas.d.cts:490,514` | `object<T>(shape: T)` object map; `discriminatedUnion` tuple-shaped constraint |
-| R1 | `libs/table/src/api/types.ts`, `engine/types.ts`, `columns-schema/types.ts`, `api/features/with-grouping/{types,feature}.ts`, `tools/generate-overloads.ts` at `c3359c0` | read; the shapes the probes mirror |
-| R2 | `libs/table/src/api/create-table.types.spec.ts`, `create-columns.types.spec.ts`, `with-grouping/feature.spec.ts` | read; the three widened-case lines and the `withProbe` pattern |
+|     | Source                                                                                                                                                                   | Verified                                                                                                                                                                  |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T1  | `node_modules/typescript/lib/typescript.js:85341` `isLiteralOfContextualType`                                                                                            | read 2026-09-22; union/intersection → `some`; leaf flags `StringLiteral \| Index \| TemplateLiteral \| StringMapping`                                                     |
+| T2  | `typescript.js:85359` `checkExpressionForMutableLocation`, `:72406` `getWidenedLiteralLikeTypeForContextualType`                                                         | read; the widen-unless gate                                                                                                                                               |
+| T3  | `typescript.js:66057` `removeRedundantLiteralTypes`                                                                                                                      | read; literals dropped only when a bare `string` is present                                                                                                               |
+| T4  | `typescript.js:78175` `getContextualType` (`SatisfiesExpression`), `:82686` `checkSatisfiesExpressionWorker`                                                             | read; `satisfies` supplies the contextual type and returns the expression's type                                                                                          |
+| T5  | https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-9.html                                                                                           | `satisfies` "without changing the resulting type of that expression"                                                                                                      |
+| T6  | https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html                                                                                           | `const` type parameters affect only expressions "written within the call"; mutable constraint defeats it                                                                  |
+| T7  | https://github.com/microsoft/TypeScript/wiki/Reference-Checker-Inference                                                                                                 | two-pass argument inference: context-sensitive arguments are skipped in the first pass, checked in source order in the second                                             |
+| T8  | https://github.com/microsoft/TypeScript/pull/30215                                                                                                                       | generic-function-returning arguments are deferred; the propagation rule's third condition excludes cases where the outer parameters already have inferences               |
+| T9  | https://github.com/microsoft/TypeScript/issues/29729                                                                                                                     | origin of `T \| (string & {})`; open, 244 👍; the "do not inherit `string & {}`" explanation at `#issuecomment-567871939`                                                 |
+| L1  | https://unpkg.com/@tanstack/table-core@8.21.3/src/types.ts, `src/core/column.ts`                                                                                         | `accessorKey: (string & {}) \| keyof TData` shipped; `ColumnDefResolved.accessorKey?: string` and `CoreColumn.id: string` re-widen it — autocomplete only, never consumed |
+| L2  | https://unpkg.com/type-fest@5.10.0/source/literal-union.d.ts                                                                                                             | `LiteralUnion` documents itself as a workaround for #29729                                                                                                                |
+| L3  | `node_modules/vite@8.2.1/types/customEvent.d.ts:75-81`, `types/hot.d.ts:27-38`                                                                                           | the one installed consumer of `keyof T \| (string & {})` on a key slot; `any` on the escape branch                                                                        |
+| L4  | https://unpkg.com/ag-grid-community@36.2.0/dist/types/src/entities/colDef.d.ts; https://unpkg.com/@mui/x-data-grid@9.14.0/models/colDef/gridColDef.d.ts                  | `colId?: string`, `field: string` — neither vendor types its id field as a literal context                                                                                |
+| L5  | https://unpkg.com/drizzle-orm@0.45.3/pg-core/table.d.ts, `relations.d.ts`                                                                                                | callback overload `columns: (columnTypes: PgColumnsBuilders) => TColumnsMap`; returns an object map                                                                       |
+| L6  | https://unpkg.com/@pothos/core@4.15.1/dts/types/builder-options.d.ts                                                                                                     | `fields: (t) => FieldMap` with `FieldMap = Record<string, GenericFieldRef<unknown>>` — the map is deliberately erased                                                     |
+| L7  | https://unpkg.com/kysely@0.29.6/dist/schema/create-table-builder.d.ts                                                                                                    | `addColumn<CN extends string>(…): CreateTableBuilder<TB, C \| CN>` keeps ordered literal keys; `ColumnBuilderCallback` is non-generic, value type lost                    |
+| L8  | `node_modules/@angular/forms@22.1.2/types/_structure-chunk.d.ts:1524,1644`                                                                                               | `SchemaFn<TModel> = (p: SchemaPathTree<TModel>) => void`; `schema()` exists to hoist a module-level callback                                                              |
+| L9  | `node_modules/zod@4.4.3/v4/classic/schemas.d.cts:490,514`                                                                                                                | `object<T>(shape: T)` object map; `discriminatedUnion` tuple-shaped constraint                                                                                            |
+| R1  | `libs/table/src/api/types.ts`, `engine/types.ts`, `columns-schema/types.ts`, `api/features/with-grouping/{types,feature}.ts`, `tools/generate-overloads.ts` at `c3359c0` | read; the shapes the probes mirror                                                                                                                                        |
+| R2  | `libs/table/src/api/create-table.types.spec.ts`, `create-columns.types.spec.ts`, `with-grouping/feature.spec.ts`                                                         | read; the three widened-case lines and the `withProbe` pattern                                                                                                            |

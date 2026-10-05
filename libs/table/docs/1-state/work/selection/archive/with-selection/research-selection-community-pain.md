@@ -45,7 +45,7 @@ row currently matching," or "the current page" silently replacing a broader sele
   activity through 2025-06-20 — same multi-year "closed but not actually settled" pattern.
 - AG Grid **[#9327](https://github.com/ag-grid/ag-grid/issues/9327)** — Server-Side Row Model:
   "Select All" visual state persists across pages despite `selectAll: 'currentPage'` — the
-  *config knob built specifically to answer this question* still leaks the wrong scope visually.
+  _config knob built specifically to answer this question_ still leaks the wrong scope visually.
   Closed 2024-12-04 → 2024-12-18.
 - AG Grid **[#10688](https://github.com/ag-grid/ag-grid/issues/10688)**,
   **[#12072](https://github.com/ag-grid/ag-grid/issues/12072)**,
@@ -71,17 +71,17 @@ row currently matching," or "the current page" silently replacing a broader sele
 **Read for our design:** this is the same "near-universal, decade-spanning, keeps recurring even
 after fixes" pattern the sibling filtering research found for filter-scoped select-all — except
 here it's worse: three separate libraries (AG Grid ×2 clusters, MRT) have shipped a
-purpose-built config option (`selectAll: 'currentPage'`, `autoResetPageIndex` interplay) *whose
-job is to answer this exact question*, and each is still fielding bug reports against its own
+purpose-built config option (`selectAll: 'currentPage'`, `autoResetPageIndex` interplay) _whose
+job is to answer this exact question_, and each is still fielding bug reports against its own
 fix years later. `withSelection()`'s D1 (refuse to define scope, make every write name its own id
 set) sidesteps the entire bug class structurally rather than attempting the config knob every
 other library has tried and re-broken. The trade (per D59's own "Not Shipped" line) is that
 `withSelection()` ships no "are all visible rows selected" read-side signal — every library above
-that *does* attempt this ships a checkbox-state bug as the direct cost of attempting it.
+that _does_ attempt this ships a checkbox-state bug as the direct cost of attempting it.
 
 ## Theme 2 — Selection silently dropped (or stuck) across data refetch, sort, and row removal
 
-Distinct from Theme 1: this is what happens to an *already-selected* row when the underlying data
+Distinct from Theme 1: this is what happens to an _already-selected_ row when the underlying data
 array changes shape, independent of any explicit "select all" action.
 
 - TanStack Table **[#4498](https://github.com/TanStack/table/issues/4498)** — "[React] Row
@@ -105,7 +105,7 @@ array changes shape, independent of any explicit "select all" action.
   **[#27425](https://github.com/angular/components/issues/27425)** — `SelectionModel.setSelection`
   "does not respect `compareWith`": restoring a selection against a freshly-fetched object array
   (new object identities, same logical ids) silently fails to re-mark rows as selected unless
-  `compareWith` is passed *and correctly respected*, which these two issues (2022, 2023,
+  `compareWith` is passed _and correctly respected_, which these two issues (2022, 2023,
   independently filed) show it wasn't, consistently, across versions. Both closed after fix
   PRs — i.e., the "restore selection against new object identities" seam broke more than once.
 
@@ -138,7 +138,7 @@ filtering research's Theme 2 pattern almost exactly.
   tracking independently.
 - TanStack Table **[PR #6409 "feat: batch row selection"](https://github.com/TanStack/table/pull/6409)**
   — merged 2026-07-12, **only two months before this research** — finally adds inclusive
-  Shift-click range selection as a *built-in* default behavior of
+  Shift-click range selection as a _built-in_ default behavior of
   `row.getToggleSelectedHandler()` (confirmed via the current
   [row-selection guide](https://tanstack.com/table/latest/docs/framework/react/guide/row-selection)),
   with an `enableRowRangeSelection` opt-out and documented caveat that ranges only span
@@ -174,7 +174,7 @@ community-only implementations before shipping one two months ago; PrimeNG took 
 a broken attempt. `withSelection()` currently has no UI layer at all (per `selection.md`'s "Not
 Shipped" table — "Selection checkbox directive + header directive" is unblocked but unbuilt), so
 this entire theme is a forward-looking flag for whichever directive effort builds shift-range
-selection: budget for the anchor-tracking state to live in the *directive*, not the state
+selection: budget for the anchor-tracking state to live in the _directive_, not the state
 feature (which is deliberately flat/id-set-only per D13), and expect the "does the range span
 filtered-out or off-page rows" question (AG Grid's still-unresolved edge, TanStack's documented
 "only loaded rows" caveat) to reopen Theme 1's scope question in a new shape.
@@ -185,7 +185,7 @@ filtered-out or off-page rows" question (AG Grid's still-unresolved edge, TanSta
   DataTable Selection," 👍19, opened 2016-08-08, **open for 1.5 years** before closing
   2018-01-13.
 - PrimeNG **[#5762](https://github.com/primefaces/primeng/issues/5762)** — "Keyboard Support for
-  Table Row Selection," 👍9, opened 2018-05-18 (i.e. *after* #713 had already closed, for a
+  Table Row Selection," 👍9, opened 2018-05-18 (i.e. _after_ #713 had already closed, for a
   different table variant) — same request resurfacing across the library's own component split
   (`DataTable` vs `TurboTable`), closed 2019-12-06.
 - Angular Material **[#14861](https://github.com/angular/components/issues/14861)** — "mat-table
@@ -223,7 +223,7 @@ afterthought and is still paying for it years later.
   interaction.
 - TanStack Table **[PR #6495](https://github.com/TanStack/table/pull/6495)** — "fix: honor
   selection rules in select-all paths, add `deselectParents` option" — merged 2026-08-02, i.e. the
-  parent/child cascade rules for select-all were *still being corrected* one month before this
+  parent/child cascade rules for select-all were _still being corrected_ one month before this
   research.
 - AG Grid **[#9565](https://github.com/ag-grid/ag-grid/issues/9565)** — "Row Selection
   `groupSelects` descendants does not select parent node" — filed as a bug, closed as `invalid`
@@ -265,12 +265,12 @@ still fixing it years in; that's a real argument for keeping it consumer code fo
 - PrimeNG **[#6736](https://github.com/primefaces/primeng/issues/6736)** — "Add `rowSelectable`
   property to DataTable," 👍34 (the highest-reaction issue found in this entire research pass) —
   opened 2018-10-23 after a user discovered `[disabled]="true"` on a row checkbox still let the
-  *header* select-all checkbox select that row. **Open for over 3 years** before closing
+  _header_ select-all checkbox select that row. **Open for over 3 years** before closing
   2021-12-23.
 - PrimeNG **[#15780](https://github.com/primefaces/primeng/issues/15780)** — "Table select all
-  checkbox deselect disabled selected checkboxes," 👍6, opened **2024-06-03** (2.5 years *after*
+  checkbox deselect disabled selected checkboxes," 👍6, opened **2024-06-03** (2.5 years _after_
   #6736 shipped a fix) — the inverse failure mode of the same root cause (select-all now
-  incorrectly *deselects* pre-selected disabled rows instead of leaving them alone), open for
+  incorrectly _deselects_ pre-selected disabled rows instead of leaving them alone), open for
   **2 full years** before closing 2026-06-18. Explicitly connected in the issue body to a sibling
   report, #15338.
 
@@ -282,7 +282,7 @@ disabled rows either). `withSelection()`'s D58/D60 (`enableRowSelection` gates e
 write including `select()`, and a fully-blocked write is a **silent** no-op) directly targets the
 first half of this — `selectAllIds()` composed with `select()` naturally drops non-selectable
 ids from the candidate set before the write, per the existing spec. The second half (should
-select-all *deselect* a disabled row that's already selected) maps onto `deselect()`'s explicit
+select-all _deselect_ a disabled row that's already selected) maps onto `deselect()`'s explicit
 "never subject to the multi-select or row-selection rule" design in `selection.md` — worth an
 explicit test case given PrimeNG's #15780 shows this exact asymmetry is where the bug hides.
 
@@ -346,7 +346,7 @@ that effort specifically since it sat unresolved in Material for 4.5 years.
 
 ## Theme 9 — End-user vs. integrator complaints, and API churn as its own complaint
 
-Nearly every issue cited above is filed by an *integrator* (a developer wiring the table), not an
+Nearly every issue cited above is filed by an _integrator_ (a developer wiring the table), not an
 end user directly — consistent with the filtering research's finding for the same library set.
 The one clear end-user-perspective complaint about a "select all" checkbox found in this research
 was **not** in one of the five target libraries (Adobe Workfront's community forum,
@@ -376,7 +376,7 @@ than a single mode-string or nested config object) staying additive going forwar
 
 1. **"Select all" scope ambiguity is the single most-repeated, most-persistent bug in the entire
    category** (Theme 1) — worse than filtering's equivalent, because multiple libraries have
-   shipped a *purpose-built config option* to answer it and are still fixing that option years
+   shipped a _purpose-built config option_ to answer it and are still fixing that option years
    later. D1's refusal to define scope at the state layer, paired with D59's `selectAllIds()`
    helper, sidesteps the bug class the other four libraries keep re-shipping — but leaves the
    "is everything visible currently selected" read-side signal unbuilt (flagged in `selection.md`

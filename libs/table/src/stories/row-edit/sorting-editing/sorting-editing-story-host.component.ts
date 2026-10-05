@@ -44,7 +44,12 @@ import { withRowEdit } from '../../../api/features/with-row-edit';
 })
 export class SortingEditingStoryHostComponent {
   protected readonly data = signal<SortEditRow[]>(SORT_EDIT_ROWS_MOCK);
-  protected readonly table = createTable(this.data, sortEditTableConfig, withSorting(), withRowEdit());
+  protected readonly table = createTable(
+    this.data,
+    sortEditTableConfig,
+    withSorting(),
+    withRowEdit(),
+  );
   /** Gated mode's commit boundary is the row (OQ-3) — `form()` writes into `table.draft` instead
    * of `data`, so a field's blur-commit can't move the row under the user or feed the sort
    * pipeline before Save (`withRowEdit()`'s `draft` member, `api/features/editing/draft-rows.ts`). */
@@ -53,7 +58,9 @@ export class SortingEditingStoryHostComponent {
 
   /** Header `[attr.aria-sort]` values for the two sortable columns — derived so the `<th>` glyph
    * and screen-reader state agree with `table.sortDirections()`. */
-  protected readonly nameSortAria = computed(() => sortAriaValue(this.table.sortDirections().get('name')));
+  protected readonly nameSortAria = computed(() =>
+    sortAriaValue(this.table.sortDirections().get('name')),
+  );
   protected readonly dueDateSortAria = computed(() =>
     sortAriaValue(this.table.sortDirections().get('dueDate')),
   );

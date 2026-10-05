@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — ClusterSummary, the admitted flag, and admission-aware ordering"
+title: 'Step 1 — ClusterSummary, the admitted flag, and admission-aware ordering'
 type: task-step
 issue: 119
 ---
@@ -28,7 +28,7 @@ the two must not race on that type.
 `groupWhen` **decides** admission, so it cannot be handed a summary that already states it — that
 is why the design splits one type into two rather than adding a flag to `GroupSummary` and reusing
 it for both callbacks (`design-group-admission.md` § The mechanism). The comparator, by contrast,
-runs *after* admission is decided and needs to see it, because ordering is what replaces an
+runs _after_ admission is decided and needs to see it, because ordering is what replaces an
 `ungroupedPlacement` config key.
 
 Landing the vocabulary and the marking pass before anything dissolves keeps the behavioural change
@@ -140,7 +140,7 @@ dissolved ones in first-occurrence order:
 
 ```ts
 if (!groupOrder) {
-  return partitionByAdmission(nodes);   // reference-identical when every node is admitted
+  return partitionByAdmission(nodes); // reference-identical when every node is admitted
 }
 ```
 
@@ -198,4 +198,5 @@ Recursion into `children` keeps applying the same rule at every depth.
       locally; the byte-identical claim above is unverified until it passes.
 
 ---
+
 [Step 2: Emission honours admission](step-2-emission-honors-admission.plan.md) →

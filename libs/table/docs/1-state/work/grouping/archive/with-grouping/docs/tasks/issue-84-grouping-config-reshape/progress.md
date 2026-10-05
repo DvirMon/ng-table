@@ -3,11 +3,11 @@
 **Issue:** #84
 **Status:** 3 / 3 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | Reshape `WithGroupingConfig` and sweep every call site | ✅ done* | — |
-| 2 | Tests for the combined config shape | ✅ done* | — |
-| 3 | Documentation the reshape owes | ✅ done | — |
+| Step | Title                                                  | Status    | PR  |
+| ---- | ------------------------------------------------------ | --------- | --- |
+| 1    | Reshape `WithGroupingConfig` and sweep every call site | ✅ done\* | —   |
+| 2    | Tests for the combined config shape                    | ✅ done\* | —   |
+| 3    | Documentation the reshape owes                         | ✅ done   | —   |
 
 \* `nx run shared-table:typecheck` / `nx run shared-table:typecheck-spec` / `nx test shared-table`
 are red project-wide, but only from pre-existing, unrelated `filters/` WIP (uncommitted before

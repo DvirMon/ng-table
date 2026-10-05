@@ -9,8 +9,8 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                              | Action              |
+| ------------------------------------------------- | ------------------- |
 | `libs/table/src/engine/grouping/clusters.spec.ts` | edit — report cases |
 
 ## Why This Step Exists
@@ -93,4 +93,5 @@ tested. A hand-written accessor would pass even if Step 4 checked the raw field 
 - [ ] `nx run shared-table:typecheck-spec` clean.
 
 ---
+
 ← [Step 5: Engine tests — cells and duplicate ids](step-5-engine-tests-cells.plan.md) | [Step 7: Document `accessor` as the value contract](step-7-docs-accessor-contract.plan.md) →

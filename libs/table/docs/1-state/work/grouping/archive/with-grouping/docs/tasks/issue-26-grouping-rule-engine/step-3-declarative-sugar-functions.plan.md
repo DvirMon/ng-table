@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — applyGrouping / applyGroupingAsync + the schema-fn layer"
+title: 'Step 3 — applyGrouping / applyGroupingAsync + the schema-fn layer'
 type: task-step
 issue: 60
 ---
@@ -66,7 +66,7 @@ import type { ResourceRef, Signal } from '@angular/core';
  */
 export function applyGrouping<TRow, K extends Extract<keyof TRow, string>>(
   path: ColumnHandle<TRow, K, AnyGroupingRule<TRow>>,
-  opts: { when: () => boolean | undefined }
+  opts: { when: () => boolean | undefined },
 ): void {
   assertPathIsCurrent(path).record({ kind: 'grouping', columnId: path.id, when: opts.when });
 }
@@ -82,14 +82,9 @@ export interface GroupingAsyncOpts<TParams, TResult> {
   onError: (error: unknown) => boolean;
 }
 
-export function applyGroupingAsync<
-  TRow,
-  K extends Extract<keyof TRow, string>,
-  TParams,
-  TResult
->(
+export function applyGroupingAsync<TRow, K extends Extract<keyof TRow, string>, TParams, TResult>(
   path: ColumnHandle<TRow, K, AnyGroupingRule<TRow>>,
-  opts: GroupingAsyncOpts<TParams, TResult>
+  opts: GroupingAsyncOpts<TParams, TResult>,
 ): void {
   assertPathIsCurrent(path).record({
     kind: 'grouping-async',
@@ -113,7 +108,7 @@ standalone `rules: GroupingRule<TRow>[]` array per D8's rules-array layer).
 
 - **`assertPathIsCurrent` is reused as-is** (Step 1 made it generic over `TRule`; no edit needed
   here beyond the call-site type argument flowing through `ColumnHandle<TRow, K,
-  AnyGroupingRule<TRow>>`).
+AnyGroupingRule<TRow>>`).
 - **No `runGroupingSchemaFn` wrapper needed as a separate export.** Step 1's generalized
   `runColumnsSchemaFn<TRow, TRule>(fn)` already does exactly this at
   `TRule = AnyGroupingRule<TRow>` — Step 4 calls `runColumnsSchemaFn<TRow, AnyGroupingRule<TRow>>(schemaFn)`
@@ -134,7 +129,7 @@ standalone `rules: GroupingRule<TRow>[]` array per D8's rules-array layer).
   vice versa).
 - If `column-schema.ts`'s `assertPathIsCurrent` return type doesn't narrow cleanly to
   `ColumnSchemaRecorder<TRow, AnyGroupingRule<TRow>>` from a `ColumnHandle<TRow, K,
-  AnyGroupingRule<TRow>>` input, that's a Step 1 gap — fix the generic propagation there, don't
+AnyGroupingRule<TRow>>` input, that's a Step 1 gap — fix the generic propagation there, don't
   work around it with a cast here (`typescript-conventions.md` — no bare `as`).
 
 ## Non-Goals
@@ -156,4 +151,5 @@ standalone `rules: GroupingRule<TRow>[]` array per D8's rules-array layer).
 - [ ] `tsc --noEmit` passes; new exports resolve from `index.ts`.
 
 ---
+
 ← [Step 2: Grouping rule types + engine fold](step-2-grouping-rule-types-and-fold.plan.md) | [Step 4: Wire withGrouping() feature →](step-4-wire-with-grouping-feature.plan.md)

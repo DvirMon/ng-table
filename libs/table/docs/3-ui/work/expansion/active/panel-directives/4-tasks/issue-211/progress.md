@@ -15,8 +15,8 @@ Parallel-safe: none · Dependency: 1 → 2 → 3
 
 ## Steps
 
-| Step | Title | Status |
-|---|---|---|
-| 1 | Panel registry and its provider | ✅ done |
-| 2 | ngpTablePanel: identity, inert and wiring errors | ✅ done |
-| 3 | ngpTablePanel: close paths and focus return | ✅ done |
+| Step | Title                                            | Status  |
+| ---- | ------------------------------------------------ | ------- |
+| 1    | Panel registry and its provider                  | ✅ done |
+| 2    | ngpTablePanel: identity, inert and wiring errors | ✅ done |
+| 3    | ngpTablePanel: close paths and focus return      | ✅ done |

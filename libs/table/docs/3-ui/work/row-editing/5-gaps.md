@@ -12,12 +12,12 @@ Split out of [`1-state/work/row-editing/active/with-row-editing/5-gaps.md`](../.
 on 2026-08-26. That register measures the **state layer** — which rows are open, what restores on
 Cancel, what happens on an id swap. This one measures the **UI layer**: how a person drives it.
 
-The boundary is *which layer owns the mechanism*, not which layer the user notices it in:
+The boundary is _which layer owns the mechanism_, not which layer the user notices it in:
 
-| Layer | Owns | Example |
-|---|---|---|
-| **State (1)** | what is true about a row | a `pending` entry orphaned by a temp-id swap |
-| **UI (3)** | keys, focus, announcements, affordances | Escape cancels the row |
+| Layer         | Owns                                    | Example                                      |
+| ------------- | --------------------------------------- | -------------------------------------------- |
+| **State (1)** | what is true about a row                | a `pending` entry orphaned by a temp-id swap |
+| **UI (3)**    | keys, focus, announcements, affordances | Escape cancels the row                       |
 
 Every gap here is **UI-layer in full**. `revertEdit` exists and works; nothing calls it from a key
 handler, and adding that call is directive work. No state-layer change is involved in any entry
@@ -91,7 +91,7 @@ row with no announcement.
 **Re-scoped 2026-09-04** — same as G1 (D1 in `work/row-edit-keyboard-a11y/2-decisions.md`):
 documented recipe, not a shipped directive.
 
-### G11 — Retained-row affordance *(phantom)*
+### G11 — Retained-row affordance _(phantom)_
 
 D25 says a row edited out of the active filter stays visible and flagged until the filter changes.
 It needs a chip or muted styling so the user can tell why an out-of-filter row is showing.
@@ -121,10 +121,10 @@ phantom until filtering or pagination exists.
 
 ## Not gaps — deliberate
 
-| Not shipped | Why |
-|---|---|
-| Row actions markup, keyboard, ARIA | D18 — every operation is already expressible through the updaters; an action registry would drag label/icon/ordering into a data-only store. Revisit only on real cross-consumer duplication, and then as a UI directive. |
-| Library-detected edit triggers (blur hooks, dirty checking) | D20 — "editing" has exactly one definition: membership in the map. Trigger policy is the consumer's. |
+| Not shipped                                                 | Why                                                                                                                                                                                                                       |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Row actions markup, keyboard, ARIA                          | D18 — every operation is already expressible through the updaters; an action registry would drag label/icon/ordering into a data-only store. Revisit only on real cross-consumer duplication, and then as a UI directive. |
+| Library-detected edit triggers (blur hooks, dirty checking) | D20 — "editing" has exactly one definition: membership in the map. Trigger policy is the consumer's.                                                                                                                      |
 
 The full non-goals table, including the state-layer entries, stays in the
 [state-layer register](../../../1-state/work/row-editing/active/with-row-editing/5-gaps.md#not-gaps--deliberate).
@@ -136,8 +136,8 @@ The full non-goals table, including the state-layer entries, stays in the
 One open question gates anything in this file. The reasoning stays in the decision log; this is the
 index.
 
-| # | Question | Gates | Full text |
-|---|---|---|---|
+| #       | Question                                                                                                                                                          | Gates                                                 | Full text                                                                                    |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | **O17** | `applyEach` validates rows the user cannot see (filtered out, other pages), so `valid()` can be false because of row 4,000. How are submit and "save all" scoped? | **G7** — phantom until filtering or pagination exists | [with-row-editing](../../../1-state/work/row-editing/active/with-row-editing/2-decisions.md) |
 
 Nothing gates **G1**, **G9** or **G10** — every verb they call shipped in E4, and the a11y contract

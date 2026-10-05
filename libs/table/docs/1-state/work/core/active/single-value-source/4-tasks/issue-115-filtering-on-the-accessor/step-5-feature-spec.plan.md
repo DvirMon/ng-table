@@ -60,4 +60,5 @@ assertions: they belong to grouping and selection, not filtering.
       `assertDeclarationsAreKnown` call is removed.
 
 ---
+
 ← [Step 4: Engine specs](step-4-engine-specs.plan.md) | [Step 6: Type specs](step-6-type-specs.plan.md) →

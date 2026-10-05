@@ -36,7 +36,7 @@ ADRs and the state-layer architecture doc).
    hosts, and the shared Signal Forms `editRowsSchema`. Each host composes its own features
    inline: `createTable(this.data, editTableConfig, ...features)`"
 2. Line 97 — the rule "Don't inline mock data or a schema call inside a story-host component"
-   now reads wrong, since the `createTable()` call *is* in the host by design. Reword to:
+   now reads wrong, since the `createTable()` call _is_ in the host by design. Reword to:
    "Don't inline mock data, column definitions, or the table config inside a story-host
    component — the host composes features on `createTable(...)`, the fixtures file owns the
    config and the Signal Forms schema."
@@ -64,4 +64,5 @@ ADRs and the state-layer architecture doc).
 - [ ] The two edited sentences name only symbols that exist (`editTableConfig`, `editRowsSchema`, `TableConfig`).
 
 ---
+
 ← [Step 2: tidy the two unformatted sorting-editing lines](step-2-format-touched-lines.plan.md) | [Step 4: render verification and close-out](step-4-render-verification-closeout.plan.md) →

@@ -28,7 +28,7 @@ export interface TreeLinkSource<TRow> {
  */
 export function resolveTreeLinks<TRow>(
   rows: readonly TRow[],
-  ctx: TreeLinkSource<TRow>
+  ctx: TreeLinkSource<TRow>,
 ): TreeLinks {
   const { parentOf, trackBy } = ctx;
 

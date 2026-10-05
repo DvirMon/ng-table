@@ -2,7 +2,13 @@ import { computed, signal, type Signal } from '@angular/core';
 import { Subject, type Observable } from 'rxjs';
 import { readAccessor } from '../../../engine/cells';
 import { buildValueOfContext, type ValueOfContext } from '../../../engine/resolvers';
-import type { ColumnValuesOf, Feature, RowOf, Shape, TableFeatureSpec } from '../../../engine/types';
+import type {
+  ColumnValuesOf,
+  Feature,
+  RowOf,
+  Shape,
+  TableFeatureSpec,
+} from '../../../engine/types';
 import { stageSchema } from '../../../schema/stage-schema';
 import { stage } from '../../../schema/stage-rules';
 import { assertDeclarationsAreKnown } from '../../../schema/validate';
@@ -75,9 +81,7 @@ function cycleSortRule(rules: SortRule[], columnId: string): SortRule[] {
     return [...rules, { columnId, direction: 'asc' }];
   }
   if (rules[index].direction === 'asc') {
-    return rules.map((rule, i) =>
-      i === index ? { ...rule, direction: 'desc' as const } : rule
-    );
+    return rules.map((rule, i) => (i === index ? { ...rule, direction: 'desc' as const } : rule));
   }
   return rules.filter((_, i) => i !== index);
 }
@@ -95,20 +99,18 @@ function replaceSortRule(rules: SortRule[], columnId: string): SortRule[] {
 
 function detectComparator<TRow>(
   accessor: (row: TRow) => unknown,
-  rows: TRow[]
+  rows: TRow[],
 ): (a: TRow, b: TRow) => number {
   const sample = rows.map(accessor).find((value) => value != null);
   if (sample instanceof Date) {
-    return (a, b) =>
-      (accessor(a) as Date).getTime() - (accessor(b) as Date).getTime();
+    return (a, b) => (accessor(a) as Date).getTime() - (accessor(b) as Date).getTime();
   }
   if (typeof sample === 'number') {
     return (a, b) => (accessor(a) as number) - (accessor(b) as number);
   }
   // String(), not `.toString()`: other rows can still be null/undefined even when the
   // detection sample was non-null, and `.toString()` would throw on those.
-  return (a, b) =>
-    String(accessor(a)).localeCompare(String(accessor(b)));
+  return (a, b) => String(accessor(a)).localeCompare(String(accessor(b)));
 }
 
 // `null`/`undefined` are always empty; `''` only counts if the rule opts in.
@@ -130,9 +132,7 @@ function assertNoDuplicateRuleKinds<TRow>(rules: readonly AnySortingRule<TRow>[]
   for (const rule of rules) {
     const key = `${rule.kind}:${rule.columnId}`;
     if (seen.has(key)) {
-      throw new Error(
-        `[withSorting] ${rule.kind} declared twice on column '${rule.columnId}'`
-      );
+      throw new Error(`[withSorting] ${rule.kind} declared twice on column '${rule.columnId}'`);
     }
     seen.add(key);
   }
@@ -143,7 +143,7 @@ function reportComparatorError(columnId: string): void {
   // degrade-logging abstraction yet.
   console.error(
     `[withSorting] comparator threw for column "${columnId}". Treating the affected ` +
-      'comparison as equal for this evaluation.'
+      'comparison as equal for this evaluation.',
   );
 }
 
@@ -152,7 +152,7 @@ function reportComparatorError(columnId: string): void {
 function guardCompare<TRow>(
   compare: (a: TRow, b: TRow, ctx: ValueOfContext<TRow>) => number,
   columnId: string,
-  reportedColumns: Set<string>
+  reportedColumns: Set<string>,
 ): (a: TRow, b: TRow, ctx: ValueOfContext<TRow>) => number {
   return (a: TRow, b: TRow, ctx: ValueOfContext<TRow>): number => {
     try {
@@ -172,7 +172,7 @@ function reportEnableError(columnId: string): void {
   // `reportComparatorError`.
   console.error(
     `[withSorting] enable threw for column "${columnId}". Treating the column as sortable ` +
-      'for this evaluation.'
+      'for this evaluation.',
   );
 }
 
@@ -193,7 +193,7 @@ function sortRows<TRow>(
   columns: ColumnDef<TRow>[],
   nullsByColumn: ReadonlyMap<string, SortNullsOpts>,
   compareByColumn: ReadonlyMap<string, (a: TRow, b: TRow, ctx: ValueOfContext<TRow>) => number>,
-  knownIds: ReadonlySet<string>
+  knownIds: ReadonlySet<string>,
 ): TRow[] {
   if (rules.length === 0) {
     return rows;
@@ -207,26 +207,27 @@ function sortRows<TRow>(
     if (!column) {
       return [];
     }
-    const accessor = (row: TRow): unknown =>
-      readAccessor(column, row, reportedAccessorColumns);
+    const accessor = (row: TRow): unknown => readAccessor(column, row, reportedAccessorColumns);
     const compare = guardCompare(
       compareByColumn.get(column.id) ?? detectComparator(accessor, rows),
       column.id,
-      reportedComparatorColumns
+      reportedComparatorColumns,
     );
     const sign = rule.direction === 'asc' ? 1 : -1;
     const nulls = nullsOrderFor(nullsByColumn.get(column.id));
 
-    return [(a: TRow, b: TRow): number => {
-      const aEmpty = isEmpty(accessor(a), nullsByColumn.get(column.id));
-      const bEmpty = isEmpty(accessor(b), nullsByColumn.get(column.id));
-      if (aEmpty || bEmpty) {
-        if (aEmpty && bEmpty) return 0;
-        // NOT multiplied by `sign` — placement stays on the same end regardless of direction.
-        return (aEmpty ? 1 : -1) * (nulls === 'last' ? 1 : -1);
-      }
-      return sign * compare(a, b, ctx);
-    }];
+    return [
+      (a: TRow, b: TRow): number => {
+        const aEmpty = isEmpty(accessor(a), nullsByColumn.get(column.id));
+        const bEmpty = isEmpty(accessor(b), nullsByColumn.get(column.id));
+        if (aEmpty || bEmpty) {
+          if (aEmpty && bEmpty) return 0;
+          // NOT multiplied by `sign` — placement stays on the same end regardless of direction.
+          return (aEmpty ? 1 : -1) * (nulls === 'last' ? 1 : -1);
+        }
+        return sign * compare(a, b, ctx);
+      },
+    ];
   });
 
   return [...rows].sort((a, b) => {
@@ -244,21 +245,19 @@ function sortRows<TRow>(
 // map `SortingInput<In>` resolved to for the caller.
 function buildSortingSpec<TRow, TValues extends ColumnValueMap = ColumnValueMap>(
   input: Pick<TableStore<TRow, TValues>, 'columns'>,
-  config: WithSortingConfig<TRow, TValues>
+  config: WithSortingConfig<TRow, TValues>,
 ): TableFeatureSpec<TRow, SortingMembers> {
   const manual = config.manual ?? false;
   const multi = config.multi ?? false;
 
-  const declaredRules = config.schema
-    ? runSortingSchemaFn<TRow, TValues>(config.schema)
-    : [];
+  const declaredRules = config.schema ? runSortingSchemaFn<TRow, TValues>(config.schema) : [];
   // Fixed at this factory's own construction time, reused below by `sortRows`'s resolver
   // guard — never rebuilt from a later, live `input.columns()` read.
   const knownIds = new Set(input.columns().map((column) => column.id));
   assertDeclarationsAreKnown(
     declaredRules.map((rule) => rule.columnId),
     knownIds,
-    'withSorting'
+    'withSorting',
   );
   assertNoDuplicateRuleKinds(declaredRules);
 
@@ -294,11 +293,7 @@ function buildSortingSpec<TRow, TValues extends ColumnValueMap = ColumnValueMap>
     if (!isSortable) {
       return;
     }
-    applySorting(
-      multi
-        ? cycleSortRule(sorting(), columnId)
-        : replaceSortRule(sorting(), columnId)
-    );
+    applySorting(multi ? cycleSortRule(sorting(), columnId) : replaceSortRule(sorting(), columnId));
   }
 
   return {
@@ -340,24 +335,25 @@ function buildSortingSpec<TRow, TValues extends ColumnValueMap = ColumnValueMap>
  * ```
  */
 export function withSorting<In extends SortingInput<In>, D extends DerivedDict>(
-  derive: Feature<NoInfer<In> & SortingMembers, D>
+  derive: Feature<NoInfer<In> & SortingMembers, D>,
 ): Feature<In, SortingMembers & D>;
 export function withSorting<In extends SortingInput<In>>(
-  config?: WithSortingConfig<RowOf<In>, ColumnValuesOf<In>>
+  config?: WithSortingConfig<RowOf<In>, ColumnValuesOf<In>>,
 ): Feature<In, SortingMembers>;
 export function withSorting<In extends SortingInput<In>, D extends DerivedDict>(
   config: WithSortingConfig<RowOf<In>, ColumnValuesOf<In>> | undefined,
-  derive: Feature<NoInfer<In> & SortingMembers, D>
+  derive: Feature<NoInfer<In> & SortingMembers, D>,
 ): Feature<In, SortingMembers & D>;
 export function withSorting(
   a: WithSortingConfig<any, any> | Feature<any, any> = {},
-  b?: Feature<any, any>
+  b?: Feature<any, any>,
 ): Feature<any, any> {
   const isDeriveFirst = typeof a === 'function';
   const config: WithSortingConfig<any, any> = isDeriveFirst ? {} : a;
   const derive = isDeriveFirst ? a : b;
-  const factory = <In extends SortingInput<In>>(input: In): TableFeatureSpec<RowOf<In>, SortingMembers> =>
-    buildSortingSpec(input, config);
+  const factory = <In extends SortingInput<In>>(
+    input: In,
+  ): TableFeatureSpec<RowOf<In>, SortingMembers> => buildSortingSpec(input, config);
   const feature: Feature<any, any> = derive
     ? createTableFeature(factory, derive)
     : createTableFeature(factory);

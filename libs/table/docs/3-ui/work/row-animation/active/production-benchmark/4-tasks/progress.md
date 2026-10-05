@@ -23,15 +23,15 @@ S3 trace summary    ──┘                                            └─�
 Parallel-safe: [1, 2, 3] — no edges between them.
 Dependency: 1, 2, 3 → 4 → 5 → 6 → 7 (and 5 → 7).
 
-| Step | Title | Type | Status |
-|---|---|---|---|
-| 1 | [`apps/table-bench`: production pages](step-1-bench-app-pages.plan.md) | `code` | ⬚ pending |
-| 2 | [Difference statistics (CI + three-way verdict)](step-2-difference-stats.plan.md) | `code` | ⬚ pending |
-| 3 | [Trace summary: script vs style/layout/paint](step-3-trace-summary.plan.md) | `code` | ⬚ pending |
-| 4 | [Playwright driver](step-4-playwright-driver.plan.md) | `code` | ⬚ pending |
-| 5 | [Nx target and first run](step-5-nx-target-first-run.plan.md) | `code` | ⬚ pending |
-| 6 | [Retire the old timing surfaces](step-6-retire-old-timing.plan.md) | `code` | ⬚ pending |
-| 7 | [Docs](step-7-docs.plan.md) | `docs` | ⬚ pending |
+| Step | Title                                                                             | Type   | Status    |
+| ---- | --------------------------------------------------------------------------------- | ------ | --------- |
+| 1    | [`apps/table-bench`: production pages](step-1-bench-app-pages.plan.md)            | `code` | ⬚ pending |
+| 2    | [Difference statistics (CI + three-way verdict)](step-2-difference-stats.plan.md) | `code` | ⬚ pending |
+| 3    | [Trace summary: script vs style/layout/paint](step-3-trace-summary.plan.md)       | `code` | ⬚ pending |
+| 4    | [Playwright driver](step-4-playwright-driver.plan.md)                             | `code` | ⬚ pending |
+| 5    | [Nx target and first run](step-5-nx-target-first-run.plan.md)                     | `code` | ⬚ pending |
+| 6    | [Retire the old timing surfaces](step-6-retire-old-timing.plan.md)                | `code` | ⬚ pending |
+| 7    | [Docs](step-7-docs.plan.md)                                                       | `docs` | ⬚ pending |
 
 Status values: `⬚ pending`, `▶ in progress`, `✅ done`, `⏭ skipped`.
 

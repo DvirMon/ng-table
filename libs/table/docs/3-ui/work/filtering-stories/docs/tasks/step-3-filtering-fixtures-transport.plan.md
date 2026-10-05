@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — filtering/fixtures/handlers.ts + http.ts: GET /api/invoices"
+title: 'Step 3 — filtering/fixtures/handlers.ts + http.ts: GET /api/invoices'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: A (part)
@@ -61,4 +61,5 @@ cluster so the story folders never write into each other.
 - [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
+
 ← [Step 2: filtering fixtures — schema.ts](step-2-filtering-fixtures-schema.plan.md) | [Step 4: client-filtering/](step-4-client-filtering-story.plan.md) →

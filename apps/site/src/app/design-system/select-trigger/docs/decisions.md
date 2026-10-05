@@ -33,7 +33,7 @@ rule rather than left as an inline computed callback.
 
 `docs/spec.md`'s own a11y front-matter asks for `role="combobox"` + `aria-expanded` +
 `aria-controls` on the trigger — that's what's built, unchanged. What it implies about the
-*popup*, though, doesn't hold: a spec-faithful combobox pairs with `aria-haspopup="listbox"` and a
+_popup_, though, doesn't hold: a spec-faithful combobox pairs with `aria-haspopup="listbox"` and a
 `role="listbox"`/`"option"` popup, but `dropdown-menu` (the only option-list component that
 exists) ships `role="menu"` with `menuitem`/`menuitemradio` rows — its own `docs/decisions.md`
 flags this exact mismatch as unresolved and hands the call to this component.
@@ -95,7 +95,7 @@ rule) rather than mirrored into a data attribute, since it isn't state this comp
 `docs/spec.md`'s Build spec table lists two values with no token (`—`): chevron size (12px) and,
 implicitly, font-size (14px, no typescale token in this app matches that value exactly — closest
 is `label-large-sm` at 13px or `body-medium` at 14.5px, neither literally 14px). Both are
-hardcoded per CONVENTIONS.md's rule, which only forbids hardcoding a value *that has* a
+hardcoded per CONVENTIONS.md's rule, which only forbids hardcoding a value _that has_ a
 `--ngpt-*` token — gap (10px) does have an exact match (`--ngpt-sys-space-250`) and uses it instead
 of a literal, even though the spec's own front-matter token list didn't enumerate it.
 

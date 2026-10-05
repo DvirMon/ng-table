@@ -23,12 +23,12 @@ export interface DropdownMenuItem {
   readonly label: string;
   readonly disabled?: boolean;
   readonly selected?: boolean; // current value — accent text + check, role="menuitemradio"
-  readonly group?: string;     // clusters consecutive items under a label + divider
+  readonly group?: string; // clusters consecutive items under a label + divider
 }
 ```
 
 Host: `role="menu"`, `[attr.data-open]` (presence-based, see below). No wrapper `<div>` inside the
-template — `:host` *is* the floating panel (all Build-spec-table CSS lives directly on `:host`),
+template — `:host` _is_ the floating panel (all Build-spec-table CSS lives directly on `:host`),
 so the caller positions/sizes it exactly like any other absolutely-positioned box.
 
 ## `items` beyond the guessed `{ id, label, disabled? }`
@@ -41,7 +41,7 @@ whenever `group` changes between consecutive items (divider only after the first
 when the new group has a name). This keeps `items` a flat, single-shape array instead of a
 discriminated union the fixed contract didn't ask for.
 
-One asymmetry: a divider renders when entering a *new* named group, but not when leaving a named
+One asymmetry: a divider renders when entering a _new_ named group, but not when leaving a named
 group back into an ungrouped run of items. The spec's mock only shows one group, so there's no
 worked example of that transition — documenting it here rather than inventing an unspec'd rule.
 
@@ -51,7 +51,7 @@ worked example of that transition — documenting it here rather than inventing 
 and ARIA section explains why: Select Trigger wants `aria-haspopup="listbox"` + `role="option"` +
 `aria-selected`, Dropdown Pill wants `aria-haspopup="menu"` + `role="menuitem"`. The task brief's
 own Rules section is explicit though ("`role=\"menu\"`/`role=\"menuitem\"` per spec"), and this
-component ships to *both* consumers with one shape, so it commits to the menu model:
+component ships to _both_ consumers with one shape, so it commits to the menu model:
 
 - Host: `role="menu"` (static).
 - Option with `selected` defined (single-choice list, e.g. the "Framework" example in the mock):
@@ -68,14 +68,14 @@ didn't include such an input, so nothing was speculatively added.
 
 ## `select` vs `closed` — which fires when
 
-Every close path emits `closed`; a *commit* also emits `select` first:
+Every close path emits `closed`; a _commit_ also emits `select` first:
 
-| Trigger | `select` | `closed` |
-|---|---|---|
-| Click / Enter / Space on an enabled option | id | yes |
-| Escape | no | yes |
-| Tab (native tab continues — no `preventDefault`) | no | yes |
-| Outside click | no | yes |
+| Trigger                                          | `select` | `closed` |
+| ------------------------------------------------ | -------- | -------- |
+| Click / Enter / Space on an enabled option       | id       | yes      |
+| Escape                                           | no       | yes      |
+| Tab (native tab continues — no `preventDefault`) | no       | yes      |
+| Outside click                                    | no       | yes      |
 
 This is the literal reading of the spec's Keyboard table ("Enter: commits the focused option,
 **closes**, returns focus to trigger"; "Esc: closes without committing"). The component can't
@@ -122,7 +122,7 @@ tabindex was picked because it needs no extra `id` plumbing per item and keeps t
 Disabled options are skipped by the roving system entirely (never receive `tabindex="0"`, never
 targeted by Arrow/Home/End/typeahead) — they stay in the DOM and render `aria-disabled="true"` so
 they're still visible to a screen reader's browse-mode cursor, matching the spec's "stay in the
-tab-around order but are skipped by arrows" note (read as *linear/AT* order, not literal Tab-key
+tab-around order but are skipped by arrows" note (read as _linear/AT_ order, not literal Tab-key
 stops — this widget never uses native Tab to move between its own items; Tab always closes it per
 the Keyboard table).
 
@@ -170,5 +170,5 @@ right now nothing in the repo constructs the `<ng-template>` this component expe
 
 `@media (prefers-reduced-motion: reduce)` in `dropdown-menu.css` zeroes the `translateY` transform
 on both the closed and open (`[data-open]`) states, per CONVENTIONS.md #9 — the global stylesheet
-only collapses transition *durations*, so without this the panel would still slide (just faster)
+only collapses transition _durations_, so without this the panel would still slide (just faster)
 instead of only fading.

@@ -76,6 +76,7 @@ pointing at ADR-0012. Read the whole file first — it's the fullest
 description of the pre-split feature and both new docs derive from it.
 
 **Narrow `expansion.md` to the panel:**
+
 - Drop the "being split" banner — the split is done.
 - Frontmatter: `code: partial` → `shipped` (the `partial` axis rested
   on `everExpanded` being unshipped — Step 1 ships it as part of the
@@ -124,8 +125,8 @@ Per the log's own maintenance rule ("supersede forward, never
 delete"), update **Status** cells only, never remove rows:
 
 - **E5, E6, E9, E13, E15** (the `withTree()`-owned decisions, `PTS D1/
-  D2/D3.../D11` in the Record column) — currently read `accepted, not
-  built`. `withTree()` shipped in #119; flip these to `shipped` with a
+D2/D3.../D11` in the Record column) — currently read `accepted, not
+built`. `withTree()` shipped in #119; flip these to `shipped` with a
   Record note (e.g. "shipped in `with-tree.ts` (#119)").
 - **E7** — `everExpanded` is panel-only. `accepted, not built` →
   `shipped` once Step 1 lands (`withExpansion()`'s `everExpanded`
@@ -142,9 +143,9 @@ delete"), update **Status** cells only, never remove rows:
   `with-tree.ts` (the panel has no `childrenAccessor` to degrade) —
   flip to `shipped`, Record note pointing at `with-tree.ts` only.
 - **E19** — currently `accepted, not built — pinned in #121's
-  acceptance criteria`. Flip to `shipped` once Step 1 ships
+acceptance criteria`. Flip to `shipped` once Step 1 ships
   `table.expansion.changed` exposing `ExpansionChange` directly.
-- **E3** — already reads "shipped ·  stayed E3-shaped via an adapter
+- **E3** — already reads "shipped · stayed E3-shaped via an adapter
   ... until #121; superseded by E19" — no change needed, it's already
   written from this issue's perspective; leave as-is or drop the
   future-tense "until #121" wording now that it's landed.
@@ -211,4 +212,5 @@ delete"), update **Status** cells only, never remove rows:
       `shipped` with a Record note; no row was deleted or renumbered.
 
 ---
+
 ← [Step 2: `with-expansion.spec.ts` narrows to the panel](step-2-with-expansion-spec-narrows-to-panel.plan.md)

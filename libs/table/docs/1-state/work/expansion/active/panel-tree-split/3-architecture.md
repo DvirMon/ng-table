@@ -2,7 +2,7 @@
 title: Architecture — panel/tree split
 type: architecture
 capability: expansion
-ticket: "101"
+ticket: '101'
 date: 2026-09-20
 audience: developers
 ---
@@ -14,36 +14,36 @@ against `libs/table/src` as of 2026-09-20 (post-#107/#108). Spec: [`2-spec.md`](
 
 ## Settled — not open for relitigation
 
-| | Settled |
-|---|---|
-| D1/E5 | `withTree()` takes real-row parents only. No `getDataPath`, no invented parents |
-| D2+D9/E6+E13 | `childrenAccessor` is **optional**, with **no `row.children` fallback**. Omitted ⇒ collapse-only ⇒ the `'tree'` stage is not claimed |
-| D3/E7 | `everExpanded` lives on `withExpansion()`, not in the shared store |
-| D5/E9 | `state()` (`'all' \| 'some' \| 'none'`) is a `withTree()` member, shipped here |
-| D6/E10 | Both features ship as ADR-0015 slices — `table.expansion`, `table.tree`. Other features stay flat until #50 |
-| D7/E11 | `setExpanded` is internal. Public: `toggle` / `expand` / `collapse` / `set`; omitted `ids` = all |
-| D8/E12 | `withGrouping()` is static. `withExpansion()` declares **no** `expandedRows` on its spec |
-| D10/E14 | `initial` ships here, seeded in the factory |
-| D11/E15 | `withTree()` has no levels API, ever |
-| D12/E16 | A throwing `childrenAccessor` degrades to "no children", reported once per evaluation, in production too |
-| E18 | `changed` emits once per write (`{ added, removed }`), not once per id — supersedes E3/E17, no paired D-number (decided via discovery, not the original grill) |
+|              | Settled                                                                                                                                                        |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1/E5        | `withTree()` takes real-row parents only. No `getDataPath`, no invented parents                                                                                |
+| D2+D9/E6+E13 | `childrenAccessor` is **optional**, with **no `row.children` fallback**. Omitted ⇒ collapse-only ⇒ the `'tree'` stage is not claimed                           |
+| D3/E7        | `everExpanded` lives on `withExpansion()`, not in the shared store                                                                                             |
+| D5/E9        | `state()` (`'all' \| 'some' \| 'none'`) is a `withTree()` member, shipped here                                                                                 |
+| D6/E10       | Both features ship as ADR-0015 slices — `table.expansion`, `table.tree`. Other features stay flat until #50                                                    |
+| D7/E11       | `setExpanded` is internal. Public: `toggle` / `expand` / `collapse` / `set`; omitted `ids` = all                                                               |
+| D8/E12       | `withGrouping()` is static. `withExpansion()` declares **no** `expandedRows` on its spec                                                                       |
+| D10/E14      | `initial` ships here, seeded in the factory                                                                                                                    |
+| D11/E15      | `withTree()` has no levels API, ever                                                                                                                           |
+| D12/E16      | A throwing `childrenAccessor` degrades to "no children", reported once per evaluation, in production too                                                       |
+| E18          | `changed` emits once per write (`{ added, removed }`), not once per id — supersedes E3/E17, no paired D-number (decided via discovery, not the original grill) |
 
 G6 needs no fix: `indexById` is built from `config.data()`, and under D1/D2 every tree node
 is an entry there.
 
 ## Current source — what each file does today
 
-| File | Today | After |
-|---|---|---|
-| `api/features/with-expansion.ts` | everything: config, store, verbs, `'tree'` stage, union contribution | panel only |
-| `api/features/expansion/state.ts` | — | **new**: `createExpansionStore()` |
-| `api/features/with-tree.ts` | — | **new**: tree config, stage, discovery walk, `state()` |
-| `engine/core.ts` | unions `expandedSources` into `expanded`, feeds `flattenVisible` | unchanged code; one library contributor instead of one-or-two |
-| `engine/flatten.ts` | the only reader of expansion state; stamps `depth`, `parentId`, `isExpanded` | unchanged |
-| `engine/render-stages.ts` | `RENDER_ORDER = ['group', 'tree']`, `mapNodes`, `RenderNode` | unchanged |
-| `engine/compose-table.ts` | `claimMember()` per member key; `expandedRows` accumulates | unchanged |
-| `api/features/with-grouping/feature.ts` | static clustering + `groupIds()`; JSDoc names `expandAll(table.groupIds())` | JSDoc re-points at `table.tree.expand(...)` |
-| `api/features/editing/state.ts` | the factory precedent to mirror | unchanged |
+| File                                    | Today                                                                        | After                                                         |
+| --------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `api/features/with-expansion.ts`        | everything: config, store, verbs, `'tree'` stage, union contribution         | panel only                                                    |
+| `api/features/expansion/state.ts`       | —                                                                            | **new**: `createExpansionStore()`                             |
+| `api/features/with-tree.ts`             | —                                                                            | **new**: tree config, stage, discovery walk, `state()`        |
+| `engine/core.ts`                        | unions `expandedSources` into `expanded`, feeds `flattenVisible`             | unchanged code; one library contributor instead of one-or-two |
+| `engine/flatten.ts`                     | the only reader of expansion state; stamps `depth`, `parentId`, `isExpanded` | unchanged                                                     |
+| `engine/render-stages.ts`               | `RENDER_ORDER = ['group', 'tree']`, `mapNodes`, `RenderNode`                 | unchanged                                                     |
+| `engine/compose-table.ts`               | `claimMember()` per member key; `expandedRows` accumulates                   | unchanged                                                     |
+| `api/features/with-grouping/feature.ts` | static clustering + `groupIds()`; JSDoc names `expandAll(table.groupIds())`  | JSDoc re-points at `table.tree.expand(...)`                   |
+| `api/features/editing/state.ts`         | the factory precedent to mirror                                              | unchanged                                                     |
 
 Nothing in `engine/` changes shape. This is an `api/features/` split plus a docs pass.
 
@@ -165,7 +165,14 @@ expected:
 ```ts
 const expansion: ExpansionSlice = Object.assign(
   computed(() => store.expanded()),
-  { everExpanded: everExpanded.asReadonly(), changed: store.changed, toggle, expand, collapse, set }
+  {
+    everExpanded: everExpanded.asReadonly(),
+    changed: store.changed,
+    toggle,
+    expand,
+    collapse,
+    set,
+  },
 );
 ```
 
@@ -214,7 +221,7 @@ Wrap once per evaluation, with an evaluation-scoped dedupe set — the shape
 ```ts
 function guardAccessor<TRow>(
   accessor: (row: TRow) => TRow[] | undefined,
-  reported: { done: boolean }
+  reported: { done: boolean },
 ): (row: TRow) => TRow[] | undefined {
   return (row) => {
     try {
@@ -222,7 +229,10 @@ function guardAccessor<TRow>(
     } catch (error) {
       if (!reported.done) {
         reported.done = true;
-        console.error('[withTree] childrenAccessor threw; the row renders without children.', error);
+        console.error(
+          '[withTree] childrenAccessor threw; the row renders without children.',
+          error,
+        );
       }
       return undefined;
     }

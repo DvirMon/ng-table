@@ -21,10 +21,10 @@ export type StagePath<TRow, TTransform, TAnchor extends string> = {
 };
 
 function buildStagePath<TRow, TTransform, TAnchor extends string>(
-  recorder: PathRecorder<TRow, StageRule<TTransform>>
+  recorder: PathRecorder<TRow, StageRule<TTransform>>,
 ): StagePath<TRow, TTransform, TAnchor> {
   return createPathProxy(
-    (id): StageHandle<TRow, TTransform, TAnchor> => ({ id, [PATH_RECORDER]: recorder })
+    (id): StageHandle<TRow, TTransform, TAnchor> => ({ id, [PATH_RECORDER]: recorder }),
   ) as StagePath<TRow, TTransform, TAnchor>;
 }
 
@@ -42,18 +42,18 @@ function buildStagePath<TRow, TTransform, TAnchor extends string>(
  */
 export function stageSchema<TRow>(
   layer: 'pipeline',
-  fn: (path: StagePath<TRow, RowTransform<TRow>, PipelineStage>) => void
+  fn: (path: StagePath<TRow, RowTransform<TRow>, PipelineStage>) => void,
 ): readonly StageRule<RowTransform<TRow>>[];
 export function stageSchema<TRow>(
   layer: 'render',
-  fn: (path: StagePath<TRow, RenderNodeTransform<TRow>, RenderStage>) => void
+  fn: (path: StagePath<TRow, RenderNodeTransform<TRow>, RenderStage>) => void,
 ): readonly StageRule<RenderNodeTransform<TRow>>[];
 export function stageSchema<TRow, TAnchor extends string = string, TTransform = unknown>(
   _layer: 'pipeline' | 'render',
-  fn: (path: StagePath<TRow, TTransform, TAnchor>) => void
+  fn: (path: StagePath<TRow, TTransform, TAnchor>) => void,
 ): readonly StageRule<TTransform>[] {
   return runRecordedSchema<TRow, StageRule<TTransform>, StagePath<TRow, TTransform, TAnchor>>(
     (recorder) => buildStagePath<TRow, TTransform, TAnchor>(recorder),
-    fn
+    fn,
   );
 }

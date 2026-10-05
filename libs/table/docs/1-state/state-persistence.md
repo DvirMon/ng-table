@@ -55,20 +55,20 @@ worth persisting. (Filtering is a table feature (`withFiltering()`) like any oth
 gates this work, but because its criteria don't fit the `filters` slice as originally shaped, per
 the banner above, not because it lives outside the table.) Today the snapshot would contain sort
 rules and column order and nothing else — and a shape fixed against that toy payload is a shape
-that needs migrating four times before it is ever useful. This spec exists now to *fix the
-contract each of those features writes toward*, not to be built now.
+that needs migrating four times before it is ever useful. This spec exists now to _fix the
+contract each of those features writes toward_, not to be built now.
 
 ## Why this doc is unusually prescriptive
 
-PrimeNG is the only one of the four competitors with a *named* persistence API
+PrimeNG is the only one of the four competitors with a _named_ persistence API
 (`[stateStorage]`/`[stateKey]`), and it has accumulated five confirmed correctness bugs
 (see [audit.md](./work/meta/archive/state-feature-competitive-audit/audit.md#state-persistence)). AG Grid,
 the closest thing to a real answer (`getState()`/`setState()`), has its own post-init reapply
 gap (#7445) and does not capture row order (#11492). Both retrofitted persistence onto
 features that already shipped their own state, one slice at a time.
 
-The audit's #3 cross-cutting gap is exactly this: *atomic, round-trippable layout state is
-genuinely hard, not a solved problem any of these four can be copied wholesale.* So the
+The audit's #3 cross-cutting gap is exactly this: _atomic, round-trippable layout state is
+genuinely hard, not a solved problem any of these four can be copied wholesale._ So the
 design rules below are written as constraints on the eventual implementation, and the
 competitors' bug list is transcribed into a test list rather than left as prose.
 
@@ -82,17 +82,17 @@ interface ColumnSnapshotEntry {
   id: string;
   order: number;
   visible: boolean;
-  width?: number;                 // withColumnSizing() — omitted when unsized
-  pinned?: 'left' | 'right';      // withColumnPinning() — omitted when unpinned
+  width?: number; // withColumnSizing() — omitted when unsized
+  pinned?: 'left' | 'right'; // withColumnPinning() — omitted when unpinned
 }
 
 interface TableSnapshot {
   version: SnapshotVersion;
   columns: ColumnSnapshotEntry[];
-  sorting?: SortRule[];                                       // withSorting()
-  filters?: { columnFilters: FilterRule[]; globalFilter: string };  // withFiltering()
-  pagination?: { pageIndex: number; pageSize: number };       // withPagination()
-  grouping?: string[];                                        // withGrouping() — ordered, index 0 = outermost
+  sorting?: SortRule[]; // withSorting()
+  filters?: { columnFilters: FilterRule[]; globalFilter: string }; // withFiltering()
+  pagination?: { pageIndex: number; pageSize: number }; // withPagination()
+  grouping?: string[]; // withGrouping() — ordered, index 0 = outermost
 }
 ```
 
@@ -183,9 +183,9 @@ to a persisted slice:
 ```ts
 // engine/types.ts — proposed addition to TableFeatureSpec
 interface FeatureSnapshotSlice<TSlice> {
-  key: string;                        // claimed via SlotRegistry, like a stage key
-  read(): TSlice;                     // called by serialize()
-  write(slice: TSlice): void;         // called by restore(), inside the transaction
+  key: string; // claimed via SlotRegistry, like a stage key
+  read(): TSlice; // called by serialize()
+  write(slice: TSlice): void; // called by restore(), inside the transaction
 }
 ```
 
@@ -207,20 +207,20 @@ Consequences that make this the preferred shape:
 Transcribed from confirmed competitor bugs, so each has a known failure mode rather than a
 speculative one. These are the acceptance tests, not a wishlist.
 
-| # | Test | Origin |
-|---|---|---|
-| T1 | Column **order** survives a full serialize → reload → restore cycle | PrimeNG #14888 (broken until 17.12.0) |
-| T2 | Column **width** is not corrupted by restore under flex/expand-style sizing; a restored width equals the width written | PrimeNG #12398 |
-| T3 | A slice whose feature is **not composed** is discarded, not partially applied | PrimeNG #9076 (spurious restores) |
-| T4 | Restore does **not** trigger a save write | PrimeNG #6969 |
-| T5 | `setColumns()` replacing the column list **invalidates** the snapshot rather than reapplying it | PrimeNG #8902 |
-| T6 | State applied during restore is settled **before first render**; no post-init reapply pass | AG Grid #7445 |
-| T7 | Every slice a composed feature owns is actually captured — no silently-missing slice | AG Grid #11492 (row order never captured) |
-| T8 | Round-trip identity: `restore(t, serialize(t))` is observably a no-op, for each composition | Rule 9 |
-| T9 | Unknown `version` → snapshot discarded whole, table keeps its configured defaults | Rule 7 |
-| T10 | Unknown column ids dropped; columns missing from the snapshot keep their defaults | Rule 5 |
-| T11 | Corrupt/empty/non-JSON payload is handled as "no snapshot", never as a partial one | Rule 7 |
-| T12 | Change events fire **once** per restore, not once per slice | Rule 2 |
+| #   | Test                                                                                                                   | Origin                                    |
+| --- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| T1  | Column **order** survives a full serialize → reload → restore cycle                                                    | PrimeNG #14888 (broken until 17.12.0)     |
+| T2  | Column **width** is not corrupted by restore under flex/expand-style sizing; a restored width equals the width written | PrimeNG #12398                            |
+| T3  | A slice whose feature is **not composed** is discarded, not partially applied                                          | PrimeNG #9076 (spurious restores)         |
+| T4  | Restore does **not** trigger a save write                                                                              | PrimeNG #6969                             |
+| T5  | `setColumns()` replacing the column list **invalidates** the snapshot rather than reapplying it                        | PrimeNG #8902                             |
+| T6  | State applied during restore is settled **before first render**; no post-init reapply pass                             | AG Grid #7445                             |
+| T7  | Every slice a composed feature owns is actually captured — no silently-missing slice                                   | AG Grid #11492 (row order never captured) |
+| T8  | Round-trip identity: `restore(t, serialize(t))` is observably a no-op, for each composition                            | Rule 9                                    |
+| T9  | Unknown `version` → snapshot discarded whole, table keeps its configured defaults                                      | Rule 7                                    |
+| T10 | Unknown column ids dropped; columns missing from the snapshot keep their defaults                                      | Rule 5                                    |
+| T11 | Corrupt/empty/non-JSON payload is handled as "no snapshot", never as a partial one                                     | Rule 7                                    |
+| T12 | Change events fire **once** per restore, not once per slice                                                            | Rule 2                                    |
 
 ## Non-goals
 
@@ -237,21 +237,21 @@ speculative one. These are the acceptance tests, not a wishlist.
 ## Open questions
 
 - [ ] **Is selection persisted?** PrimeNG deliberately excludes selection and expansion from
-  its persisted slice set. Selection is arguably session state, not layout — but it is also
-  the audit's #2 gap. Both preconditions that used to block this are gone: `withSelection()`
-  has shipped, tested code (`spec: drilled, code: partial`), and D1 settled the selection-scope
-  question (no scope concept — every write names its own ids) on 2026-09-06. `selection.md`'s
-  own D19 already answers the substance: `withSelection()` will declare a persistence slice
-  later, using the `emitEvent: false` silent-write path (D18); it ships none today, by design.
-  Still open here only as a scheduling question — when the slice actually lands, not whether it
-  will.
+      its persisted slice set. Selection is arguably session state, not layout — but it is also
+      the audit's #2 gap. Both preconditions that used to block this are gone: `withSelection()`
+      has shipped, tested code (`spec: drilled, code: partial`), and D1 settled the selection-scope
+      question (no scope concept — every write names its own ids) on 2026-09-06. `selection.md`'s
+      own D19 already answers the substance: `withSelection()` will declare a persistence slice
+      later, using the `emitEvent: false` silent-write path (D18); it ships none today, by design.
+      Still open here only as a scheduling question — when the slice actually lands, not whether it
+      will.
 - [x] **Is expansion persisted?** Resolved 2026-09-07 — **yes, as a slice**, and the slice
-  mechanism above is the *only* restore path expansion gets. The restore verb is each
-  feature's own `.set(ids, options?)` — an atomic replace of the whole open-id set, never a
-  per-id write — so `write()` in the slice below is always `(ids) => table.<slot>.set(ids, {
-  emitEvent: false })`, never a loop over individual toggles. This is what keeps a
-  multi-id restore inside rule 2's one transaction (`set()` fires at most one `changed` event
-  for the whole batch, not one per id).
+      mechanism above is the _only_ restore path expansion gets. The restore verb is each
+      feature's own `.set(ids, options?)` — an atomic replace of the whole open-id set, never a
+      per-id write — so `write()` in the slice below is always `(ids) => table.<slot>.set(ids, {
+emitEvent: false })`, never a loop over individual toggles. This is what keeps a
+      multi-id restore inside rule 2's one transaction (`set()` fires at most one `changed` event
+      for the whole batch, not one per id).
 
   **Split by [ADR-0012](../adr/0012-split-expansion-into-panel-and-tree.md) into two
   independent slices, one per feature, each claimed under its own `key`:**
@@ -274,19 +274,20 @@ speculative one. These are the acceptance tests, not a wishlist.
   arrives later; keep-unknown matches how synthetic `group:*` ids already live in `withTree()`'s
   set when composed under `withGrouping()`. Decide once, for all three id-keyed features
   (expansion, tree, selection).
+
 - [ ] **Migration policy beyond "discard".** Rule 7 discards an unknown version. A
-  `migrate?: (unknown) => TableSnapshot | null` escape hatch would let consumers upgrade
-  their own stored payloads, but invites exactly the field-probing rule 7 forbids.
+      `migrate?: (unknown) => TableSnapshot | null` escape hatch would let consumers upgrade
+      their own stored payloads, but invites exactly the field-probing rule 7 forbids.
 - [ ] **Snapshot key scoping.** PrimeNG's `stateKey` is a bare string, which collides across
-  two tables on one route and across two users on one device. Whether the key is
-  consumer-supplied, route-derived or user-scoped is undecided.
+      two tables on one route and across two users on one device. Whether the key is
+      consumer-supplied, route-derived or user-scoped is undecided.
 - [ ] **Async restore and first paint.** A `TableStateStorage` returning a `Promise` (server
-  profile, IndexedDB) cannot satisfy rule 2's "before first render" without a gate. Does the
-  table render defaults and reflow, or hold until the snapshot resolves?
+      profile, IndexedDB) cannot satisfy rule 2's "before first render" without a gate. Does the
+      table render defaults and reflow, or hold until the snapshot resolves?
 - [ ] **Does the snapshot mechanism need an ADR before any of it lands?** The
-  `FeatureSnapshotSlice` addition changes `TableFeatureSpec`. Assumed yes; not written.
+      `FeatureSnapshotSlice` addition changes `TableFeatureSpec`. Assumed yes; not written.
 - [ ] **Not yet drilled.** `spec: drafted` — no decisions session has validated any shape
-  above.
+      above.
 
 ## Competitive position
 

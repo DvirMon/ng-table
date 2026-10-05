@@ -1,5 +1,5 @@
 ---
-title: "Review — filtering stories: CriterionControl, host-level declaration, Signal Forms"
+title: 'Review — filtering stories: CriterionControl, host-level declaration, Signal Forms'
 type: review
 plan: ./1-gap-analysis.md
 date: 2026-09-13
@@ -16,7 +16,7 @@ Three defects raised on the shipped filtering stories. Two of them share one roo
 `createSelectionInvoiceFilters()`; each host calls the factory in a field initializer.
 
 `createTable()` is declared at the host (`client-filtering-story-host.component.ts:96`), with only
-its *config* in `fixtures/schema.ts`. `createFilters()` should read the same way — the schema
+its _config_ in `fixtures/schema.ts`. `createFilters()` should read the same way — the schema
 callback is the thing a consumer writes, and hiding it one file away is the opposite of what a
 story is for.
 
@@ -65,7 +65,7 @@ Two call-site constraints found while probing, both worth knowing before S1:
   the assignment fails again. `In` is meant to come contextually from `createTable()`, which is
   how every real call site already reads.
 
-`keepValidCriteria()` / `STALE_SAVED_FILTER` in the client host are a *different* thing and stay:
+`keepValidCriteria()` / `STALE_SAVED_FILTER` in the client host are a _different_ thing and stay:
 they narrow genuinely untrusted persisted JSON, which is the story's point.
 
 ## D3 — no Signal Forms binding anywhere, and a sync effect where the docs forbid one
@@ -80,6 +80,7 @@ Client and selection hosts bind nothing through Signal Forms: every input is a t
 ```ts
 readonly filterForm = form(this.filters().value, (path) => { debounce(path.search, 300); });
 ```
+
 ```html
 <input [formField]="filterForm.search" />
 ```
@@ -103,7 +104,9 @@ Duplicated state plus a sync effect — exactly the three things R18 says the de
 `buildFiltersRoot()` (`api/filters/state.ts:96`) builds it as a plain getter:
 
 ```ts
-value: (): TState => { /* reads each node, returns a fresh object */ }
+value: (): TState => {
+  /* reads each node, returns a fresh object */
+};
 ```
 
 No `set`, no `update`, not a signal node. So `form(this.filters().value, …)` — the documented
@@ -166,7 +169,7 @@ L2 (library) withFiltering TState param ───┘        typed nodes, form() 
 - **Signal Forms over the criterion model.** Each host runs `form(this.filters().value)`; text,
   number and date inputs bind with `[formField]`. The server host's duplicate `searchModel` and
   its sync `effect` are gone — `serverFilterFormSchema` debounces `path.search` on the filter
-  model itself, so the typing pause *is* the criterion write.
+  model itself, so the typing pause _is_ the criterion write.
 
 ### One control stays hand-wired
 
@@ -178,7 +181,7 @@ what empty means — `equals(path.status, { emptyValue: '' })` — and all three
 through plain `[formField]` with an `<option value="">`. No accessor, no adapter.
 
 > **Mechanism changed 2026-09-16 by [#82](https://github.com/DvirMon/ng-table/issues/82); the
-> outcome did not.** `emptyValue` became *additive*, so an `equals` criterion always carries the
+> outcome did not.** `emptyValue` became _additive_, so an `equals` criterion always carries the
 > rule's own `null` alongside any declared empty — which a `<select>`'s `string` control value
 > cannot hold. All three hosts now declare the status filter as
 > `filter(path.status, matchesStatus, { emptyValue: '' })` (`matchesStatus` in
@@ -206,15 +209,15 @@ supported route and needs no assertion.
 
 ## Tracked follow-ups
 
-| Issue | What |
-|---|---|
+| Issue                                                | What                                                                                                                                                                                                                                                                                                                                                            |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [#63](https://github.com/DvirMon/ng-table/issues/63) | **Closed** by `FilterOptions.emptyValue` — the status select binds through `[formField]`; the tag multi-select stays hand-wired by the control's own shape. Still closed after [#82](https://github.com/DvirMon/ng-table/issues/82), which moved the mechanism to `filter(path.status, matchesStatus, { emptyValue: '' })` — see "One control stays hand-wired" |
-| [#64](https://github.com/DvirMon/ng-table/issues/64) | No runtime coverage for the writable root or `form()` over the criterion model |
-| [#65](https://github.com/DvirMon/ng-table/issues/65) | Restoring a persisted snapshot has no typed entry point |
-| [#66](https://github.com/DvirMon/ng-table/issues/66) | `.storybook/preview.ts` implicit-any errors |
-| [#56](https://github.com/DvirMon/ng-table/issues/56) | **Closed** by L2 — typed `createFilters()` state now reaches `withFiltering()` |
-| [#57](https://github.com/DvirMon/ng-table/issues/57) | Partially addressed — typed `TState` fixes property access; the `composition/derived-state` story has not adopted it |
-| [#60](https://github.com/DvirMon/ng-table/issues/60) | Plain `tsc` misses template errors — hit twice in this review |
+| [#64](https://github.com/DvirMon/ng-table/issues/64) | No runtime coverage for the writable root or `form()` over the criterion model                                                                                                                                                                                                                                                                                  |
+| [#65](https://github.com/DvirMon/ng-table/issues/65) | Restoring a persisted snapshot has no typed entry point                                                                                                                                                                                                                                                                                                         |
+| [#66](https://github.com/DvirMon/ng-table/issues/66) | `.storybook/preview.ts` implicit-any errors                                                                                                                                                                                                                                                                                                                     |
+| [#56](https://github.com/DvirMon/ng-table/issues/56) | **Closed** by L2 — typed `createFilters()` state now reaches `withFiltering()`                                                                                                                                                                                                                                                                                  |
+| [#57](https://github.com/DvirMon/ng-table/issues/57) | Partially addressed — typed `TState` fixes property access; the `composition/derived-state` story has not adopted it                                                                                                                                                                                                                                            |
+| [#60](https://github.com/DvirMon/ng-table/issues/60) | Plain `tsc` misses template errors — hit twice in this review                                                                                                                                                                                                                                                                                                   |
 
 ## Not verified
 

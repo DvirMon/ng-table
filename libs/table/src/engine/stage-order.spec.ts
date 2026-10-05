@@ -25,7 +25,7 @@ function declare(
   name: string,
   anchor: string,
   placement: 'before' | 'after',
-  opts: { synthesizesRows?: boolean } = {}
+  opts: { synthesizesRows?: boolean } = {},
 ): LabelledStageRule<Run> {
   return {
     label,
@@ -36,15 +36,13 @@ function declare(
 /** For each resolved stage, the run it must be paired with — the resolved name is the anchor
  *  for a claim, or the declared name for a declare. */
 function expectedRunByName(rules: readonly LabelledStageRule<Run>[]): Map<string, Run> {
-  return new Map(
-    rules.map(({ rule }) => [('name' in rule ? rule.name : rule.anchor), rule.run])
-  );
+  return new Map(rules.map(({ rule }) => ['name' in rule ? rule.name : rule.anchor, rule.run]));
 }
 
 function assertResolvesTo(
   layer: Layer,
   rules: readonly LabelledStageRule<Run>[],
-  expectedNames: readonly string[]
+  expectedNames: readonly string[],
 ): void {
   const resolved = resolveStageOrder(layer, rules);
   expect(resolved.map((stage) => stage.name)).toEqual(expectedNames);
@@ -178,10 +176,7 @@ describe('resolveStageOrder', () => {
       [
         'L: duplicate declared name',
         'render',
-        [
-          declare('withPinA', 'pin', 'tree', 'after'),
-          declare('withPinB', 'pin', 'tree', 'after'),
-        ],
+        [declare('withPinA', 'pin', 'tree', 'after'), declare('withPinB', 'pin', 'tree', 'after')],
         [/^\[createTable\]/, /withPinA/, /withPinB/, /"pin"/, /duplicate/i],
       ],
       [

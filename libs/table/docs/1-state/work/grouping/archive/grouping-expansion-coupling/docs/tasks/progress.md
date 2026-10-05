@@ -3,15 +3,15 @@
 **Issue:** #98
 **Status:** 7 / 7 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | ADR-0017: engine-owned descendant prune | ✅ done | — |
-| 2 | `RenderRow.parentId` + both synthesizing stages stamp it | ✅ done | — |
-| 3 | Accumulating `collapsedRows` slot + feature plumbing | ✅ done (renamed `expandedRows`) | — |
-| 4 | `'prune'` stage + engine wiring | ✅ done | — |
-| 5 | Engine tests — prune position, no-op, two contributors | ✅ done | — |
-| 6 | Feature + compile-time tests — `parentId` on both paths | ✅ done | — |
-| 7 | Mark D11 and ADR-0011 superseded | ✅ done | — |
+| Step | Title                                                    | Status                           | PR  |
+| ---- | -------------------------------------------------------- | -------------------------------- | --- |
+| 1    | ADR-0017: engine-owned descendant prune                  | ✅ done                          | —   |
+| 2    | `RenderRow.parentId` + both synthesizing stages stamp it | ✅ done                          | —   |
+| 3    | Accumulating `collapsedRows` slot + feature plumbing     | ✅ done (renamed `expandedRows`) | —   |
+| 4    | `'prune'` stage + engine wiring                          | ✅ done                          | —   |
+| 5    | Engine tests — prune position, no-op, two contributors   | ✅ done                          | —   |
+| 6    | Feature + compile-time tests — `parentId` on both paths  | ✅ done                          | —   |
+| 7    | Mark D11 and ADR-0011 superseded                         | ✅ done                          | —   |
 
 ## Dependency graph
 

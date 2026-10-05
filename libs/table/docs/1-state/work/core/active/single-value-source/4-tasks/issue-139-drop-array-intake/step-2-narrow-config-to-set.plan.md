@@ -38,8 +38,11 @@ Nothing is left for it to do.
    ```ts
    export interface TableConfig<
      TRow,
-     TCols extends readonly ColumnDecl<TRow, string, unknown>[] =
-       readonly ColumnDecl<TRow, string, unknown>[],
+     TCols extends readonly ColumnDecl<TRow, string, unknown>[] = readonly ColumnDecl<
+       TRow,
+       string,
+       unknown
+     >[],
    > {
      trackBy: TrackByConfig<TRow>;
      columns: ColumnSet<TRow, TCols>;
@@ -52,6 +55,7 @@ Nothing is left for it to do.
    using the array's id inference as the reason. Keep the
    `TCols` keying. Rewrite the note so it no longer names a
    plain array.
+
 2. **Intake** in `create-table.ts`: replace the
    `resolveColumnsIntake` call and the comment block
    (`:38-42`) with a direct unpack:
@@ -111,4 +115,5 @@ Nothing is left for it to do.
       until Step 3, if the constraint mismatch surfaces there).
 
 ---
+
 ← [Step 1: Move specs off `resolveColumnsConfig`](step-1-move-specs-off-resolve.plan.md) | [Step 3: Generator constraint, regenerated](step-3-generator-constraint.plan.md) →

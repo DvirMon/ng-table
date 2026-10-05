@@ -5,7 +5,7 @@ import { assertDeclarationsAreKnown, assertWrittenIdsAreKnown } from './validate
 describe('assertDeclarationsAreKnown', () => {
   it('throws and names the declaring surface when an id is unknown', () => {
     expect(() =>
-      assertDeclarationsAreKnown(['region'], ['name', 'status'], 'withGrouping')
+      assertDeclarationsAreKnown(['region'], ['name', 'status'], 'withGrouping'),
     ).toThrow(/^\[withGrouping\] Unknown column id "region"/);
   });
 
@@ -22,19 +22,17 @@ describe('assertDeclarationsAreKnown', () => {
 
   it('does not throw when every declared id is known, including a duplicate', () => {
     expect(() =>
-      assertDeclarationsAreKnown(['name'], ['name', 'status'], 'withGrouping')
+      assertDeclarationsAreKnown(['name'], ['name', 'status'], 'withGrouping'),
     ).not.toThrow();
 
     expect(() =>
-      assertDeclarationsAreKnown(['name', 'name'], ['name', 'status'], 'withGrouping')
+      assertDeclarationsAreKnown(['name', 'name'], ['name', 'status'], 'withGrouping'),
     ).not.toThrow();
   });
 
   it('is a no-op when declaredIds is empty, even against an empty knownIds', () => {
     expect(() => assertDeclarationsAreKnown([], [], 'withGrouping')).not.toThrow();
-    expect(() =>
-      assertDeclarationsAreKnown([], new Set(['name']), 'withGrouping')
-    ).not.toThrow();
+    expect(() => assertDeclarationsAreKnown([], new Set(['name']), 'withGrouping')).not.toThrow();
   });
 });
 
@@ -44,7 +42,7 @@ describe('G76: construction check is dev-only, writer check is not', () => {
     setNgDevMode(false);
     try {
       expect(() =>
-        assertDeclarationsAreKnown(['nope'], ['name', 'status'], 'withGrouping')
+        assertDeclarationsAreKnown(['nope'], ['name', 'status'], 'withGrouping'),
       ).not.toThrow();
     } finally {
       setNgDevMode(previous);
@@ -55,9 +53,9 @@ describe('G76: construction check is dev-only, writer check is not', () => {
     const previous = getNgDevMode();
     setNgDevMode(false);
     try {
-      expect(() =>
-        assertWrittenIdsAreKnown(['nope'], ['name', 'status'], 'withGrouping')
-      ).toThrow(/^\[withGrouping\] Unknown column id "nope"/);
+      expect(() => assertWrittenIdsAreKnown(['nope'], ['name', 'status'], 'withGrouping')).toThrow(
+        /^\[withGrouping\] Unknown column id "nope"/,
+      );
     } finally {
       setNgDevMode(previous);
     }

@@ -92,7 +92,13 @@ function setup(hostType: Type<Host>): Setup {
   };
   const visibleRowIds = (): string[] =>
     Array.from(root.querySelectorAll('[role="row"]')).map((row) => row.textContent!.trim());
-  return { fixture, toggle, clickToggle, visibleRowIds, rowClicks: fixture.componentInstance.rowClicks };
+  return {
+    fixture,
+    toggle,
+    clickToggle,
+    visibleRowIds,
+    rowClicks: fixture.componentInstance.rowClicks,
+  };
 }
 
 const CHECK_ROWS: TaskTreeMockRow[] = [
@@ -127,7 +133,10 @@ function createCheckTable(rows: TaskTreeMockRow[], tree: boolean) {
 
 const CHECK_IMPORTS = [NgpTableDirective, NgpTableRowDirective, NgpTableTreeToggleDirective];
 
-@Component({ imports: CHECK_IMPORTS, template: checksTemplate('<button ngpTableTreeToggle></button>') })
+@Component({
+  imports: CHECK_IMPORTS,
+  template: checksTemplate('<button ngpTableTreeToggle></button>'),
+})
 class NoTreeHost {
   protected readonly table = createCheckTable(CHECK_ROWS, false);
 }

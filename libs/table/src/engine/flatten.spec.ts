@@ -125,9 +125,7 @@ describe('flattenVisible', () => {
 
   describe('isExpanded stamping (D1 / D1a)', () => {
     it('is undefined on every row, headers included, when expanded is undefined — zero contributors', () => {
-      const tree = [
-        node('header', { kind: 'group', data: null, children: [node('row1')] }),
-      ];
+      const tree = [node('header', { kind: 'group', data: null, children: [node('row1')] })];
 
       const result = flattenVisible(tree, undefined);
 

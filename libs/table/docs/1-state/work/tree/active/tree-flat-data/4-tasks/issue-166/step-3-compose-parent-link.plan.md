@@ -9,6 +9,7 @@ files:
   - libs/table/src/api/features/compose-features.spec.ts
   - libs/table/src/api/create-table.spec.ts
 ---
+
 # Step 3 — parentLink through composeFeatures() and derive blocks
 
 This step forwards a `parentLink` contribution through
@@ -53,4 +54,5 @@ Decisions: [A3](../../3-architecture.md), [ADR-0028](../../../../../../../adr/00
       `parentLink`.
 
 ---
+
 ← [Step 2: `parentLink` slot, claimed once](step-2-parent-link-slot.plan.md)

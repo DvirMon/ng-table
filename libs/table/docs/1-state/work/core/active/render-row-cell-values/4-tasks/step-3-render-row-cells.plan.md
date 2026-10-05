@@ -9,16 +9,16 @@ wrap around `accessor`, and the central stamp in `renderRows`. The behavioral ce
 
 ## Files
 
-| File | Action |
-|---|---|
-| `libs/table/src/api/types.ts` | edit — `cells` on `RenderRow` |
-| `libs/table/src/engine/cells.ts` | create — `readAccessor`, `buildDataCells`, `buildGroupCells` |
-| `libs/table/src/engine/render-stages.ts` | edit — `StagedRow<TRow>` alias, signatures |
-| `libs/table/src/engine/core.ts` | edit — `renderRows` reads `columns()`, stamps `cells` |
-| `libs/table/src/engine/rows.ts` | edit — `StagedRow` in `buildDefaultRenderRows`'s return type |
-| `libs/table/src/engine/grouping/render.ts` | edit — `StagedRow` |
-| `libs/table/src/api/features/with-expansion.ts` | edit — `StagedRow` |
-| `libs/table/src/table.mock.ts` | edit — `cells: {}` on both render-row factories |
+| File                                            | Action                                                       |
+| ----------------------------------------------- | ------------------------------------------------------------ |
+| `libs/table/src/api/types.ts`                   | edit — `cells` on `RenderRow`                                |
+| `libs/table/src/engine/cells.ts`                | create — `readAccessor`, `buildDataCells`, `buildGroupCells` |
+| `libs/table/src/engine/render-stages.ts`        | edit — `StagedRow<TRow>` alias, signatures                   |
+| `libs/table/src/engine/core.ts`                 | edit — `renderRows` reads `columns()`, stamps `cells`        |
+| `libs/table/src/engine/rows.ts`                 | edit — `StagedRow` in `buildDefaultRenderRows`'s return type |
+| `libs/table/src/engine/grouping/render.ts`      | edit — `StagedRow`                                           |
+| `libs/table/src/api/features/with-expansion.ts` | edit — `StagedRow`                                           |
+| `libs/table/src/table.mock.ts`                  | edit — `cells: {}` on both render-row factories              |
 
 ## Why This Step Exists
 
@@ -73,7 +73,7 @@ function reportAccessorError(columnId: string): void {
   // runtime-degradation logging abstraction to reuse in this codebase yet.
   console.error(
     `[createTable] accessor threw for column "${columnId}". Falling back to an undefined cell ` +
-      'value for the affected row(s) in this evaluation.'
+      'value for the affected row(s) in this evaluation.',
   );
 }
 
@@ -83,7 +83,7 @@ function reportAccessorError(columnId: string): void {
 export function readAccessor<TRow>(
   column: ColumnDef<TRow>,
   row: TRow,
-  reportedColumns: Set<string>
+  reportedColumns: Set<string>,
 ): unknown {
   try {
     return column.accessor(row);
@@ -99,7 +99,7 @@ export function readAccessor<TRow>(
 export function buildDataCells<TRow>(
   row: TRow,
   columns: ColumnDef<TRow>[],
-  reportedColumns: Set<string>
+  reportedColumns: Set<string>,
 ): Readonly<Record<string, unknown>> {
   const cells: Record<string, unknown> = {};
   for (const column of columns) {
@@ -112,7 +112,7 @@ export function buildDataCells<TRow>(
  * `groupKey.label`, never a `cells` entry — `aggregates` and `groupKey.columnId` name different
  * vocabularies (ADR-0021), so merging them would put a group value in an unrelated column. */
 export function buildGroupCells(
-  aggregates: Record<string, unknown> | undefined
+  aggregates: Record<string, unknown> | undefined,
 ): Readonly<Record<string, unknown>> {
   return { ...aggregates };
 }
@@ -173,7 +173,7 @@ synthesizes a row therefore does not have to know `cells` exists — which is ex
 
 **Why a group row reads `aggregates` rather than running `accessor` over `row.data`.** There is
 no `TRow` behind a group header (`data: null`), so there is nothing to accessor. The aggregate
-*is* the column's value for that row.
+_is_ the column's value for that row.
 
 **A column with no `aggregateFn` yields `undefined` in a group row's `cells`** — identical to
 what `row.aggregates?.[column.id]` returns today. The story migration in Step 8 depends on that
@@ -191,13 +191,13 @@ testable without a store.
 - **Do not filter by `visible`.** `cells` carries every resolved column (D3). The consumer's
   `visibleColumns()` loop is what hides a column, and it still is.
 - **Do not put `groupKey.value` into `cells`.** D5 was amended specifically to remove it:
-  `groupKey.columnId` is a *row field* name, `cells` is keyed by *declared column id*, and
+  `groupKey.columnId` is a _row field_ name, `cells` is keyed by _declared column id_, and
   merging the two vocabularies puts a group value in the wrong column whenever they coincide. A
   group header renders `row.groupKey.label`.
 - **One `Set` per evaluation, not per row.** Creating it inside the `.map()` is a silent
   regression to once-per-row reporting — ADR-0014 names that as a failure mode, not a detail.
 - **Wrap per callback, never per row.** `readAccessor`'s `try` is around one `accessor` call,
-  which is the callback's own granularity here — a cell *is* one invocation. Do not hoist the
+  which is the callback's own granularity here — a cell _is_ one invocation. Do not hoist the
   `try` to wrap the whole `buildDataCells` loop: that would degrade every column in a row because
   one column threw.
 - **`with-sorting.ts:117-118` stays unwrapped.** It is the one remaining legacy `accessor` site
@@ -237,4 +237,5 @@ testable without a store.
       after fixing any `.ts` error.
 
 ---
+
 ← [Step 2: Duplicate column id throws](step-2-duplicate-column-id-throw.plan.md) | [Step 4: Non-primitive group value reports](step-4-non-primitive-group-value-report.plan.md) →

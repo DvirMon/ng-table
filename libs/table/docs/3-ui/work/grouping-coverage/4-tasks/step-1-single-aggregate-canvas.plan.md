@@ -8,8 +8,8 @@
 
 When `fixtures/schema.ts` was split into `groupingConfig` (whose `amount` column carries
 `sumAmount`) and `plainGroupingConfig` (no `aggregateFn` anywhere), three hosts kept the wrong
-one. The user noticed totals rendering in stories whose lesson is not aggregation: *"we are not
-showing a specific code in a specific story."*
+one. The user noticed totals rendering in stories whose lesson is not aggregation: _"we are not
+showing a specific code in a specific story."_
 
 Decision D2: a group total appears on exactly one canvas — `grouping-aggregates/`, the story that
 owns `aggregateFn`.

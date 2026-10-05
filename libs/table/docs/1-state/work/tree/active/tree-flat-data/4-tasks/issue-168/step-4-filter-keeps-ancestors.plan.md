@@ -7,6 +7,7 @@ files:
   - libs/table/src/api/features/with-filtering/feature.ts
   - libs/table/src/api/features/with-filtering/feature.spec.ts
 ---
+
 # Step 4 — Filter keeps ancestors
 
 This step makes the filter stage keep the ancestors of every match when a tree is composed.
@@ -25,7 +26,10 @@ Decisions: [D5](../../1-decisions.md), [A2](../../3-architecture.md)
 - Contribute the box through the slot:
 
   ```ts
-  contextRows: computed(() => { input.rows(); return box.ids; })
+  contextRows: computed(() => {
+    input.rows();
+    return box.ids;
+  });
   ```
 
 - With `manual: true` or no schema, the early-return path resets the box to empty and runs no retention.
@@ -48,4 +52,5 @@ Decisions: [D5](../../1-decisions.md), [A2](../../3-architecture.md)
 - [ ] `manual: true` flags nothing.
 
 ---
+
 ← [Step 3: Tree retention](step-3-tree-retention.plan.md) | [Step 5: Tree-row directive](step-5-tree-row-directive.plan.md) →

@@ -15,12 +15,15 @@ import { retainTreeMatches } from './tree-retention';
 // from `In.columns` through an extra `keyof Record<...>` indirection. `ColumnValuesOf<In>` reads
 // `In`'s own `__columnValues` phantom directly, with no circularity. Mirrors `GroupingInput`
 // (`with-grouping/feature.ts`).
-type FilteringInput<In> = Pick<TableStore<RowOf<In>, ColumnValuesOf<In>>, 'columns' | 'rows' | 'trackBy'>;
+type FilteringInput<In> = Pick<
+  TableStore<RowOf<In>, ColumnValuesOf<In>>,
+  'columns' | 'rows' | 'trackBy'
+>;
 
 export interface WithFilteringConfig<
   TRow,
   TValues extends ColumnValueMap,
-  S extends Record<string, AnyRule> = {}
+  S extends Record<string, AnyRule> = {},
 > {
   /** Skips the `filter` stage — rows pass through untouched, but the model still builds and
    * `filters` is still exposed. For server-driven filtering via `filters().criteria()`. */
@@ -44,34 +47,35 @@ export interface FilteringMembers<TRow, TState extends Record<string, unknown>> 
  * `docs/1-state/features/filtering.md`.
  */
 export function withFiltering<In extends FilteringInput<In>>(
-  config?: WithFilteringConfig<RowOf<In>, ColumnValuesOf<In>, {}> & { schema?: undefined }
+  config?: WithFilteringConfig<RowOf<In>, ColumnValuesOf<In>, {}> & { schema?: undefined },
 ): Feature<In, {}>;
 export function withFiltering<In extends FilteringInput<In>, S extends Record<string, AnyRule>>(
   config: WithFilteringConfig<RowOf<In>, ColumnValuesOf<In>, S> & {
     schema: (path: FiltersPath<RowOf<In>, ColumnValuesOf<In>>) => S;
-  }
+  },
 ): Feature<In, FilteringMembers<RowOf<In>, StateOf<S>>>;
 export function withFiltering<In extends FilteringInput<In>, D extends DerivedDict>(
-  config: (WithFilteringConfig<RowOf<In>, ColumnValuesOf<In>, {}> & { schema?: undefined }) | undefined,
-  derive: Feature<NoInfer<In>, D>
+  config:
+    | (WithFilteringConfig<RowOf<In>, ColumnValuesOf<In>, {}> & { schema?: undefined })
+    | undefined,
+  derive: Feature<NoInfer<In>, D>,
 ): Feature<In, D>;
 export function withFiltering<
   In extends FilteringInput<In>,
   S extends Record<string, AnyRule>,
-  D extends DerivedDict
+  D extends DerivedDict,
 >(
   config: WithFilteringConfig<RowOf<In>, ColumnValuesOf<In>, S> & {
     schema: (path: FiltersPath<RowOf<In>, ColumnValuesOf<In>>) => S;
   },
-  derive: Feature<NoInfer<In> & FilteringMembers<RowOf<In>, StateOf<S>>, D>
+  derive: Feature<NoInfer<In> & FilteringMembers<RowOf<In>, StateOf<S>>, D>,
 ): Feature<In, FilteringMembers<RowOf<In>, StateOf<S>> & D>;
 export function withFiltering(
   config: WithFilteringConfig<any, any, any> = {},
-  derive?: Feature<any, any>
+  derive?: Feature<any, any>,
 ): Feature<any, any> {
-  const factory = <In extends FilteringInput<In>>(
-    input: In
-  ): TableFeatureSpec<RowOf<In>, any> => buildFilteringSpec(input, config);
+  const factory = <In extends FilteringInput<In>>(input: In): TableFeatureSpec<RowOf<In>, any> =>
+    buildFilteringSpec(input, config);
 
   const feature: Feature<any, any> = derive
     ? createTableFeature(factory, derive)
@@ -85,7 +89,7 @@ export function withFiltering(
 // this function passes through, so the check needs nothing this function doesn't already have.
 function buildFilteringSpec<TRow, TValues extends ColumnValueMap>(
   input: Pick<TableStore<TRow, TValues>, 'columns' | 'rows' | 'trackBy'>,
-  config: WithFilteringConfig<TRow, TValues, any>
+  config: WithFilteringConfig<TRow, TValues, any>,
 ): TableFeatureSpec<TRow, any> {
   const manual = config.manual ?? false;
   const schemaFn = config.schema;

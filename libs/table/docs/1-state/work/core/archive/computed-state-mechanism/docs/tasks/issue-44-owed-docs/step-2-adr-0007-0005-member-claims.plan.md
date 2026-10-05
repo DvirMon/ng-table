@@ -1,12 +1,12 @@
 ---
-title: "Step 2 — ADR-0007 + ADR-0005: core-key pre-claims, the unclaimed totalRowCount, derive-block labels"
+title: 'Step 2 — ADR-0007 + ADR-0005: core-key pre-claims, the unclaimed totalRowCount, derive-block labels'
 type: task-step
 issue: 78
 ---
 
 # Step 2 — ADR-0007 + ADR-0005: core-key pre-claims, the unclaimed `totalRowCount`, derive-block labels
 
-**PR scope:** Two ADRs, one topic. ADR-0005's owed sentence is *about* the claim path ADR-0007
+**PR scope:** Two ADRs, one topic. ADR-0005's owed sentence is _about_ the claim path ADR-0007
 defines, so splitting them would put half a rule in each PR.
 
 **Task type:** docs
@@ -32,7 +32,7 @@ mechanism in three ways the ADR does not mention, and all three are things a fea
   claimed up front, so a feature claiming a core key collides at construction instead of shadowing
   the core.
 - **`totalRowCount` is deliberately left unclaimed.** It is the one core-adjacent key a feature is
-  *allowed* to provide — which is what ADR-0005 needs a sentence about, since ADR-0005 names the
+  _allowed_ to provide — which is what ADR-0005 needs a sentence about, since ADR-0005 names the
   override path (`:82`, `aria-rowcount`) without saying how a feature legitimately takes it.
 - **Derive blocks are claimants too**, and they carry their own label in the collision message.
 
@@ -67,11 +67,11 @@ without an engine change. One sentence, with the cross-link. Not a section.
 - The exact collision-message shapes and label strings are in `engine/slots.ts` and its spec. Read
   them and quote what the code emits — do not invent a message format.
 - ADR-0007's existing voice is short and concrete (`Error: feature #2 already claims member
-  'editing' (claimed by feature #0)`). Match it.
+'editing' (claimed by feature #0)`). Match it.
 
 ## Risks / Watchouts
 
-- ADR-0005 is a *host* ADR; it must not grow a composition section. One sentence and a link, or
+- ADR-0005 is a _host_ ADR; it must not grow a composition section. One sentence and a link, or
   the concern leaks across ADR boundaries.
 - `totalRowCount` being unclaimed is deliberate, not an oversight — say so explicitly, or the next
   reader "fixes" it by pre-claiming it.
@@ -90,4 +90,5 @@ without an engine change. One sentence, with the cross-link. Not a section.
 - [ ] Quoted error/label strings match `engine/slots.ts`
 
 ---
+
 ← [Step 1: ADR-0003 row-type reversal](step-1-adr-0003-row-type-reversal.plan.md) | [Step 3: ADR-0014 derived-signal errors](step-3-adr-0014-derived-signal-errors.plan.md) →

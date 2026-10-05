@@ -24,14 +24,14 @@ composes `withOptimistic()` internally, and both declare `editing` and `pending`
 writing the reasonable-looking:
 
 ```ts
-createTable(data, config, withOptimistic(), withRowEdit())
+createTable(data, config, withOptimistic(), withRowEdit());
 ```
 
 gets two independent snapshot signals. `table.editing.update(captureEdit(id))` writes one;
 `table.pending()` reads the other. No error, no warning — restore points that are captured and
 then never found, which surfaces as rollback silently doing nothing.
 
-The failure is worse than a stage collision precisely because it is *quiet*. A duplicated sort
+The failure is worse than a stage collision precisely because it is _quiet_. A duplicated sort
 stage produces visibly wrong row order. A duplicated member produces a feature that appears to
 work until the exact moment its state is needed.
 
@@ -114,7 +114,7 @@ argument position is not knowable from inside a `Feature`.
 
 **`totalRowCount` is deliberately not pre-claimed.** It is the one core-adjacent key a feature is
 allowed to provide, typed as `OverridableCoreKey` and excluded from `CORE_MEMBER_KEYS` by
-construction — `exhaustiveCoreMemberKeys()` stops compiling if any *other* core member is left off
+construction — `exhaustiveCoreMemberKeys()` stops compiling if any _other_ core member is left off
 the list. The reason is ADR-0005: `totalRowCount` is the documented override point for
 `aria-rowcount`, so a server-paged table must be able to report a total larger than the rows it
 holds. This is the one place a feature wins over the engine by design rather than by collision.

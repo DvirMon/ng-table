@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — with-sorting.ts: withSorting<In>(config?, derive?) on the Feature<In, Out> contract"
+title: 'Step 1 — with-sorting.ts: withSorting<In>(config?, derive?) on the Feature<In, Out> contract'
 type: task-step
 issue: 72
 ---
@@ -55,8 +55,10 @@ The typing mechanism was verified by probe (`probe-r5-feature-conversion.ts.txt`
    ```ts
    function buildSortingSpec<TRow>(
      input: Pick<TableStore<TRow>, 'columns'>,
-     config: WithSortingConfig
-   ): TableFeatureSpec<TRow, SortingMembers> { /* today's inner arrow, `core` → `input` */ }
+     config: WithSortingConfig,
+   ): TableFeatureSpec<TRow, SortingMembers> {
+     /* today's inner arrow, `core` → `input` */
+   }
    ```
 
 3. **Public overloads — this exact order** (derive-first before config-only, or TS fixes the
@@ -65,14 +67,14 @@ The typing mechanism was verified by probe (`probe-r5-feature-conversion.ts.txt`
 
    ```ts
    export function withSorting<In extends SortingInput<In>, D extends DerivedDict>(
-     derive: Feature<NoInfer<In> & SortingMembers, D>
+     derive: Feature<NoInfer<In> & SortingMembers, D>,
    ): Feature<In, SortingMembers & D>;
    export function withSorting<In extends SortingInput<In>>(
-     config?: WithSortingConfig
+     config?: WithSortingConfig,
    ): Feature<In, SortingMembers>;
    export function withSorting<In extends SortingInput<In>, D extends DerivedDict>(
      config: WithSortingConfig | undefined,
-     derive: Feature<NoInfer<In> & SortingMembers, D>
+     derive: Feature<NoInfer<In> & SortingMembers, D>,
    ): Feature<In, SortingMembers & D>;
    ```
 
@@ -82,13 +84,14 @@ The typing mechanism was verified by probe (`probe-r5-feature-conversion.ts.txt`
    ```ts
    export function withSorting(
      a: WithSortingConfig | Feature<any, any> = {},
-     b?: Feature<any, any>
+     b?: Feature<any, any>,
    ): Feature<any, any> {
      const isDeriveFirst = typeof a === 'function';
      const config: WithSortingConfig = isDeriveFirst ? {} : a;
      const derive = isDeriveFirst ? a : b;
-     const factory = <In extends SortingInput<In>>(input: In): TableFeatureSpec<RowOf<In>, SortingMembers> =>
-       buildSortingSpec(input, config);
+     const factory = <In extends SortingInput<In>>(
+       input: In,
+     ): TableFeatureSpec<RowOf<In>, SortingMembers> => buildSortingSpec(input, config);
      const feature: Feature<any, any> = derive
        ? createTableFeature(factory, derive)
        : createTableFeature(factory);
@@ -137,4 +140,5 @@ The typing mechanism was verified by probe (`probe-r5-feature-conversion.ts.txt`
       `with-sorting.ts`.
 
 ---
+
 [Step 2: with-filtering.ts — Feature<In, {}>](step-2-with-filtering.plan.md) →

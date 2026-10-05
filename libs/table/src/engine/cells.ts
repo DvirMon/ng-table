@@ -7,7 +7,7 @@ function reportAccessorError(columnId: string): void {
   // runtime-degradation logging abstraction to reuse in this codebase yet.
   console.error(
     `[createTable] accessor threw for column "${columnId}". Falling back to an undefined cell ` +
-      'value for the affected row(s) in this evaluation.'
+      'value for the affected row(s) in this evaluation.',
   );
 }
 
@@ -22,7 +22,7 @@ function reportAccessorError(columnId: string): void {
 export function readAccessor<TRow>(
   column: ColumnDef<TRow>,
   row: TRow,
-  reportedColumns: Set<string>
+  reportedColumns: Set<string>,
 ): unknown {
   try {
     return column.accessor(row);
@@ -39,7 +39,7 @@ export function readAccessor<TRow>(
 export function buildDataCells<TRow>(
   row: TRow,
   columns: ColumnDef<TRow>[],
-  reportedColumns: Set<string>
+  reportedColumns: Set<string>,
 ): Readonly<Record<string, unknown>> {
   const cells: Record<string, unknown> = {};
   for (const column of columns) {
@@ -56,7 +56,7 @@ export function buildDataCells<TRow>(
  * label lives on `groupKey.label`, never merged into `cells`.
  */
 export function buildGroupCells(
-  aggregates: Record<string, unknown> | undefined
+  aggregates: Record<string, unknown> | undefined,
 ): Readonly<Record<string, unknown>> {
   return { ...aggregates };
 }

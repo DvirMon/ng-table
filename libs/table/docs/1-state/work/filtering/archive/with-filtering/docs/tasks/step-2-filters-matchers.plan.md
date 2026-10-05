@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — Matchers"
+title: 'Step 2 — Matchers'
 type: task-step
 issue: 61
 ---
@@ -38,14 +38,20 @@ matching logic from scratch. Rule functions (Step 5) use these as their default 
      return notNullish(cell) && cell.toLowerCase().includes(criterion.toLowerCase());
    }
 
-   export function isInRange(cell: number, criterion: { min: number | null; max: number | null }): boolean {
+   export function isInRange(
+     cell: number,
+     criterion: { min: number | null; max: number | null },
+   ): boolean {
      if (!notNullish(cell)) return false;
      if (criterion.min != null && cell < criterion.min) return false;
      if (criterion.max != null && cell > criterion.max) return false;
      return true;
    }
 
-   export function isInDateRange(cell: Date, criterion: { from: Date | null; to: Date | null }): boolean {
+   export function isInDateRange(
+     cell: Date,
+     criterion: { from: Date | null; to: Date | null },
+   ): boolean {
      if (!notNullish(cell)) return false;
      if (criterion.from != null && cell < criterion.from) return false;
      if (criterion.to != null && cell > criterion.to) return false;
@@ -82,7 +88,7 @@ matching logic from scratch. Rule functions (Step 5) use these as their default 
 ## Risks / Watchouts
 
 - Don't let `isInRange`/`isInDateRange` throw on a criterion shaped `{min:null,max:null}` — that
-  shape is what `isEmpty` (Step 5) exists to filter out *before* the matcher runs, but the
+  shape is what `isEmpty` (Step 5) exists to filter out _before_ the matcher runs, but the
   matcher itself should still degrade gracefully (both bounds `null` → matches everything) rather
   than assume it's unreachable.
 
@@ -99,4 +105,5 @@ matching logic from scratch. Rule functions (Step 5) use these as their default 
 - [ ] No signals/Angular imports in this file
 
 ---
+
 ← [Step 1: Filter types](step-1-filters-types.plan.md) | [Step 3: Matchers spec](step-3-filters-matchers-spec.plan.md) →

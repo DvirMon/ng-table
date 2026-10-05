@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — withSelection() feature plugin"
+title: 'Step 1 — withSelection() feature plugin'
 type: task-step
 issue: 55
 ---
@@ -29,7 +29,7 @@ issue: 55
 
    ```ts
    export interface WithSelectionConfig<TRow> {
-     enableMultiRowSelection?: boolean | ((row: TRow) => boolean);   // default true
+     enableMultiRowSelection?: boolean | ((row: TRow) => boolean); // default true
      initialSelection?: RowId[];
    }
 
@@ -39,7 +39,7 @@ issue: 55
    }
 
    export interface SelectionWriteOptions {
-     emitEvent?: boolean;                                            // default true
+     emitEvent?: boolean; // default true
    }
 
    export interface SelectionMembers {
@@ -61,16 +61,19 @@ issue: 55
    - `const selectionChangedSource = new Subject<SelectionChange>()` — **must be a plain `Subject`, never `ReplaySubject`/`BehaviorSubject`** (D16 constraint #2 — a replaying variant would deliver construction state to every late subscriber).
 
 4. Resolve the multi-select predicate once at factory time from config:
+
    ```ts
-   const canMultiSelect = typeof config.enableMultiRowSelection === 'function'
-     ? config.enableMultiRowSelection
-     : () => config.enableMultiRowSelection ?? true;
+   const canMultiSelect =
+     typeof config.enableMultiRowSelection === 'function'
+       ? config.enableMultiRowSelection
+       : () => config.enableMultiRowSelection ?? true;
    ```
+
    Evaluated per-id inside each write verb against the row resolved from `core.rows()` (step 2) — never cached, never evaluated once for a whole call.
 
 5. Write a single internal apply function all four write verbs funnel through, so the emit-delta/no-op/collapse rules (D9, D14, D15) live in one place:
    - Compute the next `Set<RowId>` for the requested op (add ids / remove ids / replace-with-last-id when the multi predicate is false for any requested id / clear).
-   - **Multi-select rule (D2/D14):** for `toggle`/`select`, if `canMultiSelect` is `false` for *any* target row involved in a multi-id write, keep only the last id in the write's `ids` array, discarding the rest. Under `ngDevMode`, throw naming the discarded ids (`typeof ngDevMode === 'undefined' || ngDevMode` guard, matching Angular's own convention — no other file in this package uses this guard yet, so this introduces the pattern per D14). In production, truncate silently.
+   - **Multi-select rule (D2/D14):** for `toggle`/`select`, if `canMultiSelect` is `false` for _any_ target row involved in a multi-id write, keep only the last id in the write's `ids` array, discarding the rest. Under `ngDevMode`, throw naming the discarded ids (`typeof ngDevMode === 'undefined' || ngDevMode` guard, matching Angular's own convention — no other file in this package uses this guard yet, so this introduces the pattern per D14). In production, truncate silently.
    - Diff previous vs. next set to get `added`/`removed` (D15: no-op → both empty → skip the signal write and the emission).
    - `selectedIds.set(next)` only when it actually changed.
    - Emit `{ added, removed }` on `selectionChangedSource` unless `opts?.emitEvent === false` (D18) or the delta is empty (D9/D15).
@@ -106,7 +109,7 @@ issue: 55
 - Follow `with-expansion.ts`'s file shape closely (imports, `TableCore`/`TableFeatureSpec` annotated directly — do **not** use `createTableFeature`, per `CLAUDE.md`'s note that internal `with-*()` files annotate directly since `engine/` is already in scope).
 - No render stage, no pipeline stage — this feature only contributes `members`, `onRowsRemoved`, `onDestroy`. Composing it alongside any other feature must never collide (`engine/slots.ts` already throws on a duplicate member name at construction — nothing extra to build here, just don't reuse an existing member key).
 - `RowId = string | number` (`api/types.ts`) — already imported elsewhere as a type-only import; keep it type-only here too.
-- Comments only where they explain a *why* that isn't obvious from the code (the D-references above are for this plan, not necessarily verbatim source comments — keep source comments terse, per repo convention. A short comment noting the "reconciliation is not a write verb, no emission" rule at the `onRowsRemoved` call site is warranted, mirroring `with-expansion.ts`'s existing comment style there).
+- Comments only where they explain a _why_ that isn't obvious from the code (the D-references above are for this plan, not necessarily verbatim source comments — keep source comments terse, per repo convention. A short comment noting the "reconciliation is not a write verb, no emission" rule at the `onRowsRemoved` call site is warranted, mirroring `with-expansion.ts`'s existing comment style there).
 
 ## Risks / Watchouts
 
@@ -131,4 +134,5 @@ issue: 55
 - [ ] `tsc --noEmit` (or the project's equivalent type-check) passes with no new errors.
 
 ---
+
 [Step 2: withSelection() colocated spec](step-2-with-selection-spec.plan.md) →

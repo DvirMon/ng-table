@@ -123,20 +123,20 @@ if (!activeElement || activeElement === this._document.body ||
 
 ## Comparison
 
-| Library / unit | Inline region? | Trigger for restore | Angular / JS mechanism | Checks where focus is? | Source |
-|---|---|---|---|---|---|
-| ng-primitives collapsible / accordion | yes | — none | — | — | [S1][S2] |
-| ng-primitives overlay (popover, menu) | no | `hide()` → before `destroyOverlay` | imperative call + `focusVia` | no | [S3][S4][S5] |
-| ng-primitives dialog | no | `afterClosed$` (after exit animation and detach) | RxJS subscription + `focusVia` | only `body.contains(trigger)` | [S6] |
-| ng-primitives focus trap | — | never restores | `onDestroy` / `overlay.closing` teardown | — | [S7] |
-| CDK `cdkTrapFocus` + autoCapture | either | `ngOnDestroy` | `.focus()` | no | [S9] |
-| CDK Dialog | no | `ngOnDestroy` of the container | `focusVia(target, closeOrigin)` | **yes, inside / body / null** | [S10] |
-| CDK Menu | no | `menuStack.closed` with `focusParentTrigger` | Rx subscription + `.focus()` | no; intent flag instead | [S11] |
-| CDK Accordion | yes | — none | — | — | [S12] |
-| @angular/aria Accordion | yes | — none (`[attr.inert]` only) | — | — | [S14][S15] |
-| React Aria FocusScope | either | layout-effect cleanup, then rAF | `.focus()` | **yes, inside / body** | [S16] |
-| Radix FocusScope | either | effect cleanup, then `setTimeout(0)` | cancelable event + `.focus()` | no | [S17] |
-| Radix Collapsible | yes | — none | — | — | [S18] |
+| Library / unit                        | Inline region? | Trigger for restore                              | Angular / JS mechanism                   | Checks where focus is?        | Source       |
+| ------------------------------------- | -------------- | ------------------------------------------------ | ---------------------------------------- | ----------------------------- | ------------ |
+| ng-primitives collapsible / accordion | yes            | — none                                           | —                                        | —                             | [S1][S2]     |
+| ng-primitives overlay (popover, menu) | no             | `hide()` → before `destroyOverlay`               | imperative call + `focusVia`             | no                            | [S3][S4][S5] |
+| ng-primitives dialog                  | no             | `afterClosed$` (after exit animation and detach) | RxJS subscription + `focusVia`           | only `body.contains(trigger)` | [S6]         |
+| ng-primitives focus trap              | —              | never restores                                   | `onDestroy` / `overlay.closing` teardown | —                             | [S7]         |
+| CDK `cdkTrapFocus` + autoCapture      | either         | `ngOnDestroy`                                    | `.focus()`                               | no                            | [S9]         |
+| CDK Dialog                            | no             | `ngOnDestroy` of the container                   | `focusVia(target, closeOrigin)`          | **yes, inside / body / null** | [S10]        |
+| CDK Menu                              | no             | `menuStack.closed` with `focusParentTrigger`     | Rx subscription + `.focus()`             | no; intent flag instead       | [S11]        |
+| CDK Accordion                         | yes            | — none                                           | —                                        | —                             | [S12]        |
+| @angular/aria Accordion               | yes            | — none (`[attr.inert]` only)                     | —                                        | —                             | [S14][S15]   |
+| React Aria FocusScope                 | either         | layout-effect cleanup, then rAF                  | `.focus()`                               | **yes, inside / body**        | [S16]        |
+| Radix FocusScope                      | either         | effect cleanup, then `setTimeout(0)`             | cancelable event + `.focus()`            | no                            | [S17]        |
+| Radix Collapsible                     | yes            | — none                                           | —                                        | —                             | [S18]        |
 
 ## Synthesis
 
@@ -177,13 +177,13 @@ if (!activeElement || activeElement === this._document.body ||
      - leave it uncovered (CDK Menu also returns focus only on intent [S11]); or
      - add an open→closed reaction. The only precedent for its shape is ng-primitives'
        `explicitEffect` [S1][S7], never used for focus.
-     Ask the user which; do not invent it.
+       Ask the user which; do not invent it.
 
 ## Against
 
 - **The effect reading.** ng-primitives itself uses `explicitEffect([open])` to react to
   open-state transitions on the collapsible [S1]. "An effect is a smell" is stronger than the
-  reference library's own practice for *non-focus* reactions to state it does not write.
+  reference library's own practice for _non-focus_ reactions to state it does not write.
 - **Leaving step 5 uncovered.** A table-level `collapseAll()` while focus is inside a kept-mounted
   panel strands focus on `<body>` after the next render [S20]. No reference library has to
   answer this, so none can be cited for leaving it.
@@ -217,27 +217,27 @@ if (!activeElement || activeElement === this._document.body ||
 
 ## Sources
 
-| | Source | Version | Verified |
-|---|---|---|---|
-| S1 | `node_modules/ng-primitives/fesm2022/ng-primitives-collapsible.mjs:188-279` | 0.130.3 | yes — read; no focus code; `hidden` gated on height 0 |
-| S2 | `node_modules/ng-primitives/fesm2022/ng-primitives-accordion.mjs:11` | 0.130.3 | yes — grep; composes collapsible engine, no focus hits |
-| S3 | `node_modules/ng-primitives/fesm2022/ng-primitives-portal.mjs:1475-1526` | 0.130.3 | yes — read; restore runs before `destroyOverlay`, unguarded |
-| S4 | `node_modules/ng-primitives/fesm2022/ng-primitives-popover.mjs:145` | 0.130.3 | yes — read |
-| S5 | `node_modules/ng-primitives/fesm2022/ng-primitives-menu.mjs:128` | 0.130.3 | yes — read; also lines 336, 463-469, 640-655, 921-924 |
-| S6 | `node_modules/ng-primitives/fesm2022/ng-primitives-dialog.mjs:427-503` | 0.130.3 | yes — read; also `close()` at 124-146 (restore after exit animation) |
-| S7 | `node_modules/ng-primitives/fesm2022/ng-primitives-focus-trap.mjs:73-314` | 0.130.3 | yes — read; corrected the assumption that the trap restores focus — it does not |
-| S8 | `node_modules/ng-primitives/fesm2022/ng-primitives-navigation-menu.mjs:344` | 0.130.3 | yes — read; also `close()` at 518-524 |
-| S9 | `node_modules/@angular/cdk/fesm2022/_a11y-module-chunk.mjs:375-422` | 22.1.7 | yes — read; restore is unguarded `.focus()`, not `focusVia` |
-| S10 | `node_modules/@angular/cdk/fesm2022/dialog.mjs:58-244` | 22.1.7 | yes — read; also `close()` at 380-387 |
-| S11 | `node_modules/@angular/cdk/fesm2022/menu.mjs:756-764` | 22.1.7 | yes — read; also 1234-1251, 1408-1421, 911-923 |
-| S12 | `node_modules/@angular/cdk/fesm2022/accordion.mjs:86-144` | 22.1.7 | yes — grep; no focus code |
-| S13 | `node_modules/@angular/cdk/fesm2022/_focus-monitor-chunk.mjs:183` | 22.1.7 | yes — read signature |
-| S14 | https://unpkg.com/@angular/aria@22.1.7/fesm2022/accordion.mjs | 22.1.7 | yes — WebFetch; `[attr.inert]`, no focus return |
-| S15 | https://unpkg.com/@angular/aria@22.1.7/fesm2022/_accordion-chunk.mjs | 22.1.7 | yes — WebFetch; `close()` has no focus code |
-| S16 | https://unpkg.com/react-aria@3.52.1/dist/private/focus/FocusScope.mjs | 3.52.1 | yes — WebFetch; the first summary was vague, a second read gave the cleanup predicate verbatim |
-| S17 | https://unpkg.com/@radix-ui/react-focus-scope@1.1.16/dist/index.mjs | 1.1.16 | yes — WebFetch; unmount restore is unguarded, `setTimeout(0)` |
-| S18 | https://unpkg.com/@radix-ui/react-collapsible@1.1.20/dist/index.mjs | 1.1.20 | yes — WebFetch; no focus code |
-| S19 | https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/ | — | yes — page read |
-| S20 | https://searchfox.org/firefox-main/source/testing/web-platform/tests/inert/dynamic-inert-on-focused-element.html | unpinned (`main`) | yes — test read |
-| S21 | `node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:4773-4795` | 22.1.2 | yes — read; also 6271-6300 |
-| S22 | WebSearch "focus fixup rule inert" (WHATWG summary) | — | no — search summary only |
+|     | Source                                                                                                           | Version           | Verified                                                                                       |
+| --- | ---------------------------------------------------------------------------------------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------- |
+| S1  | `node_modules/ng-primitives/fesm2022/ng-primitives-collapsible.mjs:188-279`                                      | 0.130.3           | yes — read; no focus code; `hidden` gated on height 0                                          |
+| S2  | `node_modules/ng-primitives/fesm2022/ng-primitives-accordion.mjs:11`                                             | 0.130.3           | yes — grep; composes collapsible engine, no focus hits                                         |
+| S3  | `node_modules/ng-primitives/fesm2022/ng-primitives-portal.mjs:1475-1526`                                         | 0.130.3           | yes — read; restore runs before `destroyOverlay`, unguarded                                    |
+| S4  | `node_modules/ng-primitives/fesm2022/ng-primitives-popover.mjs:145`                                              | 0.130.3           | yes — read                                                                                     |
+| S5  | `node_modules/ng-primitives/fesm2022/ng-primitives-menu.mjs:128`                                                 | 0.130.3           | yes — read; also lines 336, 463-469, 640-655, 921-924                                          |
+| S6  | `node_modules/ng-primitives/fesm2022/ng-primitives-dialog.mjs:427-503`                                           | 0.130.3           | yes — read; also `close()` at 124-146 (restore after exit animation)                           |
+| S7  | `node_modules/ng-primitives/fesm2022/ng-primitives-focus-trap.mjs:73-314`                                        | 0.130.3           | yes — read; corrected the assumption that the trap restores focus — it does not                |
+| S8  | `node_modules/ng-primitives/fesm2022/ng-primitives-navigation-menu.mjs:344`                                      | 0.130.3           | yes — read; also `close()` at 518-524                                                          |
+| S9  | `node_modules/@angular/cdk/fesm2022/_a11y-module-chunk.mjs:375-422`                                              | 22.1.7            | yes — read; restore is unguarded `.focus()`, not `focusVia`                                    |
+| S10 | `node_modules/@angular/cdk/fesm2022/dialog.mjs:58-244`                                                           | 22.1.7            | yes — read; also `close()` at 380-387                                                          |
+| S11 | `node_modules/@angular/cdk/fesm2022/menu.mjs:756-764`                                                            | 22.1.7            | yes — read; also 1234-1251, 1408-1421, 911-923                                                 |
+| S12 | `node_modules/@angular/cdk/fesm2022/accordion.mjs:86-144`                                                        | 22.1.7            | yes — grep; no focus code                                                                      |
+| S13 | `node_modules/@angular/cdk/fesm2022/_focus-monitor-chunk.mjs:183`                                                | 22.1.7            | yes — read signature                                                                           |
+| S14 | https://unpkg.com/@angular/aria@22.1.7/fesm2022/accordion.mjs                                                    | 22.1.7            | yes — WebFetch; `[attr.inert]`, no focus return                                                |
+| S15 | https://unpkg.com/@angular/aria@22.1.7/fesm2022/_accordion-chunk.mjs                                             | 22.1.7            | yes — WebFetch; `close()` has no focus code                                                    |
+| S16 | https://unpkg.com/react-aria@3.52.1/dist/private/focus/FocusScope.mjs                                            | 3.52.1            | yes — WebFetch; the first summary was vague, a second read gave the cleanup predicate verbatim |
+| S17 | https://unpkg.com/@radix-ui/react-focus-scope@1.1.16/dist/index.mjs                                              | 1.1.16            | yes — WebFetch; unmount restore is unguarded, `setTimeout(0)`                                  |
+| S18 | https://unpkg.com/@radix-ui/react-collapsible@1.1.20/dist/index.mjs                                              | 1.1.20            | yes — WebFetch; no focus code                                                                  |
+| S19 | https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/                                                             | —                 | yes — page read                                                                                |
+| S20 | https://searchfox.org/firefox-main/source/testing/web-platform/tests/inert/dynamic-inert-on-focused-element.html | unpinned (`main`) | yes — test read                                                                                |
+| S21 | `node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:4773-4795`                                            | 22.1.2            | yes — read; also 6271-6300                                                                     |
+| S22 | WebSearch "focus fixup rule inert" (WHATWG summary)                                                              | —                 | no — search summary only                                                                       |

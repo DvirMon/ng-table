@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — with-expansion.ts: withExpansion<In>(config?, derive?) on the Feature<In, Out> contract"
+title: 'Step 2 — with-expansion.ts: withExpansion<In>(config?, derive?) on the Feature<In, Out> contract'
 type: task-step
 issue: 73
 ---
@@ -49,14 +49,14 @@ that, but the member name and signal shape must not change.
 
    ```ts
    export function withExpansion<In extends ExpansionInput<In>, D extends DerivedDict>(
-     derive: Feature<NoInfer<In> & ExpansionMembers, D>
+     derive: Feature<NoInfer<In> & ExpansionMembers, D>,
    ): Feature<In, ExpansionMembers & D>;
    export function withExpansion<In extends ExpansionInput<In>>(
-     config?: WithExpansionConfig<RowOf<In>>
+     config?: WithExpansionConfig<RowOf<In>>,
    ): Feature<In, ExpansionMembers>;
    export function withExpansion<In extends ExpansionInput<In>, D extends DerivedDict>(
      config: WithExpansionConfig<RowOf<In>> | undefined,
-     derive: Feature<NoInfer<In> & ExpansionMembers, D>
+     derive: Feature<NoInfer<In> & ExpansionMembers, D>,
    ): Feature<In, ExpansionMembers & D>;
    ```
 
@@ -93,4 +93,5 @@ that, but the member name and signal shape must not change.
 - [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean for `with-expansion.ts`.
 
 ---
+
 ← [Step 1: with-selection.ts](step-1-with-selection.plan.md) | [Step 3: with-selection.spec.ts + selection.utils.spec.ts](step-3-with-selection-spec.plan.md) →

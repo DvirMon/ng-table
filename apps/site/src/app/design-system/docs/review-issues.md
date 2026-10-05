@@ -1,4 +1,5 @@
 # Review Issues — ngp design-system (all components)
+
 <!-- 2026-08-23 | a11y, code, styles | 15 components reviewed, preview-window skipped (no impl) -->
 
 Not built via ds-wayfinder pipeline (no phase-state.json/spec per component) — reviewed
@@ -44,17 +45,21 @@ conventions (code), and `--ngpt-*` token vocabulary (styles), instead of a per-c
 - [x] G1 `preview-window/` has only `docs/spec.md`, no implementation — scaffold or drop from DS
 
 ## Dismissed
+
 <!-- issue-id: reason -->
+
 - A11: WCAG 2.2 AA (2.5.8) forward-looking, not a 2.1 AA defect
 - C8: `code-block.html:6` state class confirmed intentional — wrapper component targeting inner `<pre>`, not `:host`
 - S9: `search-overlay.css` centering via physical `left`+`translate(-50%)` is functionally RTL-neutral at exact 50% — low priority, skipped
 
 ## Fixed
+
 <!-- populated as issues are resolved -->
+
 - [x] A1-A10: a11y pass — search trigger aria-expanded/haspopup/keyshortcuts wiring, select-trigger role fix, search-overlay listbox/combobox markup fix, decorative icons hidden (2026-08-23)
 - [x] C1-C7: code pass — extracted `withMenuTriggerPanel()` (dropdown-menu/with-menu-trigger-panel.ts), converged sr-only mechanism on `.visually-hidden`, select-trigger chevron token, tab-switcher default input, extracted search-overlay focus-lock helper, renamed select-trigger `options`→`items`, dropped dead `index` signal (2026-08-23)
 - [x] G1: `preview-window` built to `docs/CONVENTIONS.md`'s fixed contract (2026-08-23) — two
-  deltas it could not close from inside its own domain are recorded in its `docs/decisions.md`
-  and belong to whoever next edits `code-block`: the duplicate copy button, and the Source
-  panel's 12px-vs-10px radius
+      deltas it could not close from inside its own domain are recorded in its `docs/decisions.md`
+      and belong to whoever next edits `code-block`: the duplicate copy button, and the Source
+      panel's 12px-vs-10px radius
 - [x] S1-S8: styles pass — reconciled dropdown-pill/pill-button tokens, tokenized search-overlay font/spacing hardcodes, added onband hover/text tokens (color.css) and applied to pill-button, converted physical→logical properties across prose/nav-item/pagination-link/search-field/search-overlay, select-trigger border token reconciled (2026-08-23)

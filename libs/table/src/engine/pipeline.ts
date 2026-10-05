@@ -28,7 +28,7 @@ export type RowTransform<TRow> = (rows: TRow[], ctx: StageContext<TRow>) => TRow
 export function runPipeline<TRow>(
   rows: TRow[],
   stages: readonly ResolvedStage<RowTransform<TRow>>[],
-  ctx: StageContext<TRow>
+  ctx: StageContext<TRow>,
 ): TRow[] {
   return stages.reduce((current, stage) => stage.run(current, ctx), rows);
 }

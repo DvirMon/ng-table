@@ -72,7 +72,7 @@ describe('clusterRows with treeLinks', () => {
       treeOrders,
       ['region', 'category'],
       treeOrderColumns,
-      treeOrderLinks
+      treeOrderLinks,
     );
 
     expect(result.map((row) => row.id)).toEqual([1, 4, 5, 3, 2]);
@@ -97,7 +97,7 @@ describe('the two-walks gate — clusterRows and buildGroupRenderRows agree (Ste
 
   const salesColumns = resolveColumnDefs(
     [...createColumns(noData<Sale>(), (col) => [tierColumn(col)]).columns],
-    'pipeline.spec'
+    'pipeline.spec',
   );
 
   const sales: Sale[] = [
@@ -115,14 +115,14 @@ describe('the two-walks gate — clusterRows and buildGroupRenderRows agree (Ste
   /** Depth-first leaf-row ids from a render tree — the render walk's own partition order. */
   function collectLeafIds(nodes: readonly RenderNode<Sale>[]): number[] {
     return nodes.flatMap((node) =>
-      node.kind === 'row' && node.data ? [node.data.id] : collectLeafIds(node.children)
+      node.kind === 'row' && node.data ? [node.data.id] : collectLeafIds(node.children),
     );
   }
 
   /** Depth-first `kind: 'group'` headers, at every nesting level. */
   function collectHeaders(nodes: readonly RenderNode<Sale>[]): RenderNode<Sale>[] {
     return nodes.flatMap((node) =>
-      node.kind === 'group' ? [node, ...collectHeaders(node.children)] : []
+      node.kind === 'group' ? [node, ...collectHeaders(node.children)] : [],
     );
   }
 

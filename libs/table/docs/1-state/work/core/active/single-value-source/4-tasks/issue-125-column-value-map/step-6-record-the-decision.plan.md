@@ -104,7 +104,7 @@ and will have drifted.
   the row itself.
 - **The G-row is an index, not a record.** It records nothing that is not
   recorded elsewhere — it links to #125 and to the workspace log, and
-  those hold the rationale. ADR-0024 holds the *why* for the whole
+  those hold the rationale. ADR-0024 holds the _why_ for the whole
   migration and is already linked from the log's header.
 - **Write the workspace entry for someone who has not read this plan.**
   Each of the two settled questions should stand alone: the answer, the
@@ -119,7 +119,7 @@ and will have drifted.
   last before appending — another issue in this folder may have landed a
   row in the meantime.
 - **If Step 5's `composeFeatures` case failed**, the record is written the
-  other way round: the escape hatch *drops* the map, Step 4 reopened to add
+  other way round: the escape hatch _drops_ the map, Step 4 reopened to add
   the parameters to `COMPOSE_FEATURES`, and the entry says that instead.
   Write what the spec actually proved.
 - **Every link added must resolve** — relative paths from each file's own
@@ -155,4 +155,5 @@ and will have drifted.
 - [ ] Every link added in this step resolves.
 
 ---
+
 ← [Step 5: The end-to-end guard](step-5-end-to-end-guard.plan.md)

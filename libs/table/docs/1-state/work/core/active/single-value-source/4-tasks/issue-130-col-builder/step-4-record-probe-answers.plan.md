@@ -61,4 +61,5 @@ answered with a pointer to the new rows. Leave the others.
 - [ ] Open questions 1, 2, 3, 6 marked answered.
 
 ---
+
 ← [Step 3: Type proofs](step-3-type-proofs.plan.md)

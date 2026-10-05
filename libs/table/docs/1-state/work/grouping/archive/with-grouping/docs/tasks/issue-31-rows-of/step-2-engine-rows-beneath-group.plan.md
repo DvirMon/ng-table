@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — rowsBeneathGroup() pure engine walk"
+title: 'Step 2 — rowsBeneathGroup() pure engine walk'
 type: task-step
 issue: 65
 ---
@@ -21,8 +21,8 @@ Step 1.**
 
 ## Why This Step Exists
 
-`rowsOf` is two separable things: *where the render rows come from* (Step 1/3) and *which of them
-sit beneath a header* (this step). The second is a pure `RenderRow[] → TRow[]` walk with no
+`rowsOf` is two separable things: _where the render rows come from_ (Step 1/3) and _which of them
+sit beneath a header_ (this step). The second is a pure `RenderRow[] → TRow[]` walk with no
 signals and no Angular — so it belongs in `engine/`, gets plain `vitest` cases, and stays out of
 the feature factory (`CLAUDE.md`: pure engine code needing a harness landed in the wrong file).
 
@@ -39,10 +39,7 @@ Add to `engine/grouping.ts`, alongside the other cluster walks:
  * objects each pass, so a header held across renders is a stale object carrying a stable id.
  * An id matching no current header returns `[]` (D14 runtime degrade).
  */
-export function rowsBeneathGroup<TRow>(
-  rows: readonly RenderRow<TRow>[],
-  groupId: RowId
-): TRow[] {
+export function rowsBeneathGroup<TRow>(rows: readonly RenderRow<TRow>[], groupId: RowId): TRow[] {
   const start = rows.findIndex((row) => row.kind === 'group' && row.id === groupId);
   if (start === -1) {
     return [];
@@ -69,7 +66,7 @@ export function rowsBeneathGroup<TRow>(
   path-id construction (`group:${path}`) in a second place — two walks that must agree on ids is
   exactly the drift `buildGroupRenderRows` avoided by reusing `buildClusters`.
 - **Terminate on `depth <= headerDepth`, not on the next `kind: 'group'`.** A nested header is a
-  *descendant*, so the walk must pass through it (skipping it as a value) and keep going.
+  _descendant_, so the walk must pass through it (skipping it as a value) and keep going.
 - Signature takes `RowId`, not `RenderRow` — the public member takes the header (D16.1 settled
   `RenderRow` for the call site) and passes `group.id` down. Keeping the engine at the id means
   the pure function has no opinion about the parameter-ergonomics call.
@@ -101,4 +98,5 @@ export function rowsBeneathGroup<TRow>(
 - [ ] `tsc --noEmit` passes with no new errors.
 
 ---
+
 ← [Step 1: renderRows on TableCore](step-1-core-render-rows.plan.md) | [Step 3: rowsOf member](step-3-rows-of-member.plan.md) →

@@ -5,23 +5,41 @@ atomic: Organism
 spec: specs/layout/Sidebar Navigation.md
 frame: components/Sidebar Navigation.dc.html
 owns:
-  - "Sidebar container width, padding, right divider"
-  - "Section label + section group spacing"
-  - "The mobile slide-over drawer"
+  - 'Sidebar container width, padding, right divider'
+  - 'Section label + section group spacing'
+  - 'The mobile slide-over drawer'
 does_not_own:
-  - "The nav item itself — see Sidebar Nav Item.md"
+  - 'The nav item itself — see Sidebar Nav Item.md'
 depends_on:
-  - "Sidebar Nav Item.md (nav-item)"
-  - "foundations/Responsive and Breakpoints.md (responsive)"
-  - "foundations/Radius and Elevation.md (shape)"
-  - "foundations/Spacing.md (spacing)"
+  - 'Sidebar Nav Item.md (nav-item)'
+  - 'foundations/Responsive and Breakpoints.md (responsive)'
+  - 'foundations/Radius and Elevation.md (shape)'
+  - 'foundations/Spacing.md (spacing)'
 states:
-  - "desktop (static column)"
-  - "mobile (drawer closed)"
-  - "mobile (drawer open + scrim)"
+  - 'desktop (static column)'
+  - 'mobile (drawer closed)'
+  - 'mobile (drawer open + scrim)'
 a11y:
-  - "role=\"navigation\" aria-label=\"Docs\"; drawer traps focus and closes on Escape"
-tokens: [--ngpt-sys-layout-sidebar-width, --ngpt-sys-space-700, --ngpt-sys-space-500, --ngpt-comp-row-divider, --ngpt-sys-typescale-label-large, --ngpt-sys-space-100, --ngpt-sys-comp-nav-section-gap, --ngpt-sys-space-250, --ngpt-text-muted, --ngpt-sys-layout-drawer-width, --ngpt-bg-app, --ngpt-sys-z-drawer, --ngpt-sys-z-drawer-scrim, --ngpt-sys-scrim, --ngpt-sys-scrim-blur, --ngpt-border-subtle]
+  - 'role="navigation" aria-label="Docs"; drawer traps focus and closes on Escape'
+tokens:
+  [
+    --ngpt-sys-layout-sidebar-width,
+    --ngpt-sys-space-700,
+    --ngpt-sys-space-500,
+    --ngpt-comp-row-divider,
+    --ngpt-sys-typescale-label-large,
+    --ngpt-sys-space-100,
+    --ngpt-sys-comp-nav-section-gap,
+    --ngpt-sys-space-250,
+    --ngpt-text-muted,
+    --ngpt-sys-layout-drawer-width,
+    --ngpt-bg-app,
+    --ngpt-sys-z-drawer,
+    --ngpt-sys-z-drawer-scrim,
+    --ngpt-sys-scrim,
+    --ngpt-sys-scrim-blur,
+    --ngpt-border-subtle,
+  ]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
@@ -29,26 +47,22 @@ token_values_resolve_in: specs/foundations/ (single source of truth — never re
 
 The left column of the page grid. Holds the nav item tree (see `specs/Sidebar Nav Item.md` for the item-level spec) — this file covers the container that holds them.
 
-
 ## Container
 
-| Property | Value | Token |
-| --- | --- | --- |
-| Grid column width | 270px | --ngpt-sys-layout-sidebar-width |
-| padding | 28px 20px | --ngpt-sys-space-700 --ngpt-sys-space-500 |
-| border-right | 1px solid oklch(0.24 0.005 260) | --ngpt-comp-row-divider |
-| font-size (base) | 13.5px | --ngpt-sys-typescale-label-large |
-
+| Property          | Value                           | Token                                     |
+| ----------------- | ------------------------------- | ----------------------------------------- |
+| Grid column width | 270px                           | --ngpt-sys-layout-sidebar-width           |
+| padding           | 28px 20px                       | --ngpt-sys-space-700 --ngpt-sys-space-500 |
+| border-right      | 1px solid oklch(0.24 0.005 260) | --ngpt-comp-row-divider                   |
+| font-size (base)  | 13.5px                          | --ngpt-sys-typescale-label-large          |
 
 ## Section group spacing
 
-| Property | Value | Token |
-| --- | --- | --- |
-| Gap between stacked items in a group | 4px | --ngpt-sys-space-100 |
-| Section label top margin | 18px (except first "Overview" item) | --ngpt-sys-comp-nav-section-gap |
-| "Overview" item bottom margin | 10px | --ngpt-sys-space-250 |
-
-
+| Property                             | Value                               | Token                           |
+| ------------------------------------ | ----------------------------------- | ------------------------------- |
+| Gap between stacked items in a group | 4px                                 | --ngpt-sys-space-100            |
+| Section label top margin             | 18px (except first "Overview" item) | --ngpt-sys-comp-nav-section-gap |
+| "Overview" item bottom margin        | 10px                                | --ngpt-sys-space-250            |
 
 ```html
 <nav class="sidebar">
@@ -69,7 +83,6 @@ The left column of the page grid. Holds the nav item tree (see `specs/Sidebar Na
 </nav>
 ```
 
-
 ```css
 .sidebar {
   padding: 28px 20px;
@@ -77,15 +90,20 @@ The left column of the page grid. Holds the nav item tree (see `specs/Sidebar Na
   font-size: 13.5px;
 }
 .nav-section-label {
-  font: 600 11px Inter, sans-serif;
+  font:
+    600 11px Inter,
+    sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--ngpt-text-muted);
   margin: 18px 0 4px;
 }
-.nav-section-group { display: flex; flex-direction: column; gap: 4px; }
+.nav-section-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 ```
-
 
 Item-level states (default/hover/active/focus, two color treatments) are fully specified in `specs/Sidebar Nav Item.md` — this file only covers the container's own box model and section rhythm.
 
@@ -111,15 +129,15 @@ becomes the drawer and none of this applies.
 
 Below the `md` breakpoint (1024px), this container moves into a slide-over drawer instead of simply hiding (see `specs/foundations/Responsive and Breakpoints.md` for the confirmed mechanism):
 
-| Property | Value | Token |
-| --- | --- | --- |
-| Trigger | Hamburger icon, far left of navbar | — |
-| Position | fixed, left edge, full height | — |
-| Width | ~300px | --ngpt-sys-layout-drawer-width |
-| Background | oklch(0.16 0.005 260) | --ngpt-bg-app |
-| Drawer layer | z 30 | --ngpt-sys-z-drawer |
-| Scrim fill | oklch(0 0 0 / 0.5) + blur(2px) | --ngpt-sys-scrim / --ngpt-sys-scrim-blur |
-| Scrim layer | z 25 | --ngpt-sys-z-drawer-scrim |
+| Property     | Value                              | Token                                    |
+| ------------ | ---------------------------------- | ---------------------------------------- |
+| Trigger      | Hamburger icon, far left of navbar | —                                        |
+| Position     | fixed, left edge, full height      | —                                        |
+| Width        | ~300px                             | --ngpt-sys-layout-drawer-width           |
+| Background   | oklch(0.16 0.005 260)              | --ngpt-bg-app                            |
+| Drawer layer | z 30                               | --ngpt-sys-z-drawer                      |
+| Scrim fill   | oklch(0 0 0 / 0.5) + blur(2px)     | --ngpt-sys-scrim / --ngpt-sys-scrim-blur |
+| Scrim layer  | z 25                               | --ngpt-sys-z-drawer-scrim                |
 
 The scrim is the shared one, not a drawer-specific surface — fill, blur, dismiss-on-click and scroll-lock all come from `foundations/Radius and Elevation.md`. This file only says the drawer uses it.
 
@@ -137,4 +155,3 @@ The nav list itself (labels, items, states) is unchanged from desktop — only t
   <nav class="sidebar"><!-- same nav list as desktop --></nav>
 </div>
 ```
-

@@ -2,10 +2,10 @@
   <p class="story-host__hint">
     Client filtering. The amount filter starts at its declared default (min 1000), which is what
     makes <em>Reset to defaults</em> and <em>Clear all</em> two different buttons. Empty a box and
-    it stops narrowing on its own — there is no story-local "is it empty" guard anywhere here.
-    Date bounds compare real instants: set Issued from and to both to 2026-08-14 and only the
-    midnight invoice matches, because the 16:45 one is past the upper bound. The time part is not
-    silently dropped.
+    it stops narrowing on its own — there is no story-local "is it empty" guard anywhere here. Date
+    bounds compare real instants: set Issued from and to both to 2026-08-14 and only the midnight
+    invoice matches, because the 16:45 one is past the upper bound. The time part is not silently
+    dropped.
   </p>
 
   <ngp-client-filtering-toolbar
@@ -28,8 +28,13 @@
     (restoreTheData)="restoreTheData()"
   />
 
-  <div class="filtering-story__summary" [class.filtering-story__summary--empty]="matchCount() === 0">
-    <span><strong>{{ matchCount() }}</strong> of <strong>{{ rowCount() }}</strong> match</span>
+  <div
+    class="filtering-story__summary"
+    [class.filtering-story__summary--empty]="matchCount() === 0"
+  >
+    <span
+      ><strong>{{ matchCount() }}</strong> of <strong>{{ rowCount() }}</strong> match</span
+    >
     <span class="filtering-story__chips">
       @for (criterion of activeCriteria(); track criterion.key) {
         <span class="filtering-story__chip">
@@ -52,8 +57,8 @@
     @case ('raw') {
       <p class="filtering-story__notice" role="status">
         Raw load: the saved `status: "archived"` was applied verbatim and matches no row, so the
-        table looks broken rather than empty-because-you-asked. The renamed `amount` keys read as
-        an empty range and narrow nothing at all — silently.
+        table looks broken rather than empty-because-you-asked. The renamed `amount` keys read as an
+        empty range and narrow nothing at all — silently.
       </p>
     }
     @case ('guarded') {
@@ -77,8 +82,8 @@
 
   @if (hasNoData()) {
     <p class="filtering-story__empty" role="status">
-      No invoices exist. This is not the same state as "your filters matched nothing" — clearing
-      the filters here would not bring a single row back.
+      No invoices exist. This is not the same state as "your filters matched nothing" — clearing the
+      filters here would not bring a single row back.
     </p>
   } @else if (isFilteredToNothing()) {
     <p class="filtering-story__empty" role="status">

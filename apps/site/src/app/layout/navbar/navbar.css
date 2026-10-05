@@ -22,7 +22,9 @@
 .navbar__left {
   display: flex;
   align-items: center;
-  gap: var(--ngpt-sys-space-250); /* spec cites "-250-alt", which doesn't exist — see docs/decisions.md */
+  gap: var(
+    --ngpt-sys-space-250
+  ); /* spec cites "-250-alt", which doesn't exist — see docs/decisions.md */
   min-width: 0;
 }
 
@@ -103,7 +105,8 @@
   box-shadow: none;
   transition:
     background-color var(--ngpt-sys-motion-duration-base) var(--ngpt-sys-motion-easing-standard),
-    border-block-end-color var(--ngpt-sys-motion-duration-base) var(--ngpt-sys-motion-easing-standard),
+    border-block-end-color var(--ngpt-sys-motion-duration-base)
+      var(--ngpt-sys-motion-easing-standard),
     box-shadow var(--ngpt-sys-motion-duration-base) var(--ngpt-sys-motion-easing-standard);
 }
 

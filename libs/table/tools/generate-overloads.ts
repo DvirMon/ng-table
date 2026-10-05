@@ -56,8 +56,7 @@ const CREATE_TABLE: OverloadSpec = {
   base: 'TableStore<TRow, ColumnValues<TRow, TCols>>',
   leadingParams: ['data: TableDataInput<TRow>', 'config: TableConfig<TRow, TCols>'],
   includeZeroFeature: true,
-  renderReturn: (base, featureCount) =>
-    [base, ...contributions(featureCount)].join(' & '),
+  renderReturn: (base, featureCount) => [base, ...contributions(featureCount)].join(' & '),
 };
 
 const COMPOSE_FEATURES: OverloadSpec = {
@@ -66,13 +65,7 @@ const COMPOSE_FEATURES: OverloadSpec = {
     'Call signatures for `composeFeatures()` — the same left-to-right accumulation as',
     '`createTable()`, collapsed into one `Feature<In, …>` so a bundle costs a single slot.',
   ],
-  outputFile: join(
-    LIB_ROOT,
-    'src',
-    'api',
-    'features',
-    'compose-features.overloads.ts'
-  ),
+  outputFile: join(LIB_ROOT, 'src', 'api', 'features', 'compose-features.overloads.ts'),
   imports: ["import type { Feature, Shape } from '../../engine/types';"],
   baseGenerics: ['In extends Shape'],
   base: 'In',
@@ -101,14 +94,12 @@ function renderSlotInput(base: string, slot: number): string {
 function renderSignature(spec: OverloadSpec, featureCount: number): string {
   const generics = [
     ...spec.baseGenerics,
-    ...contributions(featureCount).map(
-      (contribution) => `${contribution} extends object`
-    ),
+    ...contributions(featureCount).map((contribution) => `${contribution} extends object`),
   ].join(', ');
 
   const featureParams = contributions(featureCount).map(
     (contribution, index) =>
-      `f${index + 1}: Feature<${renderSlotInput(spec.base, index + 1)}, ${contribution}>`
+      `f${index + 1}: Feature<${renderSlotInput(spec.base, index + 1)}, ${contribution}>`,
   );
 
   const params = [...spec.leadingParams, ...featureParams].join(', ');
@@ -129,9 +120,8 @@ function renderHeader(spec: OverloadSpec): string {
 
 function renderOverloads(spec: OverloadSpec): string {
   const firstCount = spec.includeZeroFeature ? 0 : 1;
-  const signatures = Array.from(
-    { length: ARITY - firstCount + 1 },
-    (_, index) => renderSignature(spec, firstCount + index)
+  const signatures = Array.from({ length: ARITY - firstCount + 1 }, (_, index) =>
+    renderSignature(spec, firstCount + index),
   );
 
   return [
@@ -196,9 +186,7 @@ async function main(): Promise<void> {
   }
 
   if (drifted.length > 0) {
-    process.stderr.write(
-      'Generated overloads are stale — run `npm run table:overloads`:\n'
-    );
+    process.stderr.write('Generated overloads are stale — run `npm run table:overloads`:\n');
     for (const href of drifted) {
       process.stderr.write(`  ${href}\n`);
     }

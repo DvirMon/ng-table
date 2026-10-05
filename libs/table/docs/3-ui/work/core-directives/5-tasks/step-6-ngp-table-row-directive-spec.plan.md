@@ -61,4 +61,5 @@ Use a test host component with `<tr [ngpTableRow]="renderRow">`, updating the bo
 - [ ] `nx test shared-design-system` passes for this spec
 
 ---
+
 ← [Step 5: NgpTableDirective spec](step-5-ngp-table-directive-spec.plan.md)

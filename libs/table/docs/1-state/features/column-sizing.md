@@ -19,8 +19,8 @@ resizable** — static width stays column-owned (a `createColumns` schema-argume
 consumer CSS),
 per the ownership resolution in
 [2-columns/reference/tier-2-layout.md](../../2-columns/reference/tier-2-layout.md#open-questions-tier-2)
-(2026-07-25): *"Static, non-resizable width stays on the column def / CSS; there is no
-in-between state."* `applyWidth`/`applyFlex` then seed this feature's initial state rather
+(2026-07-25): _"Static, non-resizable width stays on the column def / CSS; there is no
+in-between state."_ `applyWidth`/`applyFlex` then seed this feature's initial state rather
 than writing a `ColumnDef` field — the same seed-into-a-feature pattern `applyPinned` uses
 for [`withColumnPinning()`](./column-pinning.md).
 
@@ -34,8 +34,8 @@ footprint warning records `ColumnDef.width` as documented-but-unimplemented and 
 blocked on that ADR; the field is a sketch in
 [2-columns/reference/tier-2-layout.md](../../2-columns/reference/tier-2-layout.md), and no
 code path in `src/` reads a width today. This spec therefore describes the intended state
-contract only. It does not unblock itself: the ADR has to settle *which presentation facts
-the engine is allowed to hold at all* before either the `ColumnDef` seed field or this
+contract only. It does not unblock itself: the ADR has to settle _which presentation facts
+the engine is allowed to hold at all_ before either the `ColumnDef` seed field or this
 feature's state slice can land.
 
 Second, softer dependency: [state-persistence.md](../state-persistence.md) is sequenced
@@ -47,10 +47,10 @@ serialization shape and persistence consumes it — not the reverse.
 ```ts
 /** Author-side sizing config, produced by `applyWidth`/`applyFlex`. Seed only. */
 interface ColumnSizeConfig {
-  width?: number;   // fixed px
-  flex?: number;    // grow factor — mutually exclusive with `width`; flex wins if both set
-  min?: number;     // clamp floor, px
-  max?: number;     // clamp ceiling, px
+  width?: number; // fixed px
+  flex?: number; // grow factor — mutually exclusive with `width`; flex wins if both set
+  min?: number; // clamp floor, px
+  max?: number; // clamp ceiling, px
 }
 
 interface ColumnSizingState {
@@ -73,12 +73,12 @@ The sparseness is load-bearing, not an optimisation:
 
 ### The four modes, and where each is resolved
 
-| Mode | Declared by | Resolved by |
-|---|---|---|
-| `fixed` | `applyWidth(col, px)` seed | Consumer CSS, unless resized → `columnSizing[id]` |
-| `flex` | `applyFlex(col, grow)` seed | UI layer (flex distribution across the visible rail) |
-| `min` / `max` | `applyWidth`'s `opts.min`/`opts.max` | **State layer** — clamped in the updater, see below |
-| `auto` | absence of both | UI layer (content/intrinsic sizing) |
+| Mode          | Declared by                          | Resolved by                                          |
+| ------------- | ------------------------------------ | ---------------------------------------------------- |
+| `fixed`       | `applyWidth(col, px)` seed           | Consumer CSS, unless resized → `columnSizing[id]`    |
+| `flex`        | `applyFlex(col, grow)` seed          | UI layer (flex distribution across the visible rail) |
+| `min` / `max` | `applyWidth`'s `opts.min`/`opts.max` | **State layer** — clamped in the updater, see below  |
+| `auto`        | absence of both                      | UI layer (content/intrinsic sizing)                  |
 
 `auto` has no state representation on purpose. "No entry" already means it.
 
@@ -101,17 +101,19 @@ The sparseness is load-bearing, not an optimisation:
 
 ## Methods
 
-| Method | Description |
-|---|---|
-| `setColumnWidth(id: string, px: number)` | Set one column's width; clamped to its `min`/`max`; no-op for an unknown id |
-| `resetColumnWidth(id: string)` | Drop the id from `columnSizing` — back to seed/CSS resolution |
-| `resetAllColumnWidths()` | Clear the record entirely |
-| `columnWidth(id: string): number \| undefined` | Resolved override, or `undefined` when unsized |
+| Method                                         | Description                                                                 |
+| ---------------------------------------------- | --------------------------------------------------------------------------- |
+| `setColumnWidth(id: string, px: number)`       | Set one column's width; clamped to its `min`/`max`; no-op for an unknown id |
+| `resetColumnWidth(id: string)`                 | Drop the id from `columnSizing` — back to seed/CSS resolution               |
+| `resetAllColumnWidths()`                       | Clear the record entirely                                                   |
+| `columnWidth(id: string): number \| undefined` | Resolved override, or `undefined` when unsized                              |
 
 ## Feature Plugin Shape
 
 ```ts
-withColumnSizing({ /* config TBD — see open questions */ })
+withColumnSizing({
+  /* config TBD — see open questions */
+});
 ```
 
 Contributes `members` only: no `stages`, no `renderStages`, no `setup`. It stores **column
@@ -147,26 +149,26 @@ contract this feature owes persistence:
 ## Open questions
 
 - [ ] **Flex distribution: state or UI?** `flex` is declared as a seed here but resolved by
-  the UI. If a resize of one flex column has to redistribute the others (AG Grid's
-  `columnFlexService` behaviour), that redistribution is arithmetic over all visible
-  columns and may belong in the state layer after all. Not decided; `width`-only resizing
-  is the smaller v1.
+      the UI. If a resize of one flex column has to redistribute the others (AG Grid's
+      `columnFlexService` behaviour), that redistribution is arithmetic over all visible
+      columns and may belong in the state layer after all. Not decided; `width`-only resizing
+      is the smaller v1.
 - [ ] **Auto-fit needs measurement.** `autoFitColumn(id)` (fit to widest rendered cell) is
-  the most-requested sizing affordance and is inherently DOM-dependent. Does the UI measure
-  and call `setColumnWidth`, or does the state layer gain a measurement callback? The
-  former keeps the state layer pure and is the current preference, unvalidated.
+      the most-requested sizing affordance and is inherently DOM-dependent. Does the UI measure
+      and call `setColumnWidth`, or does the state layer gain a measurement callback? The
+      former keeps the state layer pure and is the current preference, unvalidated.
 - [ ] **No column-removal reconciliation hook exists.** ADR-0006 gives features
-  `onRowsRemoved` for `RowId` state; there is no `onColumnsRemoved` for features keyed by
-  column id. `setColumns()` can drop a column and leave a dead entry in `columnSizing`
-  (and in `columnPinning`). Whether to generalise ADR-0006's diff-and-prune to columns, or
-  to let both features filter lazily on read, is unresolved — and it is a shared question
-  with `withColumnPinning()`, not a sizing-local one.
+      `onRowsRemoved` for `RowId` state; there is no `onColumnsRemoved` for features keyed by
+      column id. `setColumns()` can drop a column and leave a dead entry in `columnSizing`
+      (and in `columnPinning`). Whether to generalise ADR-0006's diff-and-prune to columns, or
+      to let both features filter lazily on read, is unresolved — and it is a shared question
+      with `withColumnPinning()`, not a sizing-local one.
 - [ ] **Do `min`/`max` come from the metadata+reducer core?**
-  [signal-forms-techniques.md §1](../../2-columns/reference/signal-forms-techniques.md)
-  notes `opts.min`/`opts.max` would fall out of `MetadataReducer.min`/`.max` for free if
-  that core is adopted. If it isn't, this feature needs its own clamp config storage.
+      [signal-forms-techniques.md §1](../../2-columns/reference/signal-forms-techniques.md)
+      notes `opts.min`/`opts.max` would fall out of `MetadataReducer.min`/`.max` for free if
+      that core is adopted. If it isn't, this feature needs its own clamp config storage.
 - [ ] **Not yet drilled.** `spec: drafted` — no decisions session has validated any shape
-  above.
+      above.
 
 ## Competitive position
 

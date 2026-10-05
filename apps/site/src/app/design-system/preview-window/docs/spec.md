@@ -5,27 +5,37 @@ atomic: Organism
 spec: specs/Preview Window.md
 frame: components/Preview Window.dc.html
 owns:
-  - "The framed live-example surface: border, radius, padding, min-height"
-  - "Toolbar row + the Preview/Source tab pair"
-  - "Source-panel reveal + copy confirmation"
+  - 'The framed live-example surface: border, radius, padding, min-height'
+  - 'Toolbar row + the Preview/Source tab pair'
+  - 'Source-panel reveal + copy confirmation'
 does_not_own:
-  - "The tab control internals — see Tab Switcher.md"
-  - "The code inside Source — see Code Block.md"
+  - 'The tab control internals — see Tab Switcher.md'
+  - 'The code inside Source — see Code Block.md'
 depends_on:
-  - "Tab Switcher.md (tab-switcher)"
-  - "Code Block.md (code-block)"
-  - "Icon Button.md (icon-button)"
-  - "foundations/Radius and Elevation.md (shape)"
-  - "foundations/Color.md (color)"
-  - "foundations/Spacing.md (spacing)"
+  - 'Tab Switcher.md (tab-switcher)'
+  - 'Code Block.md (code-block)'
+  - 'Icon Button.md (icon-button)'
+  - 'foundations/Radius and Elevation.md (shape)'
+  - 'foundations/Color.md (color)'
+  - 'foundations/Spacing.md (spacing)'
 states:
-  - "Preview tab active"
-  - "Source tab active"
-  - "copy pending"
-  - "copy confirmed"
+  - 'Preview tab active'
+  - 'Source tab active'
+  - 'copy pending'
+  - 'copy confirmed'
 a11y:
-  - "Tab pair follows role=\"tablist\"; the Source panel is a labelled tabpanel"
-tokens: [--ngpt-sys-space-250, --ngpt-sys-space-200, --ngpt-sys-space-1000, --ngpt-sys-space-800, --ngpt-sys-shape-corner-medium, --ngpt-bg-surface, --ngpt-border-subtle, --ngpt-accent]
+  - 'Tab pair follows role="tablist"; the Source panel is a labelled tabpanel'
+tokens:
+  [
+    --ngpt-sys-space-250,
+    --ngpt-sys-space-200,
+    --ngpt-sys-space-1000,
+    --ngpt-sys-space-800,
+    --ngpt-sys-shape-corner-medium,
+    --ngpt-bg-surface,
+    --ngpt-border-subtle,
+    --ngpt-accent,
+  ]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
@@ -44,33 +54,33 @@ Live-example container used throughout the docs. Composed of Tab Switcher + Drop
 
 ## Build spec
 
-| Property | Value | Token |
-|---|---|---|
-| Toolbar layout | flex, space-between | `—` |
-| Toolbar margin-bottom | 10px | `--ngpt-sys-space-250` |
-| Toolbar right-side gap | 8px | `--ngpt-sys-space-200` |
-| Canvas padding | 40px 32px | `--ngpt-sys-space-1000 --ngpt-sys-space-800` |
-| Canvas radius | 12px | `--ngpt-sys-shape-corner-medium` |
-| Canvas background | oklch(0.13 0.004 260) | `--ngpt-bg-surface` |
-| Canvas border | 1px solid oklch(0.26 0.005 260) | `--ngpt-border-subtle` |
-| Canvas content alignment | flex, justify-content:center | `—` |
-| Width | fills content column (max 760px) | `—` |
+| Property                 | Value                            | Token                                        |
+| ------------------------ | -------------------------------- | -------------------------------------------- |
+| Toolbar layout           | flex, space-between              | `—`                                          |
+| Toolbar margin-bottom    | 10px                             | `--ngpt-sys-space-250`                       |
+| Toolbar right-side gap   | 8px                              | `--ngpt-sys-space-200`                       |
+| Canvas padding           | 40px 32px                        | `--ngpt-sys-space-1000 --ngpt-sys-space-800` |
+| Canvas radius            | 12px                             | `--ngpt-sys-shape-corner-medium`             |
+| Canvas background        | oklch(0.13 0.004 260)            | `--ngpt-bg-surface`                          |
+| Canvas border            | 1px solid oklch(0.26 0.005 260)  | `--ngpt-border-subtle`                       |
+| Canvas content alignment | flex, justify-content:center     | `—`                                          |
+| Width                    | fills content column (max 760px) | `—`                                          |
 
 ## Tab states: Preview vs Source
 
 The Tab Switcher swaps the canvas for a code view. The toolbar row is identical in both states — only the region below it changes.
 
-| Tab | Region below toolbar |
-|---|---|
-| Preview | Canvas surface (spec above) with the live example centered |
-| Source | Code Block (`specs/Code Block.md`) filling the same footprint, Shiki-highlighted with line numbers |
+| Tab     | Region below toolbar                                                                               |
+| ------- | -------------------------------------------------------------------------------------------------- |
+| Preview | Canvas surface (spec above) with the live example centered                                         |
+| Source  | Code Block (`specs/Code Block.md`) filling the same footprint, Shiki-highlighted with line numbers |
 
-| Property | Value | Token |
-|---|---|---|
-| Source panel radius | 12px — matches the canvas, **not** the 10px of a standalone code block | `--ngpt-sys-shape-corner-medium` |
-| Source panel margin-bottom | 0 — the outer window owns the spacing | `—` |
-| Height behavior | Natural height; no min-height match to the Preview tab | `—` |
-| Switch transition | opacity, fast / standard; no height animation | see `foundations/Motion.md` |
+| Property                   | Value                                                                  | Token                            |
+| -------------------------- | ---------------------------------------------------------------------- | -------------------------------- |
+| Source panel radius        | 12px — matches the canvas, **not** the 10px of a standalone code block | `--ngpt-sys-shape-corner-medium` |
+| Source panel margin-bottom | 0 — the outer window owns the spacing                                  | `—`                              |
+| Height behavior            | Natural height; no min-height match to the Preview tab                 | `—`                              |
+| Switch transition          | opacity, fast / standard; no height animation                          | see `foundations/Motion.md`      |
 
 The panel does not animate height between tabs — the two views are rarely the same size, and a 200px height tween on every tab click is worse than an instant jump. Only opacity crossfades.
 
@@ -78,11 +88,11 @@ ARIA: the two tabs are `role="tab"` in a `role="tablist"`, the region below is `
 
 ## Toolbar interactive states
 
-| Control | Closed / rest | Activated |
-|---|---|---|
-| "Example CSS" dropdown pill | Per `specs/Dropdown Pill.md` | Opens a Dropdown Menu below it (`specs/Dropdown Menu.md`); the pill holds its hover treatment and its chevron rotates 180° over `fast` while open |
-| Copy icon button | lucideCopy, muted | Per `Icon Button.md` § Confirmation variant: glyph swaps to lucideCheck in `--ngpt-status-success`, holds `--ngpt-comp-icon-btn-confirm-hold`, reverts; `--ngpt-status-error` on failure. No toast, no tooltip. |
-| Run icon button | lucideZap, muted | Standard hover/focus only |
+| Control                     | Closed / rest                | Activated                                                                                                                                                                                                       |
+| --------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Example CSS" dropdown pill | Per `specs/Dropdown Pill.md` | Opens a Dropdown Menu below it (`specs/Dropdown Menu.md`); the pill holds its hover treatment and its chevron rotates 180° over `fast` while open                                                               |
+| Copy icon button            | lucideCopy, muted            | Per `Icon Button.md` § Confirmation variant: glyph swaps to lucideCheck in `--ngpt-status-success`, holds `--ngpt-comp-icon-btn-confirm-hold`, reverts; `--ngpt-status-error` on failure. No toast, no tooltip. |
+| Run icon button             | lucideZap, muted             | Standard hover/focus only                                                                                                                                                                                       |
 
 Copy confirmation is in-place rather than a toast: the button is already where the user is looking, and a toast would need its own overlay layer for one word of feedback. The confirmation is announced through a polite live region for screen readers.
 
@@ -117,14 +127,20 @@ Repeats once per live example (one per feature section in the docs page).
   --ngpt-border-subtle: oklch(0.26 0.005 260);
 }
 
-.preview-window { width: 100%; }
+.preview-window {
+  width: 100%;
+}
 .preview-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 10px;
 }
-.toolbar-actions { display: flex; align-items: center; gap: 8px; }
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .preview-source {
   border-radius: var(--ngpt-sys-shape-corner-medium);
   margin: 0;

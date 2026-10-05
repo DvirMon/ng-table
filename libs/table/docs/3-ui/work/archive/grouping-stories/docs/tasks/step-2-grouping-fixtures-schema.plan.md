@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — grouping/fixtures/schema.ts: three table configs"
+title: 'Step 2 — grouping/fixtures/schema.ts: three table configs'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: A (part)
@@ -70,4 +70,5 @@ Also export the initial grouping levels each story starts from (e.g.
 - [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
+
 ← [Step 1: export group-level updaters](step-1-export-group-level-updaters.plan.md) | [Step 3: grouping fixtures — transport](step-3-grouping-fixtures-transport.plan.md) →

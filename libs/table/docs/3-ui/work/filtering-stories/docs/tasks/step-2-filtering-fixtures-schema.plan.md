@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — filtering/fixtures/schema.ts: three table configs + the debounced form schema"
+title: 'Step 2 — filtering/fixtures/schema.ts: three table configs + the debounced form schema'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: A (part)
@@ -66,4 +66,5 @@ Node A's config half. All three configs land up front so Steps 4, 5 and 6 stay p
 - [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
+
 ← [Step 1: filtering fixtures — filters.ts](step-1-filtering-fixtures-filters.plan.md) | [Step 3: filtering fixtures — transport](step-3-filtering-fixtures-transport.plan.md) →

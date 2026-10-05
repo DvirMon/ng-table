@@ -32,12 +32,12 @@ would produce a fragment with no lesson of its own.
 **Two hosts never received the other two changes from that session** — the pipe migration
 (commit `2da7921`) and the JSDoc strip. Both landed on `grouping-static/` only.
 
-| Host | Lines (ts) | 1. Harness | 2. Formatting | 3. Regression | 4. Narration | Action |
-|---|---|---|---|---|---|---|
-| `grouping-async-rule/` | 90 | inherent | pipes ✅ | — | ✅ clean | none |
-| `grouping-regressions/` | 133 | — | pipes ✅ | **by design** | acceptable | none |
-| `grouping-collapsible/` | 200 | borderline | ❌ 7 methods | — | ❌ 31-line block | **migrate** |
-| `grouping-selection/` | 194 | inherent | ❌ 7 methods | borderline | ❌ 29-line block | **migrate** |
+| Host                    | Lines (ts) | 1. Harness | 2. Formatting | 3. Regression | 4. Narration     | Action      |
+| ----------------------- | ---------- | ---------- | ------------- | ------------- | ---------------- | ----------- |
+| `grouping-async-rule/`  | 90         | inherent   | pipes ✅      | —             | ✅ clean         | none        |
+| `grouping-regressions/` | 133        | —          | pipes ✅      | **by design** | acceptable       | none        |
+| `grouping-collapsible/` | 200        | borderline | ❌ 7 methods  | —             | ❌ 31-line block | **migrate** |
+| `grouping-selection/`   | 194        | inherent   | ❌ 7 methods  | borderline    | ❌ 29-line block | **migrate** |
 
 ## Per host
 
@@ -76,7 +76,7 @@ S3, S4, S5, U3, OQ-4, C3, E-G1, ADR-0006, and four competitor references (mui-x 
 Destination is `docs/0-product/grouping.md`, which already owns §2.5, S3–S5 and P2/P3/P11.
 
 **Criterion 1 — borderline, keep.** `forceFailure`/`latencyMs` drive Refetch, and Refetch is this
-story's own attack on collapse state — the transport *is* the lesson. But `refetchStatus` holds two
+story's own attack on collapse state — the transport _is_ the lesson. But `refetchStatus` holds two
 hardcoded English paragraphs inside the class ("Replaced all N rows with freshly-constructed
 objects — every row above is a different object than it was."). Narration in source; belongs in the
 template.
@@ -103,12 +103,12 @@ evidence rather than injected misuse, and the readout is only meaningful because
 
 Current consumers:
 
-| Export | Used by |
-|---|---|
-| `formatAmount` | `grouping-story.pipes.ts`, collapsible, selection |
-| `isBlankGroupValue` | `grouping-story.pipes.ts`, collapsible, selection |
-| `formatValue` | collapsible, selection, **regressions** (key coercion, legitimate) |
-| `readRepCriterion`, `repFilterNode` | selection only |
+| Export                              | Used by                                                            |
+| ----------------------------------- | ------------------------------------------------------------------ |
+| `formatAmount`                      | `grouping-story.pipes.ts`, collapsible, selection                  |
+| `isBlankGroupValue`                 | `grouping-story.pipes.ts`, collapsible, selection                  |
+| `formatValue`                       | collapsible, selection, **regressions** (key coercion, legitimate) |
+| `readRepCriterion`, `repFilterNode` | selection only                                                     |
 
 After migrating the two hosts, `formatAmount` and `isBlankGroupValue` have one consumer each — the
 pipes file. `formatValue` keeps regressions as a real consumer. The file does not disappear, but its

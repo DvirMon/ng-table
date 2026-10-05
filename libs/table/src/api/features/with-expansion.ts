@@ -41,7 +41,7 @@ type ExpansionInput<In> = Pick<TableStore<RowOf<In>>, 'rows' | 'trackBy'>;
 
 function buildExpansionSpec<TRow>(
   input: Pick<TableStore<TRow>, 'rows' | 'trackBy'>,
-  config: WithExpansionConfig
+  config: WithExpansionConfig,
 ): TableFeatureSpec<TRow, ExpansionMembers> {
   // Accumulated via the store's `onExpanded` hook, not the store itself — additive-only, exempt
   // from `onRowsRemoved` pruning (see `ExpansionSlice.everExpanded`).
@@ -79,7 +79,7 @@ function buildExpansionSpec<TRow>(
     const removing = new Set(ids);
     store.setExpanded(
       [...store.expanded()].filter((id) => !removing.has(id)),
-      options
+      options,
     );
   }
 
@@ -87,14 +87,17 @@ function buildExpansionSpec<TRow>(
     store.setExpanded(ids, options);
   }
 
-  const expansion: ExpansionSlice = Object.assign(computed(() => store.expanded()), {
-    everExpanded: everExpanded.asReadonly(),
-    changed: store.changed,
-    toggle,
-    expand,
-    collapse,
-    set,
-  });
+  const expansion: ExpansionSlice = Object.assign(
+    computed(() => store.expanded()),
+    {
+      everExpanded: everExpanded.asReadonly(),
+      changed: store.changed,
+      toggle,
+      expand,
+      collapse,
+      set,
+    },
+  );
 
   return {
     members: { expansion },
@@ -112,24 +115,24 @@ function buildExpansionSpec<TRow>(
  * panel never changes `renderRows()`.
  */
 export function withExpansion<In extends ExpansionInput<In>, D extends DerivedDict>(
-  derive: Feature<NoInfer<In> & ExpansionMembers, D>
+  derive: Feature<NoInfer<In> & ExpansionMembers, D>,
 ): Feature<In, ExpansionMembers & D>;
 export function withExpansion<In extends ExpansionInput<In>>(
-  config?: WithExpansionConfig
+  config?: WithExpansionConfig,
 ): Feature<In, ExpansionMembers>;
 export function withExpansion<In extends ExpansionInput<In>, D extends DerivedDict>(
   config: WithExpansionConfig | undefined,
-  derive: Feature<NoInfer<In> & ExpansionMembers, D>
+  derive: Feature<NoInfer<In> & ExpansionMembers, D>,
 ): Feature<In, ExpansionMembers & D>;
 export function withExpansion(
   configOrDerive: WithExpansionConfig | Feature<any, any> = {},
-  maybeDerive?: Feature<any, any>
+  maybeDerive?: Feature<any, any>,
 ): Feature<any, any> {
   const isDeriveFirst = typeof configOrDerive === 'function';
   const config: WithExpansionConfig = isDeriveFirst ? {} : configOrDerive;
   const derive = isDeriveFirst ? configOrDerive : maybeDerive;
   const factory = <In extends ExpansionInput<In>>(
-    input: In
+    input: In,
   ): TableFeatureSpec<RowOf<In>, ExpansionMembers> => buildExpansionSpec(input, config);
   const feature: Feature<any, any> = derive
     ? createTableFeature(factory, derive)

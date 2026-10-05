@@ -43,7 +43,11 @@ function inContext<T>(build: () => T): T {
 describe('withRowEdit', () => {
   it('editing starts empty', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withRowEdit(),
+      ),
     );
 
     expect(store.editing().size).toBe(0);
@@ -51,7 +55,11 @@ describe('withRowEdit', () => {
 
   it('default (single) mode: a second beginEdit closes whatever row was already open', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withRowEdit(),
+      ),
     );
 
     store.editing.update(beginEdit('r1'));
@@ -68,8 +76,8 @@ describe('withRowEdit', () => {
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withRowEdit({ multiple: true })
-      )
+        withRowEdit({ multiple: true }),
+      ),
     );
 
     store.editing.update(beginEdit('r1'));
@@ -82,7 +90,11 @@ describe('withRowEdit', () => {
 
   it('single-mode switching closes the displaced row as a Save, not a Cancel (D31.2)', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withRowEdit(),
+      ),
     );
 
     store.editing.update(beginEdit('r1'));
@@ -96,7 +108,11 @@ describe('withRowEdit', () => {
 
   it('pending starts empty and receives endEdit entries (D31/D41)', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withRowEdit(),
+      ),
     );
 
     expect(store.pending().size).toBe(0);
@@ -115,7 +131,7 @@ describe('withRowEdit', () => {
   it('removing an open row from data clears it from editing and pending (ADR-0006)', () => {
     const data = signal(makeRows());
     const store = inContext(() =>
-      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit()),
     );
 
     store.editing.update(beginEdit('r1'));
@@ -131,7 +147,7 @@ describe('withRowEdit', () => {
   it('removing a pending (closed, snapshot-kept) row drops its snapshot too (ADR-0006)', () => {
     const data = signal(makeRows());
     const store = inContext(() =>
-      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit()),
     );
 
     store.editing.update(beginEdit('r1'));
@@ -147,7 +163,7 @@ describe('withRowEdit', () => {
   it('editing prunes when a row leaves data via store.value.update, the second write path (ADR-0006)', () => {
     const data = signal(makeRows());
     const store = inContext(() =>
-      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit()),
     );
 
     store.editing.update(beginEdit('r1'));
@@ -163,7 +179,7 @@ describe('withRowEdit', () => {
   it('removeEdit on a never-opened row survives the ADR-0006 effect, and revertEdit reinserts it (Change 4)', () => {
     const data = signal(makeRows());
     const store = inContext(() =>
-      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit()),
     );
 
     store.editing.update(removeEdit<Row>('r1'));
@@ -185,7 +201,7 @@ describe('withRowEdit', () => {
   it("removeEdit on an already-open row keeps its pre-edit restore point through the effect, and flips op to 'delete' (Change 4)", () => {
     const data = signal(makeRows());
     const store = inContext(() =>
-      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit()),
     );
 
     store.editing.update(beginEdit('r1'));
@@ -212,7 +228,7 @@ describe('withRowEdit', () => {
   it('a row added externally renders but does not open itself', () => {
     const data = signal(makeRows());
     const store = inContext(() =>
-      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit()),
     );
 
     data.update((rows) => [...rows, { id: 'r3', name: 'Cid' }]);
@@ -226,7 +242,7 @@ describe('withRowEdit', () => {
   it('keeps an open row open when rows are inserted before it, and sourceIndex follows', () => {
     const data = signal(makeRows());
     const store = inContext(() =>
-      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit()),
     );
 
     store.editing.update(beginEdit('r2'));
@@ -244,7 +260,7 @@ describe('withRowEdit', () => {
   it('does not move an open row restore point when data is patched externally (D34)', () => {
     const data = signal(makeRows());
     const store = inContext(() =>
-      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit()),
     );
 
     store.editing.update(beginEdit('r1'));
@@ -261,7 +277,7 @@ describe('withRowEdit', () => {
   it('captureEdit after an external patch makes revertEdit restore the external value (D34/D40)', () => {
     const data = signal(makeRows());
     const store = inContext(() =>
-      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+      createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit()),
     );
 
     store.editing.update(beginEdit('r1'));
@@ -285,8 +301,8 @@ describe('withRowEdit', () => {
       createTable(
         data,
         { trackBy: 'id', columns: makeColumns() },
-        withRowEdit({ multiple: isMultiple })
-      )
+        withRowEdit({ multiple: isMultiple }),
+      ),
     );
 
     store.editing.update(beginEdit('r1'));
@@ -311,8 +327,8 @@ describe('withRowEdit', () => {
       createTable(
         data,
         { trackBy: 'id', columns: makeColumns() },
-        withRowEdit({ multiple: isMultiple })
-      )
+        withRowEdit({ multiple: isMultiple }),
+      ),
     );
 
     store.editing.update(beginEdit('r1'));
@@ -324,7 +340,11 @@ describe('withRowEdit', () => {
 
   it('claims no render stage — renderRows() stays the default 1:1 mapping', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withRowEdit(),
+      ),
     );
 
     expect(store.renderRows().map((row) => row.id)).toEqual(['r1', 'r2']);
@@ -332,7 +352,11 @@ describe('withRowEdit', () => {
 
   it('exposes pendingOps and unconfirmed — same member set withOptimistic declares (D54/R2)', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withRowEdit(),
+      ),
     );
 
     const optimisticKeys: (keyof OptimisticMembers<Row>)[] = [
@@ -350,7 +374,11 @@ describe('withRowEdit', () => {
 
   it('createRow marks the id unconfirmed; releaseEdit clears it once confirmed', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withRowEdit(),
+      ),
     );
 
     store.editing.update(createRow<Row>('r3', { id: 'r3', name: 'Cid' }));
@@ -368,7 +396,7 @@ describe('withRowEdit', () => {
     () => {
       const data = signal(makeRows());
       const store = inContext(() =>
-        createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+        createTable(data, { trackBy: 'id', columns: makeColumns() }, withRowEdit()),
       );
 
       store.editing.update(createRow<Row>('r3', { id: 'r3', name: 'Cid' }));
@@ -385,7 +413,7 @@ describe('withRowEdit', () => {
       expect(data().some((row) => row.id === 'r3')).toBe(true);
       expect(store.unconfirmed().has('r3')).toBe(true); // still needs a retry POST
       expect(store.pending().has('r3')).toBe(false);
-    }
+    },
   );
 
   // -------------------------------------------------------------------------------------
@@ -396,7 +424,11 @@ describe('withRowEdit', () => {
   describe('types', () => {
     it('withRowEdit() alone: composed members are recovered exactly, never widened to any', () => {
       const store = inContext(() =>
-        createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withRowEdit())
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withRowEdit(),
+        ),
       );
 
       expectTypeOf<keyof typeof store>().toEqualTypeOf<
@@ -416,9 +448,9 @@ describe('withRowEdit', () => {
             { trackBy: 'id', columns: makeColumns() },
             withRowEdit(
               { multiple: true },
-              withComputed((s) => ({ openCount: computed(() => s.editing().size) }))
-            )
-          )
+              withComputed((s) => ({ openCount: computed(() => s.editing().size) })),
+            ),
+          ),
         );
 
         expectTypeOf(store.openCount).toEqualTypeOf<Signal<number>>();
@@ -434,7 +466,7 @@ describe('withRowEdit', () => {
 
         store.editing.update(clearEdit());
         expect(store.openCount()).toBe(0);
-      }
+      },
     );
 
     it('derive-first: withRowEdit(withComputed(...)) contributes the same member with no config', () => {
@@ -442,8 +474,8 @@ describe('withRowEdit', () => {
         createTable(
           signal<Row[]>(makeRows()),
           { trackBy: 'id', columns: makeColumns() },
-          withRowEdit(withComputed((s) => ({ hasOpen: computed(() => s.editing().size > 0) })))
-        )
+          withRowEdit(withComputed((s) => ({ hasOpen: computed(() => s.editing().size > 0) }))),
+        ),
       );
 
       expectTypeOf(store.hasOpen).toEqualTypeOf<Signal<boolean>>();

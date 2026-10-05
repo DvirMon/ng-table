@@ -28,8 +28,7 @@
 
 .hero-band__content {
   position: relative;
-  padding-block: clamp(calc(var(--ngpt-comp-navbar-height) * 2), 3.5vw, 44px)
-    clamp(32px, 4vw, 52px);
+  padding-block: clamp(calc(var(--ngpt-comp-navbar-height) * 2), 3.5vw, 44px) clamp(32px, 4vw, 52px);
   padding-inline: var(--hero-band-rail);
 }
 
@@ -102,7 +101,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: 11px; /* no exact --ngpt-sys-space-* step matches 11px — docs/decisions.md */
-  margin-top: var(--ngpt-sys-space-600); /* spec § Height: "26px above the buttons" — nearest token step (24px, tie vs 28px) */
+  margin-top: var(
+    --ngpt-sys-space-600
+  ); /* spec § Height: "26px above the buttons" — nearest token step (24px, tie vs 28px) */
 }
 
 /* Hero-only pill-button size step (spec § Variant: on-band, "Hero size override" — 13px default

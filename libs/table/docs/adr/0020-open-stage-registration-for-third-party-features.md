@@ -122,7 +122,7 @@ Vite, tapable, Babel) and MUI X DataGrid's pipe-processor registry — see Alter
   Every surveyed system ties on registration order when priorities collide — the exact
   property ADR-0011's "unordered append list" rejection exists to eliminate. tapable's
   own `_insert` algorithm (read from published source) additionally shows that where a
-  system carries *both* a named and a numeric constraint, the named one (`before`)
+  system carries _both_ a named and a numeric constraint, the named one (`before`)
   overrides the numeric one (`stage`) — supporting anchors over priorities specifically.
 - **`stageOrder` config on `TableConfig`, or a full order-array override** — rejected,
   same self-containment failure as DI; also not statically typed against the derived
@@ -132,7 +132,7 @@ Vite, tapable, Babel) and MUI X DataGrid's pipe-processor registry — see Alter
   mechanism exists to close.
 - **MUI X-style pipe-processor groups (accumulate, `Map`-insertion order, random
   per-instance ids)** — rejected as the ordering model. No deterministic order, no
-  collision detection by construction. Its `interface`-based group registry *is*
+  collision detection by construction. Its `interface`-based group registry _is_
   adopted (decision 3) — that part is a strictly better answer than a derived union.
 - **Leaning on Angular Signal Forms' reducer model** (this library's stated structural
   reference) — does not transfer. Signal Forms has no ordering primitive at all, but
@@ -143,11 +143,13 @@ Vite, tapable, Babel) and MUI X DataGrid's pipe-processor registry — see Alter
 ## Consequences
 
 **Gained**
+
 - Third-party features (consumer's own teams) add pipeline/render stages positioned relative to
   fixed anchors, with construction-time errors naming both parties on any conflict.
 - Stage names for third-party stages stay checked via interface augmentation rather than `string`.
 
 **Cost & flag**
+
 - Topological resolution introduces debuggable-but-nonlocal cycles across independently-authored
   features.
 - CLAUDE.md's `schema/run.ts` row is contradictory: it says the declaring form keeps its own body

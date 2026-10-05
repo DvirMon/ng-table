@@ -50,7 +50,7 @@ interface WithGroupingConfig<TRow, TValues extends ColumnValueMap = ColumnValueM
 
 interface GroupingLevel<TId extends string = string> {
   readonly columnId: TId;
-  readonly label?: string;          // resolves: explicit -> matching column's own label
+  readonly label?: string; // resolves: explicit -> matching column's own label
 }
 
 interface GroupingMembers<TRow> {
@@ -58,8 +58,8 @@ interface GroupingMembers<TRow> {
   readonly grouping: WritableView<string[], GroupingUpdater<TRow>>;
   readonly rowsOf: (group: RenderRow<TRow>) => readonly TRow[];
   readonly groupIds: Signal<RowId[]>;
-  readonly groupingLevels: Signal<ColumnDef<TRow>[]>;   // applied levels as ColumnDefs
-  readonly isGroupedBy: (columnId: string) => boolean;  // O(1), against applied levels
+  readonly groupingLevels: Signal<ColumnDef<TRow>[]>; // applied levels as ColumnDefs
+  readonly isGroupedBy: (columnId: string) => boolean; // O(1), against applied levels
 }
 ```
 
@@ -80,13 +80,13 @@ the cell renders.
 
 Each is declared inside `schema`, against a `GroupingPath` keyed by declared column id:
 
-| Declarator | Concern |
-|---|---|
-| `grouping(path.x, { enable?, when? })` | activation and per-column admission |
-| `groupingAsync(path.x, { params, factory, onSuccess, onError })` | activation from a resource |
-| `groupKey(path.x, extractValue)` | key derivation — must return a primitive |
-| `groupOrder(path.x, cmp)` | sibling order at that level |
-| `aggregate(path.x, aggregateFn)` | one summary value per cluster per column |
+| Declarator                                                       | Concern                                  |
+| ---------------------------------------------------------------- | ---------------------------------------- |
+| `grouping(path.x, { enable?, when? })`                           | activation and per-column admission      |
+| `groupingAsync(path.x, { params, factory, onSuccess, onError })` | activation from a resource               |
+| `groupKey(path.x, extractValue)`                                 | key derivation — must return a primitive |
+| `groupOrder(path.x, cmp)`                                        | sibling order at that level              |
+| `aggregate(path.x, aggregateFn)`                                 | one summary value per cluster per column |
 
 `grouping` declaring neither `enable` nor `when` throws at construction. A second
 `groupKey` on one column is a duplicate registration and throws.
@@ -113,7 +113,7 @@ resulting array. The writer runs the updater, validates its result, then commits
 without it, `groupingLevels()` would need to silently drop an orphaned level again (see below).
 
 **Index bounds still degrade.** `reorderGroupLevels` with an out-of-range index is a no-op, not a
-throw — only an *unknown column id* throws; a bad index is not that.
+throw — only an _unknown column id_ throws; a bad index is not that.
 
 **One runtime exception: a column removed later via `setColumns()`.** The throw above only fires
 at the two write paths it guards; a `columns` write does not re-validate the grouping array
@@ -131,22 +131,22 @@ consumer filters it out of its own column list for rendering.
 
 ### Declared vs. applied (G37)
 
-| | Source | Consumers |
-|---|---|---|
-| **declared** | `maskGroupingLevels(baseGrouping(), ruleEntries)` | clustering, `groupIds`, `rowsOf` |
-| **applied** | levels with ≥1 admitted cluster, read off the cluster tree | `grouping()`, `groupingLevels`, `isGroupedBy` |
+|              | Source                                                     | Consumers                                     |
+| ------------ | ---------------------------------------------------------- | --------------------------------------------- |
+| **declared** | `maskGroupingLevels(baseGrouping(), ruleEntries)`          | clustering, `groupIds`, `rowsOf`              |
+| **applied**  | levels with ≥1 admitted cluster, read off the cluster tree | `grouping()`, `groupingLevels`, `isGroupedBy` |
 
 A level that admits no cluster is not a grouping level — the public read follows what renders.
-Applied derives *from* the clustered tree, so there is no cycle.
+Applied derives _from_ the clustered tree, so there is no cycle.
 
 ### Rule resolution
 
-| Entry state | `result()` | Effect on other levels |
-|---|---|---|
-| never resolved, pending | `undefined` | whole set abstains — declared passes through unmasked |
-| resolved, now pending | its last boolean | none (G51) |
-| resolved | that boolean | none |
-| threw | `false`, reported once | none |
+| Entry state             | `result()`             | Effect on other levels                                |
+| ----------------------- | ---------------------- | ----------------------------------------------------- |
+| never resolved, pending | `undefined`            | whole set abstains — declared passes through unmasked |
+| resolved, now pending   | its last boolean       | none (G51)                                            |
+| resolved                | that boolean           | none                                                  |
+| threw                   | `false`, reported once | none                                                  |
 
 A rule naming an undeclared field is inert (G34). A rule with no `enable` contributes no entry,
 so a `when`-only rule can never mask or abstain.
@@ -157,7 +157,7 @@ Every built cluster renders as a group unless a `when` predicate rejects it. A r
 rows exit the grouping tree entirely — no header, no group id, no aggregates — and render flat at
 the parent's depth. They do not re-enter at a deeper level (G22).
 
-`when`'s second parameter, `ctx: ValueOfContext<TRow>`, resolves a *different* declared column's
+`when`'s second parameter, `ctx: ValueOfContext<TRow>`, resolves a _different_ declared column's
 accessor value for one row — `ctx.valueOf(path.margin, cluster.rows[0])` — the unbound-tier
 resolver from [ADR-0027 Rule 3](../../adr/0027-schema-declaration-surface.md#rule-3--resolvers-come-in-two-tiers-and-the-tier-decides-the-arity).
 `ClusterSummary` still carries only `columnId`/`key`/`rows` — the resolver lives on `ctx`,
@@ -184,7 +184,7 @@ keeps clusters contiguous and the two stages need no coordination. Headers and a
 produced here — the render layer synthesizes them downstream, which is also why `aggregateFn`
 always receives post-filter rows.
 
-**A row sort does move group headers.** The `'group'` render stage re-clusters the *sorted* rows,
+**A row sort does move group headers.** The `'group'` render stage re-clusters the _sorted_ rows,
 so with no comparator supplied, first-occurrence group order follows the sort. Rows within a group
 stay contiguous. G5's decoupling is `groupOrder`-only — supply one to pin group order across
 sort changes.
@@ -267,23 +267,23 @@ A group's row count is `rowsOf(group).length` — there is no count field on `Re
 group by `id`, never by object identity: `renderRows()` rebuilds its objects every pass (G19).
 
 The one deliberate exception is `expandedRows`, which does hold synthetic `group:` ids — that set
-holds *toggles*, not records, which is what makes group expansion survive a refetch for free.
+holds _toggles_, not records, which is what makes group expansion survive a refetch for free.
 
 ## ADRs that constrain this feature
 
 In descending order of how badly this goes wrong without them.
 
-| ADR | What it constrains |
-|---|---|
-| [0024](../../adr/0024-single-value-source-accessor.md) | The column `accessor` is the single value source; grouping's schema and `initial` key by declared column id, same space `createColumns`'s schema argument uses |
-| [0017](../../adr/0017-engine-owned-descendant-prune.md) | Collapse is engine-owned. Grouping emits unconditionally and reads no expansion state |
-| [0018](../../adr/0018-when-vs-enable-predicate-naming.md) | `when` vs `enable` — grouping is the only feature carrying both predicates |
-| [0011](../../adr/0011-chained-render-stages.md) | The `'group'` render stage claim; `RenderStages` derives from `RENDER_ORDER` |
-| [0014](../../adr/0014-runtime-error-policy.md) | Consumer callbacks degrade and report; they never throw |
-| [0019](../../adr/0019-columns-path-keyed-by-declared-column-ids.md) | `ColumnsPath`-style keying by declared ids — grouping is now one of its consumers, per ADR-0024's amendment |
-| [0022](../../adr/0022-render-row-cell-values.md) | `buildGroupCells` spreads `aggregates` into column-id-keyed `cells` |
-| [0021](../../adr/0021-column-concerns-and-data-concerns-are-separate-surfaces.md) | Superseded for grouping by ADR-0024 — kept for its still-standing capability test on other surfaces |
-| [0012](../../adr/0012-split-expansion-into-panel-and-tree.md), [0006](../../adr/0006-row-id-state-reconciliation.md) | Background: stage allocation, and group ids as synthetic `RowId`s |
+| ADR                                                                                                                  | What it constrains                                                                                                                                             |
+| -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [0024](../../adr/0024-single-value-source-accessor.md)                                                               | The column `accessor` is the single value source; grouping's schema and `initial` key by declared column id, same space `createColumns`'s schema argument uses |
+| [0017](../../adr/0017-engine-owned-descendant-prune.md)                                                              | Collapse is engine-owned. Grouping emits unconditionally and reads no expansion state                                                                          |
+| [0018](../../adr/0018-when-vs-enable-predicate-naming.md)                                                            | `when` vs `enable` — grouping is the only feature carrying both predicates                                                                                     |
+| [0011](../../adr/0011-chained-render-stages.md)                                                                      | The `'group'` render stage claim; `RenderStages` derives from `RENDER_ORDER`                                                                                   |
+| [0014](../../adr/0014-runtime-error-policy.md)                                                                       | Consumer callbacks degrade and report; they never throw                                                                                                        |
+| [0019](../../adr/0019-columns-path-keyed-by-declared-column-ids.md)                                                  | `ColumnsPath`-style keying by declared ids — grouping is now one of its consumers, per ADR-0024's amendment                                                    |
+| [0022](../../adr/0022-render-row-cell-values.md)                                                                     | `buildGroupCells` spreads `aggregates` into column-id-keyed `cells`                                                                                            |
+| [0021](../../adr/0021-column-concerns-and-data-concerns-are-separate-surfaces.md)                                    | Superseded for grouping by ADR-0024 — kept for its still-standing capability test on other surfaces                                                            |
+| [0012](../../adr/0012-split-expansion-into-panel-and-tree.md), [0006](../../adr/0006-row-id-state-reconciliation.md) | Background: stage allocation, and group ids as synthetic `RowId`s                                                                                              |
 
 ## Not in scope
 
@@ -308,7 +308,7 @@ so that bug class does not apply — which is why G9 could reopen the single-lev
 
 On group ordering, three of four researched libraries reuse column sort recursively, a documented
 bug source (TanStack; MUI X; AG Grid #7850). Only AG Grid treats group order as its own concept,
-Enterprise-gated behind `groupMaintainOrder: true` — whose *unflagged* behavior this library gets
+Enterprise-gated behind `groupMaintainOrder: true` — whose _unflagged_ behavior this library gets
 for free from its fixed pipeline order.
 
 Full competitive reasoning:

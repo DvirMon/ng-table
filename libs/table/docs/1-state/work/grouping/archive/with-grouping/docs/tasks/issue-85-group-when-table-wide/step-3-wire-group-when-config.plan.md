@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — wire config.groupWhen through withGrouping()"
+title: 'Step 3 — wire config.groupWhen through withGrouping()'
 type: task-step
 issue: 119
 ---
@@ -31,7 +31,7 @@ Steps 1 and 2 built a mechanism nothing invokes. This step gives it its one publ
 ```ts
 withGrouping({
   initial: ['region'],
-  groupWhen: (c) => c.key != null,        // no region ⇒ stays flat
+  groupWhen: (c) => c.key != null, // no region ⇒ stays flat
 });
 ```
 
@@ -137,12 +137,12 @@ it exactly.
   predicate's results or hoist the call outside the computed.
 - **`rowsOf` deliberately does not take the predicate.** `rowsBeneathGroup` resolves a group id;
   a dissolved cluster has no id to resolve, so the answer falls out as `[]` with no code — while a
-  *parent* group's `rowsOf` still includes rows that render flat beneath it, because dissolution
+  _parent_ group's `rowsOf` still includes rows that render flat beneath it, because dissolution
   changes depth, not membership. That is Q3, recommended as correct; Step 4 tests it either way.
 - **`groupWhen` is table-wide here, and there is no per-column counterpart yet.** #86 adds a
   `Map<columnId, GroupWhen>` collected off the rules array and AND-combines it with this one. Leave
   a seam, not an implementation — do not build the map now.
-- **`groupWhen` does not flow through `foldGroupingRules`.** That function resolves level *order*
+- **`groupWhen` does not flow through `foldGroupingRules`.** That function resolves level _order_
   and abstains for the whole set when any `when` is pending (D13); a row-data predicate has nothing
   to say about either. Keep the two apart (`design-group-admission.md` § `groupWhen` does not flow
   through `foldGroupingRules`).
@@ -181,4 +181,5 @@ it exactly.
 - [ ] `shared-table` suite green in CI on the PR. Not run locally.
 
 ---
+
 ← [Step 2: Emission honours admission](step-2-emission-honors-admission.plan.md) | [Step 4: Tests](step-4-tests.plan.md) →

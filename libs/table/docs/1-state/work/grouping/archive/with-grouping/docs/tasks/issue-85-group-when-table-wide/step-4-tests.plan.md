@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — tests for table-wide admission"
+title: 'Step 4 — tests for table-wide admission'
 type: task-step
 issue: 119
 ---
@@ -121,4 +121,5 @@ Through `createTable()`, asserting on `renderRows()` / `groupIds()`:
 - [ ] `nx run shared-table:typecheck` clean, on a source-clean run.
 
 ---
+
 ← [Step 3: Wire config.groupWhen](step-3-wire-group-when-config.plan.md) | [Step 5: The story](step-5-grouping-static-story.plan.md) →

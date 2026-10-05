@@ -3,14 +3,14 @@
 **Issue:** #40
 **Status:** 6 / 6 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | editing-state.ts: `createEditingStore(input: EditingStoreInput<TRow>)`, no `TableCore` | ✅ done | — |
-| 2 | with-optimistic.ts: `withOptimistic<In>(derive?)` | ✅ done | — |
-| 3 | with-row-edit.ts: `withRowEdit<In>(config?, derive?)`, `indexById` off the input | ✅ done | — |
-| 4 | with-optimistic.spec.ts: positional, derive-only block, both-orders throw | ✅ done | — |
-| 5 | with-row-edit.spec.ts + optimistic-mutations.spec.ts composed cases | ✅ done | — |
-| 6 | finding on #40: order the two features vs keep the shared store (comment) | ✅ done | — |
+| Step | Title                                                                                  | Status  | PR  |
+| ---- | -------------------------------------------------------------------------------------- | ------- | --- |
+| 1    | editing-state.ts: `createEditingStore(input: EditingStoreInput<TRow>)`, no `TableCore` | ✅ done | —   |
+| 2    | with-optimistic.ts: `withOptimistic<In>(derive?)`                                      | ✅ done | —   |
+| 3    | with-row-edit.ts: `withRowEdit<In>(config?, derive?)`, `indexById` off the input       | ✅ done | —   |
+| 4    | with-optimistic.spec.ts: positional, derive-only block, both-orders throw              | ✅ done | —   |
+| 5    | with-row-edit.spec.ts + optimistic-mutations.spec.ts composed cases                    | ✅ done | —   |
+| 6    | finding on #40: order the two features vs keep the shared store (comment)              | ✅ done | —   |
 
 Graph: `1 → {2, 3}`; `{2, 3} → 4`; `3 → 5`; `3 → 6`.
 Parallel-safe: `[2, 3]` after `1`; `[4, 5, 6]` after `3` (4 also needs 2). Dependency: `1 → 3 → 5`.

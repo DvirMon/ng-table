@@ -41,6 +41,7 @@ commits. Issues close when that PR merges.
   🎸 [#166 s2] feat(table/tree): add a parentLink slot, claimed once
   ✨ [#166 review] ref(table/tree): name ParentLink, simplify its slot claim
   ```
+
 - **Scope** is `<project>[/<domain>]` — project e.g. `table`, `root`, `deps`. The domain is the
   one the work **belongs to**, not every folder the diff touches: the folder under
   `libs/table/docs/1-state/work/<domain>/` holding the issue's workspace (e.g.

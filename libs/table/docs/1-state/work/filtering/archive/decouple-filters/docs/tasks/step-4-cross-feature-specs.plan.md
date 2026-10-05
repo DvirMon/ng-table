@@ -8,10 +8,10 @@
 
 ## Files
 
-| File | Sites | Action |
-|---|---|---|
-| `libs/shared/table/src/api/features/selection.utils.spec.ts` | helpers `:22-35`, cases `:41`, `:54` | edit |
-| `libs/shared/table/src/api/features/with-grouping.spec.ts` | schemas `:194`, `:476`, `:522`, `:849`; compose sites `:208`, `:489`, `:535`, `:863`, `:875` | edit |
+| File                                                         | Sites                                                                                        | Action |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------- | ------ |
+| `libs/shared/table/src/api/features/selection.utils.spec.ts` | helpers `:22-35`, cases `:41`, `:54`                                                         | edit   |
+| `libs/shared/table/src/api/features/with-grouping.spec.ts`   | schemas `:194`, `:476`, `:522`, `:849`; compose sites `:208`, `:489`, `:535`, `:863`, `:875` | edit   |
 
 ## Why This Step Exists
 
@@ -36,8 +36,8 @@ function makeFilteredStore(): TableStore<MockRow> {
     createTable(
       signal<MockRow[]>(mockRows),
       { trackBy: mockTrackBy, columns: makeColumns() },
-      withFiltering({ predicates: () => [(row: MockRow) => row.id === 1] })
-    )
+      withFiltering({ predicates: () => [(row: MockRow) => row.id === 1] }),
+    ),
   );
 }
 ```
@@ -58,17 +58,17 @@ Four `createFilters()` declarations, each wrapping the same rule — `filter(pat
 driven by `filters['amount']().value.set(300)` (or `40` at `:510`). Each collapses to one term:
 
 ```ts
-withFiltering({ predicates: () => [(row: GroupingMockRow) => row.amount !== 300] })
+withFiltering({ predicates: () => [(row: GroupingMockRow) => row.amount !== 300] });
 ```
 
 Apply per site:
 
-| Declaration | Compose site(s) | Criterion set at | Predicate |
-|---|---|---|---|
-| `:194` | `:208` | `:213` → 300 | `row.amount !== 300` |
-| `:476` | `:489` | `:510` → 40 | `row.amount !== 40` |
-| `:522` | `:535` | `:540` → 300 | `row.amount !== 300` |
-| `:849` | `:863`, `:875` | `:879` → 300 | `row.amount !== 300` |
+| Declaration | Compose site(s) | Criterion set at | Predicate            |
+| ----------- | --------------- | ---------------- | -------------------- |
+| `:194`      | `:208`          | `:213` → 300     | `row.amount !== 300` |
+| `:476`      | `:489`          | `:510` → 40      | `row.amount !== 40`  |
+| `:522`      | `:535`          | `:540` → 300     | `row.amount !== 300` |
+| `:849`      | `:863`, `:875`  | `:879` → 300     | `row.amount !== 300` |
 
 The `:849` declaration feeds **two** stores built in the same case (`filterGroupSort` and
 `sortGroupFilter`, proving argument order does not change pipeline order). Give each its own
@@ -76,7 +76,7 @@ The `:849` declaration feeds **two** stores built in the same case (`filterGroup
 and pass it to both — the second reads better and keeps the two stores provably identical.
 
 Delete the `createFilters` import (`:9`) and the `filter` rule import (`:11`) once no site uses
-them. Keep the inline comments that explain *which row the filter drops* (`:213`, `:540`, `:879`) —
+them. Keep the inline comments that explain _which row the filter drops_ (`:213`, `:540`, `:879`) —
 they are what make the aggregate assertions readable; rewrite them to name the predicate rather
 than the criterion.
 
@@ -86,12 +86,12 @@ than the criterion.
   after construction, so rows whose `amount` equals the criterion are dropped. The predicate spells
   the same thing directly. Assert the same row ids come back — if a case's expectations change, the
   predicate is wrong, not the expectations.
-- The old schemas set their criterion *after* the store was built, exercising reactivity the
+- The old schemas set their criterion _after_ the store was built, exercising reactivity the
   grouping spec never cared about. Fixing the predicate at composition removes a timing detail
   these cases were never testing; no case relies on the pre-set-criterion state, so no assertion
   needs a new position.
 - Keep `withFiltering`'s argument position in each `createTable()` call exactly as it is —
-  `:863` / `:875` deliberately differ in order, and that difference *is* the test.
+  `:863` / `:875` deliberately differ in order, and that difference _is_ the test.
 
 ## Risks / Watchouts
 
@@ -105,7 +105,7 @@ than the criterion.
 
 - Changing any grouping, sorting or selection assertion.
 - Touching `with-filtering.spec.ts` (Step 3) or `create-filters.spec.ts` (Step 2).
-- Adding filtering coverage to either file — both should end up testing *less* of filtering, not
+- Adding filtering coverage to either file — both should end up testing _less_ of filtering, not
   more.
 
 ## Acceptance Checks
@@ -118,4 +118,5 @@ than the criterion.
 - [ ] `npx nx test shared-table` passes for both files
 
 ---
+
 ← [Step 3: Split the feature spec by ownership](step-3-split-feature-spec.plan.md) | [Step 5: Update the prose describing the old config shape](step-5-update-prose.plan.md) →

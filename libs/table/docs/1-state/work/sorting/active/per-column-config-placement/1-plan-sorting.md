@@ -27,15 +27,15 @@ comment. One change, no expand–contract.
 
 ### Decisions made in this session (2026-09-17)
 
-Each `ColumnDef` sorting fact was classified on two axes — *where* (ColumnDef vs feature) and
-*how* (static value vs reactive rule):
+Each `ColumnDef` sorting fact was classified on two axes — _where_ (ColumnDef vs feature) and
+_how_ (static value vs reactive rule):
 
-| Fact | Still needed? | Reactive / async / order-bearing? | Lands as |
-|---|---|---|---|
-| `enableSorting` | yes — `toggleSort` guard lets a generic `@for` header template stay inert on some columns | no real reactive case (server/permission cases hide the column, not un-sort it) | **table-level set** `sortable?: boolean \| ColumnId<TRow>[]` on the config — not a per-column rule. Same shape as `withGrouping({ initial })` |
-| `sortFn` | yes — auto-detect covers string/number/Date only | no | **schema rule** `applySorting(p.x, { compare })` |
-| `applySortNulls` | yes (shipped, spec'd) | no — static opts on a reactive channel was the inverse mismatch the issue names | **schema rule** `applySorting(p.x, { nulls })`; `applySortNulls` + `SORT_NULLS` deleted |
-| `accessor` | core, not feature | — | stays on `ColumnDef` |
+| Fact             | Still needed?                                                                             | Reactive / async / order-bearing?                                               | Lands as                                                                                                                                      |
+| ---------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enableSorting`  | yes — `toggleSort` guard lets a generic `@for` header template stay inert on some columns | no real reactive case (server/permission cases hide the column, not un-sort it) | **table-level set** `sortable?: boolean \| ColumnId<TRow>[]` on the config — not a per-column rule. Same shape as `withGrouping({ initial })` |
+| `sortFn`         | yes — auto-detect covers string/number/Date only                                          | no                                                                              | **schema rule** `applySorting(p.x, { compare })`                                                                                              |
+| `applySortNulls` | yes (shipped, spec'd)                                                                     | no — static opts on a reactive channel was the inverse mismatch the issue names | **schema rule** `applySorting(p.x, { nulls })`; `applySortNulls` + `SORT_NULLS` deleted                                                       |
+| `accessor`       | core, not feature                                                                         | —                                                                               | stays on `ColumnDef`                                                                                                                          |
 
 Rationale recorded for the ADR (step 8):
 
@@ -44,7 +44,7 @@ Rationale recorded for the ADR (step 8):
   in the template. Neither makes it reactive. Putting it in the schema fn would make
   `{ when: () => false }` the only reason to write a rule — ceremony — and adding a
   comparator rule would silently change which columns sort. A dedicated config field removes
-  both: `sortable` answers *which*, `schema` answers *how*.
+  both: `sortable` answers _which_, `schema` answers _how_.
 - **Default: omitted ⇒ all sortable** (engine convention, zero repo churn). `false` ⇒ none;
   `ColumnId[]` ⇒ only those. Unknown id in the array **throws at construction** (wiring error,
   same as `withGrouping.initial`). `setSorting()` stays unguarded — programmatic writes are
@@ -59,13 +59,13 @@ Rationale recorded for the ADR (step 8):
 ### Target DX
 
 ```ts
-withSorting();                                   // every column sortable, auto comparator, nulls last
-withSorting({ sortable: ['name', 'dueDate'] });  // only these
-withSorting({ sortable: false, manual: true });  // programmatic only
+withSorting(); // every column sortable, auto comparator, nulls last
+withSorting({ sortable: ['name', 'dueDate'] }); // only these
+withSorting({ sortable: false, manual: true }); // programmatic only
 withSorting({
   sortable: ['name', 'age', 'dueDate'],
   schema: (p) => {
-    applySorting(p.age,     { compare: (a, b) => a.age - b.age });
+    applySorting(p.age, { compare: (a, b) => a.age - b.age });
     applySorting(p.dueDate, { nulls: { order: 'first', emptyString: 'is-empty' } });
   },
 });
@@ -78,9 +78,18 @@ Dependency graph: 1 → 2 → 3 → {4, 5, 6} → 7 → 8. Steps 4/5/6 are paral
 ### 1. Sorting rule types — new `src/schema/sorting-schema.types.ts`
 
 ```ts
-export interface SortNullsOpts { order?: 'first' | 'last'; emptyString?: 'is-empty' }  // moved from column-rules.ts, unchanged
-export interface SortingRuleOpts<TRow> { compare?: (a: TRow, b: TRow) => number; nulls?: SortNullsOpts }
-export interface SortingRule<TRow = unknown> extends SortingRuleOpts<TRow> { readonly kind: 'sorting'; readonly columnId: string }
+export interface SortNullsOpts {
+  order?: 'first' | 'last';
+  emptyString?: 'is-empty';
+} // moved from column-rules.ts, unchanged
+export interface SortingRuleOpts<TRow> {
+  compare?: (a: TRow, b: TRow) => number;
+  nulls?: SortNullsOpts;
+}
+export interface SortingRule<TRow = unknown> extends SortingRuleOpts<TRow> {
+  readonly kind: 'sorting';
+  readonly columnId: string;
+}
 export type SortingSchemaFn<TRow> = (path: ColumnsPath<TRow, SortingRule<TRow>>) => void;
 ```
 
@@ -92,8 +101,11 @@ Mirror of `schema/grouping-rules.ts:12`:
 
 ```ts
 export function applySorting<TRow, K extends Extract<keyof TRow, string>>(
-  path: ColumnHandle<TRow, K, SortingRule<TRow>>, opts: SortingRuleOpts<TRow>
-): void { assertPathIsCurrent(path).record({ kind: 'sorting', columnId: path.id, ...opts }); }
+  path: ColumnHandle<TRow, K, SortingRule<TRow>>,
+  opts: SortingRuleOpts<TRow>,
+): void {
+  assertPathIsCurrent(path).record({ kind: 'sorting', columnId: path.id, ...opts });
+}
 ```
 
 Records only; duplicate detection happens in step 3 (the recorder has no per-family

@@ -13,7 +13,7 @@ export interface WritableView<T, Updater> {
 
 export function createWritableView<T, Updater>(
   read: () => T,
-  applyUpdater: (updater: Updater) => void
+  applyUpdater: (updater: Updater) => void,
 ): WritableView<T, Updater> {
   return Object.assign(computed(read), { update: applyUpdater });
 }

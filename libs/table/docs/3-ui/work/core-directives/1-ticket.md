@@ -24,7 +24,7 @@ Out of scope, deliberately:
 
 - **`[ngpColumnWidth]`** on `ngpTableColumn` — `columns.md` sketches it, but `ColumnDef` has no `width` field, so the input has no defined semantics. Blocked on the presentation-fields decision (`3-ui/architecture.md` Next Steps 7).
 - **Any feature directive** — sort, selection, expansion, drag & drop, resizing, grouping. Each has its own blocker or its own drilling session pending.
-- **Styling** — `styling-tokens.md`'s token catalog is unstarted. Directives emit the `data-*` attributes; what those attributes *look like* is a separate session.
+- **Styling** — `styling-tokens.md`'s token catalog is unstarted. Directives emit the `data-*` attributes; what those attributes _look like_ is a separate session.
 
 ## Spec
 

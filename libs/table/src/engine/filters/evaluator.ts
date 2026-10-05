@@ -13,7 +13,9 @@ export interface FiltersInternal<TRow> {
   readonly columns: () => readonly ColumnDef<TRow>[];
 }
 
-export function buildCriterionOfContext<TRow>(internal: FiltersInternal<TRow>): FilterValueOfContext<TRow> {
+export function buildCriterionOfContext<TRow>(
+  internal: FiltersInternal<TRow>,
+): FilterValueOfContext<TRow> {
   // Annotated so `criterionOf` takes its generic signature contextually. The lookup is by
   // `handle.id` alone, so the handle's row type is irrelevant here.
   const context: FilterValueOfContext<TRow> = {
@@ -29,7 +31,7 @@ export function buildCriterionOfContext<TRow>(internal: FiltersInternal<TRow>): 
 function reportFilterError<TRow>(
   record: FilterRuleRecord<TRow>,
   row: TRow,
-  readCell: (columnId: string, row: TRow) => unknown
+  readCell: (columnId: string, row: TRow) => unknown,
 ): void {
   const [firstPath] = pathsOf(record);
   const cell = firstPath !== undefined ? readCell(firstPath, row) : undefined;
@@ -38,7 +40,7 @@ function reportFilterError<TRow>(
   console.error(
     `[withFiltering] The predicate for filter "${record.key}" threw while evaluating a row. ` +
       'This filter does not narrow for this evaluation; other filters are unaffected.',
-    { key: record.key, predicate: record.predicate, cell }
+    { key: record.key, predicate: record.predicate, cell },
   );
 }
 
@@ -50,7 +52,7 @@ function reportMissingColumnError<TRow>(record: FilterRuleRecord<TRow>, columnId
   console.error(
     `[withFiltering] The filter "${record.key}" targets column "${columnId}", which is not in ` +
       'the current columns. This filter does not narrow for this evaluation.',
-    { key: record.key, columnId }
+    { key: record.key, columnId },
   );
 }
 
@@ -61,7 +63,7 @@ function evaluateRecord<TRow>(
   record: FilterRuleRecord<TRow>,
   criterion: unknown,
   row: TRow,
-  readCell: (columnId: string, row: TRow) => unknown
+  readCell: (columnId: string, row: TRow) => unknown,
 ): boolean | 'error' {
   if (record.children) {
     let sawError = false;
@@ -102,7 +104,7 @@ interface FilterEvaluator<TRow> {
  * @internal
  */
 export function createFilterEvaluatorFrom<TRow>(
-  internal: FiltersInternal<TRow>
+  internal: FiltersInternal<TRow>,
 ): FilterEvaluator<TRow> {
   const reportedKeys = new Set<string>();
   const droppedKeys = new Set<string>();

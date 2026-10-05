@@ -37,7 +37,7 @@ Follow the file's existing conventions: the
 `typecheckOnly(assertions)` wrapper that never calls its
 argument, a locally-declared row interface with one
 object-valued field, `toEqualTypeOf` (never `toMatchTypeOf`
-— the failure mode is a type being *wider*), and the doc
+— the failure mode is a type being _wider_), and the doc
 comment stating `typecheck-spec` is what enforces the file.
 
 Reuse the file's `DealRow` if it has an object-valued field;
@@ -94,7 +94,7 @@ otherwise add one locally. Data witness: a local
 
 - **Pair every `@ts-expect-error` with a positive
   assertion** on the surrounding expression — the directive
-  is satisfied by *any* error on the next line.
+  is satisfied by _any_ error on the next line.
 - Cases 13 and 14 are probes: the assertion pins what TS
   does. Report the observed types in the step's hand-off so
   Step 4 can record them.
@@ -125,4 +125,5 @@ otherwise add one locally. Data witness: a local
 - [ ] Hand-off states the observed types for cases 11–14.
 
 ---
+
 ← [Step 2: Runtime spec](step-2-runtime-spec.plan.md) | [Step 4: Record the probe answers](step-4-record-probe-answers.plan.md) →

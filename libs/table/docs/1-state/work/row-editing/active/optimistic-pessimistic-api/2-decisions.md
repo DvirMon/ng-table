@@ -26,26 +26,26 @@ does not exist, and this repo's decision logs already show amendments (A1/A2 in
 [`with-optimistic/2-decisions.md`](../../archive/with-optimistic/2-decisions.md)) where implementation taught
 something the design pass missed.
 
-Reserving the numbers now is the part that *is* urgent: the sequence is global, so a concurrent
+Reserving the numbers now is the part that _is_ urgent: the sequence is global, so a concurrent
 effort could otherwise take D50.
 
 ## Reserved
 
-| # | Title | Lands with |
-|---|---|---|
-| **D50** | Optimistic and pessimistic are call-site facts, named by the verb — not configuration | [ADR-0013](../../../../../adr/0013-optimistic-and-pessimistic-are-call-site-facts.md) (written) |
-| **D51** | `beginEdit` loses its `{ insert }` data write; `createRow` becomes the only insert-and-arm verb | step 3a/3b |
-| **D52** | `endEdit` splits into `commitEdit` (keep the restore point) and `closeEdit` (release it) | step 3a/3b |
-| **D53** | `RowRestorePoint.detached` becomes `op: 'create' \| 'update' \| 'delete'` | step 1 |
-| **D54** | `unconfirmed` becomes a library slice — unconfirmed identity outlives a restore point | step 2 |
-| **D55** | Per-row error state stays consumer-side; the library cannot know when to clear it | step 5 |
-| **D56** | A pessimistic create shows no row at all — composer form, no render-stage injection | step 6 |
-| **D57** | Session verbs warn in dev mode on a `withOptimistic()`-only table | step 4 |
+| #       | Title                                                                                           | Lands with                                                                                      |
+| ------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **D50** | Optimistic and pessimistic are call-site facts, named by the verb — not configuration           | [ADR-0013](../../../../../adr/0013-optimistic-and-pessimistic-are-call-site-facts.md) (written) |
+| **D51** | `beginEdit` loses its `{ insert }` data write; `createRow` becomes the only insert-and-arm verb | step 3a/3b                                                                                      |
+| **D52** | `endEdit` splits into `commitEdit` (keep the restore point) and `closeEdit` (release it)        | step 3a/3b                                                                                      |
+| **D53** | `RowRestorePoint.detached` becomes `op: 'create' \| 'update' \| 'delete'`                       | step 1                                                                                          |
+| **D54** | `unconfirmed` becomes a library slice — unconfirmed identity outlives a restore point           | step 2                                                                                          |
+| **D55** | Per-row error state stays consumer-side; the library cannot know when to clear it               | step 5                                                                                          |
+| **D56** | A pessimistic create shows no row at all — composer form, no render-stage injection             | step 6                                                                                          |
+| **D57** | Session verbs warn in dev mode on a `withOptimistic()`-only table                               | step 4                                                                                          |
 
 ## D50 — Optimistic and pessimistic are call-site facts, named by the verb (2026-09-05)
 
-**Decision:** adopt the product-level definition — *optimistic* is reflected before the server
-answers, *pessimistic* only after it confirms — as a **per-operation** axis (create / update /
+**Decision:** adopt the product-level definition — _optimistic_ is reflected before the server
+answers, _pessimistic_ only after it confirms — as a **per-operation** axis (create / update /
 delete) applying to live and gated tables alike. The mode is not library configuration but a
 property of where in the async flow the call sits, so the verb names it rather than a config flag.
 
@@ -55,7 +55,7 @@ on: **[ADR-0013](../../../../../adr/0013-optimistic-and-pessimistic-are-call-sit
 **Consequences:** supersedes [`3-ui/stories.md`](../../../../../3-ui/stories.md) :142 (which scoped the
 axis to gated tables only); narrows — does not reverse —
 [`0-product/row-editing.md`](../../../../../0-product/row-editing.md) OQ-7, whose finding that a flow is
-undetectable *at composition time* remains true. Obliges D51–D57 and the step sequence in
+undetectable _at composition time_ remains true. Obliges D51–D57 and the step sequence in
 [`1-proposal.md`](1-proposal.md).
 
 ## D53 — `RowRestorePoint.detached` becomes `op: 'create' | 'update' | 'delete'` (2026-09-05)
@@ -69,17 +69,18 @@ the information `false` used to erase.
 **Where each value is assigned** — `detached: false` collapsed two different call-site facts into
 one boolean, so restoring the distinction is a per-site judgment, not a mechanical find/replace:
 
-| Verb | Site | `op` |
-|---|---|---|
-| `captureEdit`, `patchEdit` | snapshot the row already present in `data` | `'update'` |
-| `beginEdit(id)` (no `{ insert }`) | same — captures the found row | `'update'` |
-| `beginEdit(id, { insert })`, `createRow` (both overloads) | the row is new — inserted, not found | `'create'` |
-| `removeEdit` | takes the row out of `data` | `'delete'` (was `detached: true`) |
+| Verb                                                      | Site                                       | `op`                              |
+| --------------------------------------------------------- | ------------------------------------------ | --------------------------------- |
+| `captureEdit`, `patchEdit`                                | snapshot the row already present in `data` | `'update'`                        |
+| `beginEdit(id)` (no `{ insert }`)                         | same — captures the found row              | `'update'`                        |
+| `beginEdit(id, { insert })`, `createRow` (both overloads) | the row is new — inserted, not found       | `'create'`                        |
+| `removeEdit`                                              | takes the row out of `data`                | `'delete'` (was `detached: true`) |
 
 `revertEdit`, `discardEdit`, `releaseEdit`, `swapRowId` only read or re-key an existing snapshot —
 none constructs a new one, so none needed a change beyond the type.
 
 **Consequences:**
+
 - Public breaking change lands now (foretold by D50/ADR-0013): `RowRestorePoint.detached` is gone;
   `RowRestorePoint.op` and `PendingOp` are the replacement, both exported from `index.ts`.
 - `editing-state.ts`, `optimistic-mutations.ts`, `row-edit-mutations.ts` and their colocated specs
@@ -87,7 +88,7 @@ none constructs a new one, so none needed a change beyond the type.
   grep, including `src/stories/` as the proposal predicted).
 - No behavior change — `pending()`, `onRowsRemoved`'s pruning outcome, and every existing test
   assertion are unchanged; only the vocabulary a failure handler can branch on grew (`op ===
-  'create'` is now askable, where before only `detached` — always `false` on every path except
+'create'` is now askable, where before only `detached` — always `false` on every path except
   `removeEdit` — was).
 - Sets up D54 (`unconfirmed`, step 2), which reads `op === 'create'` as its starting point before
   layering in the "outlives a restore point" gap noted in `1-proposal.md`.
@@ -107,15 +108,15 @@ must still POST on retry. `unconfirmed` is the identity that survives that spend
 
 **Per-verb effect** (the table `1-proposal.md` specifies, implemented verb-for-verb):
 
-| Verb | Effect | Where |
-|---|---|---|
-| `createRow` (single overload, via `beginEdit`'s `{ insert }` branch) / `createRow` (array overload) | adds | `row-edit-mutations.ts` |
-| `swapRowId(from, to)` | deletes `from`, never adds `to` — a swap **is** the acknowledgement | `optimistic-mutations.ts` |
-| `releaseEdit(id)` | clears | `optimistic-mutations.ts` |
-| `discardEdit(id)` | clears | `optimistic-mutations.ts` |
-| `removeEdit(id)` | keeps (unchanged, via full-state spread) | `optimistic-mutations.ts` |
-| `revertEdit(id)` | keeps (unchanged, via full-state spread) | `optimistic-mutations.ts` |
-| `captureEdit`, `patchEdit`, `beginEdit` (no `{ insert }`) | untouched — these are `'update'`, not a create | both files |
+| Verb                                                                                                | Effect                                                              | Where                     |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------- |
+| `createRow` (single overload, via `beginEdit`'s `{ insert }` branch) / `createRow` (array overload) | adds                                                                | `row-edit-mutations.ts`   |
+| `swapRowId(from, to)`                                                                               | deletes `from`, never adds `to` — a swap **is** the acknowledgement | `optimistic-mutations.ts` |
+| `releaseEdit(id)`                                                                                   | clears                                                              | `optimistic-mutations.ts` |
+| `discardEdit(id)`                                                                                   | clears                                                              | `optimistic-mutations.ts` |
+| `removeEdit(id)`                                                                                    | keeps (unchanged, via full-state spread)                            | `optimistic-mutations.ts` |
+| `revertEdit(id)`                                                                                    | keeps (unchanged, via full-state spread)                            | `optimistic-mutations.ts` |
+| `captureEdit`, `patchEdit`, `beginEdit` (no `{ insert }`)                                           | untouched — these are `'update'`, not a create                      | both files                |
 
 **`releaseEdit`'s guard relaxes** (`1-proposal.md`'s R1 risk, foretold): it bailed when
 `!state.snapshots.has(id)`, which is exactly the state a reverted-then-retried create is in —
@@ -141,6 +142,7 @@ one of those returns) rather than a style choice. `closeAll` and `closeAllButLas
 pass it through unchanged.
 
 **Consequences:**
+
 - Additive, non-breaking: `pending`'s shape and behavior are unchanged; `EditingState` gains a
   required field, but it is constructed only inside `editing-state.ts`, `table.mock.ts`, and test
   `state()` helpers — all updated in this commit, so nothing outside the library can observe the

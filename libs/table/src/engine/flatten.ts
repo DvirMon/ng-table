@@ -3,10 +3,7 @@ import type { RenderNode } from './render-stages';
 
 /** What the walk produces. `index`, `sourceIndex` and `cells` are stamped centrally in
  *  `engine/core.ts` after it runs. */
-export type FlatRenderRow<TRow> = Omit<
-  RenderRow<TRow>,
-  'index' | 'sourceIndex' | 'cells'
->;
+export type FlatRenderRow<TRow> = Omit<RenderRow<TRow>, 'index' | 'sourceIndex' | 'cells'>;
 
 /**
  * Depth-first walk producing the flat render rows a template consumes.
@@ -20,7 +17,7 @@ export type FlatRenderRow<TRow> = Omit<
  */
 export function flattenVisible<TRow>(
   nodes: readonly RenderNode<TRow>[],
-  expanded: ReadonlySet<RowId> | undefined
+  expanded: ReadonlySet<RowId> | undefined,
 ): FlatRenderRow<TRow>[] {
   const out: FlatRenderRow<TRow>[] = [];
 

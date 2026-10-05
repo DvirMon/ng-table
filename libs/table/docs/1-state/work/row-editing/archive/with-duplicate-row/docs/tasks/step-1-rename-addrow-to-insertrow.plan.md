@@ -1,5 +1,5 @@
 ---
-title: "Step 1: Rename `addRow` → `insertRow`"
+title: 'Step 1: Rename `addRow` → `insertRow`'
 ---
 
 ← | [Step 2: Fix `beginEdit` no-op invariant comment](step-2-fix-beginedit-invariant-doc.plan.md) →
@@ -16,6 +16,7 @@ on this step — same file, sequenced to avoid overlapping edits.)
 **Scaffolding agent:** angular-implementer
 
 **Files:**
+
 - `libs/shared/table/src/api/row-mutations.ts` — rename the exported function
 - `libs/shared/table/src/api/optimistic-mutations.ts` — update import + call site (`revertEdit`'s
   re-insert path)
@@ -82,4 +83,5 @@ together at no extra cost.
 - `npx nx typecheck shared-table` (or build) passes — confirms every call site was updated.
 
 ---
+
 ← | [Step 2: Fix `beginEdit` no-op invariant comment](step-2-fix-beginedit-invariant-doc.plan.md) →

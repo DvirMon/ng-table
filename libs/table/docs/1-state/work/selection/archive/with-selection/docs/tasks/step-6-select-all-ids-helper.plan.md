@@ -1,5 +1,5 @@
 ---
-title: "Step 6 — selectAllIds() helper (D59)"
+title: 'Step 6 — selectAllIds() helper (D59)'
 type: task-step
 issue: 64
 ---
@@ -31,19 +31,22 @@ decision; nothing here is a new design choice.
 1. Create `selection.utils.ts` as a sibling to `with-selection.ts` (D59's own proposed home) —
    plain function, no DI/injection context, no dependency on `withSelection()` or
    `withFiltering()`:
+
    ```ts
    import type { RowId, TableStore } from '../types';
 
    export function selectAllIds<TRow>(
      table: Pick<TableStore<TRow>, 'rows' | 'value' | 'trackBy'>,
-     opts?: { includeHidden?: boolean }
+     opts?: { includeHidden?: boolean },
    ): RowId[] {
      const rows = opts?.includeHidden ? table.value() : table.rows();
      return rows.map(table.trackBy);
    }
    ```
+
    Confirm the actual import path/name for `TableStore`/`RowId` against `api/types.ts` before
    writing the import — don't guess the specifier.
+
 2. Export `selectAllIds` from `src/index.ts`, grouped near the other `api/features/*` exports
    (no new type export needed — the function's own generic signature is the full public surface).
 
@@ -85,4 +88,5 @@ decision; nothing here is a new design choice.
 - [ ] `tsc --noEmit` passes for the file.
 
 ---
+
 ← [Step 5: 3-spec.md: enableRowSelection() config + scope rules](step-5-spec-doc-update.plan.md) | [Step 7: selectAllIds() unit tests](step-7-select-all-ids-tests.plan.md) →

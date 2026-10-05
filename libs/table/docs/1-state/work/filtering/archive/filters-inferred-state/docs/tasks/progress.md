@@ -13,14 +13,14 @@ External edge: the decoupling ticket (`#67`, steps 1–13) is complete and merge
 
 **Status:** 6 / 6 complete
 
-| Step | Title | Type | Status | PR |
-|---|---|---|---|---|
-| 1 | [Add the rule types and the `StateOf` fold](step-1-rule-types-and-stateof.plan.md) | `code` | ✅ done | `ffd9649` |
-| 2 | [Add the row-type token](step-2-row-of-token.plan.md) | `code` | ✅ done | `ffd9649` |
-| 3 | [Rules return their records](step-3-rules-return-records.plan.md) | `code` | ✅ done | `ffd9649` |
-| 4 | [The row carrier and the array schema](step-4-carrier-and-array-schema.plan.md) | `code` | ✅ done | `ffd9649` |
-| 5 | [Delete the ambient recorder](step-5-delete-recorder.plan.md) | `code` | ✅ done | `ffd9649` |
-| 6 | [Export the token from the domain barrel](step-6-barrel-export.plan.md) | `code` | ✅ done | `ffd9649` |
+| Step | Title                                                                              | Type   | Status  | PR        |
+| ---- | ---------------------------------------------------------------------------------- | ------ | ------- | --------- |
+| 1    | [Add the rule types and the `StateOf` fold](step-1-rule-types-and-stateof.plan.md) | `code` | ✅ done | `ffd9649` |
+| 2    | [Add the row-type token](step-2-row-of-token.plan.md)                              | `code` | ✅ done | `ffd9649` |
+| 3    | [Rules return their records](step-3-rules-return-records.plan.md)                  | `code` | ✅ done | `ffd9649` |
+| 4    | [The row carrier and the array schema](step-4-carrier-and-array-schema.plan.md)    | `code` | ✅ done | `ffd9649` |
+| 5    | [Delete the ambient recorder](step-5-delete-recorder.plan.md)                      | `code` | ✅ done | `ffd9649` |
+| 6    | [Export the token from the domain barrel](step-6-barrel-export.plan.md)            | `code` | ✅ done | `ffd9649` |
 
 ### Execution graph
 
@@ -42,17 +42,17 @@ issue — that is by design, and `#77` restores it.
 Two acceptance criteria on `#76` were written against behaviour the architecture's own
 signatures did not deliver. Both were caught by compiled probe, not by a self-report.
 
-| Claim as planned | What actually happens | Resolution |
-|---|---|---|
-| `anyOf` rejects a mixed-criterion group | It did **not** — `CriterionOf<C[number]>` distributes over the children union and silently yields `string \| RangeCriterion` | **Fixed in code.** `children` now takes a homogeneity intersection checked against `CriterionOf<C[0]>`, applied on the parameter, never as `C`'s inference constraint |
-| `applyWhen(…)` and `...applyWhen(…)` both work | Spread is a `TS2488` — a node has no `[Symbol.iterator]` | **Fixed in docs**, per the user's call. Place the node directly; the spread is a compile error. Strictly better than the equivalence specified: an omitted spread is correct, a written one is loud |
+| Claim as planned                               | What actually happens                                                                                                        | Resolution                                                                                                                                                                                          |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `anyOf` rejects a mixed-criterion group        | It did **not** — `CriterionOf<C[number]>` distributes over the children union and silently yields `string \| RangeCriterion` | **Fixed in code.** `children` now takes a homogeneity intersection checked against `CriterionOf<C[0]>`, applied on the parameter, never as `C`'s inference constraint                               |
+| `applyWhen(…)` and `...applyWhen(…)` both work | Spread is a `TS2488` — a node has no `[Symbol.iterator]`                                                                     | **Fixed in docs**, per the user's call. Place the node directly; the spread is a compile error. Strictly better than the equivalence specified: an omitted spread is correct, a written one is loud |
 
 Amended in place (marked as corrections, not silently rewritten): `architecture.md` (the `anyOf`
 and `applyWhen` contract blocks, the type-facts list), `spec.md` (user story 21, the R37 bullet,
 the type-spec outline), `step-4`'s acceptance checks, and the `rules.ts` / `types.ts` doc comments.
 
 **Still owed to `#79`:** R44's wording in `design-options-hybrid-api.md`.
-**Still owed to `#78`:** its AC *"produces the same top-level keys whether spread or not"* is now
+**Still owed to `#78`:** its AC _"produces the same top-level keys whether spread or not"_ is now
 false and would have been written as a failing type assertion.
 
 ### Known state at the end of `#76`
@@ -74,11 +74,11 @@ cannot pass until `#77` lands** — the filters spec does not compile against th
 
 **Fixed before commit:**
 
-| Finding | Axis | Fix |
-|---|---|---|
-| `applyWhen` silently lost its construction throw — `HEAD:rules.ts:305` rejected an empty gate, the rewrite checked nothing at any level | Spec (regression) | `S extends readonly [unknown, ...unknown[]]`, matching `anyOf`, plus the runtime throw as backstop for untyped callers |
-| All 7 rule literals + `anyOf` dropped `satisfies FilterRuleRecord` for a bare `as`, removing structural checking on the whole literal | Standards (hard) | Restored as `} satisfies FilterRuleRecord<TRow> as FilterRule<…>` — keeps both the structural check and the phantom-carrying return type |
-| `isConditionalNode` asserted `children` + `condition` from a `kind` check alone | Standards (hard) | Every destructured member now checked; `'kind' in item` replaces the `as` |
+| Finding                                                                                                                                 | Axis              | Fix                                                                                                                                      |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `applyWhen` silently lost its construction throw — `HEAD:rules.ts:305` rejected an empty gate, the rewrite checked nothing at any level | Spec (regression) | `S extends readonly [unknown, ...unknown[]]`, matching `anyOf`, plus the runtime throw as backstop for untyped callers                   |
+| All 7 rule literals + `anyOf` dropped `satisfies FilterRuleRecord` for a bare `as`, removing structural checking on the whole literal   | Standards (hard)  | Restored as `} satisfies FilterRuleRecord<TRow> as FilterRule<…>` — keeps both the structural check and the phantom-carrying return type |
+| `isConditionalNode` asserted `children` + `condition` from a `kind` check alone                                                         | Standards (hard)  | Every destructured member now checked; `'kind' in item` replaces the `as`                                                                |
 
 **Left open, deliberately:**
 
@@ -110,14 +110,14 @@ eight. That folder also records four corrections to this issue's own body and to
 **Status:** 1 / 1 complete. Implemented directly from the issue body — `/to-tasks` was never run
 for it, and the scope is one new file plus one Nx target, which does not decompose into steps.
 
-| Artifact | Action |
-|---|---|
-| `src/filters/create-filters.types.spec.ts` | **created** — 13 cases across 7 suites |
-| `project.json` | `typecheck-spec` target — `ngc -p tsconfig.spec.json --noEmit`, same `nx:run-commands`/`cache`/`inputs` shape as `typecheck` |
-| `src/filters/create-filters.spec.ts` | the `rejects an unrelated row type` case moved out; its block header now points at the new file |
-| `src/filters/rules.ts` | `RangeCriterion`/`DateRangeCriterion` exported (internal only — `filters/index.ts` does not list them) so the seam asserts the canonical shape rather than a copy of it; `anyOf`'s homogeneity intersection gains `RowOfRule<C[0]>` |
-| `src/filters/types.ts` | `FilterRule` gains a phantom `__row`; new `RowOfRule<R>` reads it; `FlattenItem` discards `any` before the array branch |
-| `libs/shared/table/CLAUDE.md` | the Typechecking section names both targets and why there are two |
+| Artifact                                   | Action                                                                                                                                                                                                                              |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/filters/create-filters.types.spec.ts` | **created** — 13 cases across 7 suites                                                                                                                                                                                              |
+| `project.json`                             | `typecheck-spec` target — `ngc -p tsconfig.spec.json --noEmit`, same `nx:run-commands`/`cache`/`inputs` shape as `typecheck`                                                                                                        |
+| `src/filters/create-filters.spec.ts`       | the `rejects an unrelated row type` case moved out; its block header now points at the new file                                                                                                                                     |
+| `src/filters/rules.ts`                     | `RangeCriterion`/`DateRangeCriterion` exported (internal only — `filters/index.ts` does not list them) so the seam asserts the canonical shape rather than a copy of it; `anyOf`'s homogeneity intersection gains `RowOfRule<C[0]>` |
+| `src/filters/types.ts`                     | `FilterRule` gains a phantom `__row`; new `RowOfRule<R>` reads it; `FlattenItem` discards `any` before the array branch                                                                                                             |
+| `libs/shared/table/CLAUDE.md`              | the Typechecking section names both targets and why there are two                                                                                                                                                                   |
 
 ### Scope taken beyond the issue body, on the user's call
 
@@ -125,10 +125,10 @@ Two library changes in `types.ts`/`rules.ts` that `#78` does not ask for. Both c
 `/code-review` and both were decided explicitly rather than absorbed quietly. Neither changes a
 public export — `filters/index.ts` is untouched.
 
-| Change | Why it is here and not in a follow-up |
-|---|---|
-| phantom `__row` + `RowOfRule`, used by `anyOf` | The erasure was on `#77`'s list as owed to `#76`/`#78`. Asserting it without fixing it would have meant writing a test for behaviour the library does not have |
-| `FlattenItem` discards `any` | Found while investigating why the spread case could not be asserted where a consumer writes it. Without it, the criterion is only satisfiable at a synthetic position |
+| Change                                         | Why it is here and not in a follow-up                                                                                                                                 |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| phantom `__row` + `RowOfRule`, used by `anyOf` | The erasure was on `#77`'s list as owed to `#76`/`#78`. Asserting it without fixing it would have meant writing a test for behaviour the library does not have        |
+| `FlattenItem` discards `any`                   | Found while investigating why the spread case could not be asserted where a consumer writes it. Without it, the criterion is only satisfiable at a synthetic position |
 
 ### Three decisions taken during implementation
 
@@ -139,13 +139,13 @@ never an option, and one uniform idiom beats a per-case split between "safe to r
 It also removes the `TestBed` dependency the runtime spec's `build<S>` helper needs.
 
 **Cost, recorded rather than glossed:** `architecture.md`'s prior art
-(`create-filters.spec.ts`'s `describe('types')` block) has bodies that *do* execute — only its
+(`create-filters.spec.ts`'s `describe('types')` block) has bodies that _do_ execute — only its
 `expectTypeOf` calls are inert. Here nothing executes, so 13 `it()`s report green while asserting
 nothing at runtime. That satisfies the issue's wording ("runs as a passing suite whose bodies are
 inert") but "inert" means something stronger than it did in the doc that word came from.
 
-**The row-type rejection was rewritten, not moved.** The issue says *"moved here rather than
-being rewritten"*, and only the `@ts-expect-error` line survived verbatim. Its subject was rebuilt
+**The row-type rejection was rewritten, not moved.** The issue says _"moved here rather than
+being rewritten"_, and only the `@ts-expect-error` line survived verbatim. Its subject was rebuilt
 inline because the original read `buildTypedFilters()`, which routes through the runtime spec's
 `TestBed`-based `build<S>` helper — a dependency this file exists to not have. The fact asserted
 is unchanged.
@@ -158,7 +158,7 @@ said so: **`StateOf<[any]>` alone reproduces `TS2589`** with no spread anywhere.
 
 Cause: a failed spread degrades its element type to `any`; `any` satisfies `readonly unknown[]`,
 so `FlattenItem<any>` takes the array branch to `Flatten<any>`, which is `FlattenItem<any>` again.
-The depth error is the fold eating itself, and it *replaces* the real diagnostic — so any future
+The depth error is the fold eating itself, and it _replaces_ the real diagnostic — so any future
 mistake that produces an `any` in a schema array would have been reported as an unreadable
 instantiation-depth error at the call site instead of at the mistake.
 
@@ -175,14 +175,14 @@ written, not at a synthetic position.
 homogeneity intersection's right half was `FilterRule<string, CriterionOf<C[0]>, unknown>`, so a
 child built from an unrelated row's handle passed silently. Fixed rather than recorded as a hole.
 
-The proposed fix — *"`RowOfRule<C[0]>` in the intersection alongside `CriterionOf<C[0]>`"* — did
+The proposed fix — _"`RowOfRule<C[0]>` in the intersection alongside `CriterionOf<C[0]>`"_ — did
 not exist as written: **`TRow` was unrecoverable from a `FilterRule`.** `FilterRuleRecord<TRow>`
 mentions it only in the optional `condition`, whose `valueOf` is generic in its own handle, so
 nothing distinguished two rules built from different rows. `CriterionOf` works because
 `__criterion` is a phantom member; `RowOfRule` needed the same, so `FilterRule` gained a phantom
 `__row`. That is the whole reason the erasure existed.
 
-Second open item from that list — *"blame lands on the innocent siblings"* (`C[0]` is the
+Second open item from that list — _"blame lands on the innocent siblings"_ (`C[0]` is the
 reference, so an odd child in first position yields N−1 errors) — is **unchanged and still open**.
 It applies to the row check exactly as it did to the criterion check.
 
@@ -196,7 +196,7 @@ It applies to the row check exactly as it did to the criterion check.
   gives `TS2578: Unused '@ts-expect-error' directive`. Both reverted.
 - The `anyOf` row check probed the same way: with the directive removed, the group of an `Invoice`
   child and a `Ticket` child gives `TS2322 … Type 'Ticket' is missing the following properties
-  from type 'Invoice'` at the offending child.
+from type 'Invoice'` at the offending child.
 - `nx run shared-table:typecheck` (lib) — no errors; the two `NG8107` warnings in
   `grouping-static-story-host.component.html` are pre-existing.
 - `npx eslint` on the changed files — clean.
@@ -207,8 +207,8 @@ read as clean when they were not. Filter on `error` alone, or read the output un
 
 ## Not planned here
 
-| Issue | Scope | Run `/to-tasks` when |
-|---|---|---|
+| Issue                                                | Scope                                      | Run `/to-tasks` when         |
+| ---------------------------------------------------- | ------------------------------------------ | ---------------------------- |
 | [#79](https://github.com/DvirMon/ng-table/issues/79) | docs, ADRs, `CLAUDE.md`, the design record | any time — merge after `#77` |
 
 Status values: `⬚ pending`, `▶ in progress`, `✅ done`, `⏭ skipped`.

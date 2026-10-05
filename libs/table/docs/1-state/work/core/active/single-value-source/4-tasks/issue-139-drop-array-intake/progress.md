@@ -3,13 +3,13 @@
 **Issue:** [#139](https://github.com/DvirMon/ng-table/issues/139)
 **Status:** 5 / 5 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | Move specs off `resolveColumnsConfig` | ✅ done | — |
-| 2 | `TableConfig` takes a `ColumnSet` only | ✅ done | — |
-| 3 | Generator constraint, regenerated | ✅ done | — |
-| 4 | Array-rejection proofs: `create-table.types.spec.ts` | ✅ done | — |
-| 5 | Record the ruling | ✅ done | — |
+| Step | Title                                                | Status  | PR  |
+| ---- | ---------------------------------------------------- | ------- | --- |
+| 1    | Move specs off `resolveColumnsConfig`                | ✅ done | —   |
+| 2    | `TableConfig` takes a `ColumnSet` only               | ✅ done | —   |
+| 3    | Generator constraint, regenerated                    | ✅ done | —   |
+| 4    | Array-rejection proofs: `create-table.types.spec.ts` | ✅ done | —   |
+| 5    | Record the ruling                                    | ✅ done | —   |
 
 ## Graph
 

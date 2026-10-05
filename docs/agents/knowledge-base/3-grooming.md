@@ -21,7 +21,7 @@ The industry evidence is consistent and unflattering to calendar reviews:
   ([State of Documentation 2026](https://www.happysupport.ai/en/blog/state-of-documentation-2026)).
 - More than three in four surveyed had watched an AI tool at their company surface an outdated doc
   and confidently produce a wrong answer (ibid.). For an agent-driven repo this is the whole risk:
-  a stale spec doesn't just mislead a reader, it gets *implemented*.
+  a stale spec doesn't just mislead a reader, it gets _implemented_.
 - Teams on quarterly reviews still reported that "stuff still slips through" and they "mostly
   catch it when it breaks" ([RampStack](https://rampstack.co/skills/documentation-strategy)).
 
@@ -37,7 +37,7 @@ analysis for structural grounding, RAG for dependency-aware context, and a **cri
 reflexion loop** — the model drafts an update, a critic scores it against the source, and it
 refines. Reported 3.44/5.0 vs. 1.91 for CodeT5-base on a judge metric; the critic loop is the part
 that produced the semantic-correctness gain. The transferable lesson is not the model but the
-shape: *never accept a first-draft doc update; score it against code and iterate.*
+shape: _never accept a first-draft doc update; score it against code and iterate._
 
 **Half 2 — structure (is the base internally coherent?).** Contradictions between pages, stale
 claims, orphan pages, broken and missing cross-references. Cheaper than half 1 — most of it is a
@@ -50,16 +50,16 @@ Adapted from the gardener-system pattern
 ([ADR-0166, JoelClaw](https://joelclaw.com/adrs/adr-0166)) and the LLM Wiki `librarian` command.
 Each doc is scored on signals, and only docs that trip a signal get an LLM pass:
 
-| Signal | Detection | Cost |
-|---|---|---|
-| **Source drift** | Files, paths, exports, or commands named in the doc no longer exist | script |
-| **Broken link** | Relative `.md` target missing | script |
-| **Orphan** | No inbound link from any other page | script |
-| **Age without review** | `last-reviewed:` older than N months | script |
-| **Status drift** | `status:` says "spec only" but the code shipped (or vice versa) | script, once `status:` is controlled vocabulary |
-| **Contradiction** | Two pages assert incompatible things about one capability | LLM |
-| **Superseded silently** | A newer ADR overrides a claim the older page still states flatly | LLM |
-| **Redundancy** | Two pages cover the same ground; one should link, not restate | LLM |
+| Signal                  | Detection                                                           | Cost                                            |
+| ----------------------- | ------------------------------------------------------------------- | ----------------------------------------------- |
+| **Source drift**        | Files, paths, exports, or commands named in the doc no longer exist | script                                          |
+| **Broken link**         | Relative `.md` target missing                                       | script                                          |
+| **Orphan**              | No inbound link from any other page                                 | script                                          |
+| **Age without review**  | `last-reviewed:` older than N months                                | script                                          |
+| **Status drift**        | `status:` says "spec only" but the code shipped (or vice versa)     | script, once `status:` is controlled vocabulary |
+| **Contradiction**       | Two pages assert incompatible things about one capability           | LLM                                             |
+| **Superseded silently** | A newer ADR overrides a claim the older page still states flatly    | LLM                                             |
+| **Redundancy**          | Two pages cover the same ground; one should link, not restate       | LLM                                             |
 
 Script signals first, LLM only on what they flag — that is what keeps a 310-file pass affordable.
 

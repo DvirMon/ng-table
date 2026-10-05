@@ -1,5 +1,5 @@
 ---
-title: "Step 5 — Docs banner update"
+title: 'Step 5 — Docs banner update'
 type: task-step
 issue: 58
 ---
@@ -98,4 +98,5 @@ declarative `applyGrouping()` sugar (D6–D8) are still unbuilt (#26)." sentence
 - [ ] Frontmatter `spec`/`code` fields unchanged.
 
 ---
+
 ← [Step 4: Tests](step-4-tests.plan.md)

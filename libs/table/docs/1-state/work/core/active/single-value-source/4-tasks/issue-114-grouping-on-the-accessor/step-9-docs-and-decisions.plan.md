@@ -160,4 +160,5 @@ grouping joining it is the fact worth stating there.
 - [ ] `issue-graph.md` shows `#114` closed and the frontier updated.
 
 ---
+
 ← [Step 8: Stories and fixtures migrate](step-8-stories-and-fixtures.plan.md)

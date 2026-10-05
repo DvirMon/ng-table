@@ -21,32 +21,38 @@ export const HOME_CONTENT: HomeContent = {
       {
         icon: 'lucideTable',
         title: 'createTable()',
-        description: 'One factory returns a table instance — no class to extend, no store to configure by hand.',
+        description:
+          'One factory returns a table instance — no class to extend, no store to configure by hand.',
       },
       {
         icon: 'lucideTag',
         title: 'Attribute-only directives',
-        description: 'ngp-prefixed directives style your table — never insert, remove, or reorder DOM.',
+        description:
+          'ngp-prefixed directives style your table — never insert, remove, or reorder DOM.',
       },
       {
         icon: 'lucideColumns3',
         title: 'Column schema',
-        description: 'Define columns once in the config object and shape them with columnSchema(); the table derives the rest.',
+        description:
+          'Define columns once in the config object and shape them with columnSchema(); the table derives the rest.',
       },
       {
         icon: 'lucidePuzzle',
         title: 'Feature plugins',
-        description: "Opt into withSorting() and withExpansion() by passing them to createTable() after the config — nothing ships you don't use.",
+        description:
+          "Opt into withSorting() and withExpansion() by passing them to createTable() after the config — nothing ships you don't use.",
       },
       {
         icon: 'lucideRows',
         title: 'Raw row data',
-        description: 'rows() yields your row type directly, with layout and state fields colocated — no wrapper objects to unwrap.',
+        description:
+          'rows() yields your row type directly, with layout and state fields colocated — no wrapper objects to unwrap.',
       },
       {
         icon: 'lucideBlocks',
         title: 'Composability',
-        description: 'Every state feature is composable — each plugs a lean, spec\'d member object straight into the table\'s state, no wrapper types to unwrap.',
+        description:
+          "Every state feature is composable — each plugs a lean, spec'd member object straight into the table's state, no wrapper types to unwrap.",
       },
     ],
   },

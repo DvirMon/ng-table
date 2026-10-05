@@ -14,11 +14,11 @@ Table-dense reference page. Same shell, different body composition.
 
 ## Differences from Doc Article
 
-| Slot | Change |
-| --- | --- |
-| main › body | Dominated by `table-row` groups, one table per API surface, each under its own H2 |
-| main › body | `code-chip` used heavily in name/type cells |
-| main › body | `callout` variant `warning` for deprecations |
+| Slot          | Change                                                                                                                                                                                              |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| main › body   | Dominated by `table-row` groups, one table per API surface, each under its own H2                                                                                                                   |
+| main › body   | `code-chip` used heavily in name/type cells                                                                                                                                                         |
+| main › body   | `callout` variant `warning` for deprecations                                                                                                                                                        |
 | right (`toc`) | Always renders — one TOC entry per H2 (API surface). **Overrides** Doc Article's 2-H2 minimum: a lookup page with one table still gets the column. A page with no H2 at all is not an API Reference |
 
 ## Page-only rules

@@ -7,6 +7,7 @@ files:
   - libs/table/src/api/features/with-sorting/feature.ts (edit)
   - libs/table/src/api/features/with-filtering/feature.ts (edit)
 ---
+
 # Step 7 — Refactor withSorting + withFiltering
 
 This step converts both features' `stages` from the object form
@@ -74,4 +75,5 @@ behavior change.
 pass with zero edits to either spec file.
 
 ---
+
 ← [Step 6: compose-features.ts fold](step-6-compose-features-fold.plan.md) | [Step 8: Refactor withGrouping](step-8-refactor-grouping.plan.md) →

@@ -44,7 +44,11 @@ function inContext<T>(build: () => T): T {
 describe('withExpansion', () => {
   it('toggle(id) flips a row from collapsed to expanded and back', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion(),
+      ),
     );
 
     expect(store.expansion().has('r1')).toBe(false);
@@ -58,7 +62,11 @@ describe('withExpansion', () => {
 
   it('expanding row A does not collapse row B (multi-expand)', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion(),
+      ),
     );
 
     store.expansion.toggle('r1');
@@ -70,7 +78,11 @@ describe('withExpansion', () => {
 
   it('expand() with no ids expands every row in rows() — the panel has no discovery walk', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion(),
+      ),
     );
 
     store.expansion.expand();
@@ -83,7 +95,11 @@ describe('withExpansion', () => {
 
   it('expand(explicitIds) unions the explicit ids with what is already open', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion(),
+      ),
     );
 
     store.expansion.toggle('r1');
@@ -97,7 +113,11 @@ describe('withExpansion', () => {
 
   it('collapse() with no ids clears everything', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion(),
+      ),
     );
 
     store.expansion.expand();
@@ -109,7 +129,11 @@ describe('withExpansion', () => {
 
   it('collapse(ids) removes exactly those ids and leaves the rest open', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion(),
+      ),
     );
 
     store.expansion.expand();
@@ -123,7 +147,11 @@ describe('withExpansion', () => {
 
   it('set(ids) replaces atomically — an open id absent from ids closes in the same write', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion(),
+      ),
     );
 
     store.expansion.expand(['r1', 'r2']);
@@ -136,7 +164,11 @@ describe('withExpansion', () => {
 
   it('changed emits once per write — toggle expanding emits { added: [id], removed: [] }', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion(),
+      ),
     );
 
     const emitted: ExpansionChange[] = [];
@@ -149,7 +181,11 @@ describe('withExpansion', () => {
 
   it('changed emits once for expand() over a fresh table, added holding every row id (no discovery walk — every row in rows())', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion(),
+      ),
     );
 
     const emitted: ExpansionChange[] = [];
@@ -164,7 +200,11 @@ describe('withExpansion', () => {
 
   it("changed carries the full symmetric diff in one emission — expand(['r1','r2']) on an empty set emits exactly one { added: ['r1','r2'], removed: [] }, not two single-id emissions", () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion(),
+      ),
     );
 
     const emitted: ExpansionChange[] = [];
@@ -179,7 +219,11 @@ describe('withExpansion', () => {
 
   it('changed emits once for collapse(), removed holding every previously open id', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion(),
+      ),
     );
 
     store.expansion.expand();
@@ -195,7 +239,11 @@ describe('withExpansion', () => {
 
   it('a repeat write that changes nothing emits nothing on changed', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion(),
+      ),
     );
 
     store.expansion.expand();
@@ -209,7 +257,11 @@ describe('withExpansion', () => {
 
   it('emitEvent: false suppresses changed on every write verb, expansion() still changes', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion(),
+      ),
     );
 
     const emitted: ExpansionChange[] = [];
@@ -233,7 +285,11 @@ describe('withExpansion', () => {
 
   it('changed completes when the table is destroyed, so subscribers do not leak', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion(),
+      ),
     );
 
     let completed = false;
@@ -248,7 +304,7 @@ describe('withExpansion', () => {
   it('removing an open row from data clears it from expansion() but not everExpanded(), via either write path (ADR-0006)', () => {
     const data = signal(makeRows());
     const store = inContext(() =>
-      createTable(data, { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(data, { trackBy: 'id', columns: makeColumns() }, withExpansion()),
     );
 
     // Write path 1: the raw data signal directly.
@@ -277,7 +333,11 @@ describe('withExpansion', () => {
 
   it('composes with zero other features present — createTable(data, config, withExpansion()) works end-to-end', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion(),
+      ),
     );
 
     expect(store.rows().map((row) => row.id)).toEqual(['r1', 'r2', 'r3']);
@@ -292,7 +352,7 @@ describe('withExpansion', () => {
       const s = createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withExpansion({ initial: ['r1', 'r2'] })
+        withExpansion({ initial: ['r1', 'r2'] }),
       );
       s.expansion.changed.subscribe((change) => emitted.push(change));
       return s;
@@ -310,8 +370,8 @@ describe('withExpansion', () => {
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withExpansion({ initial: ['r1'] })
-      )
+        withExpansion({ initial: ['r1'] }),
+      ),
     );
 
     // Toggle collapses the seeded row.
@@ -333,7 +393,11 @@ describe('withExpansion', () => {
 
   it('claims no render stage: renderRows() is 1:1 with rows(), every depth is 0, isExpanded is unstamped on every row', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion(),
+      ),
     );
 
     // Opening a panel must not synthesize or nest any row — there is no contributor to the
@@ -355,7 +419,10 @@ describe('withExpansion', () => {
       parentId?: string | null;
     }
 
-    function makeTreeColumns(): ColumnSet<TreeRow, readonly ColumnDecl<TreeRow, string, unknown>[]> {
+    function makeTreeColumns(): ColumnSet<
+      TreeRow,
+      readonly ColumnDecl<TreeRow, string, unknown>[]
+    > {
       return createColumns(noData<TreeRow>(), (col) => [col('name')]);
     }
 
@@ -377,14 +444,14 @@ describe('withExpansion', () => {
                 signal<TreeRow[]>(makeTreeRows()),
                 { trackBy: 'id', columns: makeTreeColumns() },
                 withExpansion(),
-                withTree({ parentId: (row) => row.parentId })
+                withTree({ parentId: (row) => row.parentId }),
               )
             : createTable(
                 signal<TreeRow[]>(makeTreeRows()),
                 { trackBy: 'id', columns: makeTreeColumns() },
                 withTree({ parentId: (row) => row.parentId }),
-                withExpansion()
-              )
+                withExpansion(),
+              ),
         );
 
         store.expansion.toggle('r1');
@@ -406,7 +473,11 @@ describe('withExpansion', () => {
   describe('types', () => {
     it('withExpansion() alone: composed members are recovered exactly, never widened to any', () => {
       const store = inContext(() =>
-        createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withExpansion(),
+        ),
       );
 
       expectTypeOf<keyof typeof store>().toEqualTypeOf<
@@ -422,8 +493,11 @@ describe('withExpansion', () => {
         createTable(
           signal<Row[]>(makeRows()),
           { trackBy: 'id', columns: makeColumns() },
-          withExpansion({}, withComputed((s) => ({ openCount: computed(() => s.expansion().size) })))
-        )
+          withExpansion(
+            {},
+            withComputed((s) => ({ openCount: computed(() => s.expansion().size) })),
+          ),
+        ),
       );
 
       expectTypeOf(store.openCount).toEqualTypeOf<Signal<number>>();
@@ -442,8 +516,8 @@ describe('withExpansion', () => {
         createTable(
           signal<Row[]>(makeRows()),
           { trackBy: 'id', columns: makeColumns() },
-          withExpansion(withComputed((s) => ({ openCount: computed(() => s.expansion().size) })))
-        )
+          withExpansion(withComputed((s) => ({ openCount: computed(() => s.expansion().size) }))),
+        ),
       );
 
       expectTypeOf(store.openCount).toEqualTypeOf<Signal<number>>();
@@ -462,9 +536,9 @@ describe('withExpansion', () => {
             withComputed((s) => {
               expectTypeOf(s.expansion).toEqualTypeOf<ExpansionSlice>();
               return {};
-            })
-          )
-        )
+            }),
+          ),
+        ),
       );
 
       // Grouping first: the same read is a compile error — this slot's `In` doesn't carry
@@ -480,10 +554,10 @@ describe('withExpansion', () => {
               // grouping in this order (D25).
               expectTypeOf(s.expansion).toEqualTypeOf<ExpansionSlice>();
               return {};
-            })
+            }),
           ),
-          withExpansion()
-        )
+          withExpansion(),
+        ),
       );
     });
   });

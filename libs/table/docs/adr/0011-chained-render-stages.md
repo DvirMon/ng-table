@@ -50,14 +50,14 @@ named stage and compose without collision. This ADR applies the same mechanism o
    export const RENDER_ORDER = ['group', 'tree'] as const;
    export type RenderStage = (typeof RENDER_ORDER)[number];
    export type RenderNodeTransform<TRow> = (
-     nodes: readonly RenderNode<TRow>[]
+     nodes: readonly RenderNode<TRow>[],
    ) => readonly RenderNode<TRow>[];
    export type RenderStages<TRow> = Partial<Record<RenderStage, RenderNodeTransform<TRow>>>;
    ```
 
-   *(As amended by [ADR-0023](0023-tree-shaped-render-ir.md), 2026-09-20 — `'paginate'` left
+   _(As amended by [ADR-0023](0023-tree-shaped-render-ir.md), 2026-09-20 — `'paginate'` left
    this array unclaimed in #106 and was dropped; the stage signature moved from flat
-   `RenderRowTransform` to nested `RenderNodeTransform` in #107.)*
+   `RenderRowTransform` to nested `RenderNodeTransform` in #107.)_
 
 3. **`TableFeatureSpec.renderRows` is replaced by `TableFeatureSpec.renderStages`** — a feature
    claims one or more named stages instead of the whole builder.
@@ -72,11 +72,11 @@ not depend on the `features` array. `'group'` runs before `'tree'` because group
 structure (reversed, tree would flatten first and scatter children away from their value-cluster
 parent).
 
-*(The `'paginate'` stage this paragraph originally described running last, and whether a page
+_(The `'paginate'` stage this paragraph originally described running last, and whether a page
 counts expanded children as a `withPagination()` config flag, is superseded — `'paginate'` left
 `RENDER_ORDER` unclaimed in #106 and no pagination feature was ever built against it. Whether a
 post-flatten anchor is reintroduced is [#102](https://github.com/DvirMon/ng-table/issues/102)'s
-call; see [ADR-0020](0020-open-stage-registration-for-third-party-features.md) decision 2.)*
+call; see [ADR-0020](0020-open-stage-registration-for-third-party-features.md) decision 2.)_
 
 ## Alternatives considered
 
@@ -90,12 +90,14 @@ call; see [ADR-0020](0020-open-stage-registration-for-third-party-features.md) d
 ## Consequences
 
 **Gained**
+
 - `withGrouping()`, `withPagination()`, `withSelection()` become buildable/drillable, composing
   with tree and each other independently.
 - One declaration per fact: `RENDER_ORDER` is the only list, `RenderStage` derives from it. (Since ADR-0020 the stage keys derive from `RenderStageRegistry`.)
 - `claimRenderRows` and `RenderRowsBuilder` are deleted, not reinterpreted.
 
 **Cost**
+
 - Breaking change to the feature-authoring contract: `TableFeatureSpec.renderRows` → `renderStages`. `createTableFeature` is public; no shipped consumer other than `withExpansion()` claims it today.
 - Touches `engine/pipeline.ts`, `engine/slots.ts`, `engine/core.ts`, `engine/compose-table.ts`, `engine/types.ts`, and their specs.
 - Each stage must preserve `sourceIndex` semantics: a stage that synthesizes rows leaves it `undefined`; a stage that reorders/wraps existing rows carries it through. This is the mechanism [G6](../1-state/work/row-editing/active/with-row-editing/5-gaps.md) needs.

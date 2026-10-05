@@ -38,8 +38,8 @@ interface VirtualScrollState {
 
 ## Methods (sketch)
 
-| Method | Description |
-|---|---|
+| Method                         | Description                                             |
+| ------------------------------ | ------------------------------------------------------- |
 | `scrollToIndex(index: number)` | Scroll the viewport so `renderRows()[index]` is visible |
 
 ## Compile-Time Dependencies

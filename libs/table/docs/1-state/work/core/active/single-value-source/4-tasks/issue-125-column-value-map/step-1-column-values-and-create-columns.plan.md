@@ -18,8 +18,8 @@ what this step declares.
 
 ## Why This Step Exists
 
-#113 carried the declared column-id *union* into every feature slot. The
-value *behind* each id does not travel with it: `ColumnDef.accessor` is
+#113 carried the declared column-id _union_ into every feature slot. The
+value _behind_ each id does not travel with it: `ColumnDef.accessor` is
 typed `(row: TRow) => unknown`, and `ColumnDef<TRow, TId>[]` erases each
 element's accessor return type. Every schema keyed by column id therefore
 lands on `unknown`, and ADR-0024's single value source has no type-level
@@ -30,7 +30,7 @@ Two pieces are missing and this step adds both, wired to nothing:
 - the **derivation** — a mapped type that turns a column list into an
   id → value map;
 - the **capture point** — a call the consumer writes the array literal
-  *inside*, because TS 5.0's `const` modifier only affects expressions
+  _inside_, because TS 5.0's `const` modifier only affects expressions
   written within the call, so a hoisted `const cols = [...]` is already
   widened before `createTable()` ever sees it.
 
@@ -55,10 +55,7 @@ export type ColumnIdIn<TValues extends ColumnValueMap> = keyof TValues & string;
 /** Maps each declared column id to the value behind it: a declared `accessor`'s return
  * type, else `TRow[id]` — exact, not a guess, because the engine's documented default
  * accessor *is* `(row) => row[id]`. */
-export type ColumnValues<
-  TRow,
-  TCols extends readonly ColumnDefInput<any, string>[],
-> = {
+export type ColumnValues<TRow, TCols extends readonly ColumnDefInput<any, string>[]> = {
   [C in TCols[number] as C['id']]: C extends { accessor: (row: any) => infer V }
     ? V
     : C['id'] extends keyof TRow
@@ -71,9 +68,8 @@ export type ColumnValues<
 
 ```ts
 export function createColumns<TRow>() {
-  return <const TCols extends readonly ColumnDefInput<TRow, string>[]>(
-    columns: TCols,
-  ): TCols => columns;
+  return <const TCols extends readonly ColumnDefInput<TRow, string>[]>(columns: TCols): TCols =>
+    columns;
 }
 ```
 
@@ -94,7 +90,7 @@ map.
 
 - **Why curried.** TypeScript has no partial type-argument inference, so a
   single `createColumns<TRow, const TCols>(columns)` call cannot take
-  `TRow` explicitly *and* still infer `TCols` — supplying one type argument
+  `TRow` explicitly _and_ still infer `TCols` — supplying one type argument
   makes the second fall back to its default rather than inferring. The
   extra `()` is the price, and it buys contextual typing of every accessor
   param for free: `accessor: (row) => row.owner.name` needs no annotation,
@@ -106,7 +102,7 @@ map.
   explicit counter-example. That is exactly this repo's declaration style
   (`const dealColumns = [...] satisfies ColumnDefInput<DealRow>[]`), so a
   `const` on `createTable`'s `columns` would do nothing for any existing
-  fixture. Inside `createColumns([...])` the literal *is* written within
+  fixture. Inside `createColumns([...])` the literal _is_ written within
   the call, so hoisting its result is safe.
 - **Why `readonly` on the constraint.** TS 5.0's other documented limit: a
   mutable constraint makes the `readonly [...]` inference candidate
@@ -132,11 +128,11 @@ map.
 
 ## Risks / Watchouts
 
-- **The `accessor` arm must match a *present* `accessor`, not an optional
+- **The `accessor` arm must match a _present_ `accessor`, not an optional
   one.** `ColumnDefInput` makes `accessor` optional, so the conditional
   `C extends { accessor: (row: any) => infer V }` is doing the work of
   distinguishing "declared" from "defaulted". Verify with a probe that a
-  column literal *without* `accessor` takes the `TRow[id]` arm rather than
+  column literal _without_ `accessor` takes the `TRow[id]` arm rather than
   inferring `V = unknown` from an optional member — Step 2 asserts exactly
   this, but a five-line scratch check here is cheaper than finding out two
   steps later.
@@ -178,4 +174,5 @@ map.
 - [ ] `git diff --stat` shows exactly three files changed.
 
 ---
+
 [Step 2: The capture guard](step-2-capture-guard.plan.md) →

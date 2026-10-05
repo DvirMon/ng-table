@@ -27,11 +27,11 @@ phase. Specs stay colocated with their source file in the new folders.
 
 ## Alternatives considered
 
-| Option | Why not |
-|---|---|
+| Option                                                                | Why not                                                                             |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | Per-feature folders (TanStack style) for `schema/`/`mutations/` files | Files are still single-concern-sized; pre-splitting adds indirection with no payoff |
-| Move specs to a non-colocated `test/` | Locked invariant in table `CLAUDE.md`; not the source of the file-count problem |
-| Leave `api/` flat, just reorder/rename | Doesn't fix the conflated-concerns problem — file count would keep climbing |
+| Move specs to a non-colocated `test/`                                 | Locked invariant in table `CLAUDE.md`; not the source of the file-count problem     |
+| Leave `api/` flat, just reorder/rename                                | Doesn't fix the conflated-concerns problem — file count would keep climbing         |
 
 ## Consequences
 

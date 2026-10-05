@@ -17,15 +17,15 @@ comparing directly rather than folding into the others' rows.
 
 ## Data handling
 
-| Feature | TanStack | AG Grid | MRT | PrimeNG |
-|---|---|---|---|---|
-| Row model pipeline (filter→group→sort→expand→paginate stages) | Core, composable | Client-Side RM (default) | Same as TanStack | Internal `_value`/`filteredValue`/`processedData` derivation |
-| Server-side row model (lazy blocks, delta loading) | Manual flags only | Full SSRM (**Enterprise**) | Manual flags only | `[lazy]` + single `(onLazyLoad)` event carrying page/sort/filter |
-| Infinite/viewport row models | Not built-in | Infinite (Community), Viewport (**Enterprise**) | Not built-in | Not built-in — `[virtualScroll]` can combine with `[lazy]` for on-demand fetch |
-| Transactions (add/remove/update without full re-render) | Not built-in — consumer-owned | `applyTransaction`/`applyTransactionAsync`, immutable mode via `getRowId` | Not built-in | Not built-in — replacing `[value]` re-derives everything from scratch |
-| Faceted values (unique/min-max, feeds filter UI) | `getFacetedUniqueValues`/`getFacetedMinMaxValues` | N/A (set filter handles this internally) | Auto-wires TanStack's faceted fns to filter variants | Not built-in |
-| Virtualization state | Explicitly out of scope (delegate to TanStack Virtual) | Built-in (row+column) | Wraps TanStack Virtual, exposes as state | Built-in (`virtualScrollItemSize`) |
-| Row identity key | `getRowId` | `getRowId` | `getRowId` | `dataKey` — shared across selection/expansion/editing/reorder/state-persistence |
+| Feature                                                       | TanStack                                               | AG Grid                                                                   | MRT                                                  | PrimeNG                                                                         |
+| ------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Row model pipeline (filter→group→sort→expand→paginate stages) | Core, composable                                       | Client-Side RM (default)                                                  | Same as TanStack                                     | Internal `_value`/`filteredValue`/`processedData` derivation                    |
+| Server-side row model (lazy blocks, delta loading)            | Manual flags only                                      | Full SSRM (**Enterprise**)                                                | Manual flags only                                    | `[lazy]` + single `(onLazyLoad)` event carrying page/sort/filter                |
+| Infinite/viewport row models                                  | Not built-in                                           | Infinite (Community), Viewport (**Enterprise**)                           | Not built-in                                         | Not built-in — `[virtualScroll]` can combine with `[lazy]` for on-demand fetch  |
+| Transactions (add/remove/update without full re-render)       | Not built-in — consumer-owned                          | `applyTransaction`/`applyTransactionAsync`, immutable mode via `getRowId` | Not built-in                                         | Not built-in — replacing `[value]` re-derives everything from scratch           |
+| Faceted values (unique/min-max, feeds filter UI)              | `getFacetedUniqueValues`/`getFacetedMinMaxValues`      | N/A (set filter handles this internally)                                  | Auto-wires TanStack's faceted fns to filter variants | Not built-in                                                                    |
+| Virtualization state                                          | Explicitly out of scope (delegate to TanStack Virtual) | Built-in (row+column)                                                     | Wraps TanStack Virtual, exposes as state             | Built-in (`virtualScrollItemSize`)                                              |
+| Row identity key                                              | `getRowId`                                             | `getRowId`                                                                | `getRowId`                                           | `dataKey` — shared across selection/expansion/editing/reorder/state-persistence |
 
 Gap pattern: transaction/delta fragility is real even in AG Grid (issues #2705, #10206) —
 no library has this fully solved. PrimeNG has no transaction API at all; every
@@ -33,33 +33,33 @@ no library has this fully solved. PrimeNG has no transaction API at all; every
 
 ## Columns
 
-| Feature | TanStack | AG Grid | MRT | PrimeNG |
-|---|---|---|---|---|
-| Sizing/resizing | Core (`ColumnSizingState`) | Core + auto-size strategies | Same as TanStack | Core, two modes (`fit`/`expand`) |
-| Pinning (left/right) | Core | Core | Same as TanStack | "Frozen columns" (`frozenColumns`, `frozenWidth`, per-column `alignFrozen`) |
-| Ordering/reordering | Core, no DnD (state only) | Core + built-in drag | Same as TanStack + drag transient state | Core, built-in drag (`reorderableColumns`) |
-| Visibility | Core | Core | Same as TanStack | **Not table-internal** — no hidden flag on `Column`; app renders a filtered subset itself |
-| Header/column groups | Core | Core | Same | Declarative only (`ColumnGroup`/`colgroup`) — no runtime API to mutate group membership |
-| Column state save/restore as one atomic object | No single API — pieces only | `getColumnState()`/`applyColumnState()` — closest to "one coherent object" | No built-in persistence at all | `stateStorage`/`stateKey` persists width/order — but order was broken until 17.12.0 (#14888), width corrupted in `expand` mode (#12398) |
-| Filter variants (select/range/date/checkbox mapped to filterFn) | Not built-in | Built-in per filter type | MRT-added, no TanStack equivalent | Built-in `matchMode` per data type |
+| Feature                                                         | TanStack                    | AG Grid                                                                    | MRT                                     | PrimeNG                                                                                                                                 |
+| --------------------------------------------------------------- | --------------------------- | -------------------------------------------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Sizing/resizing                                                 | Core (`ColumnSizingState`)  | Core + auto-size strategies                                                | Same as TanStack                        | Core, two modes (`fit`/`expand`)                                                                                                        |
+| Pinning (left/right)                                            | Core                        | Core                                                                       | Same as TanStack                        | "Frozen columns" (`frozenColumns`, `frozenWidth`, per-column `alignFrozen`)                                                             |
+| Ordering/reordering                                             | Core, no DnD (state only)   | Core + built-in drag                                                       | Same as TanStack + drag transient state | Core, built-in drag (`reorderableColumns`)                                                                                              |
+| Visibility                                                      | Core                        | Core                                                                       | Same as TanStack                        | **Not table-internal** — no hidden flag on `Column`; app renders a filtered subset itself                                               |
+| Header/column groups                                            | Core                        | Core                                                                       | Same                                    | Declarative only (`ColumnGroup`/`colgroup`) — no runtime API to mutate group membership                                                 |
+| Column state save/restore as one atomic object                  | No single API — pieces only | `getColumnState()`/`applyColumnState()` — closest to "one coherent object" | No built-in persistence at all          | `stateStorage`/`stateKey` persists width/order — but order was broken until 17.12.0 (#14888), width corrupted in `expand` mode (#12398) |
+| Filter variants (select/range/date/checkbox mapped to filterFn) | Not built-in                | Built-in per filter type                                                   | MRT-added, no TanStack equivalent       | Built-in `matchMode` per data type                                                                                                      |
 
 Gap pattern (biggest one from sentiment research): column-state persistence is
 "broken or partial almost everywhere" even where an API exists — AG Grid's own
 `applyColumnState` has open bugs (#4405, #4427, #7450), and PrimeNG's
-`stateStorage` had a *confirmed* column-order restore bug live until 17.12.0
+`stateStorage` had a _confirmed_ column-order restore bug live until 17.12.0
 (#14888) plus an still-open width-corruption bug in `expand` resize mode
 (#12398). Worth getting right, not just present.
 
 ## Rows
 
-| Feature | TanStack | AG Grid | MRT | PrimeNG |
-|---|---|---|---|---|
-| Selection (single/multi) | Core, sub-row cascade | Core + group-aware/SSRM propagation (**Enterprise** for grouped) | Same as TanStack + `selectAllMode: 'all'\|'page'` | Core — single/multiple/checkbox/radio, range via shift-click, `selectionPageOnly` |
-| Selection scope (page vs filtered vs all) | Broken/ambiguous under server pagination (top sentiment complaint) | `selectAll` modes exist for SSRM | `selectAllMode` exists | `selectionPageOnly` flag exists — same shape as MRT/AG Grid's partial answer |
-| Pinning (top/bottom) | Core | Core (Community) + UI (Enterprise) | Core + `rowPinningDisplayMode` | **Not supported** — no frozen-row equivalent to frozen columns |
-| Expansion / tree data / sub-rows | Core | Tree Data (**Enterprise**) | Same as TanStack + separate detail-panel concept | Core (`expandedRowKeys` keyed by `dataKey`) — but lazy-loaded expansion content doesn't reliably re-fire after state restore (#7526); `expandedRowKeys` binding reported broken in 17.13.0 (#15257, version-specific) |
-| Row reordering (drag) | Not built-in — no `RowOrderState` | Built-in (Community) | Transient drag state only, no persisted `rowOrder` | Built-in (`reorderableRows`, `(onRowReorder)` gives `{dragIndex, dropIndex}`) — consumer still commits the reorder to `[value]` |
-| Master-detail | N/A | **Enterprise** | N/A | N/A |
+| Feature                                   | TanStack                                                           | AG Grid                                                          | MRT                                                | PrimeNG                                                                                                                                                                                                               |
+| ----------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Selection (single/multi)                  | Core, sub-row cascade                                              | Core + group-aware/SSRM propagation (**Enterprise** for grouped) | Same as TanStack + `selectAllMode: 'all'\|'page'`  | Core — single/multiple/checkbox/radio, range via shift-click, `selectionPageOnly`                                                                                                                                     |
+| Selection scope (page vs filtered vs all) | Broken/ambiguous under server pagination (top sentiment complaint) | `selectAll` modes exist for SSRM                                 | `selectAllMode` exists                             | `selectionPageOnly` flag exists — same shape as MRT/AG Grid's partial answer                                                                                                                                          |
+| Pinning (top/bottom)                      | Core                                                               | Core (Community) + UI (Enterprise)                               | Core + `rowPinningDisplayMode`                     | **Not supported** — no frozen-row equivalent to frozen columns                                                                                                                                                        |
+| Expansion / tree data / sub-rows          | Core                                                               | Tree Data (**Enterprise**)                                       | Same as TanStack + separate detail-panel concept   | Core (`expandedRowKeys` keyed by `dataKey`) — but lazy-loaded expansion content doesn't reliably re-fire after state restore (#7526); `expandedRowKeys` binding reported broken in 17.13.0 (#15257, version-specific) |
+| Row reordering (drag)                     | Not built-in — no `RowOrderState`                                  | Built-in (Community)                                             | Transient drag state only, no persisted `rowOrder` | Built-in (`reorderableRows`, `(onRowReorder)` gives `{dragIndex, dropIndex}`) — consumer still commits the reorder to `[value]`                                                                                       |
+| Master-detail                             | N/A                                                                | **Enterprise**                                                   | N/A                                                | N/A                                                                                                                                                                                                                   |
 
 Gap pattern: row-selection-scope ambiguity is the single most-cited pain point
 across all libraries (TanStack #6079/#4781, Tabulator #3715, DataTables
@@ -79,12 +79,12 @@ testing explicitly if grouping+sorting are combined.
 
 ## Filtering
 
-| Feature | TanStack | AG Grid | MRT | PrimeNG |
-|---|---|---|---|---|
-| Column filters | Core, custom `FilterFn` | Core (text/number/date), Set filter (**Enterprise**) | Core + `columnFilterFns` (runtime-switchable filter mode per column) | Core, per-data-type `matchMode` enum (contains/startsWith/equals/...) |
-| Global/quick filter | Core | Core (Client-Side RM only) | Core | Core (`globalFilterFields`, `filterGlobal()`) |
-| External/advanced filter | N/A | External (Community), Advanced (**Enterprise**) | N/A | N/A |
-| Combined global+column filter serialization/persistence | Not built-in — explicit doc punt to "roll your own" | Part of `getState()` | Not built-in | Part of `stateStorage` payload — but triggers a redundant internal save-state write on restore (#6969) |
+| Feature                                                 | TanStack                                            | AG Grid                                              | MRT                                                                  | PrimeNG                                                                                                |
+| ------------------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Column filters                                          | Core, custom `FilterFn`                             | Core (text/number/date), Set filter (**Enterprise**) | Core + `columnFilterFns` (runtime-switchable filter mode per column) | Core, per-data-type `matchMode` enum (contains/startsWith/equals/...)                                  |
+| Global/quick filter                                     | Core                                                | Core (Client-Side RM only)                           | Core                                                                 | Core (`globalFilterFields`, `filterGlobal()`)                                                          |
+| External/advanced filter                                | N/A                                                 | External (Community), Advanced (**Enterprise**)      | N/A                                                                  | N/A                                                                                                    |
+| Combined global+column filter serialization/persistence | Not built-in — explicit doc punt to "roll your own" | Part of `getState()`                                 | Not built-in                                                         | Part of `stateStorage` payload — but triggers a redundant internal save-state write on restore (#6969) |
 
 Gap pattern: no library ships a clean serialization format for combined filter
 state across navigation — PrimeNG comes closest structurally (it's part of the
@@ -97,15 +97,15 @@ Definition: grouping rows by column value, then computing a rolled-up value
 (sum/avg/count/min/max/custom) per group, shown on the group's summary row, at
 potentially multiple nesting levels.
 
-| Feature | TanStack | AG Grid | MRT | PrimeNG |
-|---|---|---|---|---|
-| Grouping state | Core (`GroupingState`) | **Enterprise only** | Core (same as TanStack) | Core (`rowGroupMode: 'subheader'\|'rowspan'`, `groupRowsBy`) |
-| Built-in agg functions | sum/count/min/max/mean/median/unique/uniqueCount/extent | sum/min/max/count/avg/first/last | Same 9 as TanStack | **None** — footer/summary templates render whatever the consumer pre-computes |
-| Custom agg functions | Core registry | Core registry (**Enterprise**) | Core (from TanStack) | N/A — there's no aggregation registry to customize; it's all consumer-side |
-| Multi-level nested aggregation | Buggy — only depth-0 resolves correctly (#3323, #3232) | Full support, incl. grand totals | Rendering layer over TanStack's (same depth-0 bug likely inherited) | N/A (no built-in aggregation to be buggy at) |
-| Pivoting (rotate grouped values into columns) | Not supported | **Enterprise** | Not supported | Not supported |
-| Server-side grouping | Discouraged/awkward in both TanStack and MRT — no robust `manualGrouping` | Full SSRM support (**Enterprise**) | Same gap as TanStack | Not part of `TableLazyLoadEvent` at all — consumer must pre-group server-side data with no contract for it |
-| Grouping perf at scale | Weak — was ~30s/50k rows pre-fix, still ~2-10x slower than AG Grid in benchmarks | Fast, designed for it | Inherits TanStack's engine | Untested/unbenchmarked in research — client-side grouping only |
+| Feature                                       | TanStack                                                                         | AG Grid                            | MRT                                                                 | PrimeNG                                                                                                    |
+| --------------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Grouping state                                | Core (`GroupingState`)                                                           | **Enterprise only**                | Core (same as TanStack)                                             | Core (`rowGroupMode: 'subheader'\|'rowspan'`, `groupRowsBy`)                                               |
+| Built-in agg functions                        | sum/count/min/max/mean/median/unique/uniqueCount/extent                          | sum/min/max/count/avg/first/last   | Same 9 as TanStack                                                  | **None** — footer/summary templates render whatever the consumer pre-computes                              |
+| Custom agg functions                          | Core registry                                                                    | Core registry (**Enterprise**)     | Core (from TanStack)                                                | N/A — there's no aggregation registry to customize; it's all consumer-side                                 |
+| Multi-level nested aggregation                | Buggy — only depth-0 resolves correctly (#3323, #3232)                           | Full support, incl. grand totals   | Rendering layer over TanStack's (same depth-0 bug likely inherited) | N/A (no built-in aggregation to be buggy at)                                                               |
+| Pivoting (rotate grouped values into columns) | Not supported                                                                    | **Enterprise**                     | Not supported                                                       | Not supported                                                                                              |
+| Server-side grouping                          | Discouraged/awkward in both TanStack and MRT — no robust `manualGrouping`        | Full SSRM support (**Enterprise**) | Same gap as TanStack                                                | Not part of `TableLazyLoadEvent` at all — consumer must pre-group server-side data with no contract for it |
+| Grouping perf at scale                        | Weak — was ~30s/50k rows pre-fix, still ~2-10x slower than AG Grid in benchmarks | Fast, designed for it              | Inherits TanStack's engine                                          | Untested/unbenchmarked in research — client-side grouping only                                             |
 
 Aggregation is a real, standard state-layer feature — grouping + per-group
 summary calculation. It's AG Grid's headline Enterprise differentiator;
@@ -127,13 +127,13 @@ state-modeling footgun, not a library defect.
 
 ## Editing
 
-| Feature | TanStack | AG Grid | MRT | PrimeNG |
-|---|---|---|---|---|
-| Cell/row edit state model | None — fully DIY | Full (`editable`, full-row mode, `cellEditRequest` for external-owned mutation) | Full (`editingRow`/`editingCell`/`creatingRow`, display modes: modal/row/cell/table) | Full — `pEditableColumn` (cell) and `editMode: 'row'` + `pEditableRow` (row), both with init/complete/cancel lifecycle events |
-| Undo/redo | None | Core (cell edits); clipboard/fill undo needs **Enterprise** | None | None |
-| Validation state | None | Partial (`valueSetter` returns false, or full-row validation callback) | None built-in — DIY via field handlers | None built-in — DIY via edit-event handlers |
-| Dirty tracking / optimistic rollback | None | None documented | None | None |
-| Dialog-based editing | N/A (render-agnostic) | Consumer pattern | Modal display mode built-in | **Not built-in** — only inline cell/row editing ships; dialog editing is a fully consumer-built pattern |
+| Feature                              | TanStack              | AG Grid                                                                         | MRT                                                                                  | PrimeNG                                                                                                                       |
+| ------------------------------------ | --------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Cell/row edit state model            | None — fully DIY      | Full (`editable`, full-row mode, `cellEditRequest` for external-owned mutation) | Full (`editingRow`/`editingCell`/`creatingRow`, display modes: modal/row/cell/table) | Full — `pEditableColumn` (cell) and `editMode: 'row'` + `pEditableRow` (row), both with init/complete/cancel lifecycle events |
+| Undo/redo                            | None                  | Core (cell edits); clipboard/fill undo needs **Enterprise**                     | None                                                                                 | None                                                                                                                          |
+| Validation state                     | None                  | Partial (`valueSetter` returns false, or full-row validation callback)          | None built-in — DIY via field handlers                                               | None built-in — DIY via edit-event handlers                                                                                   |
+| Dirty tracking / optimistic rollback | None                  | None documented                                                                 | None                                                                                 | None                                                                                                                          |
+| Dialog-based editing                 | N/A (render-agnostic) | Consumer pattern                                                                | Modal display mode built-in                                                          | **Not built-in** — only inline cell/row editing ships; dialog editing is a fully consumer-built pattern                       |
 
 Gap pattern (strong signal from sentiment research): dirty-tracking +
 optimistic/pessimistic rollback + undo-stack reconciliation is called out as
@@ -149,14 +149,14 @@ Not previously called out as its own category — PrimeNG is the only one of
 the four with an explicit, named persistence feature (`stateStorage`), so it's
 worth comparing directly rather than folding into "columns"/"filtering".
 
-| Feature | TanStack | AG Grid | MRT | PrimeNG |
-|---|---|---|---|---|
-| Named persistence API | None (DIY: `onStateChange` + your own storage) | `getState()`/`setState()`/`initialState` — closest to a real API | None (Discussion #469 requests it, unresolved) | `[stateStorage]="'session'\|'local'"` + `[stateKey]` — auto save/restore on init/destroy |
-| Slices actually covered | N/A | Column state, filter, sort, row group, pivot, selection, pagination, scroll, focus, sidebar (~23 slices) | N/A | Pagination, sort, filters, column widths, column order declared — but selection and expansion are **not** part of the persisted slice set (must persist manually) |
-| Custom storage backend | N/A | Not built-in — DIY | N/A | Not supported — session/local only, open feature request (#14461) |
-| Restore correctness | N/A | Post-init reapply gap (#7445); row order not captured (#11492) | N/A | Multiple confirmed regressions: column order broken until 17.12.0 (#14888); width corrupted in `expand` mode (#12398); spurious restore attempts for properties that don't apply to the current config (#9076); redundant save-state write during restore (#6969); state not resynced when `columns` input array is replaced (#8902) |
+| Feature                 | TanStack                                       | AG Grid                                                                                                  | MRT                                            | PrimeNG                                                                                                                                                                                                                                                                                                                              |
+| ----------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Named persistence API   | None (DIY: `onStateChange` + your own storage) | `getState()`/`setState()`/`initialState` — closest to a real API                                         | None (Discussion #469 requests it, unresolved) | `[stateStorage]="'session'\|'local'"` + `[stateKey]` — auto save/restore on init/destroy                                                                                                                                                                                                                                             |
+| Slices actually covered | N/A                                            | Column state, filter, sort, row group, pivot, selection, pagination, scroll, focus, sidebar (~23 slices) | N/A                                            | Pagination, sort, filters, column widths, column order declared — but selection and expansion are **not** part of the persisted slice set (must persist manually)                                                                                                                                                                    |
+| Custom storage backend  | N/A                                            | Not built-in — DIY                                                                                       | N/A                                            | Not supported — session/local only, open feature request (#14461)                                                                                                                                                                                                                                                                    |
+| Restore correctness     | N/A                                            | Post-init reapply gap (#7445); row order not captured (#11492)                                           | N/A                                            | Multiple confirmed regressions: column order broken until 17.12.0 (#14888); width corrupted in `expand` mode (#12398); spurious restore attempts for properties that don't apply to the current config (#9076); redundant save-state write during restore (#6969); state not resynced when `columns` input array is replaced (#8902) |
 
-PrimeNG shipping a *named* persistence feature and still accumulating this
+PrimeNG shipping a _named_ persistence feature and still accumulating this
 many correctness bugs is the strongest evidence yet for the cross-cutting gap
 below: **atomic, round-trippable layout state is genuinely hard**, not a
 solved problem any of these four libraries can be copied wholesale.

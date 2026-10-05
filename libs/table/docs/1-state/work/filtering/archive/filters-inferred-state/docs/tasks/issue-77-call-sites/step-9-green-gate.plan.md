@@ -8,9 +8,9 @@
 
 ## Files
 
-| File | Action |
-|---|---|
-| — | verification only; any edit here is a residue fix belonging to whichever step left it |
+| File | Action                                                                                |
+| ---- | ------------------------------------------------------------------------------------- |
+| —    | verification only; any edit here is a residue fix belonging to whichever step left it |
 
 ## Why This Step Exists
 
@@ -35,7 +35,7 @@ no step could prove anything beyond its own files, for two reasons:
    ```
 
    The first clean-looking run means only "no `.ts` errors". Run it a second time from a source-clean
-   tree and confirm *that* run is clean — only the second run has seen the templates. If run 1
+   tree and confirm _that_ run is clean — only the second run has seen the templates. If run 1
    reports `.ts` errors, fix them and start the count over.
 
 2. **Run the library's tests.**
@@ -107,4 +107,5 @@ no step could prove anything beyond its own files, for two reasons:
 - [ ] `src/api/features/with-filtering.ts` is unmodified across the whole issue
 
 ---
+
 ← [Step 8: `with-filtering.spec.ts`](step-8-with-filtering-spec.plan.md)

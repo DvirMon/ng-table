@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — with-grouping.ts feature plugin + barrel export"
+title: 'Step 4 — with-grouping.ts feature plugin + barrel export'
 type: task-step
 issue: 6
 ---
@@ -66,7 +66,7 @@ export interface GroupingMembers<TRow> {
 
 ```ts
 export function withGrouping<TRow = unknown>(
-  config: WithGroupingConfig<TRow> = {}
+  config: WithGroupingConfig<TRow> = {},
 ): (core: GroupingInput<TRow>) => TableFeatureSpec<TRow, GroupingMembers<TRow>> {
   return (core: GroupingInput<TRow>): TableFeatureSpec<TRow, GroupingMembers<TRow>> => {
     const initial = (config.initialGrouping ?? []) as string[];
@@ -74,14 +74,14 @@ export function withGrouping<TRow = unknown>(
     const unknownIds = initial.filter((id) => !knownIds.has(id));
     if (unknownIds.length > 0) {
       throw new Error(
-        `[withGrouping] initialGrouping names unknown column id(s): ${unknownIds.join(', ')}.`
+        `[withGrouping] initialGrouping names unknown column id(s): ${unknownIds.join(', ')}.`,
       );
     }
 
     const baseGrouping = signal<string[]>(initial);
     const grouping = createWritableView<string[], GroupingUpdater<TRow>>(
       () => baseGrouping(),
-      (updater) => baseGrouping.update(updater)
+      (updater) => baseGrouping.update(updater),
     );
 
     return {
@@ -154,4 +154,5 @@ introduce a new asymmetry).
 - [ ] `tsc --noEmit` passes with no new errors.
 
 ---
+
 ← [Step 3: mutations/update-grouping.ts](step-3-update-grouping-mutations.plan.md) | [Step 5: Tests](step-5-tests.plan.md) →

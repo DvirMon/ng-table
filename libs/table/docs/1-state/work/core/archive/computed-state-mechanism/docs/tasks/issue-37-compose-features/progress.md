@@ -3,12 +3,12 @@
 **Issue:** #37
 **Status:** 4 / 4 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | engine/slots.ts: `describeInnerFeature()` label for a composite's inner positions | ✅ done | — |
-| 2 | compose-features.ts + index.ts: `composeFeatures()` — inner fold, per-composite registry, merged spec | ✅ done | — |
-| 3 | compose-features.spec.ts + slots.spec.ts: runtime visibility, collisions, hooks | ✅ done | — |
-| 4 | create-table.spec.ts: type cases 35–41 — composite slot, nesting, arity escape, not-any | ✅ done | — |
+| Step | Title                                                                                                 | Status  | PR  |
+| ---- | ----------------------------------------------------------------------------------------------------- | ------- | --- |
+| 1    | engine/slots.ts: `describeInnerFeature()` label for a composite's inner positions                     | ✅ done | —   |
+| 2    | compose-features.ts + index.ts: `composeFeatures()` — inner fold, per-composite registry, merged spec | ✅ done | —   |
+| 3    | compose-features.spec.ts + slots.spec.ts: runtime visibility, collisions, hooks                       | ✅ done | —   |
+| 4    | create-table.spec.ts: type cases 35–41 — composite slot, nesting, arity escape, not-any               | ✅ done | —   |
 
 Graph: `1 → 2 → {3, 4}`.
 Parallel-safe: `[3, 4]` after `2`. Dependency: `1 → 2 → 3`, `1 → 2 → 4`.

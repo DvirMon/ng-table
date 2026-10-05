@@ -6,6 +6,7 @@ depends_on: [1]
 files:
   - libs/table/src/engine/types.ts (edit)
 ---
+
 # Step 4 — TableFeatureSpec retype
 
 This step retypes `TableFeatureSpec.stages` and `.renderStages`
@@ -74,4 +75,5 @@ are retyped; typecheck is expected to be red until step 9
 (documented, not a failure of this step).
 
 ---
+
 ← [Step 3: Render-stage anchors + registry](step-3-render-stage-anchors-registry.plan.md) | [Step 5: core.ts + compose-table.ts fold](step-5-core-compose-table-fold.plan.md) →

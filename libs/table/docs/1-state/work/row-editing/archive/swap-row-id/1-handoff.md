@@ -96,15 +96,15 @@ table.editing.update(createRow(tempId, draft));
 // Server confirms
 async function onCreateConfirmed(tempId: RowId, payload: NewRowInput) {
   const saved = await api.createRow(payload);
-  table.value.update(patchRow(tempId, saved));         // row's new identity lands in `data`
-  table.editing.update(swapRowId(tempId, saved.id));    // open/snapshots follow, same handler
+  table.value.update(patchRow(tempId, saved)); // row's new identity lands in `data`
+  table.editing.update(swapRowId(tempId, saved.id)); // open/snapshots follow, same handler
 }
 ```
 
 Two calls, one per slice (`table.value` / `table.editing`) — consistent with D30 (every write is
 `table.<slice>.update(updater)`, no cross-slice write except through a slice's own
 `writeData`/`indexById` context). `discardEdit`/`removeEdit` get to be one call because they only
-ever act *within* the editing slice's own context (`writeData` writes `data`, but the *decision*
+ever act _within_ the editing slice's own context (`writeData` writes `data`, but the _decision_
 of what to write is theirs — a filter). `swapRowId` can't own that decision generically, so it
 stays two calls.
 
@@ -124,13 +124,13 @@ already the key and `from` never was — nothing to prune.
 
 ## Files
 
-| File | Change |
-|---|---|
-| `mutations/optimistic-mutations.ts` | add `swapRowId()`, beside `discardEdit`/`removeEdit` |
-| `mutations/optimistic-mutations.spec.ts` | tests below |
-| `index.ts` | export `swapRowId` |
-| `features/row-editing.md` | replace G3's two defects with shipped behavior; resolve O20/O24 in the open-questions table |
-| `work/row-editing/active/with-row-editing/5-gaps.md` | close G3, point at this handoff |
+| File                                                 | Change                                                                                      |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `mutations/optimistic-mutations.ts`                  | add `swapRowId()`, beside `discardEdit`/`removeEdit`                                        |
+| `mutations/optimistic-mutations.spec.ts`             | tests below                                                                                 |
+| `index.ts`                                           | export `swapRowId`                                                                          |
+| `features/row-editing.md`                            | replace G3's two defects with shipped behavior; resolve O20/O24 in the open-questions table |
+| `work/row-editing/active/with-row-editing/5-gaps.md` | close G3, point at this handoff                                                             |
 
 **Landed ahead of this handoff, 2026-09-03:** `createRow(id, row, opts?)`
 (`mutations/row-edit-mutations.ts`, exported from `index.ts`) — `beginEdit(id, { insert: row })`
@@ -151,7 +151,7 @@ create-path example above uses it; a consumer following this handoff should have
   `await whenStable()`), assert `open`/`snapshots` hold `to` and `onRowsRemoved` never fired for
   `tempId`. This is the test that would catch a future change to effect scheduling reopening G3.
 - Optimistic-create end-to-end: `insertRow` under `tempId` → `captureEdit`/`beginEdit` → `patchRow`
-  + `swapRowId` → row still open/editable under `to`, `revertEdit(to)` restores correctly.
+  - `swapRowId` → row still open/editable under `to`, `revertEdit(to)` restores correctly.
 
 ## Open — does not block
 
@@ -162,6 +162,6 @@ G4's `{ multiple: true }` combination with optimistic create exposes a real case
 
 ## Not in scope
 
-`G5`'s move half (optimistic rollback for a row *move*, tracked as
+`G5`'s move half (optimistic rollback for a row _move_, tracked as
 [#20](https://github.com/DvirMon/ng-table/issues/20)) — unrelated representation question (O22),
 no consumer need yet.

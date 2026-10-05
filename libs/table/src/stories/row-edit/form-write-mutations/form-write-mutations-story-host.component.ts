@@ -88,8 +88,6 @@ export class FormWriteMutationsStoryHostComponent {
    * through the normal close path an optimistic save would use to recover it.
    */
   protected removeRowViaForm(id: RowId): void {
-    this.rows().value.update((current) =>
-      current.filter((row) => this.table.trackBy(row) !== id),
-    );
+    this.rows().value.update((current) => current.filter((row) => this.table.trackBy(row) !== id));
   }
 }

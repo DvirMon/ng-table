@@ -244,16 +244,19 @@ classes:
 ```html
 <table [ngpTable]="table" ngpTableRowAnimation>
   @for (row of table.renderRows(); track row.id) {
-    <tr [ngpTableRow]="row"
-        animate.enter="ngp-table-row--enter"
-        animate.leave="ngp-table-row--leave">...</tr>
+  <tr [ngpTableRow]="row" animate.enter="ngp-table-row--enter" animate.leave="ngp-table-row--leave">
+    ...
+  </tr>
   }
 </table>
 ```
 
 ```css
 @import '@ngp/table/row-animation.css';
-.my-table { border-collapse: separate; border-spacing: 0; }
+.my-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
 
 /* optional: tune the preset through its input tokens */
 .my-table {
@@ -315,36 +318,24 @@ fades in on load.
      leaving rows are ignored.
    - New `libs/table/src/row-animation.css`, published as
      `@ngp/table/row-animation.css`. Contents, all inside
-     `@layer ngp-table` (D7):
-     - `[data-row-animation] [data-row-kind]` →
-       `transform: translateY(var(--ngp-table-row-flip-offset, 0))`.
-     - `[data-row-flipping]` → `transition: transform
-       var(--ngp-table-row-flip-duration, 300ms)
-       var(--ngp-table-row-flip-easing,
-       cubic-bezier(0.4, 0, 0.2, 1))`.
-     - `.ngp-table-row--enter` → opacity-only fade in (D12).
-     - `.ngp-table-row--leave` → `@keyframes`, not a
-       transition (D12):
-       - On the row itself: `opacity` to 0, so Angular's end
-         detection (it watches the `<tr>` only) sees the
-         longest animation.
-       - On `> *` and `> * *` (not `td`, so the `div` grid
-         host is covered): `to { padding-block: 0;
-         border-block-width: 0; font-size: 0;
-         min-block-size: 0 }`, and `max-block-size` from
-         `var(--ngp-table-row-leave-max-block-size, 3rem)` to
-         0.
-       - `animation-fill-mode: forwards`, so nothing flashes
-         back before removal.
-       - Duration from
-         `var(--ngp-table-row-leave-duration, 200ms)`.
-     - `@supports (interpolate-size: allow-keywords)` → the
-       leaving row animates `block-size` to 0 instead of the
-       clamp (Chromium 129+ only).
-     - `@media (prefers-reduced-motion: reduce)` → no
-       transition, no enter/leave motion.
-     - Trial (Storybook only, not shipped until decided): a
-       `position: absolute` leave variant (D12).
+     `@layer ngp-table` (D7): - `[data-row-animation] [data-row-kind]` →
+     `transform: translateY(var(--ngp-table-row-flip-offset, 0))`. - `[data-row-flipping]` → `transition: transform
+var(--ngp-table-row-flip-duration, 300ms)
+var(--ngp-table-row-flip-easing,
+cubic-bezier(0.4, 0, 0.2, 1))`. - `.ngp-table-row--enter` → opacity-only fade in (D12). - `.ngp-table-row--leave` → `@keyframes`, not a
+     transition (D12): - On the row itself: `opacity` to 0, so Angular's end
+     detection (it watches the `<tr>` only) sees the
+     longest animation. - On `> *` and `> * *` (not `td`, so the `div` grid
+     host is covered): `to { padding-block: 0;
+border-block-width: 0; font-size: 0;
+min-block-size: 0 }`, and `max-block-size` from
+     `var(--ngp-table-row-leave-max-block-size, 3rem)` to 0. - `animation-fill-mode: forwards`, so nothing flashes
+     back before removal. - Duration from
+     `var(--ngp-table-row-leave-duration, 200ms)`. - `@supports (interpolate-size: allow-keywords)` → the
+     leaving row animates `block-size` to 0 instead of the
+     clamp (Chromium 129+ only). - `@media (prefers-reduced-motion: reduce)` → no
+     transition, no enter/leave motion. - Trial (Storybook only, not shipped until decided): a
+     `position: absolute` leave variant (D12).
    - Delete `src/row-flip.css`.
    - Export `NgpTableRowAnimationDirective` and
      `NGP_TABLE_ROW_ANIMATION` (if consumers need it) from
@@ -378,8 +369,8 @@ fades in on load.
      `ngpTableRowAnimation`.
    - `<tr [attr.data-row-kind] [attr.data-depth]>` becomes
      `<tr [ngpTableRow]="row"
-     animate.enter="ngp-table-row--enter"
-     animate.leave="ngp-table-row--leave">`. The directive
+animate.enter="ngp-table-row--enter"
+animate.leave="ngp-table-row--leave">`. The directive
      writes both attributes itself
      ([ngp-table-row.directive.ts:12-13](../../../../src/directives/ngp-table-row.directive.ts)),
      so [grouping-story.css](../../../../src/stories/grouping/grouping-story.css)
@@ -437,7 +428,7 @@ fades in on load.
 9. **Generated files.** The public surface changes, so
    `npm run llms` then `npm run llms:check` must be clean. If
    `row-animation.md` frontmatter changes, `npm run
-   table:status`. User runs both.
+table:status`. User runs both.
 
 Library change: `ngpTableRowAnimation` with the registry, the
 token, `row-animation.css` and its package export (step 1),

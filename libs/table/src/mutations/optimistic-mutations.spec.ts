@@ -47,7 +47,7 @@ function ctx(data: Person[] = rows) {
 function state(
   snapshots: [number, RowRestorePoint<Person>][] = [],
   open: number[] = [],
-  unconfirmed: number[] = []
+  unconfirmed: number[] = [],
 ): EditingState<Person> {
   return { snapshots: new Map(snapshots), open: new Set(open), unconfirmed: new Set(unconfirmed) };
 }
@@ -82,10 +82,10 @@ describe('captureEdit', () => {
     const moved = ctx(rows.map((r) => (r.id === 2 ? { id: 2, name: 'moved-on' } : r)));
 
     expect(beginEdit<Person>(2)(opened, moved).snapshots.get(2)).toEqual(
-      restorePoint({ id: 2, name: 'Bea' }, 1)
+      restorePoint({ id: 2, name: 'Bea' }, 1),
     );
     expect(captureEdit<Person>(2)(opened, moved).snapshots.get(2)).toEqual(
-      restorePoint({ id: 2, name: 'moved-on' }, 1)
+      restorePoint({ id: 2, name: 'moved-on' }, 1),
     );
   });
 
@@ -286,7 +286,7 @@ describe('revertEdit', () => {
         trackBy,
         writeData: (next) => (written = next),
         indexById: indexById(shrunkData),
-      })
+      }),
     ).not.toThrow();
 
     expect(written?.map((r) => r.id)).toEqual([1, 3]);
@@ -563,8 +563,8 @@ describe('swapRowId', () => {
         createTable(
           signal<Person[]>([...rows]),
           { trackBy: 'id', columns: makeColumns() },
-          withRowEdit()
-        )
+          withRowEdit(),
+        ),
       );
     }
 
@@ -588,7 +588,7 @@ describe('swapRowId', () => {
         expect(store.editing().has(saved.id)).toBe(true);
         expect(store.editing().has(tempId)).toBe(false);
         expect(store.pending().has(saved.id)).toBe(false); // still open, not pending
-      }
+      },
     );
 
     it('optimistic-create end-to-end: create, swap on confirm, still editable, then revert', () => {
@@ -637,7 +637,11 @@ describe('unconfirmed (D54)', () => {
     // Simulates a failed-create retry: the snapshot was already spent by an earlier revertEdit,
     // but `unconfirmed` outlives it (ADR-0013) — release must still clear it, not bail on a
     // missing snapshot.
-    const before: EditingState<Person> = { snapshots: new Map(), open: new Set(), unconfirmed: new Set([99]) };
+    const before: EditingState<Person> = {
+      snapshots: new Map(),
+      open: new Set(),
+      unconfirmed: new Set([99]),
+    };
 
     const result = releaseEdit<Person>(99)(before, ctx());
 
@@ -696,7 +700,7 @@ describe('unconfirmed (D54)', () => {
     expect(result.unconfirmed.has(200)).toBe(false);
   });
 
-  it("delete → revert keeps unconfirmed through the ADR-0006 prune exemption (R1)", () => {
+  it('delete → revert keeps unconfirmed through the ADR-0006 prune exemption (R1)', () => {
     const data = signal<Person[]>([...rows]);
     const store = TestBed.runInInjectionContext(() =>
       createTable(
@@ -705,8 +709,8 @@ describe('unconfirmed (D54)', () => {
           trackBy: 'id',
           columns: createColumns(data, (col) => [col('name')]),
         },
-        withRowEdit()
-      )
+        withRowEdit(),
+      ),
     );
 
     const tempId = 300;

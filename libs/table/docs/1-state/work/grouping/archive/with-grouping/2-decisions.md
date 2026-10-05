@@ -30,8 +30,8 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   not a model to copy.
 
 - **D2 (2026-09-10) — Grouping state lives on `withGrouping()`, never on `ColumnDef`.**
-  `ColumnDef` carries only *static predicates* supplied at column-definition time (`sortFn`,
-  `aggregateFn`, `filterFn`). Active runtime state that *references* columns lives on the owning
+  `ColumnDef` carries only _static predicates_ supplied at column-definition time (`sortFn`,
+  `aggregateFn`, `filterFn`). Active runtime state that _references_ columns lives on the owning
   feature — precedent: `withSorting` owns `sorting: Signal<SortRule[]>`, a list of columnId
   references, not fields smeared across column defs.
 
@@ -42,7 +42,7 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
 - **D3 (2026-09-10) — Shape is `grouping: string[]`, ordered, index 0 = outermost level.**
   Not `string | null`. See D9 for why the multi-level scope is open from v1.
 
-- **D4 (2026-09-10) — Group ordering is `groupOrder` on the feature config, over group *contents*.**
+- **D4 (2026-09-10) — Group ordering is `groupOrder` on the feature config, over group _contents_.**
 
   ```ts
   groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number
@@ -53,7 +53,7 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   Omitted → today's stable first-occurrence order (unchanged behavior).
 
   **Supersedes** an earlier sketch of `ColumnDef.compareGroups?: (a: GroupKey, b: GroupKey) =>
-  number`, rejected for two reasons: a key-only comparator cannot express count-based ordering
+number`, rejected for two reasons: a key-only comparator cannot express count-based ordering
   ("order categories by how many rows each holds"), and it would sit as dead config on every
   column that is not the active group-by.
 
@@ -64,24 +64,24 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
 
 - **D5 (2026-09-10) — Group order and row sort stay fully decoupled.**
   No shared state, no composition API between them. `groupOrder` orders clusters; `sorting`
-  reorders rows *within* a cluster only, guaranteed by the fixed `filter → group → sort → expand`
+  reorders rows _within_ a cluster only, guaranteed by the fixed `filter → group → sort → expand`
   order plus sort stability.
 
   Three of four researched libraries instead reuse `sortingFn` recursively for group order, and
   that entanglement is a documented bug source (TanStack; MUI X #16540/#12684/#8493; AG Grid
-  #7850). Our pipeline gives AG Grid's *opt-in* `groupMaintainOrder: true` behavior as its only
+  #7850). Our pipeline gives AG Grid's _opt-in_ `groupMaintainOrder: true` behavior as its only
   behavior — worth stating in the spec as a deliberate consequence, not an accident.
 
-  Consequence, accepted: sorting by the *grouped* column is a visible no-op (every row in a
+  Consequence, accepted: sorting by the _grouped_ column is a visible no-op (every row in a
   cluster shares that value). Routing that header click to `groupOrder` instead is a UI-layer
   question — see Open.
 
 - **D6 (2026-09-10) — Base + overlay fold; async needs no `effect()`.**
 
   ```ts
-  const baseGrouping = signal<string[]>([]);                       // D1 updater writes land here
-  const groupingRule = computed(() => config.groupingRule?.());    // async-capable
-  const grouping     = computed(() => groupingRule() ?? baseGrouping());
+  const baseGrouping = signal<string[]>([]); // D1 updater writes land here
+  const groupingRule = computed(() => config.groupingRule?.()); // async-capable
+  const grouping = computed(() => groupingRule() ?? baseGrouping());
   ```
 
   Exposed as a `WritableView`: reads the fold, writes through to base. This is
@@ -91,11 +91,11 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
 
 - **D7 (2026-09-10) — `groupingRule: () => string[] | undefined` is the contract.**
 
-  | Returns | Means |
-  |---|---|
-  | `['category']` | group by category |
-  | `[]` | actively grouped by **nothing** |
-  | `undefined` | **abstain** — hold `baseGrouping` |
+  | Returns        | Means                             |
+  | -------------- | --------------------------------- |
+  | `['category']` | group by category                 |
+  | `[]`           | actively grouped by **nothing**   |
+  | `undefined`    | **abstain** — hold `baseGrouping` |
 
   `[]` ≠ `undefined`. The abstain branch is load-bearing for server-seeded initial values: before
   the source resolves, the table holds its seed instead of flashing flat and then jumping. Mirrors
@@ -105,7 +105,7 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   `resource`'s own retention), never in the fold — D5 again. The fold stays a pure function of
   `{ baseGrouping, ruleResult }`.
 
-  Consequence, accepted: base writes are shadowed *while the rule returns a value*. A user's
+  Consequence, accepted: base writes are shadowed _while the rule returns a value_. A user's
   updater write can be clobbered when a late-resolving rule stops abstaining. Same flavor as D5's
   accepted tenant-switch limitation. "Pick one mode per table" is guidance, not an enforced
   invariant.
@@ -113,11 +113,11 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
 - **D8 (2026-09-10) — Declarative sugar ships on top, subtractable.**
   Three layers, each deletable without breaking the one below:
 
-  | Layer | Shape |
-  |---|---|
-  | Schema fn | `withGrouping(path => { applyGrouping(path.category, when) })` |
-  | Rules array | `withGrouping({ rules: [applyGrouping('category', when)] })` |
-  | Lambda | `withGrouping({ groupingRule: () => [...] })` |
+  | Layer       | Shape                                                          |
+  | ----------- | -------------------------------------------------------------- |
+  | Schema fn   | `withGrouping(path => { applyGrouping(path.category, when) })` |
+  | Rules array | `withGrouping({ rules: [applyGrouping('category', when)] })`   |
+  | Lambda      | `withGrouping({ groupingRule: () => [...] })`                  |
 
   The schema fn reuses shipped machinery — `createRecorderSession()` in
   `schema/column-schema.ts` already collects `apply*` calls into an ordered array in **call
@@ -128,14 +128,14 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   This follows the standing "general mechanism + convenience, not contract" criterion — the
   `updateRows` reference case. An earlier position in this drill rejected `applyGrouping()`
   outright on combinator-cost grounds; that objection was calibrated against a per-column rule
-  *registry* with indices and mutual exclusion, and does not survive at this shape, where the fold
+  _registry_ with indices and mutual exclusion, and does not survive at this shape, where the fold
   is `rules.filter(r => r.when()).map(r => r.id)`.
 
 - **D9 (2026-09-10) — Full multi-level ships. Grand totals and pivoting do not.**
   **Reopens and supersedes** `grouping.md`'s single-level decision (2026-07-31).
 
   That scope-out was made to avoid competitors' depth>0 aggregation-correctness bugs (TanStack
-  #3323/#3232; MUI X #16540/#12684/#8493). Those bugs are architectural to *their* design —
+  #3323/#3232; MUI X #16540/#12684/#8493). Those bugs are architectural to _their_ design —
   aggregation computed inside row-model passes over `Row` wrappers with `subRows`, where "which
   rows does this aggregate see" is ambiguous at depth. Our `group` stage is pure
   `TRow[] → TRow[]` clustering with aggregation downstream in the render stage over already-fixed
@@ -161,7 +161,7 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   rework when it lands. Handoff written for that work.
 
 - **D11 (2026-09-10) — Nested-group collapse is grouping's own subtree walk — shipped, issue #25.**
-  `'group'` runs *before* `'tree'` in `RENDER_ORDER`, so grouping cannot lean on
+  `'group'` runs _before_ `'tree'` in `RENDER_ORDER`, so grouping cannot lean on
   `withExpansion()`'s tree-walking — by the time `'tree'` runs, grouping has already emitted its
   rows. Skipping descendants of a collapsed group id is the `'group'` stage's own logic.
 
@@ -185,7 +185,7 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   `renderRows()` omit a collapsed group's descendants, that scan finds nothing for a collapsed
   header and silently returns `[]` — breaking the selection-cascade recipe the moment a group is
   collapsed. `0-product/grouping.md` X-G1 specs the correct behavior directly: "I never select
-  rows I cannot see and was never told about" describes what I *can* select, not what currently
+  rows I cannot see and was never told about" describes what I _can_ select, not what currently
   renders. `rowsBeneathGroup` now re-clusters `rows()` (pipeline output, never collapse-affected)
   and locates the target group by its synthetic id path, matching `emitGroupRows`'s own id
   construction. Cost model unchanged from D16 (derived on call, no library-side cache).
@@ -197,15 +197,15 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   [`0-product/performance.md`](../../../../../0-product/performance.md).
 
 - **D13 (2026-09-10) — Pending abstains as a set; failure is explicit. Two rule variants, and the
-  choice is about *who owns the value at runtime*.**
+  choice is about _who owns the value at runtime_.**
 
   **Abstain semantics.** `when: () => boolean | undefined`, uniformly across both variants.
 
-  | Rule state | Contributes |
-  |---|---|
+  | Rule state                 | Contributes                                                         |
+  | -------------------------- | ------------------------------------------------------------------- |
   | pending / not yet resolved | `undefined` → **the whole set abstains**, fold holds `baseGrouping` |
-  | resolved | its boolean |
-  | errored | whatever `onError` returns — an explicit decision, never abstention |
+  | resolved                   | its boolean                                                         |
+  | errored                    | whatever `onError` returns — an explicit decision, never abstention |
 
   Rejected: "an unresolved rule contributes nothing while the others apply." With N async
   sources the intermediate state becomes **race-dependent** — the same page load shows
@@ -218,12 +218,12 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
 
   **Which variant to use — the criterion is runtime ownership, not "is the value fetched".**
 
-  | | `applyGrouping` (sync) | `applyGroupingAsync` (resource-backed) |
-  |---|---|---|
-  | Use when | the value is **settled by the time it matters**, however it was obtained | the **server owns it at runtime** and it can change; the rule must re-query |
-  | Owns fetching | consumer | the rule (`params` / `factory`) |
-  | Owns success/error | consumer, upstream | the rule (`onSuccess` / `onError`, both required) |
-  | Pending | consumer returns `undefined` from `when` | rule returns `undefined` until first resolution |
+  |                    | `applyGrouping` (sync)                                                   | `applyGroupingAsync` (resource-backed)                                      |
+  | ------------------ | ------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+  | Use when           | the value is **settled by the time it matters**, however it was obtained | the **server owns it at runtime** and it can change; the rule must re-query |
+  | Owns fetching      | consumer                                                                 | the rule (`params` / `factory`)                                             |
+  | Owns success/error | consumer, upstream                                                       | the rule (`onSuccess` / `onError`, both required)                           |
+  | Pending            | consumer returns `undefined` from `when`                                 | rule returns `undefined` until first resolution                             |
 
   **A value fetched once at init is the sync case, not the async one.** It is async only in how
   it was obtained; nothing re-queries it. The consumer resolves it, handles its own failure, and
@@ -252,18 +252,18 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   derived columns** (`{ id: 'fullName', accessor: r => r.first + ' ' + r.last }` — `ColumnDef.id`
   is `string`, deliberately not constrained to `keyof TRow`), forces an unverified
   `as keyof TRow` cast at the server boundary, and cannot see columns added later by
-  `setColumns()`. Also rejected: typing against the *declared* column ids via literal capture —
+  `setColumns()`. Also rejected: typing against the _declared_ column ids via literal capture —
   it could never stay authoritative, because D30's `setColumns()` replaces the list at runtime.
 
   **Runtime behavior splits on [ADR-0014](../../../../../adr/0014-runtime-error-policy.md)'s own axis**
   (`proposed`), rather than being one rule:
 
-  | Where the bad id comes from | Behavior | Why |
-  |---|---|---|
-  | Feature config at construction (e.g. an `initialGrouping` naming no column) | **throw** | wiring error; directly parallel to ADR-0014's existing "a `trackBy` that names no field" throw site |
+  | Where the bad id comes from                                                         | Behavior                               | Why                                                                                                                                       |
+  | ----------------------------------------------------------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+  | Feature config at construction (e.g. an `initialGrouping` naming no column)         | **throw**                              | wiring error; directly parallel to ADR-0014's existing "a `trackBy` that names no field" throw site                                       |
   | Runtime — a rule result, an updater write, a restored snapshot, a server preference | **skip that level, group by the rest** | sane degraded behavior exists, and no type reaches across the network; a dev-mode throw here would flag a data condition as a code defect |
 
-  This refines the plain "never throw" reading: it holds for every id that arrives as *data*,
+  This refines the plain "never throw" reading: it holds for every id that arrives as _data_,
   which is the case that motivated the question, but construction-time config stays a throw to
   match the policy the rest of the library just adopted.
 
@@ -271,16 +271,16 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   ADR-0014 requires every new feature taking a consumer callback to name its own fallback. This
   feature adds two; both wrap per callback, never per row, and report once per evaluation.
 
-  | Callback | Fallback when it throws | Why |
-  |---|---|---|
-  | `groupOrder` (D4) | group order falls back to stable first-occurrence — the documented default when the hook is omitted | visibly unordered beats silently mis-ordered; the reasoning ADR-0014 gives for `sortFn` |
-  | `when` (D8 rule predicate) | that level does not apply | parallel to ADR-0014's filter predicate — grouping by *less* is obvious and recoverable; grouping by something unasked-for is neither. Consistent with D13: a throw is a failure, never abstention, so it must not read as `undefined` |
+  | Callback                   | Fallback when it throws                                                                             | Why                                                                                                                                                                                                                                    |
+  | -------------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `groupOrder` (D4)          | group order falls back to stable first-occurrence — the documented default when the hook is omitted | visibly unordered beats silently mis-ordered; the reasoning ADR-0014 gives for `sortFn`                                                                                                                                                |
+  | `when` (D8 rule predicate) | that level does not apply                                                                           | parallel to ADR-0014's filter predicate — grouping by _less_ is obvious and recoverable; grouping by something unasked-for is neither. Consistent with D13: a throw is a failure, never abstention, so it must not read as `undefined` |
 
-  `aggregateFn` already has its fallback in ADR-0014's table (*"that aggregate reads `undefined`;
-  the group still renders"*) — unchanged by multi-level (D9), since it wraps per callback and a
+  `aggregateFn` already has its fallback in ADR-0014's table (_"that aggregate reads `undefined`;
+  the group still renders"_) — unchanged by multi-level (D9), since it wraps per callback and a
   deeper cluster is just another call.
 
-- **D16 (2026-09-12) — A group header is a *view over rows*, not a row. The library exposes a
+- **D16 (2026-09-12) — A group header is a _view over rows_, not a row. The library exposes a
   group's member rows; the consumer owns any cascade.**
 
   ```ts
@@ -306,12 +306,12 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   **What this settles beyond grouping.** A group header is a view: it never enters `selectedRows`,
   never holds an id another feature stores, never counts toward "3 of 40 selected". The one
   deliberate exception is `withExpansion()`'s `expandedRows`, which holds synthetic
-  `group:${columnId}:${value}` ids — principled because that set holds *toggles*, not records, and
+  `group:${columnId}:${value}` ids — principled because that set holds _toggles_, not records, and
   load-bearing because it is what makes group expansion survive a refetch for free (ADR-0006 never
   prunes them).
 
   **The cascade is consumer code.** AG Grid needs `groupSelects: 'self' | 'descendants' |
-  'filteredDescendants'` because it owns the behavior; we own none of it, so we default none of it:
+'filteredDescendants'` because it owns the behavior; we own none of it, so we default none of it:
 
   ```ts
   // 'descendants' — and 'filteredDescendants' is the same call, because `filter`
@@ -342,7 +342,6 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
 
   **D16.1 (2026-09-12) — two implementation constraints, both part of the contract rather than
   details left to whoever builds it.**
-
   1. **Resolve the group by id, never by object identity.** `renderRows()` rebuilds its
      `RenderRow` objects every render pass, so a consumer holding a header across renders passes a
      stale object — but `RenderRow.id` (`types.ts:39`) is the stable

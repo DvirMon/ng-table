@@ -25,7 +25,6 @@ import {
 import type { ClientCriteria } from './client-filtering.filters';
 import { ClientFilteringToolbarComponent } from './client-filtering-toolbar.component';
 
-
 /**
  * A filter set persisted by an older build: `status` names a value that no longer exists, and
  * `amount` uses range keys from before a rename. Loaded raw it is applied verbatim; loaded

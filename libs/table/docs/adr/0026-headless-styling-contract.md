@@ -55,13 +55,13 @@ Material-style optional stylesheets.
    (e.g. `row-animation.css`). No theme bundle. Never imported
    by `index.ts`, never auto-loaded (no CDK `_CdkPrivateStyleLoader`-
    style loading). Every sheet is wrapped in `@layer
-   ngp-table` so unlayered consumer rules win without
+ngp-table` so unlayered consumer rules win without
    specificity fights; selects only on public `data-*` hooks,
    never on directive selectors; has a `prefers-reduced-motion`
    branch for any motion. Published through a package `exports`
    entry with the `style` condition.
 
-5. **Tokens:** *input* custom properties named
+5. **Tokens:** _input_ custom properties named
    `--ngp-table-<part>-<property>` (e.g.
    `--ngp-table-row-flip-duration`,
    `--ngp-table-row-flip-easing`). An input token exists only

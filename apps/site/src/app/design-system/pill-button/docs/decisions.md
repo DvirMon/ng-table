@@ -75,7 +75,7 @@ property scoped to the hero — not built into this component.
 ## `disabled` dropped; `<a>` added as a host — ADR-0005
 
 `disabled` was an `input<boolean>(false)` bound to `'[disabled]': 'disabled() || null'`. That is
-broken for the natural call form: `<button ngptPillButton disabled>` passes the *string* `''` from
+broken for the natural call form: `<button ngptPillButton disabled>` passes the _string_ `''` from
 the attribute, which is falsy, so the host binding evaluated to `null` and **removed** the
 attribute — silently enabling the button. Only `[disabled]="true"` worked.
 
@@ -91,4 +91,4 @@ reasons ADR-0005 exists. `text-decoration: none` was added to `:host` for the an
 `type="button"` moved from a static host attribute to a constructor default, because a static host
 attribute would also land on `<a>`, where `type` means something else entirely. Set imperatively
 only when the host is a `<button>` and the consumer has not specified one, so an explicit
-`type="submit"` still wins — which a host *binding* would have clobbered.
+`type="submit"` still wins — which a host _binding_ would have clobbered.

@@ -42,7 +42,7 @@ In `libs/table/src/api/features/with-sorting.ts`:
      // runtime-degradation logging abstraction to reuse in this codebase yet.
      console.error(
        `[withSorting] comparator threw for column "${columnId}". Treating the affected ` +
-         'comparison as equal for this evaluation.'
+         'comparison as equal for this evaluation.',
      );
    }
    ```
@@ -54,7 +54,7 @@ In `libs/table/src/api/features/with-sorting.ts`:
    function guardCompare<TRow>(
      compare: (a: TRow, b: TRow) => number,
      columnId: string,
-     reportedColumns: Set<string>
+     reportedColumns: Set<string>,
    ): (a: TRow, b: TRow) => number {
      return (a, b) => {
        try {
@@ -78,11 +78,7 @@ In `libs/table/src/api/features/with-sorting.ts`:
    wrapped `accessor` closure, and wrap `compare` before it's called:
 
    ```ts
-   function sortRows<TRow>(
-     rows: TRow[],
-     rules: SortRule[],
-     columns: ColumnDef<TRow>[]
-   ): TRow[] {
+   function sortRows<TRow>(rows: TRow[], rules: SortRule[], columns: ColumnDef<TRow>[]): TRow[] {
      if (rules.length === 0) {
        return rows;
      }
@@ -94,25 +90,26 @@ In `libs/table/src/api/features/with-sorting.ts`:
        if (!column) {
          return [];
        }
-       const accessor = (row: TRow): unknown =>
-         readAccessor(column, row, reportedAccessorColumns);
+       const accessor = (row: TRow): unknown => readAccessor(column, row, reportedAccessorColumns);
        const compare = guardCompare(
          column.sortFn ?? detectComparator(accessor, rows),
          column.id,
-         reportedComparatorColumns
+         reportedComparatorColumns,
        );
        const sign = rule.direction === 'asc' ? 1 : -1;
        const nulls = nullsOrderFor(column);
 
-       return [(a: TRow, b: TRow): number => {
-         const aEmpty = isEmpty(accessor(a), column);
-         const bEmpty = isEmpty(accessor(b), column);
-         if (aEmpty || bEmpty) {
-           if (aEmpty && bEmpty) return 0;
-           return (aEmpty ? 1 : -1) * (nulls === 'last' ? 1 : -1);
-         }
-         return sign * compare(a, b);
-       }];
+       return [
+         (a: TRow, b: TRow): number => {
+           const aEmpty = isEmpty(accessor(a), column);
+           const bEmpty = isEmpty(accessor(b), column);
+           if (aEmpty || bEmpty) {
+             if (aEmpty && bEmpty) return 0;
+             return (aEmpty ? 1 : -1) * (nulls === 'last' ? 1 : -1);
+           }
+           return sign * compare(a, b);
+         },
+       ];
      });
 
      return [...rows].sort((a, b) => {
@@ -179,4 +176,5 @@ In `libs/table/src/api/features/with-sorting.ts`:
       aborts at the first `.ts` error before reaching templates).
 
 ---
+
 [Step 2: Cover the two degrade paths](step-2-degrade-path-tests.plan.md) →

@@ -1,5 +1,5 @@
 ---
-title: "Step 10 — 3-ui/stories.md: register the filtering cluster and folders"
+title: 'Step 10 — 3-ui/stories.md: register the filtering cluster and folders'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: I
@@ -56,4 +56,5 @@ Node I. The conventions doc documents exactly one fixture cluster and describes 
 - [ ] No stale "8 stories" claim remains.
 
 ---
+
 ← [Step 9: product coverage marks](step-9-filtering-coverage-marks.plan.md)

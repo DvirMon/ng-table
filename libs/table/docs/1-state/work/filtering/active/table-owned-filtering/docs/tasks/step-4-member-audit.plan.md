@@ -8,11 +8,11 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
-| `libs/table/src/api/features/with-filtering.ts` | — | edit — `predicates` and `applyPredicateTerms` deleted |
-| `libs/table/src/filters/types.ts` | `:30-47` | edit — `FilterNode.dirty` marked internal |
-| `libs/table/src/filters/types.ts` | `:49-79` | edit — `FiltersRoot.matcher`/`dirty` marked internal |
+| File                                            | Line     | Action                                                |
+| ----------------------------------------------- | -------- | ----------------------------------------------------- |
+| `libs/table/src/api/features/with-filtering.ts` | —        | edit — `predicates` and `applyPredicateTerms` deleted |
+| `libs/table/src/filters/types.ts`               | `:30-47` | edit — `FilterNode.dirty` marked internal             |
+| `libs/table/src/filters/types.ts`               | `:49-79` | edit — `FiltersRoot.matcher`/`dirty` marked internal  |
 
 ## Why This Step Exists
 
@@ -50,7 +50,7 @@ The public surface lands at **eight members** (spec §Members): root `value`/`cr
 
 - ADR-0014's per-filter / per-evaluation degradation is **unchanged**. `createFilterEvaluatorFrom`
   keeps its `reportedKeys`/`droppedKeys` sets and its once-per-filter reporting. The deleted
-  `applyPredicateTerms` had a *parallel* degradation story for raw predicates; deleting it removes
+  `applyPredicateTerms` had a _parallel_ degradation story for raw predicates; deleting it removes
   a second mechanism, not the surviving one. Verify the surviving path still reports on a throwing
   predicate.
 - The `matcher()` comment in `state.ts` explains why it is deliberately **not** a `computed()` —
@@ -82,4 +82,5 @@ The public surface lands at **eight members** (spec §Members): root `value`/`cr
 - [ ] `manual: true` returns rows untouched and constructs no evaluator.
 
 ---
+
 ← [Step 3: `withFiltering` owns the model](step-3-with-filtering-owns-model.plan.md) | [Step 5: Barrels](step-5-barrels.plan.md) →

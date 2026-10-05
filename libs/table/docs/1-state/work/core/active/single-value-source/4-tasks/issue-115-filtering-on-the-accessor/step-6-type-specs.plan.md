@@ -58,4 +58,5 @@ or inline under `createTable()`), then add:
 - [ ] Adding a default to `FiltersPath`'s `TValues` makes case 4 fail.
 
 ---
+
 ← [Step 5: Feature spec](step-5-feature-spec.plan.md) | [Step 7: Stories and fixtures migrate](step-7-stories-and-fixtures.plan.md) →

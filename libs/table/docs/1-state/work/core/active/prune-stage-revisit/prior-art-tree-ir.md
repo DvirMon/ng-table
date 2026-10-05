@@ -3,8 +3,8 @@
 **Date:** 2026-09-17 · **Depth:** standard
 
 > Complement to
-> `../../../grouping/archive/grouping-expansion-coupling/prior-art.md`, which asked *how is a
-> collapsed descendant hidden*. This asks *what shape does the pipeline hold before it renders*.
+> `../../../grouping/archive/grouping-expansion-coupling/prior-art.md`, which asked _how is a
+> collapsed descendant hidden_. This asks _what shape does the pipeline hold before it renders_.
 > That file's two AG Grid "Unverified" entries are **resolved here** [S12]; one of its CDK claims
 > is **narrowed** (see Contradictions).
 
@@ -19,7 +19,7 @@ the walk-does-not-descend form is **unanimous among the libraries that hold a tr
 is nested before the expanded stage and flat after it, while `flatRows` stays the full
 expansion-blind pre-order list [S1][S3]. The dissenters are instructive rather than
 counter-examples: Angular Material's legacy `MatTreeFlattener` and Handsontable both flatten
-*everything* first and prune afterwards, and both pay for it — Material with a second level-tracking
+_everything_ first and prune afterwards, and both pay for it — Material with a second level-tracking
 pass [S9], Handsontable with a recursive descendant enumeration per collapse [S17].
 
 ## Method
@@ -46,8 +46,8 @@ pass [S9], Handsontable with a recursive descendant enumeration per collapse [S1
   `recursivelyAddToRowsToDisplay(details, topList, result, skipLeafNodes, 0)` — the tree is the
   `RowNode.childrenAfterSort` links, the flat output is a fresh `RowNode[]` [S12].
 - The descent is guarded exactly as proposed: `if (rowNode.expanded || excludedParent) { …
-  this.recursivelyAddToRowsToDisplay(details, rowNode.childrenAfterSort, result, skipLeafNodes,
-  uiLevelForChildren); }` — no descent into a collapsed node [S12].
+this.recursivelyAddToRowsToDisplay(details, rowNode.childrenAfterSort, result, skipLeafNodes,
+uiLevelForChildren); }` — no descent into a collapsed node [S12].
 - Depth is **derived by the walk**, not stamped by a feature: `addRowNodeToRowsToDisplay` ends with
   `rowNode.setUiLevel(details.isGroupMultiAutoColumn ? 0 : uiLevel)`, where `uiLevel` is the
   recursion parameter [S12].
@@ -55,7 +55,7 @@ pass [S9], Handsontable with a recursive descendant enumeration per collapse [S1
   (`_createRowNodeFooter`) and master-detail rows (`masterDetailSvc?.getDetail(rowNode)`) are
   pushed inline at the right position and level during the descent [S12].
 - The stage is declared as one pipeline slot: `public readonly step: ClientSideRowModelStage =
-  'map'` [S12], consumed by `private doRowsToDisplay()` as `rowsToDisplay = flattenStage.execute()`
+'map'` [S12], consumed by `private doRowsToDisplay()` as `rowsToDisplay = flattenStage.execute()`
   [S13]. The stage list is documented in the model: "The ordered list of row processing stages:
   group → filter → pivot → aggregate → filterAggregates → sort → flatten." [S13]
 - The flat output is private: `private rowsToDisplay: RowNode[] = []` [S13]. The nested links
@@ -83,24 +83,25 @@ pass [S9], Handsontable with a recursive descendant enumeration per collapse [S1
   This will still traverse all nested children in order to build up our internal data models, but
   will not include them in the returned array.**" [S6]
 - Its recursion returns `this._flattenNestedNodesWithExpansion(childNodes, level + 1).pipe(map(
-  nestedNodes => (this.isExpanded(node) ? nestedNodes : [])))` — descends always, emits only when
-  expanded — and stamps `this._parents.set(childKey, node)` and `this._levels.set(childKey, level
-  + 1)` inside the same walk [S6].
+nestedNodes => (this.isExpanded(node) ? nestedNodes : [])))` — descends always, emits only when
+  expanded — and stamps `this._parents.set(childKey, node)` and `this.\_levels.set(childKey, level
+  - 1)` inside the same walk [S6].
 - SlickGrid's `DataView` builds a nested `SlickGroup` tree (`g.groups`, `g.rows`) and flattens it
   with `flattenGroupedRows(groups, level)`: `groupedRows[gl++] = g; if (!g.collapsed) { rows =
-  g.groups ? this.flattenGroupedRows(g.groups, level + 1) : g.rows; … }`, injecting `g.totals`
+g.groups ? this.flattenGroupedRows(g.groups, level + 1) : g.rows; … }`, injecting `g.totals`
   during the same walk [S20].
 
 ### Both a tree and a derived flat list, in one type
 
 - TanStack's `RowModel` is a single interface used at every stage:
-  ```ts
+  ````ts
   export interface RowModel<TData extends RowData> {
     rows: Row<TData>[]
     flatRows: Row<TData>[]
     rowsById: Record<string, Row<TData>>
   }
   ``` [S2]
+  ````
 - `getCoreRowModel` fills all three in one pass: `rows` gets only top-level rows
   (`rowModel.rows = accessRows(data)`), while `accessRows` recursively pushes **every** row into
   `rowModel.flatRows` and `rowModel.rowsById`, and hangs children off `row.subRows` [S1].
@@ -109,18 +110,18 @@ pass [S9], Handsontable with a recursive descendant enumeration per collapse [S1
 - `expandRows(rowModel)` replaces `rows` with the flattened visible list and **passes `flatRows`
   and `rowsById` through untouched** [S3]:
   ```ts
-  return { rows: expandedRows, flatRows: rowModel.flatRows, rowsById: rowModel.rowsById }
+  return { rows: expandedRows, flatRows: rowModel.flatRows, rowsById: rowModel.rowsById };
   ```
 - The same field therefore changes shape mid-pipeline with no type change. The published docs
   describe the fields without mentioning this: "1. `rows` - An array of rows. 2. `flatRows` - An
   array of rows, but all sub-rows are flattened into the top level." [S4]
-- Two early-outs in `getExpandedRowModel` return the *nested* `rowModel` unchanged — when nothing
+- Two early-outs in `getExpandedRowModel` return the _nested_ `rowModel` unchanged — when nothing
   is expanded, and when `paginateExpandedRows` is false [S3]. In the second case the consumer's
   `getRowModel()` (which is `getPaginationRowModel()` [S5]) receives nested `rows`, and child rows
   are rendered by the consumer's own row-rendering recursion instead.
 - Syncfusion TreeGrid keeps both on the record itself: `ITreeData` carries `childRecords?:
-  ITreeData[]` **and** `parentItem?: ITreeData` **and** `level?: number` **and** `expanded?:
-  boolean` [S18], with a public `flatData: Object[]` on the grid [S21].
+ITreeData[]` **and** `parentItem?: ITreeData` **and** `level?: number` **and** `expanded?:
+boolean` [S18], with a public `flatData: Object[]` on the grid [S21].
 
 ### Flat list plus a visibility predicate (the contrast group)
 
@@ -132,9 +133,15 @@ pass [S9], Handsontable with a recursive descendant enumeration per collapse [S1
   flat list keeping a `currentExpand[]` array indexed by level [S9]:
   ```ts
   let expand = true;
-  for (let i = 0; i <= this.getLevel(node); i++) { expand = expand && currentExpand[i]; }
-  if (expand) { results.push(node); }
-  if (this.isExpandable(node)) { currentExpand[this.getLevel(node) + 1] = treeControl.isExpanded(node); }
+  for (let i = 0; i <= this.getLevel(node); i++) {
+    expand = expand && currentExpand[i];
+  }
+  if (expand) {
+    results.push(node);
+  }
+  if (this.isExpandable(node)) {
+    currentExpand[this.getLevel(node) + 1] = treeControl.isExpanded(node);
+  }
   ```
   This is the depth-only prune with no parent link at all — and it is the design Angular
   **deprecated**: `MatTreeFlatDataSource` is marked "@deprecated Use one of levelAccessor or
@@ -177,28 +184,28 @@ pass [S9], Handsontable with a recursive descendant enumeration per collapse [S1
   easier to style and inspect. They are also more friendly to scrolling variations, such as
   infinite or virtual scrolling." — with `childrenAccessor` listed as the option for when "the data
   source is already provided as a nested data structure" [S8]. This is the clearest published
-  statement that *nested in, flat out* is the intended shape, not a compromise.
+  statement that _nested in, flat out_ is the intended shape, not a compromise.
 - CDK, on the cost of the walk: it "will still traverse all nested children in order to build up
   our internal data models, but will not include them in the returned array" [S6] — i.e. the
   flatten walk cannot be cut short at a collapsed node if the engine also wants a complete
   parent/level index.
 - AG Grid, on stage ownership: `FlattenStage` declares its own `refreshProps` —
   `['groupHideParentOfSingleChild', 'groupRemoveSingleChildren', 'groupRemoveLowestSingleChildren',
-  'groupTotalRow', 'masterDetail']` [S12] — so the set of options that invalidate the flat list is
+'groupTotalRow', 'masterDetail']` [S12] — so the set of options that invalidate the flat list is
   declared by the stage, not scattered across features.
 - No ADR, design doc or maintainer issue comment was located for any of these choices. The
   reasoning above is all doc-comment and published-docs prose. See **Unverified**.
 
 ## Comparison
 
-| Axis | TanStack 8.21.3 | AG Grid b36.2.0 | CDK 20.1.0 (`childrenAccessor`) | Mat flattener 20.1.0 | PrimeNG 22.1.1 | MUI X 9.13.0 | Handsontable 18.1.1 | Syncfusion 34.2.8 | SlickGrid 5.20.1 | Glide 6.0.3 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Internal IR | tree **and** flat, one type [S2] | tree (`childrenAfterSort`) [S12] | nested input [S6] | nested input [S9] | nested `TreeNode` [S11] | flat map of id-linked nodes [S14] | nested `__children` + flat cache [S16] | flat `flatData`, records cross-linked [S18][S21] | nested `SlickGroup` [S20] | none [S15] |
-| Flatten site | `expandRows` stage [S3] | `FlattenStage.execute` (`step:'map'`) [S12] | `_flattenNestedNodesWithExpansion` [S6] | `flattenNodes` [S9] | `serializeNodes` [S11] | n/a | `rewriteCache` [S16] | n/a | `flattenGroupedRows` [S20] | n/a |
-| Collapse applied | during walk (don't descend) [S3] | during walk [S12] | during walk [S6] | second pass over flat list [S9] | during walk [S11] | `visibleRowsLookup` filter (prior file) | index map marked per descendant [S17] | per-row `getExpandStatus` predicate [S19] | during walk [S20] | consumer |
-| `depth` source | set at row creation [S1] | walk (`setUiLevel(uiLevel)`) [S12] | walk (`_levels.set`) [S6] | walk, then re-read to prune [S9] | walk (`level`) [S11] | field on node [S14] | walk (`nodeInfo.level`) [S16] | field on record [S18] | walk param [S20] | n/a |
-| `parent` source | set at row creation [S1] | field on node | walk (`_parents.set`) [S6] | **absent** — depth only [S9] | walk (mutates `node.parent`) [S11] | field on node [S14] | walk (`nodeInfo.parent`) [S16] | field on record [S18] | implicit | n/a |
-| Nested shape public | yes, both [S2][S4] | yes (`IRowNode` links); flat list private [S13] | input only [S8] | input only | input only [S11] | no nesting to expose [S14] | it *is* the user's data [S16] | yes on record [S18] | yes (`SlickGroup`) [S20] | n/a |
+| Axis                | TanStack 8.21.3                  | AG Grid b36.2.0                                 | CDK 20.1.0 (`childrenAccessor`)         | Mat flattener 20.1.0             | PrimeNG 22.1.1                     | MUI X 9.13.0                            | Handsontable 18.1.1                    | Syncfusion 34.2.8                                | SlickGrid 5.20.1           | Glide 6.0.3 |
+| ------------------- | -------------------------------- | ----------------------------------------------- | --------------------------------------- | -------------------------------- | ---------------------------------- | --------------------------------------- | -------------------------------------- | ------------------------------------------------ | -------------------------- | ----------- |
+| Internal IR         | tree **and** flat, one type [S2] | tree (`childrenAfterSort`) [S12]                | nested input [S6]                       | nested input [S9]                | nested `TreeNode` [S11]            | flat map of id-linked nodes [S14]       | nested `__children` + flat cache [S16] | flat `flatData`, records cross-linked [S18][S21] | nested `SlickGroup` [S20]  | none [S15]  |
+| Flatten site        | `expandRows` stage [S3]          | `FlattenStage.execute` (`step:'map'`) [S12]     | `_flattenNestedNodesWithExpansion` [S6] | `flattenNodes` [S9]              | `serializeNodes` [S11]             | n/a                                     | `rewriteCache` [S16]                   | n/a                                              | `flattenGroupedRows` [S20] | n/a         |
+| Collapse applied    | during walk (don't descend) [S3] | during walk [S12]                               | during walk [S6]                        | second pass over flat list [S9]  | during walk [S11]                  | `visibleRowsLookup` filter (prior file) | index map marked per descendant [S17]  | per-row `getExpandStatus` predicate [S19]        | during walk [S20]          | consumer    |
+| `depth` source      | set at row creation [S1]         | walk (`setUiLevel(uiLevel)`) [S12]              | walk (`_levels.set`) [S6]               | walk, then re-read to prune [S9] | walk (`level`) [S11]               | field on node [S14]                     | walk (`nodeInfo.level`) [S16]          | field on record [S18]                            | walk param [S20]           | n/a         |
+| `parent` source     | set at row creation [S1]         | field on node                                   | walk (`_parents.set`) [S6]              | **absent** — depth only [S9]     | walk (mutates `node.parent`) [S11] | field on node [S14]                     | walk (`nodeInfo.parent`) [S16]         | field on record [S18]                            | implicit                   | n/a         |
+| Nested shape public | yes, both [S2][S4]               | yes (`IRowNode` links); flat list private [S13] | input only [S8]                         | input only                       | input only [S11]                   | no nesting to expose [S14]              | it _is_ the user's data [S16]          | yes on record [S18]                              | yes (`SlickGroup`) [S20]   | n/a         |
 
 ## Synthesis
 
@@ -212,7 +219,7 @@ form is the one that admits them without a second insertion pass. That is a stro
 the proposal than anything about `depth` derivation.
 
 **AG Grid shows a capability the flat+prune form cannot express at all.** `groupRemoveSingleChildren`
-makes the walk *skip emitting* a group node while still descending into it, and pass the
+makes the walk _skip emitting_ a group node while still descending into it, and pass the
 **parent's** level down to the children (`const uiLevelForChildren = excludedParent ? uiLevel :
 uiLevel + 1`) [S12]. A terminal prune over a flat list whose `depth` was already stamped by the
 grouping feature cannot do this — the depths are wrong by one for every descendant, and the
@@ -246,7 +253,7 @@ for the same reason [S1]. Plan for **two** outputs from one walk, not one.
 CDK `_levels.set`/`_parents.set` [S6], PrimeNG `level`/`parent` on the row node [S11], SlickGrid's
 `level` recursion parameter [S20] — four independent engines derive both from the walk. Only
 TanStack stamps them at row-creation time [S1], and that is what forces its grouping feature to
-*reset* them (`row.depth = 0; row.parentId = undefined`, noted in the earlier file). Deriving is
+_reset_ them (`row.depth = 0; row.parentId = undefined`, noted in the earlier file). Deriving is
 the mainstream choice and it removes exactly that reset.
 
 ## Against
@@ -285,7 +292,7 @@ the mainstream choice and it removes exactly that reset.
   [S6].
 - **Contradicted in emphasis.** The earlier file treats "prune as a terminal stage over an already
   ordered list" as the unanimous shape. At the IR level it is not: AG Grid, CDK-with-children,
-  PrimeNG and SlickGrid never build a full flat list to prune — the flat list *is* the prune's
+  PrimeNG and SlickGrid never build a full flat list to prune — the flat list _is_ the prune's
   output [S6][S11][S12][S20]. MUI X's `visibleRowsLookup` is the lookup form, and it is the
   minority, not the norm.
 - **Extends.** The earlier file's open question "which prune form — emit or lookup" gains a third
@@ -324,27 +331,27 @@ the mainstream choice and it removes exactly that reset.
 
 ## Sources
 
-| | Source | Version | Verified |
-|---|---|---|---|
-| S1 | https://unpkg.com/@tanstack/table-core@8.21.3/src/utils/getCoreRowModel.ts | 8.21.3 | yes — source read; `accessRows` fills `rows` (top-level only), `flatRows` (all), `rowsById`, and `row.subRows` |
-| S2 | https://unpkg.com/@tanstack/table-core@8.21.3/src/types.ts | 8.21.3 | yes — source read; `RowModel` interface, lines 221-225 |
-| S3 | https://unpkg.com/@tanstack/table-core@8.21.3/src/utils/getExpandedRowModel.ts | 8.21.3 | yes — source read; both early-out branches and the `{ rows: expandedRows, flatRows: rowModel.flatRows, … }` return |
-| S4 | https://raw.githubusercontent.com/TanStack/table/v8.21.3/docs/guide/row-models.md | 8.21.3 | yes — docs read; "Row Model Data Structure" section and the stage-order line |
-| S5 | https://unpkg.com/@tanstack/table-core@8.21.3/src/core/table.ts | 8.21.3 | yes — source read; `getRowModel: () => table.getPaginationRowModel()`, line 390 |
-| S6 | https://unpkg.com/@angular/cdk@20.1.0/fesm2022/tree.mjs | 20.1.0 | yes — bundle read; `_flattenNestedNodesWithExpansion` full body and doc comment, lines 1020-1056 |
-| S7 | https://unpkg.com/@angular/cdk@20.1.0/fesm2022/tree.mjs | 20.1.0 | yes — bundle read; `_computeRenderingData` four branches and `_calculateParents`, lines 1057-1120 |
-| S8 | https://raw.githubusercontent.com/angular/components/20.1.0/src/cdk/tree/tree.md | 20.1.0 | yes — docs read; "Flat trees are generally easier to style and inspect…", and the `levelAccessor`/`childrenAccessor` responsibility split, lines 26 and 157-178 |
-| S9 | https://unpkg.com/@angular/material@20.1.0/fesm2022/tree.mjs | 20.1.0 | yes — bundle read; `MatTreeFlattener._flattenNode`, `flattenNodes`, `expandFlattenedNodes`, lines 371-438 |
-| S10 | https://unpkg.com/@angular/material@20.1.0/fesm2022/tree.mjs | 20.1.0 | yes — bundle read; `MatTreeFlatDataSource` `@deprecated … @breaking-change 21.0.0` and its `connect()`, lines 440-483 |
-| S11 | https://unpkg.com/primeng@22.1.1/fesm2022/primeng-treetable.mjs | 22.1.1 | yes — bundle read; `serializeNodes` and `serializePageNodes`, lines 2025-2060 |
-| S12 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-enterprise/src/rowHierarchy/flattenStage.ts | b36.2.0 | yes — source read; `step: 'map'`, `refreshProps`, `execute`, `recursivelyAddToRowsToDisplay`, `addRowNodeToRowsToDisplay`, `uiLevelForChildren`, footer/detail injection |
-| S13 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/clientSideRowModel/clientSideRowModel.ts | b36.2.0 | yes — source read; stage-order comment (line 80), `private rowsToDisplay` (line 60), `doRowsToDisplay` and the no-flattenStage fallback (lines 1310-1333) |
-| S14 | https://unpkg.com/@mui/x-data-grid@9.13.0/models/gridRows.d.ts | 9.13.0 | yes — types read; `GridRowTreeConfig = Record<GridRowId, GridTreeNode>` (line 185), `depth` (62), `children: GridRowId[]` (90), `childrenExpanded?` (105) |
-| S15 | https://unpkg.com/@glideapps/glide-data-grid@6.0.3/dist/dts/data-editor/data-editor.d.ts | 6.0.3 | yes — types read; `readonly rows: number` (line 123), `readonly getCellContent: (cell: Item) => GridCell` (line 317) |
-| S16 | https://unpkg.com/handsontable@18.1.1/plugins/nestedRows/data/dataManager.js | 18.1.1 | yes — source read; `rewriteCache`, `cacheNode` (`cache.rows`, `cache.levels`, `nodeInfo` WeakMap with `{parent,row,level}`), `__children` recursion, lines 45-105 |
-| S17 | https://unpkg.com/handsontable@18.1.1/plugins/nestedRows/ui/collapsing.js | 18.1.1 | yes — source read; `collapseChildren`, `trimRows` → `collapsedRowsMap.setValueAtIndex(physicalRow, true)`, lines 91-140 and 429-440 |
-| S18 | https://unpkg.com/@syncfusion/ej2-treegrid@34.2.8/src/treegrid/base/interface.d.ts | 34.2.8 | yes — types read; `ITreeData` with `childRecords`, `hasChildRecords`, `expanded`, `parentItem`, `index`, `level`, lines 9-49 |
-| S19 | https://unpkg.com/@syncfusion/ej2-treegrid@34.2.8/src/treegrid/utils.d.ts | 34.2.8 | yes — types read; `getExpandStatus(parent, record, parents): boolean` and `findParentRecords`/`findChildrenRecords` |
-| S20 | https://unpkg.com/slickgrid@5.20.1/dist/browser/slick.dataview.js | 5.20.1 | yes — source read; `flattenGroupedRows(groups, level)` with `if (!g.collapsed)` descent and inline `g.totals` push, lines 552-564 |
-| S21 | https://unpkg.com/@syncfusion/ej2-treegrid@34.2.8/src/treegrid/base/treegrid.d.ts | 34.2.8 | yes — types read; `flatData: Object[]`, line 134 |
-| S22 | https://raw.githubusercontent.com/TanStack/table/v8.21.3/docs/guide/expanding.md | 8.21.3 | yes — docs read; `getSubRows`, `ExpandedState` semantics; cited as background only, no claim above rests on it |
+|     | Source                                                                                                                            | Version | Verified                                                                                                                                                                 |
+| --- | --------------------------------------------------------------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| S1  | https://unpkg.com/@tanstack/table-core@8.21.3/src/utils/getCoreRowModel.ts                                                        | 8.21.3  | yes — source read; `accessRows` fills `rows` (top-level only), `flatRows` (all), `rowsById`, and `row.subRows`                                                           |
+| S2  | https://unpkg.com/@tanstack/table-core@8.21.3/src/types.ts                                                                        | 8.21.3  | yes — source read; `RowModel` interface, lines 221-225                                                                                                                   |
+| S3  | https://unpkg.com/@tanstack/table-core@8.21.3/src/utils/getExpandedRowModel.ts                                                    | 8.21.3  | yes — source read; both early-out branches and the `{ rows: expandedRows, flatRows: rowModel.flatRows, … }` return                                                       |
+| S4  | https://raw.githubusercontent.com/TanStack/table/v8.21.3/docs/guide/row-models.md                                                 | 8.21.3  | yes — docs read; "Row Model Data Structure" section and the stage-order line                                                                                             |
+| S5  | https://unpkg.com/@tanstack/table-core@8.21.3/src/core/table.ts                                                                   | 8.21.3  | yes — source read; `getRowModel: () => table.getPaginationRowModel()`, line 390                                                                                          |
+| S6  | https://unpkg.com/@angular/cdk@20.1.0/fesm2022/tree.mjs                                                                           | 20.1.0  | yes — bundle read; `_flattenNestedNodesWithExpansion` full body and doc comment, lines 1020-1056                                                                         |
+| S7  | https://unpkg.com/@angular/cdk@20.1.0/fesm2022/tree.mjs                                                                           | 20.1.0  | yes — bundle read; `_computeRenderingData` four branches and `_calculateParents`, lines 1057-1120                                                                        |
+| S8  | https://raw.githubusercontent.com/angular/components/20.1.0/src/cdk/tree/tree.md                                                  | 20.1.0  | yes — docs read; "Flat trees are generally easier to style and inspect…", and the `levelAccessor`/`childrenAccessor` responsibility split, lines 26 and 157-178          |
+| S9  | https://unpkg.com/@angular/material@20.1.0/fesm2022/tree.mjs                                                                      | 20.1.0  | yes — bundle read; `MatTreeFlattener._flattenNode`, `flattenNodes`, `expandFlattenedNodes`, lines 371-438                                                                |
+| S10 | https://unpkg.com/@angular/material@20.1.0/fesm2022/tree.mjs                                                                      | 20.1.0  | yes — bundle read; `MatTreeFlatDataSource` `@deprecated … @breaking-change 21.0.0` and its `connect()`, lines 440-483                                                    |
+| S11 | https://unpkg.com/primeng@22.1.1/fesm2022/primeng-treetable.mjs                                                                   | 22.1.1  | yes — bundle read; `serializeNodes` and `serializePageNodes`, lines 2025-2060                                                                                            |
+| S12 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-enterprise/src/rowHierarchy/flattenStage.ts            | b36.2.0 | yes — source read; `step: 'map'`, `refreshProps`, `execute`, `recursivelyAddToRowsToDisplay`, `addRowNodeToRowsToDisplay`, `uiLevelForChildren`, footer/detail injection |
+| S13 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/clientSideRowModel/clientSideRowModel.ts | b36.2.0 | yes — source read; stage-order comment (line 80), `private rowsToDisplay` (line 60), `doRowsToDisplay` and the no-flattenStage fallback (lines 1310-1333)                |
+| S14 | https://unpkg.com/@mui/x-data-grid@9.13.0/models/gridRows.d.ts                                                                    | 9.13.0  | yes — types read; `GridRowTreeConfig = Record<GridRowId, GridTreeNode>` (line 185), `depth` (62), `children: GridRowId[]` (90), `childrenExpanded?` (105)                |
+| S15 | https://unpkg.com/@glideapps/glide-data-grid@6.0.3/dist/dts/data-editor/data-editor.d.ts                                          | 6.0.3   | yes — types read; `readonly rows: number` (line 123), `readonly getCellContent: (cell: Item) => GridCell` (line 317)                                                     |
+| S16 | https://unpkg.com/handsontable@18.1.1/plugins/nestedRows/data/dataManager.js                                                      | 18.1.1  | yes — source read; `rewriteCache`, `cacheNode` (`cache.rows`, `cache.levels`, `nodeInfo` WeakMap with `{parent,row,level}`), `__children` recursion, lines 45-105        |
+| S17 | https://unpkg.com/handsontable@18.1.1/plugins/nestedRows/ui/collapsing.js                                                         | 18.1.1  | yes — source read; `collapseChildren`, `trimRows` → `collapsedRowsMap.setValueAtIndex(physicalRow, true)`, lines 91-140 and 429-440                                      |
+| S18 | https://unpkg.com/@syncfusion/ej2-treegrid@34.2.8/src/treegrid/base/interface.d.ts                                                | 34.2.8  | yes — types read; `ITreeData` with `childRecords`, `hasChildRecords`, `expanded`, `parentItem`, `index`, `level`, lines 9-49                                             |
+| S19 | https://unpkg.com/@syncfusion/ej2-treegrid@34.2.8/src/treegrid/utils.d.ts                                                         | 34.2.8  | yes — types read; `getExpandStatus(parent, record, parents): boolean` and `findParentRecords`/`findChildrenRecords`                                                      |
+| S20 | https://unpkg.com/slickgrid@5.20.1/dist/browser/slick.dataview.js                                                                 | 5.20.1  | yes — source read; `flattenGroupedRows(groups, level)` with `if (!g.collapsed)` descent and inline `g.totals` push, lines 552-564                                        |
+| S21 | https://unpkg.com/@syncfusion/ej2-treegrid@34.2.8/src/treegrid/base/treegrid.d.ts                                                 | 34.2.8  | yes — types read; `flatData: Object[]`, line 134                                                                                                                         |
+| S22 | https://raw.githubusercontent.com/TanStack/table/v8.21.3/docs/guide/expanding.md                                                  | 8.21.3  | yes — docs read; `getSubRows`, `ExpandedState` semantics; cited as background only, no claim above rests on it                                                           |

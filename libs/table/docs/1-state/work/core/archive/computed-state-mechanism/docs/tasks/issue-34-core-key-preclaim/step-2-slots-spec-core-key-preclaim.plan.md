@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — slots.spec.ts: registry unit spec for the core-key pre-claim"
+title: 'Step 2 — slots.spec.ts: registry unit spec for the core-key pre-claim'
 type: task-step
 issue: 68
 ---
@@ -52,7 +52,7 @@ for `describeInternalFeature`.
 
 ## Risks / Watchouts
 
-- Do not assert on the *order* keys are claimed; only that each collides.
+- Do not assert on the _order_ keys are claimed; only that each collides.
 - Keep the stage / render-stage cases untouched — this step is about members.
 
 ## Non-Goals
@@ -65,4 +65,5 @@ for `describeInternalFeature`.
 - [ ] `totalRowCount` non-throw case exists and passes.
 
 ---
+
 ← [Step 1: slots.ts core-key pre-claim](step-1-slots-core-key-preclaim.plan.md) | [Step 3: Fold — base store before features →](step-3-fold-base-store-before-features.plan.md)

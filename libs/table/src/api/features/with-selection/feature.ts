@@ -47,7 +47,7 @@ type SelectionInput<In> = Pick<TableStore<RowOf<In>>, 'rows' | 'trackBy'>;
 
 /** Normalizes an `enable*` config field into a per-row predicate, permissive by default. */
 function toRowPredicate<TRow>(
-  config: boolean | ((row: TRow) => boolean) | undefined
+  config: boolean | ((row: TRow) => boolean) | undefined,
 ): (row: TRow) => boolean {
   return typeof config === 'function' ? config : () => config ?? true;
 }
@@ -59,7 +59,7 @@ function toRowPredicate<TRow>(
  */
 function buildSelectionSpec<TRow>(
   input: Pick<TableStore<TRow>, 'rows' | 'trackBy'>,
-  config: WithSelectionConfig<TRow>
+  config: WithSelectionConfig<TRow>,
 ): TableFeatureSpec<TRow, SelectionMembers> {
   const canSelect = toRowPredicate(config.enableRowSelection);
   const canMultiSelect = toRowPredicate(config.enableMultiRowSelection);
@@ -105,12 +105,12 @@ function buildSelectionSpec<TRow>(
   // permissive.
   function applyMultiSelectRule(
     ownIds: readonly RowId[],
-    previousIds: readonly RowId[] = []
+    previousIds: readonly RowId[] = [],
   ): readonly RowId[] {
     const uniqueOwnIds = [...new Set(ownIds)];
     if (callArgumentCoSelects(uniqueOwnIds)) {
       throw new Error(
-        `withSelection(): enableMultiRowSelection forbids co-selecting these rows — ids: ${uniqueOwnIds.join(', ')}`
+        `withSelection(): enableMultiRowSelection forbids co-selecting these rows — ids: ${uniqueOwnIds.join(', ')}`,
       );
     }
     const combinedIds = [...new Set([...previousIds, ...uniqueOwnIds])];
@@ -207,24 +207,25 @@ function buildSelectionSpec<TRow>(
  * field or claims a render stage: selection is read from `selectedRows` only.
  */
 export function withSelection<In extends SelectionInput<In>, D extends DerivedDict>(
-  derive: Feature<NoInfer<In> & SelectionMembers, D>
+  derive: Feature<NoInfer<In> & SelectionMembers, D>,
 ): Feature<In, SelectionMembers & D>;
 export function withSelection<In extends SelectionInput<In>>(
-  config?: WithSelectionConfig<RowOf<In>>
+  config?: WithSelectionConfig<RowOf<In>>,
 ): Feature<In, SelectionMembers>;
 export function withSelection<In extends SelectionInput<In>, D extends DerivedDict>(
   config: WithSelectionConfig<RowOf<In>> | undefined,
-  derive: Feature<NoInfer<In> & SelectionMembers, D>
+  derive: Feature<NoInfer<In> & SelectionMembers, D>,
 ): Feature<In, SelectionMembers & D>;
 export function withSelection(
   configOrDerive: WithSelectionConfig<any> | Feature<any, any> = {},
-  maybeDerive?: Feature<any, any>
+  maybeDerive?: Feature<any, any>,
 ): Feature<any, any> {
   const isDeriveFirst = typeof configOrDerive === 'function';
   const config: WithSelectionConfig<any> = isDeriveFirst ? {} : configOrDerive;
   const derive = isDeriveFirst ? configOrDerive : maybeDerive;
-  const factory = <In extends SelectionInput<In>>(input: In): TableFeatureSpec<RowOf<In>, SelectionMembers> =>
-    buildSelectionSpec(input, config);
+  const factory = <In extends SelectionInput<In>>(
+    input: In,
+  ): TableFeatureSpec<RowOf<In>, SelectionMembers> => buildSelectionSpec(input, config);
   // The `Feature<any, any>` annotation is load-bearing: without a contextual type the ternary
   // infers the generic factory's `In` as its own constraint fallback.
   const feature: Feature<any, any> = derive

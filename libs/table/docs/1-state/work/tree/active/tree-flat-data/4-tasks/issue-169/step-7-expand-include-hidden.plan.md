@@ -9,6 +9,7 @@ files:
   - libs/table/src/api/features/with-tree/feature.spec.ts
   - libs/table/src/index.ts
 ---
+
 # Step 7 — expand() includeHidden
 
 This step lets `expand()` open every expandable row in `data()`, not only those in the filtered view.
@@ -43,4 +44,5 @@ Decisions: [D8](../../1-decisions.md) (spec stories 32, 33)
 - [ ] `expand(undefined, { includeHidden: true })` opens every expandable row in `data()`.
 
 ---
+
 ← [Step 6: Open-set writes clear closed rows](step-6-open-writes-clear-closed.plan.md) | [Step 8: state() includeHidden](step-8-state-include-hidden.plan.md) →

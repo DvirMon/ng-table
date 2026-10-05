@@ -33,11 +33,11 @@ once and stays plain `vitest`:
 export function pruneByIds<V>(
   container: ReadonlyMap<RowId, V>,
   removedIds: readonly RowId[],
-  keep?: (value: V) => boolean
+  keep?: (value: V) => boolean,
 ): ReadonlyMap<RowId, V>;
 export function pruneByIds(
   container: ReadonlySet<RowId>,
-  removedIds: readonly RowId[]
+  removedIds: readonly RowId[],
 ): ReadonlySet<RowId>;
 ```
 

@@ -20,7 +20,7 @@ stale input — the exact failure the audit itself documented in `0-product/grou
 
 §2's cross-feature table and §3d both say `row-editing.md` §5 "still claims the story exists"
 and cites `grouping-crud/`. **It does not.** `row-editing.md` already marks G-2 ❌
-*(forward-looking)* and never mentions that folder. The dead claim was in
+_(forward-looking)_ and never mentions that folder. The dead claim was in
 `0-product/grouping.md:664-666` — grouping's own §5 — which additionally contradicted itself,
 asserting a coverage claim one sentence after saying `row-editing.md` owns the mark.
 

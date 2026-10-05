@@ -22,7 +22,7 @@ written by hand. R32 concluded `TState` cannot be inferred because `schema: (pat
 returns `void`, leaving "no channel to observe which keys a void-returning function's body
 touched."
 
-That reasoning is correct about the *current signature*. It is not a limit of TypeScript. The
+That reasoning is correct about the _current signature_. It is not a limit of TypeScript. The
 channel is missing because rules record via side effect; if rules **return** and the schema
 returns the collection, the channel exists.
 
@@ -39,19 +39,19 @@ must change no matter which direction is taken.
 
 ### 2. Four ways to supply `TRow`
 
-| Shape | Result |
-|---|---|
-| `createFilters(rowOf<Row>(), schema)` — token value | ✅ exact |
-| `createFilters(this.data, schema)` — real data | ✅ exact |
-| `createFilters<Row>()(schema)` — curried | ✅ exact |
+| Shape                                                             | Result                |
+| ----------------------------------------------------------------- | --------------------- |
+| `createFilters(rowOf<Row>(), schema)` — token value               | ✅ exact              |
+| `createFilters(this.data, schema)` — real data                    | ✅ exact              |
+| `createFilters<Row>()(schema)` — curried                          | ✅ exact              |
 | `createFilters((path: FiltersPath<Row>) => …)` — param annotation | ⚠️ works, but fragile |
 
 The annotation form silently degrades to `TRow = unknown` if the annotation is an alias
 (`type P = FiltersPath<Row>`) or an interface extending it. The error names missing properties on
 `FiltersPath<unknown>`, pointing at the wrong cause entirely. Not recommended.
 
-> This also corrects R11's closing claim — *"TypeScript cannot recover `TRow` from a callback
-> whose parameter is `ColumnsPath<TRow>`"*. It can. It is merely fragile.
+> This also corrects R11's closing claim — _"TypeScript cannot recover `TRow` from a callback
+> whose parameter is `ColumnsPath<TRow>`"_. It can. It is merely fragile.
 
 ### 3. One argument serves both modes, with no named carrier type
 
@@ -64,16 +64,16 @@ declare function createFilters<TRow, S extends readonly unknown[]>(
 
 All seven carriers infer `TRow` exactly:
 
-| Carrier | |
-|---|---|
-| `InvoiceRow[]`, `readonly InvoiceRow[]` | ✅ |
-| `Signal<readonly InvoiceRow[]>`, `WritableSignal<InvoiceRow[]>` | ✅ |
-| `Signal<InvoiceRow[] \| undefined>` — a resource's value pre-load | ✅ |
-| `() => InvoiceRow[]` — a bare store method | ✅ |
-| `rowOf<InvoiceRow>()` — server mode, no data yet | ✅ |
-| `42`, `{ foo: 1 }` | ✅ rejected |
+| Carrier                                                           |             |
+| ----------------------------------------------------------------- | ----------- |
+| `InvoiceRow[]`, `readonly InvoiceRow[]`                           | ✅          |
+| `Signal<readonly InvoiceRow[]>`, `WritableSignal<InvoiceRow[]>`   | ✅          |
+| `Signal<InvoiceRow[] \| undefined>` — a resource's value pre-load | ✅          |
+| `() => InvoiceRow[]` — a bare store method                        | ✅          |
+| `rowOf<InvoiceRow>()` — server mode, no data yet                  | ✅          |
+| `42`, `{ foo: 1 }`                                                | ✅ rejected |
 
-The middle union member — *any callable returning rows* — covers the four signal-shaped cases on
+The middle union member — _any callable returning rows_ — covers the four signal-shaped cases on
 its own. An earlier attempt used a recursive `RowOf<E>` conditional type plus a named
 `RowEvidence` constraint to keep the slot open-ended; it was discarded as machinery re-deriving
 what one union member states directly, for identical coverage.
@@ -83,8 +83,9 @@ what one union member states directly, for identical coverage.
 Given rules that return `FilterRule<TKey, TCriterion>` instead of recording:
 
 ```ts
-type StateOf<T extends readonly unknown[]> =
-  { [R in Extract<T[number], AnyRule> as R['key']]: CriterionOf<R> };
+type StateOf<T extends readonly unknown[]> = {
+  [R in Extract<T[number], AnyRule> as R['key']]: CriterionOf<R>;
+};
 ```
 
 - **Array form** — `(path) => [equals(path.status), inRange(path.amount)]`. Keys stay implicit,
@@ -119,7 +120,7 @@ same constraint.
 path-derived keys:
 
 ```ts
-anyOf('search', [contains(path.note), filter(path.id, matchesInvoiceNumber)])
+anyOf('search', [contains(path.note), filter(path.id, matchesInvoiceNumber)]);
 // → { status: InvoiceStatus | null; search: string }
 ```
 
@@ -136,22 +137,22 @@ Type '{ min: number; }' is not assignable to type 'string'
 
 ## Known holes
 
-| Hole | Consequence | Fix |
-|---|---|---|
-| Key collision — `equals(path.customer)` + `anyOf('customer', …)` | silently merges to one key with a union criterion | `validate.ts` checks path uniqueness; needs key uniqueness |
-| `createFilters([], schema)` | `TRow = never`, compiles, useless object — `keyof never` widens to an index signature | make `FiltersPath<never>` resolve to an error-shaped type |
-| A bare `equals(path.x);` statement | silently registers nothing once rules return instead of record | lint (`no-unused-expressions`) |
-| Widened `as` — `{ as: someStringVar }` | today produces an untyped key silently | now rejectable: `TAs` becomes a real inference site, so `EnforceLiteralKey` finally bites |
+| Hole                                                             | Consequence                                                                           | Fix                                                                                       |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Key collision — `equals(path.customer)` + `anyOf('customer', …)` | silently merges to one key with a union criterion                                     | `validate.ts` checks path uniqueness; needs key uniqueness                                |
+| `createFilters([], schema)`                                      | `TRow = never`, compiles, useless object — `keyof never` widens to an index signature | make `FiltersPath<never>` resolve to an error-shaped type                                 |
+| A bare `equals(path.x);` statement                               | silently registers nothing once rules return instead of record                        | lint (`no-unused-expressions`)                                                            |
+| Widened `as` — `{ as: someStringVar }`                           | today produces an untyped key silently                                                | now rejectable: `TAs` becomes a real inference site, so `EnforceLiteralKey` finally bites |
 
 ## What this would supersede
 
-| | |
-|---|---|
-| R10/R11 | data is accepted when it exists; `rowOf()` is the server-mode escape hatch, not a separate API |
-| R31 | `as` becomes genuinely enforceable as a string literal |
-| R32 | `TState` is inferred; the second type parameter goes |
-| R33 | `anyOf`'s inner callback disappears, taking its `TRow` gap with it |
-| R11's closing claim | factually wrong — see §2 |
+|                     |                                                                                                |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| R10/R11             | data is accepted when it exists; `rowOf()` is the server-mode escape hatch, not a separate API |
+| R31                 | `as` becomes genuinely enforceable as a string literal                                         |
+| R32                 | `TState` is inferred; the second type parameter goes                                           |
+| R33                 | `anyOf`'s inner callback disappears, taking its `TRow` gap with it                             |
+| R11's closing claim | factually wrong — see §2                                                                       |
 
 ## Migration surface
 

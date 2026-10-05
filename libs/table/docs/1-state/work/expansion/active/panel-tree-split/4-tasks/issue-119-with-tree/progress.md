@@ -3,11 +3,11 @@
 **Issue:** #119
 **Status:** 3 / 3 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | `withTree()`: the feature, the conditional `'tree'` stage and `state()` | ✅ done | — |
-| 2 | `with-tree.spec.ts`: the inherited row-tree behavior | ✅ done | — |
-| 3 | `with-tree.spec.ts`: collapse-only, `state()` and the ADR-0014 degrade | ✅ done | — |
+| Step | Title                                                                   | Status  | PR  |
+| ---- | ----------------------------------------------------------------------- | ------- | --- |
+| 1    | `withTree()`: the feature, the conditional `'tree'` stage and `state()` | ✅ done | —   |
+| 2    | `with-tree.spec.ts`: the inherited row-tree behavior                    | ✅ done | —   |
+| 3    | `with-tree.spec.ts`: collapse-only, `state()` and the ADR-0014 degrade  | ✅ done | —   |
 
 ## Graph
 

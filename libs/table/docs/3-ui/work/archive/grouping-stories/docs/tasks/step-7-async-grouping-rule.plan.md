@@ -1,5 +1,5 @@
 ---
-title: "Step 7 — async grouping rule: applyGroupingAsync() on the static story"
+title: 'Step 7 — async grouping rule: applyGroupingAsync() on the static story'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: F
@@ -58,7 +58,7 @@ done (`api/features/with-grouping.ts` folds `config.groupingRule ?? rulesGroupin
 
 - Keep the async rule additive: `Default` and `ThrowingGroupOrder` must be unchanged in behaviour.
   If that is not achievable cleanly in one host, say so rather than restructuring Step 4's story.
-- The rule is a *column rule* (`applyGroupingAsync` from the library root), not a host-local
+- The rule is a _column rule_ (`applyGroupingAsync` from the library root), not a host-local
   `effect()` — D6's no-`effect()` fold is the point.
 
 ## Risks / Watchouts
@@ -79,4 +79,5 @@ done (`api/features/with-grouping.ts` folds `config.groupingRule ?? rulesGroupin
 - [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
+
 ← [Step 6: grouping-selection/](step-6-grouping-selection-story.plan.md) | [Step 8: grouping docs](step-8-grouping-docs.plan.md) →

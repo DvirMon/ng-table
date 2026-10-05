@@ -20,7 +20,7 @@ export function isContaining(cell: string, criterion: string): boolean {
 
 export function isInRange(
   cell: number,
-  criterion: { min: number | null; max: number | null }
+  criterion: { min: number | null; max: number | null },
 ): boolean {
   if (!notNullish(cell)) return false;
   if (criterion.min != null && cell < criterion.min) return false;
@@ -30,7 +30,7 @@ export function isInRange(
 
 export function isInDateRange(
   cell: Date,
-  criterion: { from: Date | null; to: Date | null }
+  criterion: { from: Date | null; to: Date | null },
 ): boolean {
   if (!notNullish(cell)) return false;
   if (criterion.from != null && cell < criterion.from) return false;

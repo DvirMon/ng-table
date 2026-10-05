@@ -5,20 +5,20 @@ atomic: —
 spec: specs/Search Index.md
 frame: null
 owns:
-  - "What gets indexed, at what granularity"
-  - "The record shape a result row renders from"
-  - "Group derivation and group order"
-  - "Match, rank, and highlight rules"
-  - "What selecting a result does"
+  - 'What gets indexed, at what granularity'
+  - 'The record shape a result row renders from'
+  - 'Group derivation and group order'
+  - 'Match, rank, and highlight rules'
+  - 'What selecting a result does'
 does_not_own:
-  - "Any search UI — see Search.md"
-  - "The tree itself — see Content Model.md"
-  - "Route resolution — see Routing and Page State.md"
-  - "Choice of search library, or whether the index is built or bundled"
+  - 'Any search UI — see Search.md'
+  - 'The tree itself — see Content Model.md'
+  - 'Route resolution — see Routing and Page State.md'
+  - 'Choice of search library, or whether the index is built or bundled'
 depends_on:
-  - "Content Model.md (entries, sections, order)"
-  - "Content Prose.md (heading levels)"
-  - "Search.md (the surfaces that render these records)"
+  - 'Content Model.md (entries, sections, order)'
+  - 'Content Prose.md (heading levels)'
+  - 'Search.md (the surfaces that render these records)'
 states: []
 a11y:
   - "Result count changes are announced by Search.md's live region; this spec only guarantees the count is knowable before render"
@@ -29,7 +29,7 @@ token_values_resolve_in: specs/foundations/ (single source of truth — never re
 # Search Index
 
 `Search.md` specs the field, the overlay and every visual state. It explicitly does not own indexing.
-This file closes that half: what is searched, what a result *is*, and what happens on select.
+This file closes that half: what is searched, what a result _is_, and what happens on select.
 
 ## Granularity: one record per heading
 
@@ -45,14 +45,14 @@ deep to label, and it is too granular to rank meaningfully.
 
 ## Record shape
 
-| Field | Source | Used for |
-| --- | --- | --- |
-| `id` | `slug` + `#anchor`, or `slug` for a page record | Row key; the navigation target |
-| `title` | The heading text, or `entry.label` for a page record | Result row title |
-| `section` | The entry's parent section label | Group assignment |
-| `breadcrumb` | `section.label › entry.label › heading` — heading omitted on a page record | The row's second line |
-| `body` | Prose under the heading, down to the next heading of any level | Matching only, never displayed |
-| `entryOrder` | The entry's flattened tree position | Tie-breaking |
+| Field        | Source                                                                     | Used for                       |
+| ------------ | -------------------------------------------------------------------------- | ------------------------------ |
+| `id`         | `slug` + `#anchor`, or `slug` for a page record                            | Row key; the navigation target |
+| `title`      | The heading text, or `entry.label` for a page record                       | Result row title               |
+| `section`    | The entry's parent section label                                           | Group assignment               |
+| `breadcrumb` | `section.label › entry.label › heading` — heading omitted on a page record | The row's second line          |
+| `body`       | Prose under the heading, down to the next heading of any level             | Matching only, never displayed |
+| `entryOrder` | The entry's flattened tree position                                        | Tie-breaking                   |
 
 ## What is indexed
 
@@ -96,7 +96,7 @@ broad needs refining rather than paging.
 
 ## Selecting a result
 
-Navigate to `record.id`. A heading record therefore lands on the page *and* at the anchor, offset by
+Navigate to `record.id`. A heading record therefore lands on the page _and_ at the anchor, offset by
 `--ngpt-sys-layout-scroll-offset` per `Routing and Page State.md`. Same-page selection is a hash change,
 not a re-render.
 

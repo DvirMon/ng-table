@@ -5,15 +5,15 @@ atomic: Atom
 spec: specs/Category Badge.md
 frame: components/Category Badge.dc.html
 owns:
-  - "Uppercase accent eyebrow that sits above an H1"
+  - 'Uppercase accent eyebrow that sits above an H1'
 does_not_own: []
 depends_on:
-  - "foundations/Typography.md (typography)"
-  - "foundations/Color.md (color)"
+  - 'foundations/Typography.md (typography)'
+  - 'foundations/Color.md (color)'
 states:
-  - "default"
+  - 'default'
 a11y:
-  - "Purely visual; do not use as the accessible heading"
+  - 'Purely visual; do not use as the accessible heading'
 tokens: [--ngpt-sys-typescale-label-small, --ngpt-accent, --ngpt-sys-comp-eyebrow-gap]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
@@ -32,14 +32,13 @@ Small uppercase label sitting above an H1 to indicate section/category (e.g. "PR
 
 ## Build spec
 
-| Property | Value | Token |
-|---|---|---|
-| Font | Inter, 12px / 700, uppercase | `--ngpt-sys-typescale-label-small` |
-| Letter spacing | 0.08em | `—` |
-| Color | oklch(0.68 0.22 328) | `--ngpt-accent` |
-| Margin | 0 0 6px (sits directly above H1) | `--ngpt-sys-comp-eyebrow-gap` |
-| Text | The resolved `eyebrow` from `Routing and Page State.md` (`entry.eyebrow ?? section.label`), uppercased by CSS | `—` |
-
+| Property       | Value                                                                                                         | Token                              |
+| -------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Font           | Inter, 12px / 700, uppercase                                                                                  | `--ngpt-sys-typescale-label-small` |
+| Letter spacing | 0.08em                                                                                                        | `—`                                |
+| Color          | oklch(0.68 0.22 328)                                                                                          | `--ngpt-accent`                    |
+| Margin         | 0 0 6px (sits directly above H1)                                                                              | `--ngpt-sys-comp-eyebrow-gap`      |
+| Text           | The resolved `eyebrow` from `Routing and Page State.md` (`entry.eyebrow ?? section.label`), uppercased by CSS | `—`                                |
 
 ## API
 
@@ -47,12 +46,12 @@ Attribute-hosted on the consumer's own `<span>` (ADR-0005) — no wrapper elemen
 rather than a semantic element because the a11y note above requires the eyebrow to add no meaning
 of its own; `:host` promotes it to `display: block`.
 
-| | |
-|---|---|
-| Selector | `span[ngptCategoryBadge]` |
-| Inputs | none — projected text only |
-| Outputs | none |
-| Host attributes | none |
+|                 |                            |
+| --------------- | -------------------------- |
+| Selector        | `span[ngptCategoryBadge]`  |
+| Inputs          | none — projected text only |
+| Outputs         | none                       |
+| Host attributes | none                       |
 
 ```html
 <span ngptCategoryBadge>Primitives</span>

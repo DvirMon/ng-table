@@ -1,13 +1,13 @@
 <div class="story-host">
   @if (forceFailure()) {
     <p class="story-host__hint">
-      Every save fails: the row still closes immediately (optimistic), then reverts to its
-      pre-edit snapshot and reopens once Retry is clicked.
+      Every save fails: the row still closes immediately (optimistic), then reverts to its pre-edit
+      snapshot and reopens once Retry is clicked.
     </p>
   } @else {
     <p class="story-host__hint">
-      Rows show as text until Edit opens them. Cancel resets the row; Discard removes it — both
-      are separate, clearly-labeled buttons on any open row, no matter how the row was added. Save
+      Rows show as text until Edit opens them. Cancel resets the row; Discard removes it — both are
+      separate, clearly-labeled buttons on any open row, no matter how the row was added. Save
       closes the row immediately and reconciles over the network — a real MSW-intercepted `fetch`
       that rolls the row back on failure (`forceFailure`/`latencyMs` are Storybook controls below).
       Keyboard: Escape cancels the open row, Enter saves it, Tab stays inside its cells.
@@ -38,7 +38,8 @@
           <td class="story-host__cell">
             @if (isEditing) {
               <ng-container *ngpTableRowField="row; from: rows; let field">
-                @let needsUniqueNameFlag = field.name().errors().some((error) => error.kind === 'duplicateName');
+                @let needsUniqueNameFlag =
+                  field.name().errors().some((error) => error.kind === 'duplicateName');
                 <input
                   type="text"
                   [formField]="field.name"
@@ -50,7 +51,10 @@
                   "
                 />
                 @if (needsUniqueNameFlag) {
-                  <span class="story-host__field-hint" [id]="'gated-single-optimistic-duplicate-hint-' + row.id">
+                  <span
+                    class="story-host__field-hint"
+                    [id]="'gated-single-optimistic-duplicate-hint-' + row.id"
+                  >
                     another row already uses this name
                   </span>
                 }

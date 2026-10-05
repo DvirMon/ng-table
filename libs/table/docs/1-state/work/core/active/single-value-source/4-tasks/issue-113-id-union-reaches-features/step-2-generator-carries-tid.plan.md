@@ -122,4 +122,5 @@ change and needs its own decision.
 - [ ] `compose-features.overloads.ts` is untouched in the diff.
 
 ---
+
 ← [Step 1: `TId` survives on the store shape](step-1-tid-on-store-shape.plan.md) | [Step 3: The literal-union guard](step-3-literal-union-guard.plan.md) →

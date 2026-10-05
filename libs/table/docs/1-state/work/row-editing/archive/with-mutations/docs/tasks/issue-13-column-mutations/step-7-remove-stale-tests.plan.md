@@ -52,4 +52,5 @@ store to do it.
 - Remaining tests in the file still pass.
 
 ---
+
 ← [Step 6: demo app caller update](step-6-demo-caller.plan.md) | [Step 8: `update-columns.spec.ts`](step-8-update-columns-spec.plan.md) →

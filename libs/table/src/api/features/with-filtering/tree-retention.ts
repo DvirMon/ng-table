@@ -17,7 +17,7 @@ export function retainTreeMatches<TRow>(
     parentOf: ParentLink<TRow>;
     trackBy: TrackByFn<TRow>;
     includeDescendants: boolean;
-  }
+  },
 ): { rows: TRow[]; contextIds: ReadonlySet<RowId> } {
   const { matches, parentOf, trackBy, includeDescendants } = opts;
   const { parentById } = resolveTreeLinks(rows, { parentOf, trackBy });

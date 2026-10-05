@@ -1,8 +1,4 @@
-import type {
-  ColumnRule,
-  ColumnRuleContext,
-  ColumnsSchemaStore,
-} from '../../columns-schema/types';
+import type { ColumnRule, ColumnRuleContext, ColumnsSchemaStore } from '../../columns-schema/types';
 import type { ColumnRuleEntry } from '../columns';
 import type { TableFeatureSpec } from '../types';
 import { assertDeclarationsAreKnown } from '../../schema/validate';
@@ -24,7 +20,7 @@ import {
  * Auto-composed by `createTable()`, unlike other `with-*()` features.
  */
 export function wireColumnsSchemaAsync<TRow>(
-  rules: readonly ColumnRule<TRow>[]
+  rules: readonly ColumnRule<TRow>[],
 ): (core: ColumnsSchemaStore<TRow>) => TableFeatureSpec<TRow> {
   const metadataRules = rules.filter(isMetadataRule);
   const metadataAsyncRules = rules.filter(isMetadataAsyncRule);

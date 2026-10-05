@@ -60,9 +60,9 @@ person using the table and is ignored here.
 
 Two modes, genuinely different products — the same split `filtering.md` draws:
 
-| Mode | What the person sees |
-|---|---|
-| **Client** (`withSorting()`, default) | All rows are already on the table; sorting reorders what's shown, instantly, with no round trip. |
+| Mode                                                            | What the person sees                                                                                                                                                                                                                                                                 |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Client** (`withSorting()`, default)                           | All rows are already on the table; sorting reorders what's shown, instantly, with no round trip.                                                                                                                                                                                     |
 | **Server** (`withSorting({ manual: true })`, feeding a request) | The local `sort` stage is skipped — the person's click has to travel to a request that returns freshly sorted data. The person sees the same reordering, but it costs a request, and the window between the click and the new order landing has to be a designed state, not silence. |
 
 Server mode is not a degraded client mode — a million-row table that only ever renders a
@@ -72,24 +72,24 @@ happened" complaint is on record a decade apart, in two different libraries (§4
 
 ## Coverage marks
 
-| Mark | Meaning |
-|---|---|
-| ✅ **covered** | Demonstrable today in `src/stories/` or a demo app, with the failure path included |
+| Mark                  | Meaning                                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| ✅ **covered**        | Demonstrable today in `src/stories/` or a demo app, with the failure path included                                             |
 | 🟡 **partly covered** | The mechanism exists but the person's experience of it does not — no affordance, no message, no recipe, or the happy path only |
-| ❌ **not covered** | Nothing on screen anywhere; or structurally impossible with what ships |
+| ❌ **not covered**    | Nothing on screen anywhere; or structurally impossible with what ships                                                         |
 
 **No dedicated sorting story exists.** Unlike filtering (`client-filtering/`), sorting has never
-been the subject of its own story — it only ever appears as the *other* feature in a composition,
+been the subject of its own story — it only ever appears as the _other_ feature in a composition,
 filed under a different Storybook title. All four are read from host component code, not folder
 names or `.mdx` wrappers, per
 [`research-sorting-internal-coverage.md`](../1-state/work/sorting/active/story-discovery/research-sorting-internal-coverage.md):
 
-| Story | Filed under | Composes | What it demonstrates for sorting |
-|---|---|---|---|
-| [`grouping/grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) | Grouping | `withGrouping()` + `withExpansion()` + `withSorting()` | The **broadest** sorting demo in the repo, incidentally: a sort button on every column — `number`, `Date`, plain string, and an `accessor`-derived string, plus a nullable string — so this is the only place auto-detection is exercised across types. Bare `withSorting()`, no `multi`. |
-| [`row-edit/sorting-editing/`](../../src/stories/row-edit/sorting-editing/) | Row Editing | `withSorting()` + `withRowEdit()` | Three-state toggle with a glyph, derived `aria-sort`, a "Clear sort" button, and **null-last on a nullable column** with two null fixture rows plus a button that adds a third live. The one story with the FLIP row-reorder animation turned on (`sorting-editing-flip.css`), and the one that renders **S-1's failure live** — a banner naming the row's index at open vs. now, on purpose, not by oversight. |
-| [`row-edit/live-table/`](../../src/stories/row-edit/live-table/) | Row Editing | `withSorting()` + `withOptimistic()` | Two sortable columns under no-session live editing. |
-| [`selection/filtering-selection/`](../../src/stories/selection/filtering-selection/) | Selection | `withFiltering()` + `withSelection()` + `withSorting()` | Sorting reorders rows and changes no selection ([`selection.md:339`](selection.md)). |
+| Story                                                                                | Filed under | Composes                                                | What it demonstrates for sorting                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------------------ | ----------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`grouping/grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) | Grouping    | `withGrouping()` + `withExpansion()` + `withSorting()`  | The **broadest** sorting demo in the repo, incidentally: a sort button on every column — `number`, `Date`, plain string, and an `accessor`-derived string, plus a nullable string — so this is the only place auto-detection is exercised across types. Bare `withSorting()`, no `multi`.                                                                                                                       |
+| [`row-edit/sorting-editing/`](../../src/stories/row-edit/sorting-editing/)           | Row Editing | `withSorting()` + `withRowEdit()`                       | Three-state toggle with a glyph, derived `aria-sort`, a "Clear sort" button, and **null-last on a nullable column** with two null fixture rows plus a button that adds a third live. The one story with the FLIP row-reorder animation turned on (`sorting-editing-flip.css`), and the one that renders **S-1's failure live** — a banner naming the row's index at open vs. now, on purpose, not by oversight. |
+| [`row-edit/live-table/`](../../src/stories/row-edit/live-table/)                     | Row Editing | `withSorting()` + `withOptimistic()`                    | Two sortable columns under no-session live editing.                                                                                                                                                                                                                                                                                                                                                             |
+| [`selection/filtering-selection/`](../../src/stories/selection/filtering-selection/) | Selection   | `withFiltering()` + `withSelection()` + `withSorting()` | Sorting reorders rows and changes no selection ([`selection.md:339`](selection.md)).                                                                                                                                                                                                                                                                                                                            |
 
 **Five shipped capabilities are demonstrated in none of the four:** `multi: true`, `manual: true`,
 a custom `sortFn`, `sortable({ enable: () => false })`, and any `sortNulls()` override. All five are
@@ -160,8 +160,8 @@ every column.
 **Design status:** covered — D-S1, D-S17 (`[...rows].sort()`, a copy, stable ties — never
 in-place). This matches the majority position: AG Grid, MUI X and TanStack all ship
 `asc → desc → none` as their **default**. PrimeNG is the outlier — it has no third state at all,
-and its own community has asked for one since 2019 with no built-in fix: *"Why anyone would build
-and release a sort feature without any option to 'reset' is hard to understand"*
+and its own community has asked for one since 2019 with no built-in fix: _"Why anyone would build
+and release a sort feature without any option to 'reset' is hard to understand"_
 ([`primefaces/primeng#12553`](https://github.com/primefaces/primeng/issues/12553), 9 👍, 13
 comments, open since 2023). See
 [`research-sorting-community-pain.md`](../1-state/work/sorting/active/story-discovery/research-sorting-community-pain.md)
@@ -179,16 +179,16 @@ Theme 1.
   inferred from a sample of the loaded data.
 
 **Failure behavior avoided:** TanStack infers the first click's direction from the type of the
-*first filtered row's* value (`getAutoSortDir`) — a column whose first row happens to be blank
+_first filtered row's_ value (`getAutoSortDir`) — a column whose first row happens to be blank
 flips to a different cycle than the same column with different data loaded. This produced the
 highest-reaction sorting bug in TanStack's own tracker
 ([`TanStack/table#4289`](https://github.com/TanStack/table/issues/4289), 16 reactions, "the sorting
 toggle for that column doesn't follow the asc-desc-undefined pattern... a multitude of other
 variations"), and TanStack's own guide concedes the trap in prose rather than fixing it.
 
-**Covered by:** nothing directly demonstrates the *absence* of this bug — it's an inference from
+**Covered by:** nothing directly demonstrates the _absence_ of this bug — it's an inference from
 reading `with-sorting.ts`, not something a story sets out to prove. Listed because the value is in
-what's *not* here, not what is.
+what's _not_ here, not what is.
 
 **Design status:** covered by construction — no runtime type inference anywhere in `with-sorting.ts`.
 See
@@ -240,7 +240,7 @@ one did.
 **Design status — gap, in two different ways at once.** The shipped mechanism (`multi: true`) is a
 construction-time table mode a developer picks. The specced UI mechanism
 ([`sort.md`](../3-ui/directives/sort.md)'s `toggleSort(id, { accumulate })`) is a per-click gesture
-a *person* performs — a genuinely different product, and an unticketed state-layer change neither
+a _person_ performs — a genuinely different product, and an unticketed state-layer change neither
 doc has reconciled with the other. This is the sharpest open decision in the whole feature — see
 §6. **OQ-sort-2, OQ-sort-3.**
 
@@ -280,7 +280,7 @@ is no table-level initial-sort option independent of that larger persistence fea
 
 # 3. Trust the order to be correct
 
-## 3.1 — A blank or missing value lands somewhere predictable, regardless of which way I sort — ✅ covered *(the strongest thing in this feature)*
+## 3.1 — A blank or missing value lands somewhere predictable, regardless of which way I sort — ✅ covered _(the strongest thing in this feature)_
 
 > As someone who just sorted invoices by due date, and some invoices have no due date set yet, I
 > want those blank ones to stay in the same spot whether I sort oldest-first or newest-first — not
@@ -307,7 +307,7 @@ placement and its direction-independence are on canvas.
 asked in 2015 ("can you change it that the null value always stays at the bottom?"), again in 2022,
 again in 2023 (tracked internally as **AG-4861**, staff answer: "there's no way to implement this
 behaviour with AG Grid besides using your own custom comparator") — still no declarative option as
-of 2026-09-17. MUI X's own docs devote a demo to *escaping* their own direction-relative default,
+of 2026-09-17. MUI X's own docs devote a demo to _escaping_ their own direction-relative default,
 which is itself the evidence their default is the wrong one. PrimeNG pins nulls at the bottom both
 directions too, but undocumented, in a private helper, with an in-source comment as the only trace
 of the decision. TanStack is the closest competitor (`sortUndefined: 'first' | 'last'`), and even
@@ -369,8 +369,8 @@ header across all four sorting stories genuinely is sortable.
 
 **Design status:** shipped (D-S5), unit-tested only (`with-sorting.spec.ts:140`), never
 demonstrated. Structurally compounding this: since no `ngpTableSort` directive ships yet, there is
-no shared convention for what a sortable header *looks like* either — every consumer draws their
-own from scratch (§2.1), so there is nothing shared to get wrong or right about a *non*-sortable one
+no shared convention for what a sortable header _looks like_ either — every consumer draws their
+own from scratch (§2.1), so there is nothing shared to get wrong or right about a _non_-sortable one
 either. Once a directive exists, this is exactly the failure mode the community research flags most
 often in the wild: hover-only sort affordances that fail keyboard and touch users identically, and
 the mirror complaint of non-sortable headers that still look clickable — both open, years apart, on
@@ -406,7 +406,7 @@ comparator.
 [`research-sorting-internal-coverage.md`](../1-state/work/sorting/active/story-discovery/research-sorting-internal-coverage.md)
 finding C-4. **OQ-sort-5.**
 
-## 4.2 — A row I'm editing doesn't move out from under me — 🟡 partly covered *(linked — owned by row editing, §5)*
+## 4.2 — A row I'm editing doesn't move out from under me — 🟡 partly covered _(linked — owned by row editing, §5)_
 
 Not restated here — see §5 below (`row-editing.md` S-1). Named in harm order because the community
 research found this to be the largest sort-collision theme by volume in the entire category: seven
@@ -449,7 +449,7 @@ and that file keeps owning its coverage mark. Per
 [`research-sorting-internal-coverage.md`](../1-state/work/sorting/active/story-discovery/research-sorting-internal-coverage.md)
 §4, this is the entire existing cross-feature surface for sorting — nothing else needs writing.
 
-## Owned by grouping *(built)*
+## Owned by grouping _(built)_
 
 **S-G1 and S-G2 already exist** at [`grouping.md`](grouping.md) §"Owned by sorting" — S-G1 (✅
 covered, contingent), sorting the column a table is grouped by does not produce a "dead header" that
@@ -460,7 +460,7 @@ themselves in place — demonstrated for the rows half only, since no story comp
 composed story supplying no `groupOrder`, not on a shipped guarantee** — supplying one reintroduces
 the dead header, and `grouping.md` says so explicitly.
 
-## Owned by row editing *(built, unshipped)*
+## Owned by row editing _(built, unshipped)_
 
 **S-1, S-2 and 2.2 already exist** at [`row-editing.md`](row-editing.md) §"Owned by sorting" — S-1
 (🟡 partly covered), a row must not move while the person is working in it: **decided** 2026-08-27
@@ -472,7 +472,7 @@ must change." `row-editing.md` §2.2 (❌ not covered), finding the row just add
 sort — the comparator half is fixed by S-2, the row-hold half is OQ-3; row-editing keeps the mark
 because the person meets this during Add, not during an existing edit.
 
-## Owned by selection *(built)*
+## Owned by selection _(built)_
 
 **No "Owned by sorting" section exists in [`selection.md`](selection.md), on purpose** — sorting
 reorders rows and changes no selection at all, which is entirely selection's guarantee to make and
@@ -480,7 +480,7 @@ keep ([`selection.md:332,339`](selection.md)), demonstrated in
 [`filtering-selection/`](../../src/stories/selection/filtering-selection/). There is nothing for
 sorting to add here.
 
-## Owned by filtering *(built)*
+## Owned by filtering _(built)_
 
 **No "Owned by sorting" section exists in [`filtering.md`](filtering.md) either.** Filtering and
 sorting compose without a documented collision — the fixed pipeline order (`filter → group → sort →
@@ -489,7 +489,7 @@ order, with no sorting-specific wiring required.
 
 ---
 
-# 6. What multi-column sort activation *is*
+# 6. What multi-column sort activation _is_
 
 Not a story — a question that sits underneath 2.2 and both open UI questions about it (OQ-sort-2,
 OQ-sort-3), recorded here because answering it once frames both.
@@ -497,27 +497,27 @@ OQ-sort-3), recorded here because answering it once frames both.
 **Is multi-column sort a mode the developer turns on for the whole table, or a gesture the person
 performs per click?**
 
-| If it's **the developer's mode** | If it's **the person's gesture** |
-|---|---|
-| `withSorting({ multi: true })` fully describes the behavior — every click accumulates, by click order, no modifier needed | A modifier key (shift/ctrl/meta) has to be read off each click event and translated into `{ accumulate: boolean }` |
-| No priority-indicator ambiguity about *whether* a click was a multi-sort click — every click is | The moment a modifier+click "worked" is otherwise the only feedback a person gets that it registered at all — a priority badge becomes load-bearing, not decorative |
-| A table either supports multi-sort everywhere or nowhere, decided once at construction | Multi-sort can coexist with single-column replace as the default gesture, discoverable or not depending on whether a badge exists |
+| If it's **the developer's mode**                                                                                          | If it's **the person's gesture**                                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `withSorting({ multi: true })` fully describes the behavior — every click accumulates, by click order, no modifier needed | A modifier key (shift/ctrl/meta) has to be read off each click event and translated into `{ accumulate: boolean }`                                                  |
+| No priority-indicator ambiguity about _whether_ a click was a multi-sort click — every click is                           | The moment a modifier+click "worked" is otherwise the only feedback a person gets that it registered at all — a priority badge becomes load-bearing, not decorative |
+| A table either supports multi-sort everywhere or nowhere, decided once at construction                                    | Multi-sort can coexist with single-column replace as the default gesture, discoverable or not depending on whether a badge exists                                   |
 
 **Both answers are "accepted" in this repo today, and they are not the same product.** ADR-0001
 answered the first question — single-column replace is the default, `multi: true` is a
 construction-time opt-in restoring the original always-additive behavior. `sort.md` then answered
-the *second* question — a configurable modifier key, read per click — without reopening the first,
+the _second_ question — a configurable modifier key, read per click — without reopening the first,
 and specced `toggleSort(id, { accumulate })` against a `multi` flag the shipped code only reads
 once. Neither doc names this as a reopened decision; both are simply true today, of two different
 mechanisms, only one of which is built.
 
 **What the competitor research says about which one the market has converged on:** three of four
-surveyed libraries (AG Grid, MUI X, TanStack) now ship *both* a modifier gesture **and** a
+surveyed libraries (AG Grid, MUI X, TanStack) now ship _both_ a modifier gesture **and** a
 no-modifier "always multi-sort" mode (`alwaysMultiSort`, `multipleColumnsSortingMode: "always"`,
 `isMultiSortEvent: () => true`) — which reads as tacit agreement that the gesture alone is
 undiscoverable enough that a table-wide mode is worth offering as an escape hatch, not that the
 mode has replaced the gesture. The one place the market disagrees sharply is money: MUI X meters
-*plain* multi-column sorting — the least exotic version of this feature — behind its Pro plan, while
+_plain_ multi-column sorting — the least exotic version of this feature — behind its Pro plan, while
 AG Grid, otherwise the most aggressively metered of the four, gives multi-sort, the priority badge,
 and keyboard multi-sort away in Community. See
 [`research-sorting-ux-capabilities.md`](../1-state/work/sorting/active/story-discovery/research-sorting-ux-capabilities.md)
@@ -530,77 +530,77 @@ Axis 2 and Axis 8.
 Each carries a recommendation and what would settle it. None silently picked.
 
 **OQ-sort-1 — Does the library recommend or ship any active-sort visibility convention? — open.**
-*Recommendation:* no shipped UI, consistent with the same call `filtering.md`'s OQ-4 makes — but a
+_Recommendation:_ no shipped UI, consistent with the same call `filtering.md`'s OQ-4 makes — but a
 documented recipe using `sortDirections()`'s existing `columnId → direction` map for a glyph and
 `aria-sort`, since the data already exists and the gap is entirely a missing example.
-*To decide:* whether the recipe belongs in `features/sorting.md` or waits for `sort.md` to actually
+_To decide:_ whether the recipe belongs in `features/sorting.md` or waits for `sort.md` to actually
 ship.
-*Sequencing:* not blocked; cheap, and every existing sorting story has already independently
+_Sequencing:_ not blocked; cheap, and every existing sorting story has already independently
 reinvented the same fifteen lines.
 
 **OQ-sort-2 — Is multi-column sort a construction-time mode or a per-click gesture? — open, and the
 sharpest one in this document.**
-*Recommendation:* resolve this before building `ngpTableSort`, not while building it. §6 lays out
-both positions; the market split (three of four now ship *both* a gesture and a no-modifier mode) is
+_Recommendation:_ resolve this before building `ngpTableSort`, not while building it. §6 lays out
+both positions; the market split (three of four now ship _both_ a gesture and a no-modifier mode) is
 evidence that a person-facing multi-sort table probably wants both eventually, but the shipped state
 layer (`multi: true`, construction-time only) and the specced UI layer (`toggleSort(id, {
 accumulate })`, per-click) currently answer two different questions without saying so.
-*To decide:* whether `toggleSort()` grows a per-call options argument (the state-layer change
+_To decide:_ whether `toggleSort()` grows a per-call options argument (the state-layer change
 `3-ui/architecture.md` already names as open and unticketed), or whether `sort.md` is revised to
 build against the shipped `multi` flag instead.
-*Sequencing:* blocks `ngpTableSort` and, transitively, OQ-sort-1 and OQ-sort-3 — a directive can't be
+_Sequencing:_ blocks `ngpTableSort` and, transitively, OQ-sort-1 and OQ-sort-3 — a directive can't be
 built against a signature that doesn't exist.
 
 **OQ-sort-3 — Multi-sort priority indicator: shape and timing — open, elevated.**
-*Recommendation:* once OQ-sort-2 resolves, ship *some* numbered indicator rather than none — every
+_Recommendation:_ once OQ-sort-2 resolves, ship _some_ numbered indicator rather than none — every
 surveyed competitor except headless TanStack renders one, and the community research is explicit
 that without one, a successful modifier+click has no other feedback that it registered at all.
-PrimeNG's detail worth copying: it gates the badge on there being a *second* sorted column, so a lone
+PrimeNG's detail worth copying: it gates the badge on there being a _second_ sorted column, so a lone
 sorted column never shows a redundant "1."
-*To decide:* component vs. documented recipe — same open question as the sort icon itself
+_To decide:_ component vs. documented recipe — same open question as the sort icon itself
 (`3-ui/architecture.md`).
-*Sequencing:* depends on OQ-sort-2; already flagged in three docs as more load-bearing than
+_Sequencing:_ depends on OQ-sort-2; already flagged in three docs as more load-bearing than
 previously assessed.
 
 **OQ-sort-4 — Should a table be able to start already sorted? — open.**
-*Recommendation:* yes, worth a small, focused addition independent of the larger (and currently
+_Recommendation:_ yes, worth a small, focused addition independent of the larger (and currently
 unshipped) persistence feature — a table-level initial-sort option is a much smaller surface than
 the full `sorting?: SortRule[]` persistence snapshot, and "reopen a saved view" is unreachable
 without it regardless of how that larger feature lands.
-*To decide:* whether it belongs on `withSorting({ initialSort })` or is folded entirely into
+_To decide:_ whether it belongs on `withSorting({ initialSort })` or is folded entirely into
 whenever `state-persistence.md` ships.
-*Sequencing:* not blocked; independently useful even if persistence never ships.
+_Sequencing:_ not blocked; independently useful even if persistence never ships.
 
 **OQ-sort-5 — Fix the `sortFn` throw-blanks-the-table bug — not really open, a bug to schedule.**
-*Recommendation:* wrap `compare(a, b)` the same way filtering wraps a predicate (per-callback, once
+_Recommendation:_ wrap `compare(a, b)` the same way filtering wraps a predicate (per-callback, once
 per evaluation, reporting in production too) — ADR-0014 already names this as the contract; the code
 just doesn't do it yet.
-*To decide:* nothing structural — this is closing an implementation gap against an already-agreed
+_To decide:_ nothing structural — this is closing an implementation gap against an already-agreed
 policy, not a design decision.
-*Sequencing:* small, isolated, no dependency on anything else in this document. Worth doing before a
+_Sequencing:_ small, isolated, no dependency on anything else in this document. Worth doing before a
 custom `sortFn` gets its first story (§3.2), so that story doesn't have to also demonstrate a crash.
 
 **OQ-sort-6 — Table-wide `nulls` default? — open, already named in `features/sorting.md` as
 "not proposed."**
-*Recommendation:* no change — the per-column default (`'last'`) already fixes the crash and the
+_Recommendation:_ no change — the per-column default (`'last'`) already fixes the crash and the
 direction-flip for every table with zero configuration; a table-wide override is worth adding only
 once a real consumer asks for `'first'` everywhere.
-*To decide:* nothing yet — revisit on demand.
-*Sequencing:* not blocked on anything.
+_To decide:_ nothing yet — revisit on demand.
+_Sequencing:_ not blocked on anything.
 
 **OQ-sort-7 — Which per-column config surface is current? — resolved 2026-09-25 (#100).**
 [#100](https://github.com/DvirMon/ng-table/issues/100) shipped `withSorting({ schema })`
 (`sortNulls`/`sortFn`/`sortable`, plus the `sortingSchema<Row>(fn)` reuse helper) as the single
 per-column surface. `ColumnDef` carries no feature config at all — `sortFn`, `enableSorting` and
 the columns-schema `sortNulls()` are deleted from `src/`, not deprecated. This document's own
-practice of writing every story against the *capability* rather than a specific spelling is why
+practice of writing every story against the _capability_ rather than a specific spelling is why
 none of the stories above needed a rewrite for the API to change underneath them — see
 `docs/decisions/sorting.md` SO19/21/22/25–29 for the full ruling.
 [`tier-3-feature-config.md`](../2-columns/reference/tier-3-feature-config.md)'s
 `applyEnableSorting`/`applySortFn`/`applyDefaultSort` proposal never shipped and has been
 corrected to match the shipped surface.
-*To decide:* nothing — closed.
-*Sequencing:* n/a.
+_To decide:_ nothing — closed.
+_Sequencing:_ n/a.
 
 ---
 
@@ -615,37 +615,37 @@ is tagged **state**, **UI**, or **both**, and where it is both, what each layer 
 
 Owned by `1-state/features/sorting.md` and `1-state/work/sorting/`.
 
-| # | Gap | Story | Note |
-|---|---|---|---|
-| S1 | A throwing `sortFn` blanks the table instead of degrading | 4.1 | `with-sorting.ts:123` calls `compare()` unwrapped. ADR-0014 names the fallback in its own policy table; the code doesn't implement it. **OQ-sort-5** |
-| S2 | No initial/default sort — a table cannot open already sorted | 2.4 | `sorting` always initializes to `[]`. `sorting?: SortRule[]` exists only inside the larger, unshipped persistence spec. **OQ-sort-4** |
-| S3 | `toggleSort()` has no per-call options argument | 2.2, §6 | `sort.md`'s `{ accumulate }` design is unbuildable against the shipped signature. Named as open and unticketed in `3-ui/architecture.md`. **OQ-sort-2** |
-| ~~S4~~ | ~~Three incompatible per-column config surfaces exist across the docs~~ — resolved: `withSorting({ schema })` (`sortNulls`/`sortFn`/`sortable`) shipped as the single surface (#100) | §6 note, all of §1–4 by extension | **OQ-sort-7**, closed |
-| S5 | No table-wide `nulls` default | — | Explicitly "not proposed" in `features/sorting.md`. **OQ-sort-6** |
-| S6 | `features/sorting.md` still lists the auto-detect algorithm as an open question | — | It shipped (`detectComparator`, `with-sorting.ts:62-80`). Documentation-only fix. |
-| S7 | Two broken links inside `features/sorting.md` itself (null-ordering handoff, gap-analysis) | — | Both files exist, at different paths than written. Documentation-only fix. |
+| #      | Gap                                                                                                                                                                                  | Story                             | Note                                                                                                                                                    |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S1     | A throwing `sortFn` blanks the table instead of degrading                                                                                                                            | 4.1                               | `with-sorting.ts:123` calls `compare()` unwrapped. ADR-0014 names the fallback in its own policy table; the code doesn't implement it. **OQ-sort-5**    |
+| S2     | No initial/default sort — a table cannot open already sorted                                                                                                                         | 2.4                               | `sorting` always initializes to `[]`. `sorting?: SortRule[]` exists only inside the larger, unshipped persistence spec. **OQ-sort-4**                   |
+| S3     | `toggleSort()` has no per-call options argument                                                                                                                                      | 2.2, §6                           | `sort.md`'s `{ accumulate }` design is unbuildable against the shipped signature. Named as open and unticketed in `3-ui/architecture.md`. **OQ-sort-2** |
+| ~~S4~~ | ~~Three incompatible per-column config surfaces exist across the docs~~ — resolved: `withSorting({ schema })` (`sortNulls`/`sortFn`/`sortable`) shipped as the single surface (#100) | §6 note, all of §1–4 by extension | **OQ-sort-7**, closed                                                                                                                                   |
+| S5     | No table-wide `nulls` default                                                                                                                                                        | —                                 | Explicitly "not proposed" in `features/sorting.md`. **OQ-sort-6**                                                                                       |
+| S6     | `features/sorting.md` still lists the auto-detect algorithm as an open question                                                                                                      | —                                 | It shipped (`detectComparator`, `with-sorting.ts:62-80`). Documentation-only fix.                                                                       |
+| S7     | Two broken links inside `features/sorting.md` itself (null-ordering handoff, gap-analysis)                                                                                           | —                                 | Both files exist, at different paths than written. Documentation-only fix.                                                                              |
 
 ## 8.2 UI-layer gaps
 
 Owned by `3-ui/directives/sort.md` and whichever story-planning effort picks up a dedicated sorting
 story.
 
-| # | Gap | Story | Note |
-|---|---|---|---|
-| U1 | `ngpTableSort` doesn't exist | 2.1, 3.4, §6 | `spec: drafted, code: none`. Every affordance below is hand-rolled per consumer today. Blocked on **OQ-sort-2**. |
-| U2 | No dedicated sorting story exists anywhere | all of §1–4 | Every sorting demo is filed under Grouping, Row Editing, or Selection's Storybook title. Five shipped capabilities (`multi`, `manual`, custom `sortFn`, `sortable({ enable: () => false })`, any `sortNulls()` override) are demonstrated in none of them. |
-| U3 | No multi-sort priority indicator, component or recipe | 2.2 | Elevated from "low stakes" to load-bearing in three docs — once accumulation requires a deliberate gesture, the badge is the only confirmation it registered. **OQ-sort-3** |
-| U4 | No active-sort visibility convention (glyph, `aria-sort` wiring) | 2.1 | Recipe exists ad hoc in two stories; no shared component or documented pattern. **OQ-sort-1** |
-| U5 | No server-mode sort loading-state recipe | 4.3 | No story composes `withSorting({ manual: true })` at all. |
-| U6 | `aria-live` announcement of a sort change is deferred, by explicit decision | — | Accepted cost, recorded at `3-ui/architecture.md:96`. The sharpest evidence this matters: a JAWS user's verbatim complaint about an unrelated grid is the only genuine end-user voice found anywhere in the competitor research corpus (`research-sorting-community-pain.md` Theme 6). |
-| U7 | No affordance convention for what a sortable (or deliberately non-sortable) header looks like | 3.4 | Depends on U1 existing first — there is currently nothing shared to get right or wrong. |
+| #   | Gap                                                                                           | Story        | Note                                                                                                                                                                                                                                                                                   |
+| --- | --------------------------------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| U1  | `ngpTableSort` doesn't exist                                                                  | 2.1, 3.4, §6 | `spec: drafted, code: none`. Every affordance below is hand-rolled per consumer today. Blocked on **OQ-sort-2**.                                                                                                                                                                       |
+| U2  | No dedicated sorting story exists anywhere                                                    | all of §1–4  | Every sorting demo is filed under Grouping, Row Editing, or Selection's Storybook title. Five shipped capabilities (`multi`, `manual`, custom `sortFn`, `sortable({ enable: () => false })`, any `sortNulls()` override) are demonstrated in none of them.                             |
+| U3  | No multi-sort priority indicator, component or recipe                                         | 2.2          | Elevated from "low stakes" to load-bearing in three docs — once accumulation requires a deliberate gesture, the badge is the only confirmation it registered. **OQ-sort-3**                                                                                                            |
+| U4  | No active-sort visibility convention (glyph, `aria-sort` wiring)                              | 2.1          | Recipe exists ad hoc in two stories; no shared component or documented pattern. **OQ-sort-1**                                                                                                                                                                                          |
+| U5  | No server-mode sort loading-state recipe                                                      | 4.3          | No story composes `withSorting({ manual: true })` at all.                                                                                                                                                                                                                              |
+| U6  | `aria-live` announcement of a sort change is deferred, by explicit decision                   | —            | Accepted cost, recorded at `3-ui/architecture.md:96`. The sharpest evidence this matters: a JAWS user's verbatim complaint about an unrelated grid is the only genuine end-user voice found anywhere in the competitor research corpus (`research-sorting-community-pain.md` Theme 6). |
+| U7  | No affordance convention for what a sortable (or deliberately non-sortable) header looks like | 3.4          | Depends on U1 existing first — there is currently nothing shared to get right or wrong.                                                                                                                                                                                                |
 
 ## 8.3 Gaps needing both layers
 
-| Gap | State owes | UI owes |
-|---|---|---|
-| Multi-column sort (2.2, §6) | Resolve **OQ-sort-2** — whether `toggleSort()` grows a per-call options argument, or `sort.md` is revised to target the shipped `multi` flag | Once resolved: the modifier-key config (if the gesture model wins) and the priority badge (**OQ-sort-3**) |
-| Row-hold under sort (4.2 / row-editing S-1) | OQ-3's decision (hold the edited row's position for the gated session) — **decided, not implemented** | Making the move perceptible once it lands — the FLIP row-reorder animation (D-S20) already ships as opt-in infrastructure for exactly this, wired into `sorting-editing/` alone; it needs to be the *general* answer, not one story's opt-in stylesheet |
+| Gap                                         | State owes                                                                                                                                   | UI owes                                                                                                                                                                                                                                                 |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Multi-column sort (2.2, §6)                 | Resolve **OQ-sort-2** — whether `toggleSort()` grows a per-call options argument, or `sort.md` is revised to target the shipped `multi` flag | Once resolved: the modifier-key config (if the gesture model wins) and the priority badge (**OQ-sort-3**)                                                                                                                                               |
+| Row-hold under sort (4.2 / row-editing S-1) | OQ-3's decision (hold the edited row's position for the gated session) — **decided, not implemented**                                        | Making the move perceptible once it lands — the FLIP row-reorder animation (D-S20) already ships as opt-in infrastructure for exactly this, wired into `sorting-editing/` alone; it needs to be the _general_ answer, not one story's opt-in stylesheet |
 
 ## 8.4 Confirmed right — do not re-litigate
 
@@ -672,7 +672,7 @@ Distinct from the gaps above: these are not missing paragraphs in an existing sp
 **features with no doc at all**. Checked against `docs/status.md` (the generated capability
 registry) rather than against memory — `sorting` is present there (`drilled | shipped | drafted |
 none`), so nothing at the capability level is unowned; what follows is unowned at the
-*sub-capability* level.
+_sub-capability_ level.
 
 ### 9.1 A sort-criteria panel (Notion/Airtable-style) — **UI**
 
@@ -706,7 +706,7 @@ not mistaken for missing stories.
   (D-S19).** A retroactively-corrected framing across three docs; a wiring detail invisible to
   anyone using the table.
 - **`sortNulls()`'s single-writer enforcement (D-S12) and its schema-only availability
-  (D-S13).** The *effect* — a per-column override existing at all — is product-visible and already
+  (D-S13).** The _effect_ — a per-column override existing at all — is product-visible and already
   credited in §3.1; the mechanism enforcing "only one rule per column" is a construction-time
   developer error, not something a person sorting a table ever perceives.
 - **`sortNulls()`'s declaration site (`withSorting({ schema })`, `api/features/with-sorting/schema.ts`

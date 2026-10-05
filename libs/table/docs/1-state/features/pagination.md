@@ -13,6 +13,7 @@ parent: ../architecture.md
 # withPagination()
 
 Known from `overview.md`:
+
 - State shape sketch: `{ pageIndex, pageSize, totalRows }`.
 - Owns the `pageChanged` event.
 - Mutually exclusive with `withInfiniteScroll()` in practice — a table shouldn't run both simultaneously.

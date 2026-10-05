@@ -8,15 +8,15 @@
 
 ## Files
 
-| File | Action |
-|---|---|
-| `libs/shared/table/CLAUDE.md` | edit — the filters barrel row and its internals claim |
-| `libs/shared/table/docs/3-ui/stories.md` | edit — the `createFilters` placement rule's landmine |
-| `libs/shared/table/docs/0-product/filtering.md` | edit — one illustrative call, one line |
-| `libs/shared/table/docs/adr/0016-filtering-takes-a-predicate-list.md` | edit — dated amendment note only, body untouched |
-| `libs/shared/table/docs/status.md` | **generated** — `npm run table:status` |
-| root `llms.txt` | **generated** — `npm run llms`, only if the context file set changed |
-| GitHub issue `#56` | comment + confirm closed as fixed-by-design |
+| File                                                                  | Action                                                               |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `libs/shared/table/CLAUDE.md`                                         | edit — the filters barrel row and its internals claim                |
+| `libs/shared/table/docs/3-ui/stories.md`                              | edit — the `createFilters` placement rule's landmine                 |
+| `libs/shared/table/docs/0-product/filtering.md`                       | edit — one illustrative call, one line                               |
+| `libs/shared/table/docs/adr/0016-filtering-takes-a-predicate-list.md` | edit — dated amendment note only, body untouched                     |
+| `libs/shared/table/docs/status.md`                                    | **generated** — `npm run table:status`                               |
+| root `llms.txt`                                                       | **generated** — `npm run llms`, only if the context file set changed |
+| GitHub issue `#56`                                                    | comment + confirm closed as fixed-by-design                          |
 
 ## Why This Step Exists
 
@@ -26,7 +26,7 @@ produce four PRs whose review is "yes, that sentence was stale."
 
 It depends on Steps 1 and 2 for two different reasons, and both are real:
 
-- the roll-up is derived from the two specs' frontmatter, so it is regenerated *after* they are
+- the roll-up is derived from the two specs' frontmatter, so it is regenerated _after_ they are
   final, never before;
 - `#56`'s closing comment has to name the change that removed the landmines, which is only true
   once the landmine text is actually gone from the filters spec and from `stories.md`.
@@ -53,8 +53,8 @@ and in the ADRs. Do not add an "as of #79" note or any status line.
 ### 2. The story conventions — `docs/3-ui/stories.md`
 
 The "`createFilters()` is the exception, and belongs in the host" paragraph (~L141) ends with a
-landmine that has inverted: *"the `createFilters<TRow, TState>(…)` call goes in the host's field
-initializer. Pass `TState` there too: without it every node reads back `unknown`…"*
+landmine that has inverted: _"the `createFilters<TRow, TState>(…)` call goes in the host's field
+initializer. Pass `TState` there too: without it every node reads back `unknown`…"_
 
 Following that advice now fails to compile. Replace those two sentences with the shipped shape —
 `createFilters(rows, (path) => [ … ])` in the host's field initializer, criterion types inferred
@@ -125,7 +125,7 @@ frontmatter it should not have; fix that there, not here.
 
 - **Do not hand-edit `docs/status.md` or `llms.txt` under any circumstance.** Both carry a
   generated-file banner.
-- **Do not reopen `#56`.** It is closed; this adds the comment that explains *why* it is closed.
+- **Do not reopen `#56`.** It is closed; this adds the comment that explains _why_ it is closed.
 - The `#56` comment is outward-facing and permanent. Get the issue numbers right before posting —
   `#76` (inference), `#77` (call sites), `#79` (docs).
 
@@ -155,4 +155,5 @@ frontmatter it should not have; fix that there, not here.
 - [ ] `git status` shows no change under `libs/shared/table/src/`
 
 ---
+
 ← [Step 3: Mark the decision record](step-3-decision-record.plan.md)

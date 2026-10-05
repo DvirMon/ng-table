@@ -10,9 +10,9 @@
 
 ## Files
 
-| Path | Action |
-|---|---|
-| `libs/table/src/api/features/with-expansion.spec.ts` | edit |
+| Path                                                 | Action |
+| ---------------------------------------------------- | ------ |
+| `libs/table/src/api/features/with-expansion.spec.ts` | edit   |
 
 ## Why This Step Exists
 
@@ -67,7 +67,7 @@ behaviour diffs, and only those two, reached a consumer.
   assertion that changed for a third reason is a bug you just wrote
   down as expected behaviour.
 - The two-feature case is where D1a shows up at a consumer level: a
-  group header in a table that *does* compose `withExpansion()` gets
+  group header in a table that _does_ compose `withExpansion()` gets
   a real `isExpanded`. That is the intended win (user story 13) — not
   a regression.
 
@@ -93,4 +93,5 @@ behaviour diffs, and only those two, reached a consumer.
       D2 or C4.
 
 ---
+
 ← [Step 3: Grouping's node tree](step-3-grouping-render-spec.plan.md) | [Step 5: core.spec and the wording sweep](step-5-core-spec-and-sweep.plan.md) →

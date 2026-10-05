@@ -6,14 +6,14 @@
 Reading chosen for AC #3: **B** — extract the recording runner only.
 Recorded by Step 1 before any code moves.
 
-| Step | Title | Type | Depends on | Status | PR |
-|---|---|---|---|---|---|
-| 1 | [Record reading B](step-1-record-reading.plan.md) | docs | — | ✅ done | — |
-| 2 | [Decouple `path-proxy.ts`](step-2-decouple-path-proxy.plan.md) | code | 1 | ✅ done | — |
-| 3 | [Shared recording runner](step-3-shared-recording-runner.plan.md) | code | 2 | ✅ done | — |
-| 4 | [Shared identifier check](step-4-shared-identifier-check.plan.md) | code | 1 | ✅ done | — |
-| 5 | [Spec the shared check](step-5-validate-spec.plan.md) | test | 4 | ✅ done | — |
-| 6 | [Document the two new files](step-6-doc-new-files.plan.md) | docs | 3, 4 | ✅ done | — |
+| Step | Title                                                             | Type | Depends on | Status  | PR  |
+| ---- | ----------------------------------------------------------------- | ---- | ---------- | ------- | --- |
+| 1    | [Record reading B](step-1-record-reading.plan.md)                 | docs | —          | ✅ done | —   |
+| 2    | [Decouple `path-proxy.ts`](step-2-decouple-path-proxy.plan.md)    | code | 1          | ✅ done | —   |
+| 3    | [Shared recording runner](step-3-shared-recording-runner.plan.md) | code | 2          | ✅ done | —   |
+| 4    | [Shared identifier check](step-4-shared-identifier-check.plan.md) | code | 1          | ✅ done | —   |
+| 5    | [Spec the shared check](step-5-validate-spec.plan.md)             | test | 4          | ✅ done | —   |
+| 6    | [Document the two new files](step-6-doc-new-files.plan.md)        | docs | 3, 4       | ✅ done | —   |
 
 Status values: `⬚ pending`, `▶ in progress`, `✅ done`, `⏭ skipped`.
 

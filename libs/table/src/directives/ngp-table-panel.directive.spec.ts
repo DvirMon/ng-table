@@ -6,12 +6,7 @@ import { NgpTablePanelDirective } from './ngp-table-panel.directive';
 import { createColumns } from '../api/create-columns';
 import { createTable } from '../api/create-table';
 import { withExpansion } from '../api/features/with-expansion';
-import {
-  mockSpacedIdRow,
-  mockTaskTreeRows,
-  noData,
-  type TaskTreeMockRow,
-} from '../table.mock';
+import { mockSpacedIdRow, mockTaskTreeRows, noData, type TaskTreeMockRow } from '../table.mock';
 
 const ROWS: TaskTreeMockRow[] = [...mockTaskTreeRows, mockSpacedIdRow];
 
@@ -40,7 +35,15 @@ const IMPORTS = [NgpTableDirective, NgpTablePanelDirective];
       <tbody>
         @for (row of table.rows(); track row.id) {
           @if (table.expansion().has(row.id)) {
-            <tr><td><div [ngpTablePanel]="row.id" role="region" [attr.aria-label]="'Details ' + row.id"></div></td></tr>
+            <tr>
+              <td>
+                <div
+                  [ngpTablePanel]="row.id"
+                  role="region"
+                  [attr.aria-label]="'Details ' + row.id"
+                ></div>
+              </td>
+            </tr>
           }
         }
       </tbody>
@@ -59,7 +62,15 @@ class DefaultHost {
       <tbody>
         @for (row of table.rows(); track row.id) {
           @if (table.expansion.everExpanded().has(row.id)) {
-            <tr><td><div [ngpTablePanel]="row.id" role="region" [attr.aria-label]="'Details ' + row.id"></div></td></tr>
+            <tr>
+              <td>
+                <div
+                  [ngpTablePanel]="row.id"
+                  role="region"
+                  [attr.aria-label]="'Details ' + row.id"
+                ></div>
+              </td>
+            </tr>
           }
         }
       </tbody>
@@ -77,7 +88,15 @@ class KeptMountedHost {
     <table [ngpTable]="table">
       <tbody>
         @for (row of table.rows(); track row.id) {
-          <tr><td><div [ngpTablePanel]="row.id" role="region" [attr.aria-label]="'Details ' + row.id"></div></td></tr>
+          <tr>
+            <td>
+              <div
+                [ngpTablePanel]="row.id"
+                role="region"
+                [attr.aria-label]="'Details ' + row.id"
+              ></div>
+            </td>
+          </tr>
         }
       </tbody>
     </table>
@@ -94,7 +113,20 @@ class NoExpansionHost {
     <table [ngpTable]="table">
       <tbody>
         @for (row of table.rows(); track row.id) {
-          <tr><td><div [ngpTablePanel]="row.id" role="region" [attr.aria-label]="'Details ' + row.id"></div><div [ngpTablePanel]="row.id" role="region" [attr.aria-label]="'Details ' + row.id"></div></td></tr>
+          <tr>
+            <td>
+              <div
+                [ngpTablePanel]="row.id"
+                role="region"
+                [attr.aria-label]="'Details ' + row.id"
+              ></div>
+              <div
+                [ngpTablePanel]="row.id"
+                role="region"
+                [attr.aria-label]="'Details ' + row.id"
+              ></div>
+            </td>
+          </tr>
         }
       </tbody>
     </table>

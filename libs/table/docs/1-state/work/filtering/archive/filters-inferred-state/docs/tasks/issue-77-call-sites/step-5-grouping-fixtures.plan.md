@@ -8,11 +8,11 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                                        | Action                                                   |
+| ----------------------------------------------------------- | -------------------------------------------------------- |
 | `libs/shared/table/src/stories/grouping/fixtures/schema.ts` | edit — array schema, `rowOf`, drop the return annotation |
-| `libs/shared/table/src/stories/grouping/fixtures/utils.ts` | edit — two helper signatures |
-| `libs/shared/table/src/stories/grouping/fixtures/types.ts` | edit — delete `DealFilterState` |
+| `libs/shared/table/src/stories/grouping/fixtures/utils.ts`  | edit — two helper signatures                             |
+| `libs/shared/table/src/stories/grouping/fixtures/types.ts`  | edit — delete `DealFilterState`                          |
 
 The only site where the filter set is built by a shared **factory** rather than declared in a host.
 Its return type is annotated, and two helpers in a sibling file take that type as a parameter — so
@@ -25,7 +25,7 @@ its return as `Filters<DealRow, DealFilterState>`, and `readRepCriterion` / `rep
 `utils.ts` take the same type. Deleting `DealFilterState` therefore breaks a signature that nothing
 infers — the case the ticket said to raise rather than guess at.
 
-The resolution: derive from the factory. The factory *is* the declaration; a helper that consumes
+The resolution: derive from the factory. The factory _is_ the declaration; a helper that consumes
 its result should say so, not restate its shape.
 
 ## What To Do
@@ -48,6 +48,7 @@ its result should say so, not restate its shape.
    The paragraph beginning "Typed with `DealFilterState`, because the host reads the criterion
    back…" goes: it explains an annotation that no longer exists, and the reason it gave (otherwise
    `unknown` behind a bracket) is now what inference delivers for free.
+
 2. **`rowOf<DealRow>()`, not a row array.** The factory holds no rows — its three callers each own
    their own data signal. This is the second legitimate `rowOf()` site after Step 4's server host.
 3. Rewrite both helpers in `utils.ts` to take the factory's own return type:
@@ -60,7 +61,7 @@ its result should say so, not restate its shape.
    }
 
    export function repFilterNode(
-     filters: ReturnType<typeof createDealFilters>
+     filters: ReturnType<typeof createDealFilters>,
    ): FilterNode<string> {
      return filters.rep();
    }
@@ -74,7 +75,7 @@ its result should say so, not restate its shape.
 
 - `utils.ts` importing from `schema.ts` introduces no cycle: `schema.ts` imports `./types` and the
   filters domain, never `./utils`. Use `import type` regardless — the value is never needed.
-- `ReturnType<typeof createDealFilters>` requires the factory to have an *inferred* return type. If
+- `ReturnType<typeof createDealFilters>` requires the factory to have an _inferred_ return type. If
   someone later re-annotates it, these helpers silently follow the annotation instead of the
   schema. That is the trade for not exporting a utility type; leave a one-line comment on the
   factory saying its return type is inferred on purpose.
@@ -108,4 +109,5 @@ its result should say so, not restate its shape.
 - [ ] `nx run shared-table:typecheck` reports no error in the three files this step touched
 
 ---
+
 ← [Step 4: The server filtering host — the `rowOf()` reference](step-4-server-filtering-host.plan.md) | [Step 6: `create-filters.spec.ts`](step-6-create-filters-spec.plan.md) →

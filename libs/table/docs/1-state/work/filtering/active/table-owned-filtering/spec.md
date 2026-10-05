@@ -1,5 +1,5 @@
 ---
-title: "Filtering moves into the table"
+title: 'Filtering moves into the table'
 type: spec
 status: ready-for-issues
 date: 2026-09-16
@@ -21,14 +21,14 @@ can filter anything. It is not table machinery: `withFiltering` imports nothing 
 whole bridge is `predicates: () => [filters().matcher()]`.
 
 R10 justified that separation on one claim — in server mode filters feed the request that
-*produces* the data, so a table-owned filter object cannot be constructed at all. **The claim is
+_produces_ the data, so a table-owned filter object cannot be constructed at all. **The claim is
 false.** `create-table.ts:28` reads rows through a thunk inside a `computed()`, so a `resource()`
 whose `params` read `table.filters().criteria()` wires with no construction cycle. The shipped
 server story proves the ordering works today — it builds its table on `signal<InvoiceRow[]>([])`
 before the first fetch (`server-filtering-story-host.component.ts:126-128`).
 
-With the blocker gone, the survey rule in `research-filter-state-ownership.md` — *ownership tracks
-who originates the value* — plus the stated constraint that **filters are always born with a
+With the blocker gone, the survey rule in `research-filter-state-ownership.md` — _ownership tracks
+who originates the value_ — plus the stated constraint that **filters are always born with a
 table** puts filtering table-owned, alongside AG Grid, PrimeNG, NgRx and `MatTableDataSource`
 (4 of the 7 libraries surveyed).
 
@@ -72,13 +72,11 @@ export interface FilteringMembers<TRow, TState extends Record<string, unknown>> 
   readonly filters: Filters<TRow, TState>;
 }
 
-export function withFiltering<In extends Shape>(
-  config: WithFilteringConfig
-): Feature<In, {}>;
+export function withFiltering<In extends Shape>(config: WithFilteringConfig): Feature<In, {}>;
 
 export function withFiltering<In extends Shape, S extends Record<string, AnyRule>>(
   config: WithFilteringConfig,
-  schema: (path: FiltersPath<RowOf<In>>) => S
+  schema: (path: FiltersPath<RowOf<In>>) => S,
 ): Feature<In, FilteringMembers<RowOf<In>, StateOf<S>>>;
 
 type StateOf<S> = { [K in keyof S]: CriterionOf<S[K]> };
@@ -115,19 +113,19 @@ produce a pending state (R53).
 
 ### Members — eight (R56)
 
-| | Root `filters()` | Per key `filters.status()` |
-|---|---|---|
-| Writable criterion | `value: WritableSignal<TState>` | `value: WritableSignal<TCriterion>` |
-| Effective criterion, empties omitted | `criteria(): Partial<TState>` | `criterion(): TCriterion \| undefined` |
-| Narrowing right now | `isActive()` | `isActive()` |
-| Back to the declared source | `reset(value?)` | `reset()` |
+|                                      | Root `filters()`                | Per key `filters.status()`             |
+| ------------------------------------ | ------------------------------- | -------------------------------------- |
+| Writable criterion                   | `value: WritableSignal<TState>` | `value: WritableSignal<TCriterion>`    |
+| Effective criterion, empties omitted | `criteria(): Partial<TState>`   | `criterion(): TCriterion \| undefined` |
+| Narrowing right now                  | `isActive()`                    | `isActive()`                           |
+| Back to the declared source          | `reset(value?)`                 | `reset()`                              |
 
 `matcher()` and `dirty()` become internal.
 
 ## Out of scope
 
 - **A raw-predicate escape hatch.** `predicates` is deleted and no `where()` replaces it. A
-  predicate with no criterion is a *scope*, not a filter, and a scope is expressed by narrowing
+  predicate with no criterion is a _scope_, not a filter, and a scope is expressed by narrowing
   the rows signal — `filter` precedes `group`/`sort`/`expand` in `PIPELINE_ORDER`, so the pipeline
   output is identical (R54).
 - **A `filterSchema()` helper.** A hoisted arrow annotated `(path: FiltersPath<Row>)` already
@@ -155,33 +153,33 @@ The duplicate-**key** throw is deleted — an object literal cannot repeat a key
                                                             └─> [8 specs] ──> [9 docs] ──> [10 relocate]
 ```
 
-| # | Step | Depends on |
-|---|---|---|
-| 1 | `withFiltering(config, schema)` builds the model, exposes the member | — |
-| 2 | Object-literal schema, `StateOf<S>`, delete the key-derivation layer | — |
-| 3 | `when` in `FilterOptions`; delete `applyWhen` and the conditional node | 2 |
-| 4 | Delete carrier, `rowOf`, `RowToken`, the `[TRow] extends [never]` brand | 1 |
-| 5 | `matcher()`/`dirty()` internal; delete `predicates` | 1 |
-| 6 | Barrel: drop `createFilters`/`rowOf`/`RowToken`/`applyWhen`; add `FiltersPath` | 1,2,4,5 |
-| 7 | Call sites — 5 story hosts, fixtures; server host moves to `resource()` | 6 |
-| 8 | Specs — `create-filters.types.spec.ts` rewritten; others migrated | 6 |
-| 9 | Docs — `filters.md` folds into `features/filtering.md`; ADR-0016 successor | 7,8 |
-| 10 | Relocate the domain + amend ADR-0004 | 9 |
+| #   | Step                                                                           | Depends on |
+| --- | ------------------------------------------------------------------------------ | ---------- |
+| 1   | `withFiltering(config, schema)` builds the model, exposes the member           | —          |
+| 2   | Object-literal schema, `StateOf<S>`, delete the key-derivation layer           | —          |
+| 3   | `when` in `FilterOptions`; delete `applyWhen` and the conditional node         | 2          |
+| 4   | Delete carrier, `rowOf`, `RowToken`, the `[TRow] extends [never]` brand        | 1          |
+| 5   | `matcher()`/`dirty()` internal; delete `predicates`                            | 1          |
+| 6   | Barrel: drop `createFilters`/`rowOf`/`RowToken`/`applyWhen`; add `FiltersPath` | 1,2,4,5    |
+| 7   | Call sites — 5 story hosts, fixtures; server host moves to `resource()`        | 6          |
+| 8   | Specs — `create-filters.types.spec.ts` rewritten; others migrated              | 6          |
+| 9   | Docs — `filters.md` folds into `features/filtering.md`; ADR-0016 successor     | 7,8        |
+| 10  | Relocate the domain + amend ADR-0004                                           | 9          |
 
 Parallel-safe: `[3,4,5]` after 1–2; `[7,8]` after 6.
 
 ### Step 10 — where the domain lands
 
 `src/filters/` exists because standalone was the trajectory
-([review-filters-table-coupling.md](../../archive/with-filtering/review-filters-table-coupling.md): *"move
-the closure to `src/filters/` … so the seam is visible before it is cut"*). R50 closes that
+([review-filters-table-coupling.md](../../archive/with-filtering/review-filters-table-coupling.md): _"move
+the closure to `src/filters/` … so the seam is visible before it is cut"_). R50 closes that
 trajectory, so the folder now misstates the architecture under ADR-0004's contract-boundary axis.
 
-| File | Lands in |
-|---|---|
+| File                                                                                              | Lands in                       |
+| ------------------------------------------------------------------------------------------------- | ------------------------------ |
 | `rules.ts`, `matchers.ts`, public types (`Filters`, `FilterNode`, `FilterOptions`, `FiltersPath`) | `api/features/with-filtering/` |
-| model builder, `state.ts`, `evaluator.ts`, `validate.ts`, internal types | `engine/filters/` |
-| `row-of.ts` | deleted in step 4 |
+| model builder, `state.ts`, `evaluator.ts`, `validate.ts`, internal types                          | `engine/filters/`              |
+| `row-of.ts`                                                                                       | deleted in step 4              |
 
 Mirrors `api/features/with-columns-schema/`'s declare / compile / run split. Last step by design:
 mechanical once the surface is settled, and a churning rename early would inflate every other

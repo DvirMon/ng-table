@@ -9,8 +9,8 @@ audience: developers
 # Generic filter utilities — what problem do they actually solve
 
 Prerequisite research for the `createFilters()` design. The companion doc
-[research-filter-state-ownership.md](research-filter-state-ownership.md) asked *who owns filter
-state* across four **table** libraries. This one deliberately looks away from tables: at
+[research-filter-state-ownership.md](research-filter-state-ownership.md) asked _who owns filter
+state_ across four **table** libraries. This one deliberately looks away from tables: at
 utilities whose entire job is "given a criterion and a value, decide whether the value matches."
 The goal is to find the **irreducible core** of the problem, so the API is designed off the
 problem, not off four table libraries' inherited shapes.
@@ -19,13 +19,13 @@ Every claim below was read from released source or published docs. URLs per sect
 
 ## The five surveyed
 
-| Library | What it is | Coupled to a table? |
-|---|---|---|
-| **PrimeNG `FilterService`** | Injectable Angular service; named match-mode registry | No — `p-table` is a *consumer* of it |
-| **sift.js** | MongoDB-query-syntax matcher for plain JS arrays | No |
-| **react-querybuilder** | Query-builder UI + a serializable rule/group tree | No |
-| **json-rules-engine** | Fact/operator/value rules engine | No |
-| **TanStack Table `filterFns`** | Built-in filter fns (included as the table-side control) | Yes |
+| Library                        | What it is                                               | Coupled to a table?                  |
+| ------------------------------ | -------------------------------------------------------- | ------------------------------------ |
+| **PrimeNG `FilterService`**    | Injectable Angular service; named match-mode registry    | No — `p-table` is a _consumer_ of it |
+| **sift.js**                    | MongoDB-query-syntax matcher for plain JS arrays         | No                                   |
+| **react-querybuilder**         | Query-builder UI + a serializable rule/group tree        | No                                   |
+| **json-rules-engine**          | Fact/operator/value rules engine                         | No                                   |
+| **TanStack Table `filterFns`** | Built-in filter fns (included as the table-side control) | Yes                                  |
 
 Sources:
 [PrimeNG filterservice.ts](https://raw.githubusercontent.com/primefaces/primeng/master/packages/primeng/src/api/filterservice.ts) ·
@@ -43,17 +43,17 @@ Sources:
 
 Five libraries, five vocabularies, one shape:
 
-| | operand source | operator | criterion |
-|---|---|---|---|
-| PrimeNG | `resolveFieldData(item, field)` | `filterMatchMode: string` | `filterValue` |
-| sift | property path (dotted, array-aware) | `$eq` / `$in` / … | operator params |
-| react-querybuilder | `field` | `operator` | `value` |
-| json-rules-engine | `fact` | `operator` | `value` |
-| TanStack | `columnId` → accessor | `filterFn` (string key or fn) | `filterValue` |
+|                    | operand source                      | operator                      | criterion       |
+| ------------------ | ----------------------------------- | ----------------------------- | --------------- |
+| PrimeNG            | `resolveFieldData(item, field)`     | `filterMatchMode: string`     | `filterValue`   |
+| sift               | property path (dotted, array-aware) | `$eq` / `$in` / …             | operator params |
+| react-querybuilder | `field`                             | `operator`                    | `value`         |
+| json-rules-engine  | `fact`                              | `operator`                    | `value`         |
+| TanStack           | `columnId` → accessor               | `filterFn` (string key or fn) | `filterValue`   |
 
 **`(field, operator, criterion) → boolean` is the whole problem.** Nothing else is universal.
-This independently confirms the earlier conclusion — *a filter is a rule with an externalized
-operand* — arrived at from this repo's own constraints rather than from precedent.
+This independently confirms the earlier conclusion — _a filter is a rule with an externalized
+operand_ — arrived at from this repo's own constraints rather than from precedent.
 
 ## Finding 2 — the operator signature is unanimously binary
 
@@ -68,7 +68,7 @@ engine.addOperator(String operatorName, Function evaluateFunc(factValue, jsonVal
 ```
 
 Only two extras exist anywhere: PrimeNG's optional `filterLocale`, and json-rules-engine's
-*decorator* form `(factValue, jsonValue, next)` used to lift an operator over a collection
+_decorator_ form `(factValue, jsonValue, next)` used to lift an operator over a collection
 (`first`, `every`, `some`).
 
 **Consequence:** this repo's existing `filterFn(value, filterValue) => boolean` on `ColumnDef`
@@ -81,15 +81,15 @@ json-rules-engine's decorator is worth stealing conceptually, though: it is how 
 lifting mechanism instead of an operator per collection semantic — exactly the
 `general-mechanism-over-enumerated-cases` shape.
 
-## Finding 3 — everyone ships a named registry with an escape hatch, but the *scope* differs
+## Finding 3 — everyone ships a named registry with an escape hatch, but the _scope_ differs
 
-| Library | Registry | Extension mechanism | Scope of a custom operator |
-|---|---|---|---|
-| PrimeNG | `filters: { [rule]: fn }` | `register(rule, fn)` | **Application-global mutation** |
-| json-rules-engine | engine-owned | `addOperator` / `addOperatorDecorator` (+ `remove*`) | Per engine instance |
-| sift | none built in by default | `options.operations` | **Per call** |
-| react-querybuilder | `defaultOperators` array | `operators` prop | Per component instance |
-| TanStack | `filterFns` built-ins | `filterFns` table option; string key *or* inline fn | Per table / per column |
+| Library            | Registry                  | Extension mechanism                                  | Scope of a custom operator      |
+| ------------------ | ------------------------- | ---------------------------------------------------- | ------------------------------- |
+| PrimeNG            | `filters: { [rule]: fn }` | `register(rule, fn)`                                 | **Application-global mutation** |
+| json-rules-engine  | engine-owned              | `addOperator` / `addOperatorDecorator` (+ `remove*`) | Per engine instance             |
+| sift               | none built in by default  | `options.operations`                                 | **Per call**                    |
+| react-querybuilder | `defaultOperators` array  | `operators` prop                                     | Per component instance          |
+| TanStack           | `filterFns` built-ins     | `filterFns` table option; string key _or_ inline fn  | Per table / per column          |
 
 PrimeNG's `register()` is:
 
@@ -109,19 +109,19 @@ against `TRow`.
 
 ## Finding 4 — the default operator sets converge on a small core
 
-| Semantic | PrimeNG | RQB | json-rules-engine | sift | TanStack |
-|---|---|---|---|---|---|
-| equals | `equals` | `=` | `equal` | `$eq` | `equals`, `equalsString` |
-| not equals | `notEquals` | `!=` | `notEqual` | `$ne` | — |
-| substring contains | `contains`, `notContains` | `contains`, `doesNotContain` | — | `$regex` | `includesString`(+`Sensitive`) |
-| starts / ends with | `startsWith`, `endsWith` | `beginsWith`, `endsWith` (+negations) | — | `$regex` | — |
-| `<` `<=` `>` `>=` | `lt` `lte` `gt` `gte` | `<` `<=` `>` `>=` | `lessThan…`, `greaterThan…` | `$lt` `$lte` `$gt` `$gte` | — |
-| range | `between` | `between`, `notBetween` | — | (compose) | `inNumberRange` |
-| value ∈ list | `in` | `in`, `notIn` | `in`, `notIn` | `$in`, `$nin` | `arrIncludesSome` |
-| list ∋ value | — | — | `contains`, `doesNotContain` | `$all` | `arrIncludes`, `arrIncludesAll` |
-| null check | — | `null`, `notNull` | — | `$exists` | — |
-| boolean is | `is`, `isNot` | (`=`) | — | — | — |
-| date-specific | `before`, `after`, `dateIs`, `dateIsNot`, `dateBefore`, `dateAfter` | (per field type) | — | — | — |
+| Semantic           | PrimeNG                                                             | RQB                                   | json-rules-engine            | sift                      | TanStack                        |
+| ------------------ | ------------------------------------------------------------------- | ------------------------------------- | ---------------------------- | ------------------------- | ------------------------------- |
+| equals             | `equals`                                                            | `=`                                   | `equal`                      | `$eq`                     | `equals`, `equalsString`        |
+| not equals         | `notEquals`                                                         | `!=`                                  | `notEqual`                   | `$ne`                     | —                               |
+| substring contains | `contains`, `notContains`                                           | `contains`, `doesNotContain`          | —                            | `$regex`                  | `includesString`(+`Sensitive`)  |
+| starts / ends with | `startsWith`, `endsWith`                                            | `beginsWith`, `endsWith` (+negations) | —                            | `$regex`                  | —                               |
+| `<` `<=` `>` `>=`  | `lt` `lte` `gt` `gte`                                               | `<` `<=` `>` `>=`                     | `lessThan…`, `greaterThan…`  | `$lt` `$lte` `$gt` `$gte` | —                               |
+| range              | `between`                                                           | `between`, `notBetween`               | —                            | (compose)                 | `inNumberRange`                 |
+| value ∈ list       | `in`                                                                | `in`, `notIn`                         | `in`, `notIn`                | `$in`, `$nin`             | `arrIncludesSome`               |
+| list ∋ value       | —                                                                   | —                                     | `contains`, `doesNotContain` | `$all`                    | `arrIncludes`, `arrIncludesAll` |
+| null check         | —                                                                   | `null`, `notNull`                     | —                            | `$exists`                 | —                               |
+| boolean is         | `is`, `isNot`                                                       | (`=`)                                 | —                            | —                         | —                               |
+| date-specific      | `before`, `after`, `dateIs`, `dateIsNot`, `dateBefore`, `dateAfter` | (per field type)                      | —                            | —                         | —                               |
 
 **Present in ≥4 of 5 — the hard core:** `equals`, `notEquals`, substring `contains`,
 the four comparisons, and set membership. That is roughly **eight** operators, not twenty.
@@ -129,17 +129,17 @@ the four comparisons, and set membership. That is roughly **eight** operators, n
 Two entries in that table are cautionary rather than exemplary:
 
 - **`between` is not a primitive.** It is `gte && lte`. PrimeNG and RQB ship it; sift and
-  json-rules-engine make you compose it. Ship it only if it visibly *is* the composition.
+  json-rules-engine make you compose it. Ship it only if it visibly _is_ the composition.
 - **PrimeNG's six date modes are a type problem wearing an operator costume.** `dateIs`,
   `dateBefore`, `dateAfter`, `dateIsNot`, `before`, `after` all exist because JS `Date`
-  equality compares instants, not days. The fix belongs in *coercion* (normalise to a day
+  equality compares instants, not days. The fix belongs in _coercion_ (normalise to a day
   boundary), not in six more registry entries. This is the direct precedent for the doubt
   raised against Option E's `dateRange()` — shipping a date kind means deciding inclusive
   bounds, timezone, and null semantics on the consumer's behalf.
 
 **Note the two `contains` are different operators with the same name.** PrimeNG/RQB/TanStack's
-`contains` is *substring of a string*; json-rules-engine's and sift's `$all` is *array includes
-value*. Whichever this library ships must be named unambiguously — this collision is a live
+`contains` is _substring of a string_; json-rules-engine's and sift's `$all` is _array includes
+value_. Whichever this library ships must be named unambiguously — this collision is a live
 source of confusion in the wild.
 
 ## Finding 5 — "what does an empty criterion mean" is part of the operator contract
@@ -161,13 +161,13 @@ if (filter === undefined || filter === null || filter.length === 0) return true;
 Twenty near-identical checks, subtly divergent (`trim()` on some, not others), and the filter
 stays in state while being a no-op.
 
-**TanStack — beside the predicate, as data.** `autoRemove` is a property *on* the filter
+**TanStack — beside the predicate, as data.** `autoRemove` is a property _on_ the filter
 function:
 
 ```ts
-includesString.autoRemove  = (val) => testFalsey(val)
-arrIncludesSome.autoRemove = (val) => testFalsey(val) || !val?.length
-inNumberRange.autoRemove   = (val) => testFalsey(val) || (testFalsey(val[0]) && testFalsey(val[1]))
+includesString.autoRemove = (val) => testFalsey(val);
+arrIncludesSome.autoRemove = (val) => testFalsey(val) || !val?.length;
+inNumberRange.autoRemove = (val) => testFalsey(val) || (testFalsey(val[0]) && testFalsey(val[1]));
 ```
 
 The engine consults it and **drops the filter entry entirely** before any predicate runs.
@@ -177,7 +177,7 @@ predicate stays a pure match; and the empty filter never reaches persisted state
 query string. That last one matters here specifically — `state-persistence.md` and `manual`
 mode both serialize filters, and a `{ columnId: 'status', value: '' }` in a URL is noise.
 
-**Also unspecified everywhere: null *field* values.** PrimeNG returns `false` for a null field
+**Also unspecified everywhere: null _field_ values.** PrimeNG returns `false` for a null field
 in every operator **except `notEquals`, which returns `true`**. Defensible, undocumented, and
 inconsistent. Whatever this library does, it must state it once, centrally.
 
@@ -186,17 +186,17 @@ library-wide policy for null field values. Not a bare predicate.
 
 ## Finding 6 — the operator layer knows nothing about composition
 
-| Library | Boolean composition |
-|---|---|
-| PrimeNG `FilterService` | **None.** One field, one mode, one value |
+| Library                       | Boolean composition                                          |
+| ----------------------------- | ------------------------------------------------------------ |
+| PrimeNG `FilterService`       | **None.** One field, one mode, one value                     |
 | PrimeNG `Table` (layer above) | `{ operator: 'and' \| 'or', constraints: FilterMetadata[] }` |
-| react-querybuilder | Full `RuleGroupType` tree: `and` / `or`, `not`, nested |
-| json-rules-engine | `all` / `any` / `not`, nested |
-| sift | `$and` / `$or` / `$nor` / `$not` |
-| TanStack | AND across columns only |
+| react-querybuilder            | Full `RuleGroupType` tree: `and` / `or`, `not`, nested       |
+| json-rules-engine             | `all` / `any` / `not`, nested                                |
+| sift                          | `$and` / `$or` / `$nor` / `$not`                             |
+| TanStack                      | AND across columns only                                      |
 
-PrimeNG's split is the instructive one: the *service* is deliberately composition-free, and the
-*table* stacks AND/OR on top of it. The two concerns never mix.
+PrimeNG's split is the instructive one: the _service_ is deliberately composition-free, and the
+_table_ stacks AND/OR on top of it. The two concerns never mix.
 
 **Consequence:** `createFilters()` should not become a query builder. AND-across-filters (the
 current `filtering.md` behavior) is the right default. If OR/NOT is ever wanted it is a distinct
@@ -210,7 +210,7 @@ up by name:
 
 - react-querybuilder exists largely to emit `formatQuery(query, 'sql' | 'mongodb' | 'json' | …)`.
 - json-rules-engine rules are JSON by definition; operators are referenced by string name.
-- A sift query *is* a MongoDB document.
+- A sift query _is_ a MongoDB document.
 - PrimeNG's `FilterMetadata` is `{ value, matchMode, operator }` — a serializable triple.
 
 **The reason is not persistence. It is that their rules are authored at runtime, as data.**
@@ -221,7 +221,7 @@ the operator from a dropdown at runtime**. In every one of those, no code exists
 the rule, so the operator has to be a string that can be resolved later.
 
 This library's filters are declared in TypeScript, in a schema function, that **re-runs on every
-construction**. The predicate is therefore *declaration*, not state:
+construction**. The predicate is therefore _declaration_, not state:
 
 ```ts
 // runs again on every page load, so the match function rebuilds itself
@@ -261,14 +261,14 @@ flow, not a library surface. Named operators, a per-column operator list, and co
 operator are all out of scope with it.
 
 This costs nothing, because a picker falls out of the general mechanism unchanged — put the
-operator *inside* the criterion value:
+operator _inside_ the criterion value:
 
 ```ts
 filter(path.customer, (cell, c: { op: 'equals' | 'contains'; text: string }) =>
-  c.op === 'equals' ? cell === c.text : contains(cell, c.text)
+  c.op === 'equals' ? cell === c.text : contains(cell, c.text),
 );
 
-filters.customer.set({ op: 'contains', text: 'acme' });   // the consumer's dropdown writes this
+filters.customer.set({ op: 'contains', text: 'acme' }); // the consumer's dropdown writes this
 ```
 
 The criterion stays plain data, so it still round-trips. Same shape as this repo's
@@ -291,56 +291,53 @@ compile-checked. No change needed, and nothing in the survey improves on it.
 Spec input. Not implementation.
 
 **Core (all five libraries have it, non-negotiable):**
+
 1. Binary operator contract `(fieldValue, criterion) => boolean` — no row parameter.
 2. Field resolution from a row to a comparable value (already solved: `accessor` / `ColumnsPath`).
 3. A criterion **value** that survives a JSON round-trip, keyed by field path. The predicate does
-   not travel with it — the schema re-declares it (Finding 7). An operator *name* is required
+   not travel with it — the schema re-declares it (Finding 7). An operator _name_ is required
    only if the operator becomes end-user-selectable at runtime.
 4. A named built-in operator set, ~8 entries: `equals`, `notEquals`, `contains` (substring),
    `lt` / `lte` / `gt` / `gte`, set membership.
 5. Per-instance override / registration of custom operators — never a global registry.
-6. Empty-criterion policy declared *beside* the predicate (`autoRemove`-shaped), not inside it,
+6. Empty-criterion policy declared _beside_ the predicate (`autoRemove`-shaped), not inside it,
    and applied before evaluation so empty filters never enter persisted or server state.
 7. One stated, central policy for null / undefined field values.
 8. AND across active filters.
 
-**Deliberately out of the operator layer:**
-9. Boolean composition beyond AND (OR / NOT / nesting) — a separate optional layer, if ever.
-10. Date semantics — a coercion concern, not six operators.
-11. `between` — sugar over `gte` + `lte`, shipped only if it reads as that composition.
+**Deliberately out of the operator layer:** 9. Boolean composition beyond AND (OR / NOT / nesting) — a separate optional layer, if ever. 10. Date semantics — a coercion concern, not six operators. 11. `between` — sugar over `gte` + `lte`, shipped only if it reads as that composition.
 
-**This repo's own additions, not from the survey:**
-12. Signal reactivity: criteria are writable signals; the filtered result is derived, not pushed.
-13. Server-supplied defaults that user input can override (the `linkedSignal` mechanism already
-    established in `design-options-hybrid-api.md`).
-14. `manual` mode: criteria handed to a server instead of evaluated — which is what makes
-    requirement 3 load-bearing rather than nice-to-have.
+**This repo's own additions, not from the survey:** 12. Signal reactivity: criteria are writable signals; the filtered result is derived, not pushed. 13. Server-supplied defaults that user input can override (the `linkedSignal` mechanism already
+established in `design-options-hybrid-api.md`). 14. `manual` mode: criteria handed to a server instead of evaluated — which is what makes
+requirement 3 load-bearing rather than nice-to-have.
 
 ## The sugar / generic balance — what the survey actually recommends
 
 The requested balance ("some defaults, not complete defaults, easy override") is exactly what
-four of five libraries already do, and the survey says *where* the line goes:
+four of five libraries already do, and the survey says _where_ the line goes:
 
 **Ship as the general mechanism (the `value.update()` half):**
+
 - The binary operator contract, and one way to declare a filter from `(field, operator,
-  criterion)`.
+criterion)`.
 - Per-instance operator registration.
 - The empty/null policy hooks.
 
 **Ship as sugar (the `insertRow` / `removeRow` half — removable without loss):**
+
 - The ~8 core operators, by name.
 - Convenience declarations for common criterion shapes.
 
 **The acceptance test, restated from the survey's own evidence:** sugar is genuine only if
 declaring a filter with a custom operator costs the same as declaring one with a built-in.
 PrimeNG passes (`register()` then use the name identically — scope defect aside). TanStack
-passes (`filterFn` takes a string key *or* a function in the same slot). AG Grid's set filter
+passes (`filterFn` takes a string key _or_ a function in the same slot). AG Grid's set filter
 fails — its built-in carries UI and state a custom one cannot reproduce, which is precisely the
 failure mode flagged in the over-reach section of
 [design-options-hybrid-api.md](design-options-hybrid-api.md).
 
 Typed kinds (`dateRange()`, `numberRange()`) sit **above** the sugar line, not on it: they bundle
-an operator with a criterion *shape* and a coercion policy. Finding 4's date evidence says that
+an operator with a criterion _shape_ and a coercion policy. Finding 4's date evidence says that
 bundle is where libraries accumulate surface they can never remove. If they ship, each must
 decompose visibly into `(field, operator, criterion)` and be ignorable at zero cost.
 
@@ -352,7 +349,7 @@ All resolved during the grill. See the `R` decisions in
 - **Q "handle callable vs `.value`"** — no surveyed library constrained it; decided from Signal
   Forms instead. **R20.**
 - **Q "`ColumnDef.filterFn` / `enableFiltering` obsolete?"** — Finding 2 says `filterFn`'s
-  *signature* is right; its *location* is what changes. Both fields deleted. **R12.**
+  _signature_ is right; its _location_ is what changes. Both fields deleted. **R12.**
 - **From Finding 7 — is a runtime operator picker in scope?** No. It was the only thing forcing
   named operators. **R1.**
 - **From Finding 7 — who revives a non-JSON criterion value?** Nobody, for now: persistence is

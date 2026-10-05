@@ -9,7 +9,7 @@ contexts:
   library:
     paths: [libs/table/**]
     kind: library
-    public-surface: [libs/table/src/index.ts]      # ADR-0004: the only barrel
+    public-surface: [libs/table/src/index.ts] # ADR-0004: the only barrel
     typecheck: nx run shared-table:typecheck
   site:
     paths: [apps/site/**]
@@ -32,7 +32,7 @@ knowledge:
     - apps/site/CLAUDE.md
     - apps/site/docs/CONVENTIONS.md
     - .claude/rules/
-    - libs/table/CONTEXT.md       # glossary: a term used against its definition is a standards finding
+    - libs/table/CONTEXT.md # glossary: a term used against its definition is a standards finding
     - apps/site/CONTEXT.md
   decisions:
     - libs/table/docs/adr/
@@ -53,7 +53,7 @@ reviewers:
 
 spec:
   issue-contract: docs/agents/issue-tracker.md
-  issue-workspace: "libs/table/docs/*/work/*/*/*/4-tasks/issue-{n}-*/"
+  issue-workspace: 'libs/table/docs/*/work/*/*/*/4-tasks/issue-{n}-*/'
   doc-names: [spec.md, narrative.md, decisions.md]
 ```
 

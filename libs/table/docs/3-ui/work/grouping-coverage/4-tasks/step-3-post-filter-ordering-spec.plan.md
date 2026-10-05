@@ -10,10 +10,10 @@ Three acceptance criteria in `0-product/grouping.md` describe outcomes that no d
 user action can make false, because `PIPELINE_ORDER` is `['filter', 'group', 'sort', 'expand']`
 (`engine/pipeline.ts:6`) and clusters are therefore built from already-filtered rows:
 
-| Criterion | Where |
-|---|---|
-| "The ordering reflects the filtered rows" | §3.4 crit. 2 |
-| "The ordering updates when the data does" | §3.4 crit. 3 |
+| Criterion                                                               | Where        |
+| ----------------------------------------------------------------------- | ------------ |
+| "The ordering reflects the filtered rows"                               | §3.4 crit. 2 |
+| "The ordering updates when the data does"                               | §3.4 crit. 3 |
 | "A group with no surviving rows disappears rather than rendering empty" | F-G1 crit. 2 |
 
 A story can only show these being true, which teaches a reader nothing about the API the story
@@ -21,8 +21,8 @@ exists to teach. They are in the doc because **AG Grid gets the first one wrong*
 `initialGroupOrderComparator` runs before filtering and aggregation — and §8.4 already records
 that as a differentiator. A competitive claim is not a user story.
 
-§3.4's own design status says it: *"Ordering must run after clustering and filtering for that to
-hold — worth a test, not a decision."* **That test does not exist.** The one genuine risk — an
+§3.4's own design status says it: _"Ordering must run after clustering and filtering for that to
+hold — worth a test, not a decision."_ **That test does not exist.** The one genuine risk — an
 edit to `PIPELINE_ORDER` — is unguarded today, and a story would never have caught it.
 
 Decision D4: delete the three criteria (step 5) and add the assertion here.

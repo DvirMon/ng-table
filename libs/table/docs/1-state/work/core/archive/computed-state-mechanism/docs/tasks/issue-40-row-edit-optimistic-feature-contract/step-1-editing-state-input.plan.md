@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — editing-state.ts: createEditingStore() takes the store slice it reads (value, trackBy, indexById), not TableCore"
+title: 'Step 1 — editing-state.ts: createEditingStore() takes the store slice it reads (value, trackBy, indexById), not TableCore'
 type: task-step
 issue: 74
 ---
@@ -78,4 +78,5 @@ features cannot be typed as `Feature<In, Out>` until this parameter changes.
       `editing-state.ts` (the two features still red until Steps 2–3 — expected).
 
 ---
+
 [Step 2: with-optimistic.ts](step-2-with-optimistic.plan.md) →

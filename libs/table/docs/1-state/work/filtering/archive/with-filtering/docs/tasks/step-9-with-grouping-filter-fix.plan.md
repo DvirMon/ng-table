@@ -70,4 +70,5 @@ codebase wouldn't build in between).
 - [ ] `nx test shared-table` passes
 
 ---
+
 ← [Step 8: withFiltering() spec](step-8-with-filtering-spec.plan.md)

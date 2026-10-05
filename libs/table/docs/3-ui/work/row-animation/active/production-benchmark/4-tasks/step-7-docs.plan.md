@@ -8,13 +8,13 @@
 
 ## Files
 
-| File | Action |
-|---|---|
-| `libs/table/docs/3-ui/work/row-animation/discovery-benchmark-thresholds.md` | edit — § PM points to the new harness; the three 2026-09-25 notes stay as history |
-| `libs/table/docs/3-ui/work/row-animation/discovery-production-benchmark.md` | edit — mark § Proposed setup "adopted", link this plan, record Step 5's answers |
-| `libs/table/docs/3-ui/directives/row-animation.md` | edit — "Performance" pointer: how to run `table-bench:bench`, what the verdict means |
-| `apps/table-bench/README.md` | create — what the app is for, why nothing else may be added to it, how to run |
-| `handoffs/handoff-row-animation-bench.md` | edit — mark resolved, point here |
+| File                                                                        | Action                                                                               |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `libs/table/docs/3-ui/work/row-animation/discovery-benchmark-thresholds.md` | edit — § PM points to the new harness; the three 2026-09-25 notes stay as history    |
+| `libs/table/docs/3-ui/work/row-animation/discovery-production-benchmark.md` | edit — mark § Proposed setup "adopted", link this plan, record Step 5's answers      |
+| `libs/table/docs/3-ui/directives/row-animation.md`                          | edit — "Performance" pointer: how to run `table-bench:bench`, what the verdict means |
+| `apps/table-bench/README.md`                                                | create — what the app is for, why nothing else may be added to it, how to run        |
+| `handoffs/handoff-row-animation-bench.md`                                   | edit — mark resolved, point here                                                     |
 
 ## What To Do
 

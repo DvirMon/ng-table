@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — GroupOrder type, GroupOrderRule, and the per-column collector"
+title: 'Step 1 — GroupOrder type, GroupOrderRule, and the per-column collector'
 type: task-step
 issue: 87
 ---
@@ -79,9 +79,7 @@ Import `GroupOrder` from `../api/types` alongside the existing `GroupWhen` impor
 In `engine/grouping-rules.ts`, beside `isGroupingRule`/`isGroupingAsyncRule`:
 
 ```ts
-export function isGroupOrderRule<TRow>(
-  rule: AnyGroupingRule<TRow>
-): rule is GroupOrderRule<TRow> {
+export function isGroupOrderRule<TRow>(rule: AnyGroupingRule<TRow>): rule is GroupOrderRule<TRow> {
   return rule.kind === 'group-order';
 }
 ```
@@ -97,7 +95,7 @@ And beside `collectGroupPredicates` — same shape, same "last write wins" note,
  * duplicate `columnId` (undocumented edge case, not validated).
  */
 export function collectGroupOrder<TRow>(
-  rules: readonly AnyGroupingRule<TRow>[]
+  rules: readonly AnyGroupingRule<TRow>[],
 ): Map<string, GroupOrder<TRow>> {
   const comparators = new Map<string, GroupOrder<TRow>>();
   for (const rule of rules) {
@@ -150,4 +148,5 @@ file.
 - [ ] `nx run shared-table:typecheck` clean, on a source-clean run.
 
 ---
+
 [Step 2: `applyGroupOrder` schema sugar](step-2-apply-group-order-sugar.plan.md) →

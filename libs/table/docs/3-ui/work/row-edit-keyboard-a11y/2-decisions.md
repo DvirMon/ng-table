@@ -21,7 +21,7 @@ code this package exports.
 is the only definition). Live, gated, and optimistic tables each want different Escape/Enter/
 focus semantics; a single shipped directive would either impose one opinion or grow enough
 config surface to become its own feature. Distinguished explicitly from expansion's
-`ngpTableExpandToggle`, which *does* ship Enter/Space activation as shipped default behavior —
+`ngpTableExpandToggle`, which _does_ ship Enter/Space activation as shipped default behavior —
 expansion's activation semantics are universal and unambiguous (Enter/Space toggles), where
 row-edit's are not.
 
@@ -31,7 +31,7 @@ committed to.
 
 **Researched before deciding:** ng-primitives splits state (`NgpDialogRef`) from behavior
 (`NgpFocusTrap`, escape-routing in `NgpDialogManager`), composed by default via `hostDirectives`
-— i.e., they *do* ship default keyboard/focus behavior on their stateful primitives. Considered
+— i.e., they _do_ ship default keyboard/focus behavior on their stateful primitives. Considered
 and not followed here: their dialog's Escape/focus semantics are unambiguous across every dialog
 instance, unlike row-editing's three different session shapes (live / live+optimistic / gated).
 Also confirmed against this repo's own precedent (`expansion.md`'s "Rejected Alternatives" —

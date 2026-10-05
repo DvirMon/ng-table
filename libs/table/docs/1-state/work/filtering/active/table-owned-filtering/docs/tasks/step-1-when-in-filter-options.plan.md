@@ -8,16 +8,16 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
-| `libs/table/src/filters/types.ts` | `:12-27` | edit — `FilterOptions` gains `when` |
-| `libs/table/src/filters/types.ts` | `:170-179` | delete — `ConditionalRule` |
-| `libs/table/src/filters/types.ts` | `:196-211` | edit — `FlattenItem` loses its `ConditionalRule` branch |
-| `libs/table/src/filters/rules.ts` | `:305-346` | delete — `applyWhen` and its comment block |
-| `libs/table/src/filters/create-filters.ts` | `:15-40` | delete — `ConditionalNode`, `isConditionalNode` |
-| `libs/table/src/filters/create-filters.ts` | `:42-68` | edit — `flattenRules` loses its conditional branch |
-| `libs/table/src/filters/create-filters.ts` | `:130-152` | edit — the gate pass reads `record.options.when` |
-| `libs/table/src/filters/index.ts` | `:7` | edit — drop `applyWhen` from the rule re-export |
+| File                                       | Line       | Action                                                  |
+| ------------------------------------------ | ---------- | ------------------------------------------------------- |
+| `libs/table/src/filters/types.ts`          | `:12-27`   | edit — `FilterOptions` gains `when`                     |
+| `libs/table/src/filters/types.ts`          | `:170-179` | delete — `ConditionalRule`                              |
+| `libs/table/src/filters/types.ts`          | `:196-211` | edit — `FlattenItem` loses its `ConditionalRule` branch |
+| `libs/table/src/filters/rules.ts`          | `:305-346` | delete — `applyWhen` and its comment block              |
+| `libs/table/src/filters/create-filters.ts` | `:15-40`   | delete — `ConditionalNode`, `isConditionalNode`         |
+| `libs/table/src/filters/create-filters.ts` | `:42-68`   | edit — `flattenRules` loses its conditional branch      |
+| `libs/table/src/filters/create-filters.ts` | `:130-152` | edit — the gate pass reads `record.options.when`        |
+| `libs/table/src/filters/index.ts`          | `:7`       | edit — drop `applyWhen` from the rule re-export         |
 
 ## Why This Step Exists
 
@@ -47,6 +47,7 @@ where the condition is declared moves.
    This forces a second type parameter — `FilterOptions<TSource = unknown, TRow = unknown>`. The
    existing `TAs extends string` parameter stays for now; Step 2 deletes it. Keep the parameter
    order so every rule's `FilterOptions<X, TAs>` call site still compiles this step.
+
 2. Delete `ConditionalRule` from `types.ts`, and the `Item extends ConditionalRule<infer C>` branch
    from `FlattenItem`. `Flatten` now only recurses through nested arrays.
 3. Delete `applyWhen` from `rules.ts`, including the long comment block above it explaining the
@@ -79,7 +80,7 @@ where the condition is declared moves.
   parameter. A `when` whose `ctx.valueOf` does not accept a `FiltersPath<Row>` handle is the symptom.
 - `filters/create-filters.spec.ts` and `create-filters.types.spec.ts` both exercise `applyWhen` and
   will fail to compile after this step. That is expected and in scope for Step 6 — do not patch
-  them here beyond what is needed to keep the *source* tree coherent.
+  them here beyond what is needed to keep the _source_ tree coherent.
 
 ## Non-Goals
 
@@ -98,4 +99,5 @@ where the condition is declared moves.
       `isActive() === false`, while `value()` still reads back what was written.
 
 ---
+
 [Step 2: Object-literal schema](step-2-object-literal-schema.plan.md) →

@@ -1,17 +1,14 @@
 <div class="story-host">
   <p class="story-host__hint">
     Tree with client-side filtering. Type "review" and every match appears under its opened
-    ancestors, which are shown dimmed (context rows). Close one revealed parent and it stays
-    closed while you keep typing. The matching parent "API Review" has no matching children, so
-    its toggle is hidden. Open a branch first, then filter, then Clear: that branch is open again.
-    The row count below includes the ancestors kept for context, and opening or closing a parent
-    does not change it.
+    ancestors, which are shown dimmed (context rows). Close one revealed parent and it stays closed
+    while you keep typing. The matching parent "API Review" has no matching children, so its toggle
+    is hidden. Open a branch first, then filter, then Clear: that branch is open again. The row
+    count below includes the ancestors kept for context, and opening or closing a parent does not
+    change it.
   </p>
 
-  <ngp-tree-filtering-toolbar
-    [nameField]="filterForm.name"
-    (clearFilter)="clearFilter()"
-  />
+  <ngp-tree-filtering-toolbar [nameField]="filterForm.name" (clearFilter)="clearFilter()" />
 
   <p class="story-host__summary" role="status">
     <strong>{{ rowCount() }} rows</strong>
@@ -32,10 +29,7 @@
             @for (column of table.renderColumns(); track column.id) {
               <td class="story-host__cell">
                 @if (column.id === 'name') {
-                  <button
-                    ngpTableTreeToggle
-                    [attr.aria-label]="'Children of ' + task.name"
-                  >
+                  <button ngpTableTreeToggle [attr.aria-label]="'Children of ' + task.name">
                     ▸
                   </button>
                   {{ task.name }}

@@ -15,8 +15,8 @@ Parallel-safe: none · Dependency: 1 → 2 → 3
 
 ## Steps
 
-| Step | Title | Status |
-|---|---|---|
-| 1 | Stage context through both runners | ✅ done |
-| 2 | `parentLink` slot, claimed once | ✅ done |
-| 3 | parentLink through composeFeatures() and derive blocks | ✅ done |
+| Step | Title                                                  | Status  |
+| ---- | ------------------------------------------------------ | ------- |
+| 1    | Stage context through both runners                     | ✅ done |
+| 2    | `parentLink` slot, claimed once                        | ✅ done |
+| 3    | parentLink through composeFeatures() and derive blocks | ✅ done |

@@ -14,6 +14,7 @@ files:
   - libs/table/src/engine/pipeline.types.spec.ts
   - libs/table/src/engine/render-stages.types.spec.ts
 ---
+
 # Step 1 — Stage context through both runners
 
 This step threads a shared `StageContext` through the pipeline
@@ -37,12 +38,12 @@ Decisions: [A1](../../3-architecture.md), [ADR-0028](../../../../../../../adr/00
   parameter:
 
   ```ts
-  export type RowTransform<TRow> =
-    (rows: TRow[], ctx: StageContext<TRow>) => TRow[];
+  export type RowTransform<TRow> = (rows: TRow[], ctx: StageContext<TRow>) => TRow[];
 
-  export type RenderNodeTransform<TRow> =
-    (nodes: readonly RenderNode<TRow>[], ctx: StageContext<TRow>) =>
-      readonly RenderNode<TRow>[];
+  export type RenderNodeTransform<TRow> = (
+    nodes: readonly RenderNode<TRow>[],
+    ctx: StageContext<TRow>,
+  ) => readonly RenderNode<TRow>[];
   ```
 
 - Give `runPipeline` and `runRenderStages` a required `ctx`
@@ -76,4 +77,5 @@ Decisions: [A1](../../3-architecture.md), [ADR-0028](../../../../../../../adr/00
 - [ ] One-argument stage lambdas still type-check.
 
 ---
+
 [Step 2: `parentLink` slot, claimed once](step-2-parent-link-slot.plan.md) →

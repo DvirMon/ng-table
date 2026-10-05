@@ -50,17 +50,18 @@ assertions against the new `table.expansion` slice from Step 1.
 
 Translate call sites 1:1 — same behavior, new spelling:
 
-| Old | New |
-|---|---|
-| `store.toggleExpanded(id)` | `store.expansion.toggle(id)` |
-| `store.expandedRows()` | `store.expansion()` |
-| `store.everExpanded()` | `store.expansion.everExpanded()` |
-| `store.expandAll()` | `store.expansion.expand()` |
-| `store.expandAll(ids)` | `store.expansion.expand(ids)` |
-| `store.collapseAll()` | `store.expansion.collapse()` |
+| Old                                | New                                                                                                                                                                                                                                                       |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `store.toggleExpanded(id)`         | `store.expansion.toggle(id)`                                                                                                                                                                                                                              |
+| `store.expandedRows()`             | `store.expansion()`                                                                                                                                                                                                                                       |
+| `store.everExpanded()`             | `store.expansion.everExpanded()`                                                                                                                                                                                                                          |
+| `store.expandAll()`                | `store.expansion.expand()`                                                                                                                                                                                                                                |
+| `store.expandAll(ids)`             | `store.expansion.expand(ids)`                                                                                                                                                                                                                             |
+| `store.collapseAll()`              | `store.expansion.collapse()`                                                                                                                                                                                                                              |
 | `store.rowExpanded.subscribe(...)` | `store.expansion.changed.subscribe(...)` — payload is now `{ added, removed }`, not a bare `RowId`; update every assertion that read individual emitted ids to read the change's `added`/`removed` arrays instead (see "Gains" below for the exact shape) |
 
 Cases to keep, re-expressed:
+
 - toggle flips collapsed → expanded → collapsed (multi-expand: A does
   not collapse B).
 - `expand()` with no ids expands every row in `rows()` (was: every row
@@ -88,7 +89,7 @@ Cases to keep, re-expressed:
   there's no contributor to the union, so `flattenVisible` never
   stamps it.
 - **Composed with `withTree()`, isolation.** `createTable(data, config,
-  withExpansion(), withTree({ childrenAccessor }))` (and the reverse
+withExpansion(), withTree({ childrenAccessor }))` (and the reverse
   argument order) on a row set where some rows have children: opening
   a panel on a row (`store.expansion.toggle(rowId)`) does **not**
   reveal that row's children in `renderRows()` — only
@@ -113,6 +114,7 @@ Cases to keep, re-expressed:
 ### `describe('types')` block
 
 Rewrite the existing block (lines 584-630) against the new shape:
+
 - `keyof typeof store` equals `keyof TableStore<Row> | keyof ExpansionMembers`.
 - `store.expansion` matches `ExpansionSlice`; `store.expansion()` is
   `ReadonlySet<RowId>`.
@@ -176,4 +178,5 @@ Rewrite the existing block (lines 584-630) against the new shape:
       `withExpansion()` precedes `withGrouping()`) is present.
 
 ---
+
 ← [Step 1: `withExpansion()` narrows to the detail panel](step-1-with-expansion-narrows-to-panel.plan.md) | [Step 3: Docs and ADRs catch up](step-3-docs-and-adrs-catch-up.plan.md) →

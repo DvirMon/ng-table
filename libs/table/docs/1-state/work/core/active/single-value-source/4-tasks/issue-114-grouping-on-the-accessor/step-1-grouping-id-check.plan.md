@@ -39,7 +39,7 @@ rule for both paths, the writer throws.** Record it in the workspace
 decisions log in Step 9.
 
 This does not contradict `reorderGroupLevels`' JSDoc ("never throws").
-That sentence is about *index bounds*, and index bounds keep degrading —
+That sentence is about _index bounds_, and index bounds keep degrading —
 only an unknown column id throws.
 
 ## What To Do
@@ -58,7 +58,7 @@ const knownIds = input.columns().map((column) => column.id);
 assertDeclarationsAreKnown(
   [...initial, ...rules.map((rule) => rule.columnId)],
   knownIds,
-  'withGrouping'
+  'withGrouping',
 );
 ```
 
@@ -79,10 +79,10 @@ const groupingView = createWritableView<string[], GroupingUpdater<TRow>>(
     assertDeclarationsAreKnown(
       next,
       input.columns().map((column) => column.id),
-      'withGrouping'
+      'withGrouping',
     );
     baseGrouping.set(next);
-  }
+  },
 );
 ```
 
@@ -101,7 +101,7 @@ level naming it must be writable.
   names `withGrouping` as an intended caller.
 - **Read `input.columns()` once per call** in the constructor path and
   once per write in the writer path — not inside a loop.
-- The check runs *before* the `emptyRule` throw. An `applyGrouping` on an
+- The check runs _before_ the `emptyRule` throw. An `applyGrouping` on an
   undeclared column that also declares neither `enable` nor `when` should
   report the unknown id, which is the actionable half.
 

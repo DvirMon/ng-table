@@ -4,18 +4,18 @@
 **Issue:** — (no tracked issue; the gap analysis is the spec)
 **Status:** 10 / 10 complete (Steps 7–10 ran 2026-09-14 as the held-back merged docs pass)
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | `filtering/fixtures/filters.ts` — `createFilters()` factories (A) | ✅ done | — |
-| 2 | `filtering/fixtures/schema.ts` — configs + `filterFormSchema` (A) | ✅ done | — |
-| 3 | `filtering/fixtures/handlers.ts` + `http.ts` (A) | ✅ done | — |
-| 4 | `client-filtering/` (B) | ✅ done | — |
-| 5 | `server-filtering/` (C) | ✅ done | — |
-| 6 | `selection-filtering/` (D) — **cross-plan blocker** | ✅ done | — |
-| 7 | `1-state/filters.md` code status + `status.md` (E) | ✅ done | — |
-| 8 | `3-ui/architecture.md` U5 method names (G) | ✅ done | — |
-| 9 | `0-product/filtering.md` coverage marks (F) | ✅ done | — |
-| 10 | `3-ui/stories.md` registration (I) | ✅ done | — |
+| Step | Title                                                             | Status  | PR  |
+| ---- | ----------------------------------------------------------------- | ------- | --- |
+| 1    | `filtering/fixtures/filters.ts` — `createFilters()` factories (A) | ✅ done | —   |
+| 2    | `filtering/fixtures/schema.ts` — configs + `filterFormSchema` (A) | ✅ done | —   |
+| 3    | `filtering/fixtures/handlers.ts` + `http.ts` (A)                  | ✅ done | —   |
+| 4    | `client-filtering/` (B)                                           | ✅ done | —   |
+| 5    | `server-filtering/` (C)                                           | ✅ done | —   |
+| 6    | `selection-filtering/` (D) — **cross-plan blocker**               | ✅ done | —   |
+| 7    | `1-state/filters.md` code status + `status.md` (E)                | ✅ done | —   |
+| 8    | `3-ui/architecture.md` U5 method names (G)                        | ✅ done | —   |
+| 9    | `0-product/filtering.md` coverage marks (F)                       | ✅ done | —   |
+| 10   | `3-ui/stories.md` registration (I)                                | ✅ done | —   |
 
 **Parallel-safe:** [1, 3, 7, 8] start now; 2 ← 1; [4, 5, 6] once their fixture deps land (4 ← 1+2,
 5 ← 1+2+3, 6 ← 1+2); [9, 10] ← 4+5+6.
@@ -29,11 +29,11 @@ Steps 1–6 shipped, then were **reworked in review**. The plan's layout for nod
 what is in `src/` now is authoritative. Review:
 [`../../2-review-criterion-control.md`](../../2-review-criterion-control.md).
 
-| Change | Effect on this plan |
-|---|---|
-| `fixtures/filters.ts` **deleted**; each host declares its own `createFilters<TRow, TState>()` inline | Step 1's artifact no longer exists; Steps 4–6 own their declarations |
-| `TState` supplied per story (`fixtures/types.ts`) | Removed the `CriterionControl` wrapper and all six `as*` narrowers Step 4 had introduced |
-| Signal Forms bound to the criterion model (`form(filters().value)`) | Step 5's separate `searchModel` + sync effect deleted; `filterFormSchema` → `serverFilterFormSchema`, applied to the filter model |
+| Change                                                                                               | Effect on this plan                                                                                                               |
+| ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `fixtures/filters.ts` **deleted**; each host declares its own `createFilters<TRow, TState>()` inline | Step 1's artifact no longer exists; Steps 4–6 own their declarations                                                              |
+| `TState` supplied per story (`fixtures/types.ts`)                                                    | Removed the `CriterionControl` wrapper and all six `as*` narrowers Step 4 had introduced                                          |
+| Signal Forms bound to the criterion model (`form(filters().value)`)                                  | Step 5's separate `searchModel` + sync effect deleted; `filterFormSchema` → `serverFilterFormSchema`, applied to the filter model |
 
 Three library gaps were fixed to make the above possible — root `value` is now a
 `WritableSignal`, `withFiltering()` carries `TState`, and `reset()` takes a `Partial<TState>`.
@@ -53,12 +53,12 @@ The three story plans run in parallel for their code/story steps — the source 
 and the only shared `src/` edit is `grouping-stories/` Step 1 (`index.ts`). **The docs steps are
 not disjoint** and are held back for one merged, serialized pass:
 
-| File | Written by |
-|---|---|
-| `docs/3-ui/stories.md` | grouping Step 8, filtering Step 10 |
-| `docs/0-product/grouping.md` | grouping Step 8, selection Step 4 (X-G1 body) |
-| `docs/0-product/filtering.md` | filtering Step 9, selection Step 4 (F-S1 bullet 1) |
-| `docs/status.md` (regen) | filtering Step 7, grouping Step 8, selection Step 4 |
+| File                          | Written by                                          |
+| ----------------------------- | --------------------------------------------------- |
+| `docs/3-ui/stories.md`        | grouping Step 8, filtering Step 10                  |
+| `docs/0-product/grouping.md`  | grouping Step 8, selection Step 4 (X-G1 body)       |
+| `docs/0-product/filtering.md` | filtering Step 9, selection Step 4 (F-S1 bullet 1)  |
+| `docs/status.md` (regen)      | filtering Step 7, grouping Step 8, selection Step 4 |
 
 Plus the already-recorded hard edge: selection Step 4 waits on filtering Step 6.
 
@@ -69,17 +69,17 @@ Do not run a docs step from inside a per-plan implementation run.
 The held-back docs steps ran as one serialized pass, in the main session, exactly as the write-edge
 table below requires. What landed:
 
-| File | Change |
-|---|---|
-| `0-product/filtering.md` | Marks re-derived: 14 ✅, 1 🟡, 2 ❌. §8.1 S3/S4 struck through, OQ-1 resolved, §9's "no `filters` row" claim corrected |
-| `0-product/grouping.md` | Marks re-derived: §1–§4 9 ✅ / 5 🟡 / 3 ❌; cross-feature 3 ✅ / 2 🟡 / 4 ❌ |
-| `0-product/selection.md` | Marks re-derived: 12 ✅ / 5 🟡 / 4 ❌; every "Report the deltas" drift item verified, none re-fixed |
-| `3-ui/stories.md` | Story count 8 → 18; the three feature folders, their fixtures clusters and their stylesheets registered; three new Reference implementations entries |
-| `3-ui/architecture.md` | U5 fixed — the filtering row named `setColumnFilter()`/`setGlobalFilter()`, removed by R26. Grouping and selection also un-blocked in the same table |
-| `1-state/filters.md` | `code: none` → `code: shipped` |
-| `1-state/features/filtering.md` | R26 marked executed |
-| `with-selection/0-architecture-seam.md` | Item 3's `RenderRow.isSelected?` read path struck — superseded by D5 |
-| `1-gap-analysis.md` (all three) | `status:` flipped from "nothing here built yet" to built |
+| File                                    | Change                                                                                                                                               |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `0-product/filtering.md`                | Marks re-derived: 14 ✅, 1 🟡, 2 ❌. §8.1 S3/S4 struck through, OQ-1 resolved, §9's "no `filters` row" claim corrected                               |
+| `0-product/grouping.md`                 | Marks re-derived: §1–§4 9 ✅ / 5 🟡 / 3 ❌; cross-feature 3 ✅ / 2 🟡 / 4 ❌                                                                         |
+| `0-product/selection.md`                | Marks re-derived: 12 ✅ / 5 🟡 / 4 ❌; every "Report the deltas" drift item verified, none re-fixed                                                  |
+| `3-ui/stories.md`                       | Story count 8 → 18; the three feature folders, their fixtures clusters and their stylesheets registered; three new Reference implementations entries |
+| `3-ui/architecture.md`                  | U5 fixed — the filtering row named `setColumnFilter()`/`setGlobalFilter()`, removed by R26. Grouping and selection also un-blocked in the same table |
+| `1-state/filters.md`                    | `code: none` → `code: shipped`                                                                                                                       |
+| `1-state/features/filtering.md`         | R26 marked executed                                                                                                                                  |
+| `with-selection/0-architecture-seam.md` | Item 3's `RenderRow.isSelected?` read path struck — superseded by D5                                                                                 |
+| `1-gap-analysis.md` (all three)         | `status:` flipped from "nothing here built yet" to built                                                                                             |
 
 **Pending, and deliberately not run from here:** `npm run table:status`. `1-state/filters.md`'s
 `code:` moved, so `docs/status.md`'s `filters` row is stale until it is regenerated by hand.
@@ -87,7 +87,7 @@ table below requires. What landed:
 Two findings the step files did not anticipate, recorded because they are code-level, not
 editorial:
 
-- **`0-product/grouping.md` 1.3 is 🟡, not ✅.** *Break one group's summary* takes the whole table
+- **`0-product/grouping.md` 1.3 is 🟡, not ✅.** _Break one group's summary_ takes the whole table
   down rather than blanking one summary — `engine/grouping.ts` calls `aggregateFn` unwrapped
   (S2, [#45](https://github.com/DvirMon/ng-table/issues/45)). That is the story's stated failure
   behavior inverted.

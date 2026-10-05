@@ -24,7 +24,7 @@ describe('resolveTreeLinks', () => {
         ['r', null],
         ['c1', 'r'],
         ['g1', 'c1'],
-      ])
+      ]),
     );
     expect(links.broken).toEqual({ self: [], absent: [], cycle: [] });
   });
@@ -91,13 +91,7 @@ describe('resolveTreeLinks', () => {
   });
 
   it('groups broken links by kind in input order', () => {
-    const rows = [
-      r('s2', 's2'),
-      r('x', 'ghost'),
-      r('s1', 's1'),
-      r('p', 'q'),
-      r('q', 'p'),
-    ];
+    const rows = [r('s2', 's2'), r('x', 'ghost'), r('s1', 's1'), r('p', 'q'), r('q', 'p')];
 
     const links = resolveTreeLinks(rows, { parentOf, trackBy });
 

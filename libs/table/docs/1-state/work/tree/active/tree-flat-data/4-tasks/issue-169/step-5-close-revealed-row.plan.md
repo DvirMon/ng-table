@@ -8,6 +8,7 @@ files:
   - libs/table/src/api/features/with-tree/feature.ts
   - libs/table/src/api/features/with-tree/feature.spec.ts
 ---
+
 # Step 5 — Close a revealed row
 
 This step lets a person close a row that reveal opened.
@@ -39,4 +40,5 @@ Decisions: [D20 (c)](../../1-decisions.md) (spec story 28)
 - [ ] It is revealed again after it stops being a context row and later comes back.
 
 ---
+
 ← [Step 4: Reveal context rows](step-4-reveal-context-rows.plan.md) | [Step 6: Open-set writes clear closed rows](step-6-open-writes-clear-closed.plan.md) →

@@ -83,4 +83,5 @@ Only where it declares config changes:
       `SORT_NULLS`, or `sortNulls` from `columns-schema`.
 
 ---
+
 ← [Step 3: Delete the old surface](step-3-delete-old-surface.plan.md) | [Step 5: Types spec](step-5-types-spec.plan.md) →

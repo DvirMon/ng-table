@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — collapse/expand test coverage"
+title: 'Step 4 — collapse/expand test coverage'
 type: task-step
 issue: 59
 ---
@@ -36,10 +36,11 @@ collapse/expand line).
 ### 1. `engine/grouping.spec.ts` — plain `vitest`, no `TestBed`
 
 **Extend `describe('buildGroupRenderRows', ...)`:**
+
 - An `expandedRows` set omitting a depth-0 header's id: that header still renders, but every
   descendant (nested headers and leaves, at every depth) is omitted.
 - An `expandedRows` set including a header's id but omitting one of its children's ids: the
-  included header's *own* children render, but that grandchild's descendants are omitted — proves
+  included header's _own_ children render, but that grandchild's descendants are omitted — proves
   gating is per-node, not "the whole subtree if the top is expanded."
 - `expandedRows: undefined` (omit the 5th arg entirely): identical output to the current 4-arg
   behavior — the explicit regression case for "no `withExpansion()` composed."
@@ -49,7 +50,7 @@ collapse/expand line).
 
 **Replace `describe('rowsBeneathGroup', ...)` entirely** — the old `twoClusterFixture()` /
 `header()` / `leaf()` helpers build hand-rolled `RenderRow[]`s with ids (`'group:A'`) that don't
-match the real `` group:${path} `` format and no longer fit the new signature. Delete those helpers
+match the real `group:${path}` format and no longer fit the new signature. Delete those helpers
 and the `Leaf` interface (dead code after this step); reuse the file's existing `orders`/`columns`
 fixtures instead:
 
@@ -104,11 +105,11 @@ Import `withExpansion` from `./with-expansion`. New `describe('collapse/expand (
 ## Risks / Watchouts
 
 - **Toggling a header id requires knowing it in advance.** Read it off an uncollapsed
-  `renderRows()` pass first (or construct it from the same `` group:>columnId:type:value ``
+  `renderRows()` pass first (or construct it from the same `group:>columnId:type:value`
   format the existing "groupOrder omitted" test already asserts against), rather than guessing a
   literal string independently — a drift between the id format used in the test and the real one
   would pass for the wrong reason.
-- **Don't assert on `console.error`/`console.warn` call *count* being zero across the whole suite**
+- **Don't assert on `console.error`/`console.warn` call _count_ being zero across the whole suite**
   — scope the spy to the single construction + first `renderRows()` read this test performs, mirror
   the existing `groupOrder` throw test's spy/restore pattern (`with-grouping.spec.ts`'s last case).
 
@@ -129,4 +130,5 @@ Import `withExpansion` from `./with-expansion`. New `describe('collapse/expand (
 - [ ] `nx test shared-table` passes.
 
 ---
+
 [← Step 3: Wire withGrouping()](step-3-wire-with-grouping.plan.md) | [Step 5: Docs →](step-5-docs.plan.md)

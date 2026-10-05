@@ -10,15 +10,15 @@ double-prunes.
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                            | Action                                                                                   |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `libs/shared/table/src/engine/render-stages.ts` | edit — `'prune'` in `RENDER_ORDER`, key exclusion, `runRenderStages` signature, the pass |
-| `libs/shared/table/src/engine/core.ts` | edit — union computed, pass into `runRenderStages` |
+| `libs/shared/table/src/engine/core.ts`          | edit — union computed, pass into `runRenderStages`                                       |
 
 ## Why This Step Exists
 
-This is the replacement the epic is built around: hiding moves from *while emitting* to *after
-emitting*. Everything before this step is additive scaffolding; everything after is verification.
+This is the replacement the epic is built around: hiding moves from _while emitting_ to _after
+emitting_. Everything before this step is additive scaffolding; everything after is verification.
 
 It stays behavior-neutral because grouping keeps its own prune (D6) and pruning twice is
 idempotent — which is exactly why #98 and #99 are separate issues.
@@ -49,8 +49,8 @@ the caller:
 export function runRenderStages<TRow>(
   rows: Omit<RenderRow<TRow>, 'index'>[],
   stages: RenderStages<TRow>,
-  collapsed: ReadonlySet<RowId>
-): Omit<RenderRow<TRow>, 'index'>[]
+  collapsed: ReadonlySet<RowId>,
+): Omit<RenderRow<TRow>, 'index'>[];
 ```
 
 The `reduce` runs the prune when it reaches `'prune'` rather than looking that key up in `stages`.
@@ -60,14 +60,13 @@ The `reduce` runs the prune when it reaches `'prune'` rather than looking that k
 ```ts
 function pruneCollapsedDescendants<TRow>(
   rows: Omit<RenderRow<TRow>, 'index'>[],
-  collapsed: ReadonlySet<RowId>
+  collapsed: ReadonlySet<RowId>,
 ): Omit<RenderRow<TRow>, 'index'>[] {
   if (collapsed.size === 0) return rows;
   const hidden = new Set<RowId>();
   return rows.filter((row) => {
     const hasHiddenParent =
-      row.parentId !== undefined &&
-      (hidden.has(row.parentId) || collapsed.has(row.parentId));
+      row.parentId !== undefined && (hidden.has(row.parentId) || collapsed.has(row.parentId));
     if (hasHiddenParent) {
       hidden.add(row.id);
       return false;
@@ -137,4 +136,5 @@ that unions the sources lives in `core.ts`, which is already the signal boundary
 - [ ] `nx run shared-table:typecheck` clean — re-run after fixing any `.ts` error.
 
 ---
+
 ← [Step 3: `collapsedRows` slot](step-3-collapsed-rows-slot.plan.md) | [Step 5: Engine tests](step-5-engine-tests.plan.md) →

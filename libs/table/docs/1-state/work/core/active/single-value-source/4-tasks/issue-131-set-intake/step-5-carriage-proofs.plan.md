@@ -93,4 +93,5 @@ An inline set proves only what was never in doubt.
 - [ ] Hand-off states case 15's observed behaviour.
 
 ---
+
 ← [Step 4: Delete `columnsSchema`](step-4-delete-columns-schema.plan.md) | [Step 6: Record the amendment](step-6-record-the-amendment.plan.md) →

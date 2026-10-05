@@ -59,7 +59,7 @@ now the feature a reader would otherwise reach for.
 **Keep the `childrenAccessor` sentence.** It reads as an aside today;
 after Step 1 it is literally the story's own config
 (`withTree({ childrenAccessor: (row) => row.children })`), so it gets
-*more* accurate, not less. Same for "A deal carrying `children`
+_more_ accurate, not less. Same for "A deal carrying `children`
 renders a second, separately-keyed chevron from the `'tree'` stage" —
 unchanged and still true.
 
@@ -75,7 +75,7 @@ Line ~64. The member doc ends:
    * `expandAll(table.groupIds())`. */
 ```
 
-The last sentence becomes `` Feeds `table.tree.expand(table.groupIds())`. ``
+The last sentence becomes ``Feeds `table.tree.expand(table.groupIds())`.``
 
 One line, one identifier. Per
 `.claude/rules/terse-jsdoc-for-ai-and-humans.md`, do not grow the
@@ -163,4 +163,5 @@ not touch:
       it, which is the point of confirming.
 
 ---
+
 ← [Step 2: The collapse cases move to the tree's spec](step-2-collapse-cases-move-to-tree-spec.plan.md)

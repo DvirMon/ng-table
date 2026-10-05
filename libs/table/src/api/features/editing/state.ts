@@ -76,7 +76,7 @@ export interface EditingUpdaterContext<TRow> {
 
 export type EditingUpdater<TRow> = (
   state: EditingState<TRow>,
-  ctx: EditingUpdaterContext<TRow>
+  ctx: EditingUpdaterContext<TRow>,
 ) => EditingState<TRow>;
 
 const NO_IDS: ReadonlySet<RowId> = new Set();
@@ -118,7 +118,7 @@ export function findRow<TRow>(
   data: TRow[],
   trackBy: TrackByFn<TRow>,
   id: RowId,
-  indexById: ReadonlyMap<RowId, number>
+  indexById: ReadonlyMap<RowId, number>,
 ): TRow | undefined {
   const at = resolveIndex(data, id, { trackBy, indexById });
   return at === -1 ? undefined : data[at];
@@ -127,15 +127,12 @@ export function findRow<TRow>(
 export function withSnapshot<TRow>(
   snapshots: SnapshotMap<TRow>,
   id: RowId,
-  snapshot: RowSnapshot<TRow>
+  snapshot: RowSnapshot<TRow>,
 ): SnapshotMap<TRow> {
   return new Map(snapshots).set(id, snapshot);
 }
 
-export function withoutSnapshot<TRow>(
-  snapshots: SnapshotMap<TRow>,
-  id: RowId
-): SnapshotMap<TRow> {
+export function withoutSnapshot<TRow>(snapshots: SnapshotMap<TRow>, id: RowId): SnapshotMap<TRow> {
   const next = new Map(snapshots);
   next.delete(id);
   return next;
@@ -205,7 +202,7 @@ export interface EditingStore<TRow> {
 
 export function createEditingStore<TRow>(
   input: EditingStoreInput<TRow>,
-  options: EditingStoreOptions<TRow> = {}
+  options: EditingStoreOptions<TRow> = {},
 ): EditingStore<TRow> {
   // One signal over all three facts: `pending` is derived from them together, so it can never
   // read a half-applied write.
@@ -228,8 +225,8 @@ export function createEditingStore<TRow>(
           trackBy: input.trackBy,
           writeData: (rows) => input.value.update(() => rows),
           indexById: input.indexById(),
-        })
-      )
+        }),
+      ),
   );
 
   // An id that leaves `data` must leave `open` (nothing left to show inputs for), `snapshots`
@@ -248,7 +245,7 @@ export function createEditingStore<TRow>(
     const nextUnconfirmed = pruneByIds(
       current.unconfirmed,
       ids,
-      (id) => nextSnapshots.get(id)?.op === 'delete'
+      (id) => nextSnapshots.get(id)?.op === 'delete',
     );
     if (
       nextOpen !== current.open ||

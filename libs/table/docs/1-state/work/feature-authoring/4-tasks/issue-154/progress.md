@@ -22,16 +22,16 @@ Dependency: 1,2,3 → 4 → 5 → 6 → {7, 8, 9} → 10; 11 depends on 1, 2, 3,
 
 ## Steps
 
-| Step | Title | Status |
-|---|---|---|
-| 1 | Stage authoring surface (stageSchema + stage) | ✅ done |
-| 2 | Pipeline anchors + registry | ✅ done |
-| 3 | Render-stage anchors + registry | ✅ done |
-| 4 | TableFeatureSpec retype | ✅ done |
-| 5 | core.ts + compose-table.ts fold | ✅ done |
-| 6 | compose-features.ts fold | ✅ done |
-| 7 | Refactor withSorting + withFiltering | ✅ done |
-| 8 | Refactor withGrouping | ✅ done |
-| 9 | Refactor withTree | ✅ done |
-| 10 | Barrel export | ✅ done |
-| 11 | CLAUDE.md doc fix | ✅ done |
+| Step | Title                                         | Status  |
+| ---- | --------------------------------------------- | ------- |
+| 1    | Stage authoring surface (stageSchema + stage) | ✅ done |
+| 2    | Pipeline anchors + registry                   | ✅ done |
+| 3    | Render-stage anchors + registry               | ✅ done |
+| 4    | TableFeatureSpec retype                       | ✅ done |
+| 5    | core.ts + compose-table.ts fold               | ✅ done |
+| 6    | compose-features.ts fold                      | ✅ done |
+| 7    | Refactor withSorting + withFiltering          | ✅ done |
+| 8    | Refactor withGrouping                         | ✅ done |
+| 9    | Refactor withTree                             | ✅ done |
+| 10   | Barrel export                                 | ✅ done |
+| 11   | CLAUDE.md doc fix                             | ✅ done |

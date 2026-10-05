@@ -50,22 +50,22 @@ entirely rather than attaching-then-no-op'ing in CSS. `scrolled` stays permanent
 **No reduced-motion override.** The task brief asked me to double-check this: the band transition
 is `background-color` / `border-block-end-color` / `box-shadow` — color and shadow, never a
 `transform`. `src/styles/global.css`'s `prefers-reduced-motion: reduce` block already collapses
-*all* `transition-duration` (not just transform-driven ones) to
+_all_ `transition-duration` (not just transform-driven ones) to
 `--ngpt-sys-motion-duration-fast` via a universal selector, so the swap still happens, just faster
 — no navbar-local media query needed. Contract rule 9 only requires a component to suppress its
-*own* transform under reduced motion; there is no transform here to suppress.
+_own_ transform under reduced motion; there is no transform here to suppress.
 
 ## `docs` vs `band` — what actually differs
 
-| | `docs` | `band` |
-| --- | --- | --- |
-| Surface | Static `--ngpt-bg-deep`, `--ngpt-border-subtle` bottom edge, always | Transparent until scrolled, then `--ngpt-navbar-scrolled` + border + shadow, 180ms |
-| Inner width | Full bar width, `24px` fixed side padding | Capped at `--ngpt-sys-layout-wide-measure` (1080px), centered, `clamp(24px,4vw,48px)` side padding (Home's section rail) |
-| Logo fill | `--ngpt-accent` | `--ngpt-text-primary` (white) — spec: "Logo mark and text go white" |
-| Hamburger | `<md` (1023px and below), opens the sidebar drawer | Never — Home has no sidebar to open |
-| Right group | Search, Sponsor pill, status dot, Discord, GitHub | Search (`on-band` variant), Documentation, GitHub |
-| Link fill/border | None specified — plain text-tertiary, color shift on hover | None ever; hover **darkens** the band (`oklch(0 0 0 / 0.15)`), never lightens (spec's own AA contrast note) |
-| `<640px` | Title hides, Sponsor pill drops (spec's own breakpoint table) | No breakpoint behavior specified in `pages/home/docs/spec.md` — left as-is |
+|                  | `docs`                                                              | `band`                                                                                                                   |
+| ---------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Surface          | Static `--ngpt-bg-deep`, `--ngpt-border-subtle` bottom edge, always | Transparent until scrolled, then `--ngpt-navbar-scrolled` + border + shadow, 180ms                                       |
+| Inner width      | Full bar width, `24px` fixed side padding                           | Capped at `--ngpt-sys-layout-wide-measure` (1080px), centered, `clamp(24px,4vw,48px)` side padding (Home's section rail) |
+| Logo fill        | `--ngpt-accent`                                                     | `--ngpt-text-primary` (white) — spec: "Logo mark and text go white"                                                      |
+| Hamburger        | `<md` (1023px and below), opens the sidebar drawer                  | Never — Home has no sidebar to open                                                                                      |
+| Right group      | Search, Sponsor pill, status dot, Discord, GitHub                   | Search (`on-band` variant), Documentation, GitHub                                                                        |
+| Link fill/border | None specified — plain text-tertiary, color shift on hover          | None ever; hover **darkens** the band (`oklch(0 0 0 / 0.15)`), never lightens (spec's own AA contrast note)              |
+| `<640px`         | Title hides, Sponsor pill drops (spec's own breakpoint table)       | No breakpoint behavior specified in `pages/home/docs/spec.md` — left as-is                                               |
 
 Both variants render the same DOM shape (`.navbar__inner > .navbar__left, .navbar__right`) so
 responsive rules are pure CSS, matching how `search-field.css` already owns its own icon-only
@@ -83,9 +83,9 @@ in `navbar.ts`.
 
 1. **`--ngpt-sys-space-250-alt` doesn't exist.** `spec.md`'s front-matter and its Left-group table
    both cite it for the 10px logo-to-title gap. `src/styles/docs/Spacing.md` (the token
-   foundations doc, single source of truth) explicitly calls this out as stale: *"There are no
+   foundations doc, single source of truth) explicitly calls this out as stale: _"There are no
    `-alt`... variants... `-250-alt` for values this ramp already carries (... 10px). Those names
-   never existed."* Used `--ngpt-sys-space-250` (10px, the real token) instead — not a deviation
+   never existed."_ Used `--ngpt-sys-space-250` (10px, the real token) instead — not a deviation
    from the design intent, just from a spec citation that the design system's own docs say is
    wrong.
 

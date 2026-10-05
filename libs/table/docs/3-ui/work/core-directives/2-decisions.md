@@ -4,16 +4,16 @@
 
 ## Where the real decisions live
 
-| Decision | Recorded in |
-|---|---|
+| Decision                                                                                                           | Recorded in                                                |
+| ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
 | Store reaches directives via a required `[ngpTable]` input + `useExisting` self-provide, not `provideTableStore()` | `../../../directives/core.md` — "Store Connection Pattern" |
-| `ngpTableRow` binds `RenderRow<TRow>`, not raw `TRow` and not a bare `RowId` | `../../../directives/core.md` — "Directive: `ngpTableRow`" |
-| Header `<tr>` carries no `ngpTableRow` | `../../../directives/core.md` |
-| Store owns the data contract; directives may override presentation only | `../../../directives/columns.md` — "The Override Boundary" |
-| `store.columns()` is unfiltered/unsorted — templates derive visible/order themselves | `../../../directives/columns.md` |
-| Attribute-only directives; no custom Angular structural directives | `../../../overview.md` (locked) |
-| State as `data-*` attributes, values as CSS custom properties | `../../../cross-cutting/styling-tokens.md` |
-| Conditional `aria-label` only; one table-level `aria-live`, never per-cell | `../../../cross-cutting/accessibility.md` |
+| `ngpTableRow` binds `RenderRow<TRow>`, not raw `TRow` and not a bare `RowId`                                       | `../../../directives/core.md` — "Directive: `ngpTableRow`" |
+| Header `<tr>` carries no `ngpTableRow`                                                                             | `../../../directives/core.md`                              |
+| Store owns the data contract; directives may override presentation only                                            | `../../../directives/columns.md` — "The Override Boundary" |
+| `store.columns()` is unfiltered/unsorted — templates derive visible/order themselves                               | `../../../directives/columns.md`                           |
+| Attribute-only directives; no custom Angular structural directives                                                 | `../../../overview.md` (locked)                            |
+| State as `data-*` attributes, values as CSS custom properties                                                      | `../../../cross-cutting/styling-tokens.md`                 |
+| Conditional `aria-label` only; one table-level `aria-live`, never per-cell                                         | `../../../cross-cutting/accessibility.md`                  |
 
 ## Backfill decisions (made 2026-08-07, in this session)
 

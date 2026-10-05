@@ -32,7 +32,7 @@ export const orderColumns: ColumnDef<Order>[] = resolveColumnDefs(
       orderColumn(col, 'category'),
     ]).columns,
   ],
-  'grouping.mock'
+  'grouping.mock',
 );
 
 export interface TreeOrder extends Order {
@@ -59,13 +59,10 @@ export const brokenLinkOrders: TreeOrder[] = [
 
 export const treeOrderColumns: ColumnDef<TreeOrder>[] = resolveColumnDefs(
   [
-    ...createColumns(noData<TreeOrder>(), (col) => [
-      col('id'),
-      col('region'),
-      col('category'),
-    ]).columns,
+    ...createColumns(noData<TreeOrder>(), (col) => [col('id'), col('region'), col('category')])
+      .columns,
   ],
-  'grouping.mock'
+  'grouping.mock',
 );
 
 export const treeOrderLinks = {

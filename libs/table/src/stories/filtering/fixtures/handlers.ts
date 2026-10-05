@@ -21,9 +21,7 @@ function matchesSearch(row: InvoiceRow, search: string | null): boolean {
     return true;
   }
   const needle = search.toLowerCase();
-  return (
-    row.customer.toLowerCase().includes(needle) || String(row.id).includes(needle)
-  );
+  return row.customer.toLowerCase().includes(needle) || String(row.id).includes(needle);
 }
 
 function matchesAmount(row: InvoiceRow, min: string | null, max: string | null): boolean {
