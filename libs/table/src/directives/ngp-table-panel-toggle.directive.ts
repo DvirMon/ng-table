@@ -1,4 +1,4 @@
-import { computed, Directive, inject, type Signal } from '@angular/core';
+import { computed, Directive, effect, ElementRef, inject, type Signal } from '@angular/core';
 
 import { hasExpansion } from './expansion.guard';
 import { NgpTableCollapsibleTrigger } from './ngp-table-collapsible-trigger.directive';
@@ -33,6 +33,7 @@ export class NgpTablePanelToggleDirective extends NgpTableCollapsibleTrigger {
   private readonly row = inject(NGP_TABLE_ROW);
   private readonly table = inject(NGP_TABLE_STORE);
   private readonly registry = inject(NGP_TABLE_PANEL_REGISTRY);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   protected readonly controlsId: Signal<string | null> = computed(
     (): string | null => this.registry.panelId(this.row.ngpTableRow().id)(),
@@ -46,6 +47,17 @@ export class NgpTablePanelToggleDirective extends NgpTableCollapsibleTrigger {
   constructor() {
     super();
     assertExpansionComposed(() => this.table.ngpTable());
+    this.registerWithPanelRegistry();
+  }
+
+  // Note: keyed by host, so a reused view swapping rows never deletes another toggle's entry.
+  private registerWithPanelRegistry(): void {
+    const host = this.host.nativeElement;
+    effect((onCleanup): void => {
+      const id = this.row.ngpTableRow().id;
+      this.registry.registerToggle(id, host);
+      onCleanup(() => this.registry.unregisterToggle(id, host));
+    });
   }
 
   protected override toggle(): void {
