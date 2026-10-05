@@ -185,7 +185,7 @@ since the whole point is that this vocabulary is now one thing.
 - [ ] `nx run shared-table:typecheck-spec` — existing specs compile or
       are left for Step 7; no assertion is softened to make them pass.
 - [ ] `ColumnId` appears nowhere in `libs/table/src` (`grep -rn
-  'ColumnId\b' libs/table/src` returns only `ColumnIdOf`).
+'ColumnId\b' libs/table/src` returns only `ColumnIdOf`).
 - [ ] `path.<declaredId>` autocompletes the declared ids inside a
       `withGrouping({ schema })` slot, and a typo is a compile error.
 
