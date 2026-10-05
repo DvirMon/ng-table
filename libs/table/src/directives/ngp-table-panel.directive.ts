@@ -12,15 +12,10 @@ import {
   type SimpleChanges,
 } from '@angular/core';
 
+import { hasExpansion } from './expansion.guard';
 import { NGP_TABLE_PANEL_REGISTRY } from './panel-registry';
 import { NGP_TABLE_STORE } from './table.tokens';
-import type { ExpansionMembers } from '../api/features/with-expansion';
 import type { RowId } from '../api/types';
-
-function hasExpansion(table: unknown): table is ExpansionMembers {
-  if (typeof table !== 'object' || table === null || !('expansion' in table)) return false;
-  return typeof table.expansion === 'function' && 'expand' in table.expansion;
-}
 
 function assertExpansionComposed(readTable: () => unknown): void {
   if (typeof ngDevMode === 'undefined' || !ngDevMode) return;
