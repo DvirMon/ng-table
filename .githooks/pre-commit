@@ -10,3 +10,10 @@ for protected in main master $default; do
     exit 1
   fi
 done
+
+# Format staged files and re-stage them. Skipped when prettier isn't installed.
+[ -x node_modules/.bin/prettier ] || exit 0
+files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|html|css|scss|json|md)$')
+[ -n "$files" ] || exit 0
+echo "$files" | tr '\n' '\0' | xargs -0 node_modules/.bin/prettier --write --ignore-unknown --log-level warn || exit 1
+echo "$files" | tr '\n' '\0' | xargs -0 git add --
