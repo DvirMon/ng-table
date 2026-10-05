@@ -32,6 +32,11 @@ jobs:
 
       - uses: nrwl/nx-set-shas@v5
 
+      - name: Check formatting of changed files
+        run: |
+          files=$(git diff --name-only --diff-filter=ACMR "$NX_BASE" "$NX_HEAD" | grep -E '\.(ts|html|css|scss|json|md)$' || true)
+          [ -z "$files" ] || echo "$files" | tr '\n' '\0' | xargs -0 npx prettier --check
+
       - run: npm run llms:check
       - run: npx nx affected -t lint typecheck
 
