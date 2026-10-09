@@ -2,6 +2,8 @@ import { Component, input, signal } from '@angular/core';
 import {
   addGroupLevel,
   createTable,
+  NgpTableDirective,
+  NgpTableRowDirective,
   removeGroupLevel,
   reorderGroupLevels,
   setGroupLevels,
@@ -25,7 +27,7 @@ import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
   selector: 'ngp-grouping-basic-story-host',
   templateUrl: './grouping-basic-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
-  imports: [...GROUPING_STORY_PIPES],
+  imports: [NgpTableDirective, NgpTableRowDirective, ...GROUPING_STORY_PIPES],
 })
 export class GroupingBasicStoryHostComponent {
   readonly showCount = input(true);
