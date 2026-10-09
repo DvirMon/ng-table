@@ -3,6 +3,8 @@ import {
   addGroupLevel,
   createTable,
   groupOrder,
+  NgpTableDirective,
+  NgpTableRowDirective,
   removeGroupLevel,
   setGroupLevels,
   withGrouping,
@@ -42,7 +44,7 @@ function externalRank(key: unknown): number {
   selector: 'ngp-grouping-order-story-host',
   templateUrl: './grouping-order-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
-  imports: [...GROUPING_STORY_PIPES],
+  imports: [NgpTableDirective, NgpTableRowDirective, ...GROUPING_STORY_PIPES],
 })
 export class GroupingOrderStoryHostComponent {
   readonly groupOrder = input<GroupOrderMode>('first-occurrence');

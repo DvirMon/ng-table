@@ -38,7 +38,7 @@
     >. A rejected cluster leaves its rows in the table — it never hides them.
   </p>
 
-  <table class="story-host__table grouping-story__table">
+  <table [ngpTable]="table" class="story-host__table grouping-story__table">
     <thead>
       <tr>
         @for (column of table.renderColumns(); track column.id) {
@@ -48,7 +48,7 @@
     </thead>
     <tbody>
       @for (row of table.renderRows(); track row.id) {
-        <tr [attr.data-row-kind]="row.kind" [attr.data-depth]="row.depth">
+        <tr [ngpTableRow]="row">
           @if (row.kind === 'group') {
             @for (column of table.renderColumns(); track column.id; let isFirst = $first) {
               <td class="story-host__cell" [class.grouping-story__cell--label]="isFirst">

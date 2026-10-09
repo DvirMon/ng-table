@@ -1,5 +1,11 @@
 import { Component, input, signal } from '@angular/core';
-import { createTable, groupKey, withGrouping } from '../../../index';
+import {
+  createTable,
+  groupKey,
+  NgpTableDirective,
+  NgpTableRowDirective,
+  withGrouping,
+} from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { groupingConfig } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
@@ -25,7 +31,7 @@ function monthOf(date: Date): string {
   selector: 'ngp-grouping-keys-story-host',
   templateUrl: './grouping-keys-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
-  imports: [...GROUPING_STORY_PIPES],
+  imports: [NgpTableDirective, NgpTableRowDirective, ...GROUPING_STORY_PIPES],
 })
 export class GroupingKeysStoryHostComponent {
   readonly bucketClosedAtByMonth = input(true);

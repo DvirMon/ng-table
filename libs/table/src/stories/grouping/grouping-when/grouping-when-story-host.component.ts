@@ -1,5 +1,12 @@
 import { Component, computed, input, linkedSignal, signal } from '@angular/core';
-import { createTable, grouping, withGrouping, type GroupKey } from '../../../index';
+import {
+  createTable,
+  grouping,
+  NgpTableDirective,
+  NgpTableRowDirective,
+  withGrouping,
+  type GroupKey,
+} from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { groupingConfig, BASE_GROUPING_LEVELS } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
@@ -26,7 +33,7 @@ function isPresentKey(key: GroupKey): boolean {
   selector: 'ngp-grouping-when-story-host',
   templateUrl: './grouping-when-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
-  imports: [...GROUPING_STORY_PIPES, GroupingWhenToolbarComponent],
+  imports: [NgpTableDirective, NgpTableRowDirective, ...GROUPING_STORY_PIPES, GroupingWhenToolbarComponent],
 })
 export class GroupingWhenStoryHostComponent {
   readonly showCount = input(true);
