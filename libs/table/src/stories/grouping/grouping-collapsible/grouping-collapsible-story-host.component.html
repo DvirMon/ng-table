@@ -7,8 +7,8 @@
     </p>
   } @else {
     <p class="story-host__hint">
-      Three levels deep — Region, then Category, then Rep — and everything starts collapsed. Click a
-      chevron to open one; Enter and Space work on the chevron because it is a real button.
+      Three levels deep — Region, then Category, then Rep — and everything starts collapsed. Click
+      a chevron to open one; Enter and Space work on the chevron because it is a real button.
       Collapsing a parent takes its whole subtree with it. Refetch and Regroup attack the collapse
       state from two directions.
     </p>
@@ -60,19 +60,23 @@
     <tbody>
       @for (row of table.renderRows(); track row.id) {
         @if (row.kind === 'group') {
-          <tr [ngpTableRow]="row" ngpTableTreeRow>
+          <tr
+            [ngpTableRow]="row"
+            ngpTableTreeRow
+          >
             @for (column of table.renderColumns(); track column.id; let isFirst = $first) {
-              <td class="story-host__cell" [class.grouping-story__cell--label]="isFirst">
+              <td class="story-host__cell">
                 @if (isFirst) {
                   <button
                     ngpTableTreeToggle
-                    class="grouping-story__chevron"
                     [attr.aria-label]="
                       (row.groupKey?.value | isBlankGroup)
                         ? 'the unlabelled group'
                         : row.groupKey?.value
                     "
-                  ></button>
+                  >
+                    ▸
+                  </button>
                   @if (row.groupKey?.value | isBlankGroup) {
                     <span class="grouping-story__group-label grouping-story__group-label--blank">
                       no value
@@ -86,23 +90,19 @@
             }
           </tr>
         } @else {
-          <tr [ngpTableRow]="row">
+          <tr [ngpTableRow]="row" ngpTableTreeRow>
             @for (column of table.renderColumns(); track column.id; let isFirst = $first) {
               <td
                 class="story-host__cell"
-                [class.grouping-story__cell--label]="isFirst"
                 [class.grouping-story__cell--numeric]="column.id === 'amount'"
               >
-                @if (isFirst && row.hasChildren) {
+                @if (isFirst) {
                   <button
-                    type="button"
-                    class="grouping-story__chevron"
-                    [attr.aria-expanded]="row.isExpanded"
-                    [attr.aria-label]="
-                      (row.isExpanded ? 'Hide' : 'Show') + ' the line items on this deal'
-                    "
-                    (click)="table.tree.toggle(row.id)"
-                  ></button>
+                    ngpTableTreeToggle
+                    [attr.aria-label]="'Line items on deal ' + row.id"
+                  >
+                    ▸
+                  </button>
                 }
                 @switch (column.id) {
                   @case ('amount') {
@@ -124,8 +124,8 @@
   </table>
 
   <p class="grouping-story__notice">
-    The deal with line items carries its own chevron, from the <code>'tree'</code> render stage — a
-    second, separately-keyed affordance on a data row. Opening it never opens a group, and opening a
-    group never opens it (E-G1).
+    The deal with line items carries its own chevron, from the <code>'tree'</code> render stage —
+    a second, separately-keyed affordance on a data row. Opening it never opens a group, and
+    opening a group never opens it (E-G1).
   </p>
 </div>

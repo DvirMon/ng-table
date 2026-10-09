@@ -35,6 +35,7 @@ import groupingPipes from './grouping-story.pipes.ts?raw';
 import groupingSchema from './fixtures/schema.ts?raw';
 import groupingHttp from './fixtures/http.ts?raw';
 import sharedStyles from '../styles/story-host.css?raw';
+import treeStyles from '../tree/tree-story.css?raw';
 import collapsibleToolbarClass from './grouping-collapsible/grouping-collapsible-toolbar.component.ts?raw';
 import collapsibleToolbarTemplate from './grouping-collapsible/grouping-collapsible-toolbar.component.html?raw';
 import selectionToolbarClass from './grouping-selection/grouping-selection-toolbar.component.ts?raw';
@@ -440,14 +441,28 @@ page. That collapse state survives a refetch or a sort is asserted in `with-grou
 rather than shown here — a control whose whole outcome is "nothing moved" gives a reader nothing
 to look at.
 
-Group headers bind the tree directives like this:
+Group headers and data rows bind the tree directives alike. Both read `row.isExpanded`
+since `flattenVisible()` stamps it on every render row.
+
+Group headers:
 
 ```html
 <tr [ngpTableRow]="row" ngpTableTreeRow>
   <td>
-    <button ngpTableTreeToggle class="grouping-story__chevron"
-      [attr.aria-label]="groupName"></button>
+    <button ngpTableTreeToggle
+      [attr.aria-label]="groupName">▸</button>
     <span>{{ groupName }}</span>
+  </td>
+</tr>
+```
+
+Data rows:
+
+```html
+<tr [ngpTableRow]="row" ngpTableTreeRow>
+  <td>
+    <button ngpTableTreeToggle
+      [attr.aria-label]="'Line items on deal ' + row.id">▸</button>
   </td>
 </tr>
 ```
@@ -468,6 +483,10 @@ Group headers bind the tree directives like this:
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="grouping-collapsible-source" />
+      tree-story.css (recipe)
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-collapsible-source" />
       grouping-collapsible-toolbar.component.ts
     </label>
     <label className="code-tabs-tab">
@@ -484,6 +503,9 @@ Group headers bind the tree directives like this:
     </div>
     <div className="code-tabs-panel">
       <Source code={groupingStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={treeStyles} language="css" />
     </div>
     <div className="code-tabs-panel">
       <Source code={collapsibleToolbarClass} language="tsx" />

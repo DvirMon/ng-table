@@ -38,7 +38,11 @@ import { GroupingCollapsibleToolbarComponent } from './grouping-collapsible-tool
 @Component({
   selector: 'ngp-grouping-collapsible-story-host',
   templateUrl: './grouping-collapsible-story-host.component.html',
-  styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
+  styleUrls: [
+    '../../styles/story-host.css',
+    '../grouping-story.css',
+    '../../tree/tree-story.css',
+  ],
   imports: [
     ...GROUPING_STORY_PIPES,
     GroupingCollapsibleToolbarComponent,
