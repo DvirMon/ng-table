@@ -3,7 +3,7 @@
 **Issue:** #202
 **Branch:** feat/202-grouping-collapsible-tree-pair
 **Worktree:** C:/Users/dmena/git/ng-table/.claude/worktrees/feat-202-grouping-collapsible-tree-pair
-**Status:** 4 / 5 complete
+**Status:** 5 / 5 complete
 
 ## Graph
 
@@ -24,4 +24,4 @@ Parallel-safe: [1, 2, 3] · Dependency: {1,2,3} → 4 → 5
 | 2 | Four more grouping hosts bind the core directives | ✅ done |
 | 3 | Collapsible data rows use the tree pair | ✅ done |
 | 4 | One depth rule in grouping-story.css | ✅ done |
-| 5 | Product doc coverage for U6 and 1.6 | ⬚ pending |
+| 5 | Product doc coverage for U6 and 1.6 | ✅ done |
