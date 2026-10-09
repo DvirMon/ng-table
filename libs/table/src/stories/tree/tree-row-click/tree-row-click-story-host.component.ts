@@ -46,7 +46,7 @@ export class TreeRowClickStoryHostComponent {
     treeConfig,
     withTree({
       parentId: (row: TaskRow) => row.parentId,
-    })
+    }),
   );
 
   /**

@@ -33,7 +33,12 @@ function isPresentKey(key: GroupKey): boolean {
   selector: 'ngp-grouping-when-story-host',
   templateUrl: './grouping-when-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
-  imports: [NgpTableDirective, NgpTableRowDirective, ...GROUPING_STORY_PIPES, GroupingWhenToolbarComponent],
+  imports: [
+    NgpTableDirective,
+    NgpTableRowDirective,
+    ...GROUPING_STORY_PIPES,
+    GroupingWhenToolbarComponent,
+  ],
 })
 export class GroupingWhenStoryHostComponent {
   readonly showCount = input(true);
