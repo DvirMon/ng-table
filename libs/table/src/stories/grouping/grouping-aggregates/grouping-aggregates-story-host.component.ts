@@ -1,5 +1,12 @@
 import { Component, computed, input, signal } from '@angular/core';
-import { aggregate, createTable, patchRow, withGrouping } from '../../../index';
+import {
+  aggregate,
+  createTable,
+  NgpTableDirective,
+  NgpTableRowDirective,
+  patchRow,
+  withGrouping,
+} from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { groupingConfig, BASE_GROUPING_LEVELS, sumAmount } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
@@ -29,7 +36,7 @@ const BREAKABLE_ROW_AMOUNT =
   selector: 'ngp-grouping-aggregates-story-host',
   templateUrl: './grouping-aggregates-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
-  imports: [...GROUPING_STORY_PIPES, GroupingAggregatesToolbarComponent],
+  imports: [NgpTableDirective, NgpTableRowDirective, ...GROUPING_STORY_PIPES, GroupingAggregatesToolbarComponent],
 })
 export class GroupingAggregatesStoryHostComponent {
   readonly showCount = input(true);

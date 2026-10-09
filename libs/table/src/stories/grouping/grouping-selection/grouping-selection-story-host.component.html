@@ -43,7 +43,7 @@
     ever in it to dangle.
   </p>
 
-  <table class="story-host__table grouping-story__table">
+  <table [ngpTable]="table" class="story-host__table grouping-story__table">
     <thead>
       <tr>
         <th class="story-host__cell"><span class="sr-only">select</span></th>
@@ -54,7 +54,7 @@
     </thead>
     <tbody>
       @for (row of table.renderRows(); track row.id) {
-        <tr [attr.data-row-kind]="row.kind" [attr.data-depth]="row.depth">
+        <tr [ngpTableRow]="row">
           @if (row.kind === 'group') {
             <td class="story-host__cell">
               <input

@@ -1,6 +1,12 @@
 import { Component, computed, input, signal } from '@angular/core';
 import type { HttpResourceRef } from '@angular/common/http';
-import { createTable, groupingAsync, withGrouping } from '../../../index';
+import {
+  createTable,
+  groupingAsync,
+  NgpTableDirective,
+  NgpTableRowDirective,
+  withGrouping,
+} from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { createGroupingPreferenceResource, type GroupingPreference } from '../fixtures/http';
 import { groupingConfig, BASE_GROUPING_LEVELS } from '../fixtures/schema';
@@ -21,7 +27,7 @@ import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
   selector: 'ngp-grouping-async-rule-story-host',
   templateUrl: './grouping-async-rule-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
-  imports: [...GROUPING_STORY_PIPES],
+  imports: [NgpTableDirective, NgpTableRowDirective, ...GROUPING_STORY_PIPES],
 })
 export class GroupingAsyncRuleStoryHostComponent {
   readonly forceFailure = input(false);
