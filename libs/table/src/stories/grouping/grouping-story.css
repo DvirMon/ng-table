@@ -1,4 +1,5 @@
-/* Layered after story-host.css — every grouping host loads both, this one second. */
+/* Layered after story-host.css — every grouping host loads both, this one second.
+   grouping-collapsible adds styles/tree-recipe.css after it. */
 
 /* Depth is read from the core ngpTableRow directive's --ngp-table-row-depth custom property. */
 .grouping-story__table {
