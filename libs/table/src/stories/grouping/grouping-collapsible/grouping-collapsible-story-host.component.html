@@ -7,8 +7,8 @@
     </p>
   } @else {
     <p class="story-host__hint">
-      Three levels deep — Region, then Category, then Rep — and everything starts collapsed. Click
-      a chevron to open one; Enter and Space work on the chevron because it is a real button.
+      Three levels deep — Region, then Category, then Rep — and everything starts collapsed. Click a
+      chevron to open one; Enter and Space work on the chevron because it is a real button.
       Collapsing a parent takes its whole subtree with it. Refetch and Regroup attack the collapse
       state from two directions.
     </p>
@@ -60,10 +60,7 @@
     <tbody>
       @for (row of table.renderRows(); track row.id) {
         @if (row.kind === 'group') {
-          <tr
-            [ngpTableRow]="row"
-            ngpTableTreeRow
-          >
+          <tr [ngpTableRow]="row" ngpTableTreeRow>
             @for (column of table.renderColumns(); track column.id; let isFirst = $first) {
               <td class="story-host__cell">
                 @if (isFirst) {
@@ -97,10 +94,7 @@
                 [class.grouping-story__cell--numeric]="column.id === 'amount'"
               >
                 @if (isFirst) {
-                  <button
-                    ngpTableTreeToggle
-                    [attr.aria-label]="'Line items on deal ' + row.id"
-                  >
+                  <button ngpTableTreeToggle [attr.aria-label]="'Line items on deal ' + row.id">
                     ▸
                   </button>
                 }

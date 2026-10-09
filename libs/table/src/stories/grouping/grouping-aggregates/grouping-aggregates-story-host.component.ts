@@ -36,7 +36,12 @@ const BREAKABLE_ROW_AMOUNT =
   selector: 'ngp-grouping-aggregates-story-host',
   templateUrl: './grouping-aggregates-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
-  imports: [NgpTableDirective, NgpTableRowDirective, ...GROUPING_STORY_PIPES, GroupingAggregatesToolbarComponent],
+  imports: [
+    NgpTableDirective,
+    NgpTableRowDirective,
+    ...GROUPING_STORY_PIPES,
+    GroupingAggregatesToolbarComponent,
+  ],
 })
 export class GroupingAggregatesStoryHostComponent {
   readonly showCount = input(true);
