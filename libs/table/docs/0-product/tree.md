@@ -345,7 +345,7 @@ the guard.
 
 - The open/closed state is still visible without the animation.
 
-**Covered by:** every tree story loads `tree-story.css`, whose chevron turns with a short
+**Covered by:** every tree story loads `styles/tree-recipe.css`, whose chevron turns with a short
 transition and has a `prefers-reduced-motion` branch. It is an OS setting with no in-story
 control, so the reduced-motion half cannot be toggled on the canvas.
 
