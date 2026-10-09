@@ -11,7 +11,7 @@ import { FormField } from '@angular/forms/signals';
   imports: [FormField],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './tree-filtering-toolbar.component.html',
-  styleUrls: ['../../styles/story-host.css', '../tree-story.css'],
+  styleUrls: ['../../styles/story-host.css', '../../styles/tree-recipe.css'],
 })
 export class TreeFilteringToolbarComponent {
   readonly nameField = input.required<FieldTree<string>>();

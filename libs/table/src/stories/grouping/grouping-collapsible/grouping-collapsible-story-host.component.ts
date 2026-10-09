@@ -41,7 +41,7 @@ import { GroupingCollapsibleToolbarComponent } from './grouping-collapsible-tool
   styleUrls: [
     '../../styles/story-host.css',
     '../grouping-story.css',
-    '../../tree/tree-story.css',
+    '../../styles/tree-recipe.css',
   ],
   imports: [
     ...GROUPING_STORY_PIPES,

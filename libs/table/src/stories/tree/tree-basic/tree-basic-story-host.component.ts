@@ -18,7 +18,7 @@ import { TreeBasicToolbarComponent } from './tree-basic-toolbar.component';
 @Component({
   selector: 'ngp-tree-basic-story-host',
   templateUrl: './tree-basic-story-host.component.html',
-  styleUrls: ['../../styles/story-host.css', '../tree-story.css'],
+  styleUrls: ['../../styles/story-host.css', '../../styles/tree-recipe.css'],
   imports: [
     TreeBasicToolbarComponent,
     NgpTableDirective,

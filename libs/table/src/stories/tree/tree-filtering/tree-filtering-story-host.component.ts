@@ -27,7 +27,7 @@ import { TreeFilteringToolbarComponent } from './tree-filtering-toolbar.componen
     TreeFilteringToolbarComponent,
   ],
   templateUrl: './tree-filtering-story-host.component.html',
-  styleUrls: ['../../styles/story-host.css', '../tree-story.css'],
+  styleUrls: ['../../styles/story-host.css', '../../styles/tree-recipe.css'],
 })
 export class TreeFilteringStoryHostComponent {
   protected readonly data = signal<TaskRow[]>(TREE_ROWS_MOCK);

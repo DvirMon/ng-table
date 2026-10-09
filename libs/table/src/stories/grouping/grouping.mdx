@@ -35,7 +35,7 @@ import groupingPipes from './grouping-story.pipes.ts?raw';
 import groupingSchema from './fixtures/schema.ts?raw';
 import groupingHttp from './fixtures/http.ts?raw';
 import sharedStyles from '../styles/story-host.css?raw';
-import treeStyles from '../tree/tree-story.css?raw';
+import treeStyles from '../styles/tree-recipe.css?raw';
 import collapsibleToolbarClass from './grouping-collapsible/grouping-collapsible-toolbar.component.ts?raw';
 import collapsibleToolbarTemplate from './grouping-collapsible/grouping-collapsible-toolbar.component.html?raw';
 import selectionToolbarClass from './grouping-selection/grouping-selection-toolbar.component.ts?raw';
@@ -483,15 +483,15 @@ Data rows:
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="grouping-collapsible-source" />
-      tree-story.css (recipe)
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="grouping-collapsible-source" />
       grouping-collapsible-toolbar.component.ts
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="grouping-collapsible-source" />
       grouping-collapsible-toolbar.component.html
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-collapsible-source" />
+      tree-recipe.css
     </label>
   </div>
   <div className="code-tabs-panels">
@@ -505,13 +505,13 @@ Data rows:
       <Source code={groupingStyles} language="css" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={treeStyles} language="css" />
-    </div>
-    <div className="code-tabs-panel">
       <Source code={collapsibleToolbarClass} language="tsx" />
     </div>
     <div className="code-tabs-panel">
       <Source code={collapsibleToolbarTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={treeStyles} language="css" />
     </div>
   </div>
 </div>

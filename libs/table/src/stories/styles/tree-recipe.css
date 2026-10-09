@@ -1,5 +1,5 @@
 /* Tree styling recipe from the UI spec (3-ui/directives/tree.md).
- * Used by all tree story hosts. No library stylesheet ships; consumers apply this recipe
+ * Used by every tree story host and by grouping-collapsible. No library stylesheet ships; consumers apply this recipe
  * or build their own based on the data-* hooks and CSS custom properties. */
 
 /* Indent the toggle itself off the inherited depth. */

@@ -14,7 +14,7 @@ import filteredFilters from './tree-filtering/tree-filtering.filters.ts?raw';
 import rowClickClass from './tree-row-click/tree-row-click-story-host.component.ts?raw';
 import rowClickTemplate from './tree-row-click/tree-row-click-story-host.component.html?raw';
 import rowClickStyles from './tree-row-click/tree-row-click.css?raw';
-import treeStyles from './tree-story.css?raw';
+import treeStyles from '../styles/tree-recipe.css?raw';
 import treeSchema from './fixtures/schema.ts?raw';
 import sharedStyles from '../styles/story-host.css?raw';
 import '../styles/code-tabs.css';
@@ -31,7 +31,7 @@ Each story composes the fewest features its lesson needs. Where a second feature
 
 For group-header expansion, see [`Table / Grouping`](?path=/docs/table-grouping--docs), its Collapsible section. For a tree chevron beside a panel chevron within groups, see [#190](https://github.com/DvirMon/ng-table/issues/190)'s `expansion/panel-in-groups/` story. The [tree UI spec](https://github.com/DvirMon/ng-table/blob/main/libs/table/docs/3-ui/directives/tree.md) describes the directive pair and styling recipe.
 
-Shared across all of them: `fixtures/schema.ts` (one column list and one `treeConfig`) and `tree-story.css`. Those are at the bottom of this page, once.
+Shared across all of them: `fixtures/schema.ts` (one column list and one `treeConfig`) and `styles/tree-recipe.css`. Those are at the bottom of this page, once.
 
 ---
 
@@ -168,7 +168,7 @@ The handler is the tree UI spec's guard written out with named booleans: skip wh
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="tree-row-click-source" />
-      tree-story.css
+      tree-recipe.css
     </label>
   </div>
   <div className="code-tabs-panels">
@@ -199,7 +199,7 @@ The handler is the tree UI spec's guard written out with named booleans: skip wh
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="tree-shared-source" />
-      tree-story.css
+      tree-recipe.css
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="tree-shared-source" />
