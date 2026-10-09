@@ -2,6 +2,8 @@ import { Component, computed, input, signal } from '@angular/core';
 import {
   addGroupLevel,
   createTable,
+  NgpTableDirective,
+  NgpTableRowDirective,
   removeGroupLevel,
   setGroupLevels,
   withGrouping,
@@ -26,7 +28,7 @@ import type { GroupedColumnMode } from './grouping-columns.types';
   selector: 'ngp-grouping-columns-story-host',
   templateUrl: './grouping-columns-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
-  imports: [...GROUPING_STORY_PIPES],
+  imports: [NgpTableDirective, NgpTableRowDirective, ...GROUPING_STORY_PIPES],
 })
 export class GroupingColumnsStoryHostComponent {
   readonly groupedColumnMode = input<GroupedColumnMode>('keep');

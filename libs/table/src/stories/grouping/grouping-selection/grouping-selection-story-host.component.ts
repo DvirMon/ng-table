@@ -1,6 +1,8 @@
 import { Component, computed, input, signal } from '@angular/core';
 import {
   createTable,
+  NgpTableDirective,
+  NgpTableRowDirective,
   setGroupLevels,
   withFiltering,
   withGrouping,
@@ -28,7 +30,7 @@ import type { CascadeMode } from './grouping-selection.types';
   selector: 'ngp-grouping-selection-story-host',
   templateUrl: './grouping-selection-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
-  imports: [...GROUPING_STORY_PIPES, GroupingSelectionToolbarComponent],
+  imports: [NgpTableDirective, NgpTableRowDirective, ...GROUPING_STORY_PIPES, GroupingSelectionToolbarComponent],
 })
 export class GroupingSelectionStoryHostComponent {
   readonly cascade = input<CascadeMode>('descendants');
