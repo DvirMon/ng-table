@@ -1,8 +1,10 @@
-import { Component, signal, type Type } from '@angular/core';
+import { Component, computed, signal, type Type } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { NgpTableDirective } from './ngp-table.directive';
 import { NgpTablePanelDirective } from './ngp-table-panel.directive';
+import { NgpTablePanelToggleDirective } from './ngp-table-panel-toggle.directive';
+import { NgpTableRowDirective } from './ngp-table-row.directive';
 import { createColumns } from '../api/create-columns';
 import { createTable } from '../api/create-table';
 import { withExpansion } from '../api/features/with-expansion';
@@ -25,7 +27,12 @@ function createPlainTable() {
   return createTable(signal<TaskTreeMockRow[]>(ROWS), createPanelConfig());
 }
 
-const IMPORTS = [NgpTableDirective, NgpTablePanelDirective];
+const IMPORTS = [
+  NgpTableDirective,
+  NgpTablePanelDirective,
+  NgpTableRowDirective,
+  NgpTablePanelToggleDirective,
+];
 
 @Component({
   selector: 'ngp-default-panel-host',
@@ -142,7 +149,10 @@ class DuplicatePanelHost {
   template: `
     <table [ngpTable]="table">
       <tbody>
-        @for (row of table.rows(); track row.id) {
+        @for (row of table.renderRows(); track row.id) {
+          <tr [ngpTableRow]="row">
+            <td><button type="button" ngpTablePanelToggle>Toggle {{ row.id }}</button></td>
+          </tr>
           @if (table.expansion().has(row.id)) {
             <tr>
               <td>
@@ -171,6 +181,79 @@ class ClosePanelHost {
     signal<TaskTreeMockRow[]>(ROWS),
     createPanelConfig(),
     withExpansion({ initial: ['t1', 't2'] }),
+  );
+}
+
+@Component({
+  selector: 'ngp-unmount-panel-host',
+  imports: IMPORTS,
+  template: `
+    <table [ngpTable]="table">
+      <tbody>
+        @for (row of table.renderRows(); track row.id) {
+          <tr [ngpTableRow]="row">
+            <td><button type="button" ngpTablePanelToggle>Toggle {{ row.id }}</button></td>
+          </tr>
+          @if (table.expansion().has(row.id)) {
+            <tr>
+              <td>
+                <div [ngpTablePanel]="row.id" role="region" [attr.aria-label]="'Details ' + row.id">
+                  <button type="button">Inside {{ row.id }}</button>
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  `,
+})
+class UnmountPanelHost {
+  readonly table = createTable(
+    signal<TaskTreeMockRow[]>(ROWS),
+    createPanelConfig(),
+    withExpansion({ initial: ['t1', 't2'] }),
+  );
+}
+
+@Component({
+  selector: 'ngp-reused-toggle-host',
+  imports: IMPORTS,
+  template: `
+    <table [ngpTable]="table">
+      <tbody>
+        @for (row of orderedRows(); track $index) {
+          <tr [ngpTableRow]="row">
+            <td><button type="button" ngpTablePanelToggle>Toggle {{ row.id }}</button></td>
+          </tr>
+          @if (table.expansion().has(row.id)) {
+            <tr>
+              <td>
+                <div
+                  [ngpTablePanel]="row.id"
+                  #p="ngpTablePanel"
+                  role="region"
+                  [attr.aria-label]="'Details ' + row.id"
+                >
+                  <button type="button" (click)="p.close()">Close {{ row.id }}</button>
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  `,
+})
+class ReusedToggleHost {
+  readonly reversed = signal(false);
+  readonly table = createTable(
+    signal<TaskTreeMockRow[]>(ROWS),
+    createPanelConfig(),
+    withExpansion({ initial: ['t1', 't2'] }),
+  );
+  readonly orderedRows = computed(() =>
+    this.reversed() ? [...this.table.renderRows()].reverse() : this.table.renderRows(),
   );
 }
 
@@ -309,20 +392,89 @@ describe('NgpTablePanelDirective', () => {
     it('close() collapses only its own row', () => {
       const { fixture, button, table } = setupClose();
 
+      button('Close t1').focus();
       button('Close t1').click();
       fixture.detectChanges();
 
       expect([...table.expansion()]).toEqual(['t2']);
+      expect(document.activeElement).toBe(button('Toggle t1'));
     });
 
     it('Esc inside a panel collapses only that row', () => {
       const { fixture, button, table } = setupClose();
 
+      button('Close t1').focus();
       const event = pressEscape(button('Close t1'));
       fixture.detectChanges();
 
       expect([...table.expansion()]).toEqual(['t2']);
       expect(event.defaultPrevented).toBe(true);
+      expect(document.activeElement).toBe(button('Toggle t1'));
+    });
+
+    it('close() returns focus to the toggle when focus is on <body>', () => {
+      const { fixture, button } = setupClose();
+      const close = button('Close t1');
+      const toggle = button('Toggle t1');
+      (document.activeElement as HTMLElement | null)?.blur();
+      expect(document.activeElement).toBe(document.body);
+
+      close.click();
+      fixture.detectChanges();
+
+      expect(document.activeElement).toBe(toggle);
+    });
+
+    it('close() returns focus to the toggle when no element has focus', () => {
+      const { fixture, button } = setupClose();
+      const close = button('Close t1');
+      const focus = vi.spyOn(button('Toggle t1'), 'focus');
+      Object.defineProperty(document, 'activeElement', { configurable: true, get: () => null });
+      try {
+        close.click();
+        fixture.detectChanges();
+      } finally {
+        delete (document as { activeElement?: unknown }).activeElement;
+      }
+
+      expect(focus).toHaveBeenCalledTimes(1);
+    });
+
+    it('close() leaves focus alone when it was outside the panel', () => {
+      const { fixture, button } = setupClose();
+      const other = button('Toggle t2');
+      other.focus();
+
+      button('Close t1').click();
+      fixture.detectChanges();
+
+      expect(document.activeElement).toBe(other);
+    });
+
+    it('returns focus to the toggle now rendering the row after reused views swap rows', () => {
+      const fixture = TestBed.createComponent(ReusedToggleHost);
+      fixture.detectChanges();
+      const root: HTMLElement = fixture.nativeElement;
+      const button = (name: string): HTMLButtonElement => {
+        const found = Array.from(root.querySelectorAll('button')).find(
+          (b) => b.textContent?.trim() === name,
+        );
+        if (found === undefined) throw new Error(`no button named ${name}`);
+        return found;
+      };
+
+      fixture.componentInstance.reversed.set(true);
+      fixture.detectChanges();
+
+      button('Close t2').focus();
+      button('Close t2').click();
+      fixture.detectChanges();
+      expect(document.activeElement?.textContent?.trim()).toBe('Toggle t2');
+
+      button('Close t1').focus();
+      button('Close t1').click();
+      fixture.detectChanges();
+      expect(document.activeElement?.textContent?.trim()).toBe('Toggle t1');
     });
 
     it('ignores Esc when an inner element already prevented it', () => {
@@ -333,6 +485,75 @@ describe('NgpTablePanelDirective', () => {
       fixture.detectChanges();
 
       expect([...table.expansion()]).toEqual(['t1', 't2']);
+    });
+
+    describe('destroy path (collapse through table.expansion.collapse)', () => {
+      function setupUnmount() {
+        const base = setup(UnmountPanelHost);
+        const root: HTMLElement = base.fixture.nativeElement;
+        const host = base.fixture.componentInstance;
+        if (!(host instanceof UnmountPanelHost)) throw new Error('unexpected host');
+        const button = (name: string): HTMLButtonElement => {
+          const found = Array.from(root.querySelectorAll('button')).find(
+            (b) => b.textContent?.trim() === name,
+          );
+          if (found === undefined) throw new Error(`no button named ${name}`);
+          return found;
+        };
+        return { ...base, button, table: host.table };
+      }
+
+      it('returns focus to the toggle when the panel unmounts with focus inside it', () => {
+        const { fixture, button, table } = setupUnmount();
+        button('Inside t1').focus();
+        table.expansion.collapse(['t1']);
+        fixture.detectChanges();
+
+        expect(document.activeElement).toBe(button('Toggle t1'));
+      });
+
+      it('does not move focus on unmount when focus is on <body>', () => {
+        const { fixture, button, table } = setupUnmount();
+        const focus = vi.spyOn(button('Toggle t1'), 'focus');
+        (document.activeElement as HTMLElement | null)?.blur();
+        expect(document.activeElement).toBe(document.body);
+
+        table.expansion.collapse(['t1']);
+        fixture.detectChanges();
+
+        expect(focus).not.toHaveBeenCalled();
+        expect(document.activeElement).toBe(document.body);
+      });
+
+      it('does not focus a disconnected toggle', () => {
+        const { fixture, button, table } = setupUnmount();
+        const toggle = button('Toggle t1');
+        const focus = vi.spyOn(toggle, 'focus');
+        button('Inside t1').focus();
+        toggle.remove();
+        expect(toggle.isConnected).toBe(false);
+
+        table.expansion.collapse(['t1']);
+        fixture.detectChanges();
+
+        expect(focus).not.toHaveBeenCalled();
+      });
+
+      it('returns focus before the destroy-time inert write', () => {
+        const { fixture, panel, button, table } = setupUnmount();
+        const leaving = panel('t1');
+        const inertWhenFocused: boolean[] = [];
+        button('Toggle t1').addEventListener('focusin', () => {
+          inertWhenFocused.push(leaving.hasAttribute('inert'));
+        });
+        button('Inside t1').focus();
+
+        table.expansion.collapse(['t1']);
+        fixture.detectChanges();
+
+        expect(inertWhenFocused).toEqual([false]);
+        expect(leaving.hasAttribute('inert')).toBe(true);
+      });
     });
 
     it('marks a leaving panel inert immediately after the closing change detection', () => {

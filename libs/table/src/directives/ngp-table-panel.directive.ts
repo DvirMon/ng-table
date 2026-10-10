@@ -12,15 +12,10 @@ import {
   type SimpleChanges,
 } from '@angular/core';
 
+import { hasExpansion } from './expansion.guard';
 import { NGP_TABLE_PANEL_REGISTRY } from './panel-registry';
 import { NGP_TABLE_STORE } from './table.tokens';
-import type { ExpansionMembers } from '../api/features/with-expansion';
 import type { RowId } from '../api/types';
-
-function hasExpansion(table: unknown): table is ExpansionMembers {
-  if (typeof table !== 'object' || table === null || !('expansion' in table)) return false;
-  return typeof table.expansion === 'function' && 'expand' in table.expansion;
-}
 
 function assertExpansionComposed(readTable: () => unknown): void {
   if (typeof ngDevMode === 'undefined' || !ngDevMode) return;
@@ -48,6 +43,8 @@ function assertExpansionComposed(readTable: () => unknown): void {
     '[id]': 'panelId',
     '[attr.inert]': 'isOpen() ? null : ""',
     '(keydown.escape)': 'onEscape($event)',
+    '(focusin)': 'onFocusIn()',
+    '(focusout)': 'onFocusOut()',
   },
   exportAs: 'ngpTablePanel',
 })
@@ -62,6 +59,9 @@ export class NgpTablePanelDirective implements OnChanges, OnInit, OnDestroy {
 
   protected panelId = '';
   private registeredId: RowId | null = null;
+  // Angular detaches the panel's DOM before `ngOnDestroy`, which drops focus to `<body>`;
+  // `contains(activeElement)` is then false, so track focus while the panel is mounted.
+  private hasFocusInside = false;
 
   protected readonly isOpen: Signal<boolean> = computed((): boolean => {
     const table = this.table.ngpTable();
@@ -98,9 +98,20 @@ export class NgpTablePanelDirective implements OnChanges, OnInit, OnDestroy {
     event.preventDefault();
   }
 
+  protected onFocusIn(): void {
+    this.hasFocusInside = true;
+  }
+
+  protected onFocusOut(): void {
+    // A focusout fired by the DOM removal itself must not clear the flag.
+    if (!this.host.nativeElement.isConnected) return;
+    this.hasFocusInside = false;
+  }
+
   private returnFocus(id: RowId, { allowBody }: { allowBody: boolean }): void {
     const active = document.activeElement;
-    const isFocusInside = active !== null && this.host.nativeElement.contains(active);
+    const isActiveInside = active !== null && this.host.nativeElement.contains(active);
+    const isFocusInside = isActiveInside || this.hasFocusInside;
     const isFocusLost = allowBody && (active === null || active === document.body);
     if (!isFocusInside && !isFocusLost) return;
     const toggle = this.registry.toggleOf(id);
