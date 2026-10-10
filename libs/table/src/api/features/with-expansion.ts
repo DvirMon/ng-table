@@ -26,7 +26,8 @@ export interface WithExpansionConfig {
 // Note: a throwing accessor degrades to multi-open, the mode that hides nothing, and is
 // reported once per evaluation (ADR-0014).
 function resolveMulti(multi: WithExpansionConfig['multi']): Signal<boolean> {
-  if (typeof multi !== 'function') {
+  const isStaticValue = typeof multi !== 'function';
+  if (isStaticValue) {
     return signal(multi ?? true);
   }
   return computed((): boolean => {
