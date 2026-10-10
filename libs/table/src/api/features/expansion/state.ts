@@ -3,11 +3,8 @@ import { Subject, type Observable } from 'rxjs';
 import { pruneByIds } from '../../../engine/rows';
 import type { RowId } from '../../types';
 
-// The expansion state model — factory only, no spec of its own. Exercised through
-// `with-expansion.spec.ts`, mirroring `api/features/editing/state.ts`.
-//
-// Not a feature. `withExpansion()` builds one instance today; a future tree feature builds its
-// own, passing no `onExpanded` (see the member's own doc).
+// The expansion state model: not a feature, and no spec of its own — exercised through
+// `with-expansion.spec.ts`. Each owning feature builds its own instance.
 
 export interface ExpansionWriteOptions {
   /** `false` suppresses `changed` emissions for this write — restore, server sync. */
@@ -16,13 +13,10 @@ export interface ExpansionWriteOptions {
 
 export interface ExpansionStoreOptions {
   initial?: readonly RowId[];
-  /** Normalizes the ids of every write, and the `initial` seed, before the added/removed diff is
-   *  computed — so one write is one `changed` emission carrying only kept ids. `withExpansion()`
-   *  passes the single-open trim; omitted, writes are stored as given. */
+  /** Normalizes the ids of every write and of `initial` before the diff is computed, so one write
+   *  is one `changed` emission carrying only kept ids. Omitted, writes are stored as given. */
   enforce?: (ids: readonly RowId[]) => readonly RowId[];
-  /** Called with ids newly added to the set by any write. `withExpansion()` uses it to
-   *  accumulate `everExpanded`; a future tree feature passes nothing. Mirrors
-   *  `EditingStoreOptions.onWrite`. */
+  /** Called with the ids newly added to the set by any write. */
   onExpanded?: (ids: readonly RowId[]) => void;
 }
 
@@ -35,8 +29,7 @@ export interface ExpansionChange {
 export interface ExpansionStore {
   readonly expanded: Signal<ReadonlySet<RowId>>;
   readonly changed: Observable<ExpansionChange>;
-  /** The only writer of the signal. Emits once per write, carrying every id whose
-   *  membership changed — added and removed together. */
+  /** The only writer of the signal. Emits once per write. */
   setExpanded(ids: readonly RowId[], options?: ExpansionWriteOptions): void;
   toggle(id: RowId, options?: ExpansionWriteOptions): void;
   /** Prunes via `pruneByIds()` (ADR-0006). Never touches `everExpanded` — the feature owns it. */
@@ -45,6 +38,7 @@ export interface ExpansionStore {
   destroy(): void;
 }
 
+/** Creates the open-id set with one `changed` emission per write. */
 export function createExpansionStore(options: ExpansionStoreOptions = {}): ExpansionStore {
   const enforce = options.enforce ?? ((ids: readonly RowId[]): readonly RowId[] => ids);
   const expandedSignal = signal<ReadonlySet<RowId>>(
