@@ -16,6 +16,10 @@ export interface ExpansionWriteOptions {
 
 export interface ExpansionStoreOptions {
   initial?: readonly RowId[];
+  /** Normalizes the ids of every write, and the `initial` seed, before the added/removed diff is
+   *  computed — so one write is one `changed` emission carrying only kept ids. `withExpansion()`
+   *  passes the single-open trim; omitted, writes are stored as given. */
+  enforce?: (ids: readonly RowId[]) => readonly RowId[];
   /** Called with ids newly added to the set by any write. `withExpansion()` uses it to
    *  accumulate `everExpanded`; a future tree feature passes nothing. Mirrors
    *  `EditingStoreOptions.onWrite`. */
@@ -42,12 +46,15 @@ export interface ExpansionStore {
 }
 
 export function createExpansionStore(options: ExpansionStoreOptions = {}): ExpansionStore {
-  const expandedSignal = signal<ReadonlySet<RowId>>(new Set(options.initial ?? []));
+  const enforce = options.enforce ?? ((ids: readonly RowId[]): readonly RowId[] => ids);
+  const expandedSignal = signal<ReadonlySet<RowId>>(
+    new Set(enforce([...new Set(options.initial ?? [])])),
+  );
   const changedSource = new Subject<ExpansionChange>();
 
   function setExpanded(ids: readonly RowId[], writeOptions?: ExpansionWriteOptions): void {
     const current = expandedSignal();
-    const next = new Set(ids);
+    const next = new Set(enforce([...new Set(ids)]));
 
     const added: RowId[] = [];
     for (const id of next) {
