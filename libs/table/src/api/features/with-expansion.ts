@@ -42,8 +42,8 @@ function resolveMulti(multi: WithExpansionConfig['multi']): Signal<boolean> {
 
 export interface ExpansionSlice {
   (): ReadonlySet<RowId>;
-  /** Ids ever opened, kept so their panels stay mounted. Additive-only and not pruned when rows
-   *  leave `data`; `release()` frees them. */
+  /** Ids ever opened, kept so their panels stay mounted. Grows on open and is not pruned when rows
+   *  leave `data`; only `release()` removes closed ids. */
   readonly everExpanded: Signal<ReadonlySet<RowId>>;
   /** One emission per write, carrying the whole symmetric difference. */
   readonly changed: Observable<ExpansionChange>;
@@ -72,8 +72,8 @@ function buildExpansionSpec<TRow>(
   multi: Signal<boolean>,
   config: WithExpansionConfig,
 ): TableFeatureSpec<TRow, ExpansionMembers> {
-  // Note: accumulated via the store's `onExpanded` hook, not the store itself. Additive-only and
-  // exempt from `onRowsRemoved` pruning.
+  // Note: accumulated via the store's `onExpanded` hook, not the store itself. Exempt from
+  // `onRowsRemoved` pruning; only `release()` removes ids.
   const everExpanded = signal(new Set<RowId>());
 
   // Single-open: keeps only the last id of the write. Runs inside the store's write funnel, so no
