@@ -52,6 +52,10 @@ export interface ExpansionSlice {
   collapse(ids?: readonly RowId[], options?: ExpansionWriteOptions): void;
   /** Atomic replace — the restore path. */
   set(ids: readonly RowId[], options?: ExpansionWriteOptions): void;
+  /** Frees the kept panels of closed rows, so `everExpanded` stops holding them. Open ids are
+   *  skipped. Omitted `ids`: every closed id in `everExpanded`; `[]` does nothing. Unknown ids are
+   *  ignored. Never emits on `changed`. */
+  release(ids?: readonly RowId[]): void;
 }
 
 export interface ExpansionMembers {
@@ -121,6 +125,22 @@ function buildExpansionSpec<TRow>(
     store.setExpanded(ids, options);
   }
 
+  function release(ids?: readonly RowId[]): void {
+    const open = store.expanded();
+    const candidates = ids ?? everExpanded();
+    const releasable = [...candidates].filter((id) => !open.has(id));
+    const seen = everExpanded();
+    const removing = releasable.filter((id) => seen.has(id));
+    if (removing.length === 0) {
+      return;
+    }
+    everExpanded.update((current) => {
+      const next = new Set(current);
+      removing.forEach((id) => next.delete(id));
+      return next;
+    });
+  }
+
   const expansion: ExpansionSlice = Object.assign(
     computed(() => store.expanded()),
     {
@@ -130,6 +150,7 @@ function buildExpansionSpec<TRow>(
       expand,
       collapse,
       set,
+      release,
     },
   );
 
