@@ -143,7 +143,7 @@ Consumer-owned (E55, ADR-0029 category 3). No label input, no default text, no w
 table.expansion.everExpanded().has(row.id))) { … }
 ```
 
-A kept panel is `inert` while closed. `table.expansion.release(ids?)` removes ids from `everExpanded` (none = clear), never touches the open set, emits nothing (E39). Collapse-all then `release()` frees every kept panel. Memory otherwise grows with rows the user has opened.
+A kept panel is `inert` while closed. `table.expansion.release(ids?)` removes closed ids from `everExpanded` (none = every closed id), skips open ids, never touches the open set, emits nothing (E39). `release()` with no ids frees every closed kept panel; no collapse-all first. Memory otherwise grows with rows the user has opened.
 
 Tree children stay gated by `renderRows()`; different cost profile — a tree can reveal thousands of rows at once, a panel is one row someone opened.
 

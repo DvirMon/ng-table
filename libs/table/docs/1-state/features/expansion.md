@@ -37,12 +37,9 @@ interface ExpansionSlice {
   expand(ids?: readonly RowId[], options?: ExpansionWriteOptions): void;
   collapse(ids?: readonly RowId[], options?: ExpansionWriteOptions): void;
   set(ids: readonly RowId[], options?: ExpansionWriteOptions): void;
-  release(ids?: readonly RowId[]): void; // specced, not shipped (E39, #200)
+  release(ids?: readonly RowId[]): void;
 }
 ```
-
-> **Pending (#200):** `release` is specced, not shipped — `code: shipped` covers everything else on this
-> slice. See `0-product/expansion.md` OQ-exp-8 part 2.
 
 `expansion()` is the primary read — the open set. `everExpanded`, `changed` are properties
 (ADR-0015's primary-signal rule).
@@ -67,7 +64,7 @@ Not generic in `TRow` — nothing in it reads a row. `initial` is covered under
   [Single-open](#single-open-multi); `0-product/expansion.md` OQ-exp-1, OQ-exp-7.
 - **`everExpanded` — lazy-mount support:** a set recording every id that has been opened at least
   once. `expand()`/`toggle()`-to-open add to it; `collapse()` and `toggle()`-to-close never remove
-  from it. It shrinks only through `release()` (E39, specced, not shipped) — exempt from
+  from it. It shrinks only through `release()` (E39), which removes closed ids and skips open ones — exempt from
   `onRowsRemoved` pruning ([ADR-0006](../../adr/0006-row-id-state-reconciliation.md)), unlike the
   open set.
 
@@ -83,7 +80,7 @@ Not generic in `TRow` — nothing in it reads a row. `initial` is covered under
   **Mount lifetime — resolved 2026-10-01 (`0-product/expansion.md` OQ-exp-8, #195).** Default
   recipe unmounts on close (gate `expansion().has(id)`, `animate.leave`); keeping inner state is a
   per-row opt-in, `expansion().has(id) || (keepMounted(row) && everExpanded().has(id))` (E40).
-  `release(ids?)` frees kept panels (E39, pending in #200). Panel a11y directives ship in #199 (E41). The
+  `release(ids?)` frees kept panels (E39). Panel a11y directives ship in #199 (E41). The
   panel stays outside `renderRows()` (E12 kept); virtual scroll must support it (E42).
 
 - **No discovery walk.** `expand()` with no `ids` targets every row in `rows()` — the panel has
@@ -92,13 +89,13 @@ Not generic in `TRow` — nothing in it reads a row. `initial` is covered under
 
 ## Methods
 
-| Method                                     | Description                                                                                                                                                                |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `table.expansion.toggle(rowId, options?)`  | Toggle a single row's open state. Emits `changed` once.                                                                                                                    |
-| `table.expansion.expand(ids?, options?)`   | Adds. Omitted `ids`: every row in `rows()`, unioned with what's already open; targets are ordered last, so single mode keeps the last target.                              |
-| `table.expansion.collapse(ids?, options?)` | Removes. Omitted `ids`: everything currently open.                                                                                                                         |
-| `table.expansion.set(ids, options?)`       | Atomic replace — the restore path.                                                                                                                                         |
-| `table.expansion.release(ids?)`            | **Specced, not shipped (E39, #200).** Removes ids from `everExpanded`; omitted `ids` clears it. Never touches the open set; emits nothing on `changed`. Frees kept panels. |
+| Method                                     | Description                                                                                                                                                |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `table.expansion.toggle(rowId, options?)`  | Toggle a single row's open state. Emits `changed` once.                                                                                                    |
+| `table.expansion.expand(ids?, options?)`   | Adds. Omitted `ids`: every row in `rows()`, unioned with what's already open; targets are ordered last, so single mode keeps the last target.              |
+| `table.expansion.collapse(ids?, options?)` | Removes. Omitted `ids`: everything currently open.                                                                                                         |
+| `table.expansion.set(ids, options?)`       | Atomic replace — the restore path.                                                                                                                         |
+| `table.expansion.release(ids?)`            | Removes closed ids from `everExpanded`; open ids are skipped; omitted `ids` frees every closed id. Never touches the open set; emits nothing on `changed`. |
 
 Every write verb takes `options?: ExpansionWriteOptions` (`{ emitEvent?: boolean }`) — see
 [Silent writes](#silent-writes-emitevent-false).
@@ -225,7 +222,8 @@ there is no contributor to the union for `engine/flatten.ts`'s `flattenVisible` 
       staleness is caller-owned.** Adopts selection's [D8](../work/with-selection/2-decisions.md)
       verbatim: neither id-set feature carries a data-backed invariant, and an id matching no row
       renders nothing. `onRowsRemoved` prunes the open set (`table.expansion()`), never
-      `everExpanded` (ADR-0006 exemption, deliberate — it's an additive ledger).
+      `everExpanded` (ADR-0006 exemption, deliberate — it's an additive ledger that only
+      `release()` shrinks).
 - [x] **Does `expansionState` land here or in `withTree()`?** Resolved — it shipped as
       `withTree()`'s `state` property (tri-state depends on the discovery walk, which only the
       tree feature has). See [tree.md](tree.md).
