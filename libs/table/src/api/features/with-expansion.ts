@@ -15,17 +15,16 @@ export interface WithExpansionConfig {
   /** Seeds the open set at construction, and `everExpanded` alongside it. Emits nothing on
    *  `changed`. */
   initial?: readonly RowId[];
-  /** Default `true`. `false` keeps at most one row open: every write (`toggle`, `expand`,
-   *  `set`, `initial`) keeps only the last id of the write, and the displaced row closes in the
-   *  same `changed` emission. `emitEvent: false` still trims. Accepts an accessor
-   *  (`() => boolean`) that is read reactively; flipping it to `false` with more than one row
-   *  open closes all of them in one emission, and with one or none open changes nothing.
-   *  A throwing accessor is reported with `console.error` and treated as `true`. */
+  /** Defaults to `true`. `false` keeps at most one row open: each write, `initial` included,
+   *  keeps only its last id, and the displaced row closes in the same `changed` emission, even
+   *  with `emitEvent: false`. An accessor is read reactively; flipping it to `false` with more
+   *  than one row open closes them all. A throwing accessor is reported with `console.error`
+   *  and treated as `true`. */
   multi?: boolean | (() => boolean);
 }
 
-/** Resolves `multi` to a signal. A throwing accessor degrades to multi-open — the mode that
- *  hides nothing — and is reported once per evaluation (ADR-0014). */
+// Note: a throwing accessor degrades to multi-open, the mode that hides nothing, and is
+// reported once per evaluation (ADR-0014).
 function resolveMulti(multi: WithExpansionConfig['multi']): Signal<boolean> {
   if (typeof multi !== 'function') {
     return signal(multi ?? true);
@@ -46,8 +45,7 @@ export interface ExpansionSlice {
   /** One emission per write, carrying the whole symmetric difference. */
   readonly changed: Observable<ExpansionChange>;
   toggle(id: RowId, options?: ExpansionWriteOptions): void;
-  /** Adds. Omitted `ids`: every row in `rows()` — the panel has no
-   *  discovery walk, unlike the tree's `expand()`. */
+  /** Adds. Omitted `ids`: every row in `rows()`. */
   expand(ids?: readonly RowId[], options?: ExpansionWriteOptions): void;
   /** Removes. Omitted `ids`: everything currently open. */
   collapse(ids?: readonly RowId[], options?: ExpansionWriteOptions): void;
@@ -157,7 +155,12 @@ function buildExpansionSpec<TRow>(
  *
  * @remarks
  * Composes with a tree/group feature without affecting which rows they reveal — opening a
- * panel never changes `renderRows()`.
+ * panel never changes `renderRows()`. Pass `multi: false` for accordion behavior.
+ *
+ * @example
+ * const table = createTable(data, { trackBy: 'id', columns }, withExpansion({ multi: false }));
+ * table.expansion.toggle(1);
+ * table.expansion.changed.subscribe(({ added, removed }) => save(added, removed));
  */
 export function withExpansion<In extends ExpansionInput<In>, D extends DerivedDict>(
   derive: Feature<NoInfer<In> & ExpansionMembers, D>,
