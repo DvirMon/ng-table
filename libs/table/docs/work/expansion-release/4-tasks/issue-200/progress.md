@@ -3,7 +3,7 @@
 **Issue:** #200
 **Branch:** feat/200-expansion-release
 **Worktree:** C:/Users/dmena/git/ng-table/.claude/worktrees/feat-200-expansion-release
-**Status:** 1 / 2 complete
+**Status:** 2 / 2 complete
 
 ## Graph
 
@@ -16,7 +16,7 @@ Parallel-safe: [1, 2] · Dependency: none (commit order 1 → 2)
 
 ## Steps
 
-| Step | Title                                       | Status         |
-| ---- | ------------------------------------------- | -------------- |
-| 1    | The release() method on the expansion slice | ▶ in progress |
-| 2    | Document release() as shipped               | ✅ done        |
+| Step | Title                                       | Status  |
+| ---- | ------------------------------------------- | ------- |
+| 1    | The release() method on the expansion slice | ✅ done |
+| 2    | Document release() as shipped               | ✅ done |

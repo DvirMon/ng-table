@@ -696,6 +696,116 @@ describe('withExpansion', () => {
     });
   });
 
+  describe('release()', () => {
+    function makeStore() {
+      return inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withExpansion(),
+        ),
+      );
+    }
+
+    function collect(store: ReturnType<typeof makeStore>): ExpansionChange[] {
+      const emitted: ExpansionChange[] = [];
+      store.expansion.changed.subscribe((change) => emitted.push(change));
+      return emitted;
+    }
+
+    /** r1 opened then closed: closed, but still in the ledger. */
+    function makeStoreWithClosedR1() {
+      const store = makeStore();
+      store.expansion.toggle('r1');
+      store.expansion.toggle('r1');
+      return store;
+    }
+
+    /** r2 open; r1 and r3 closed but already seen. */
+    function makeStoreWithMixedState() {
+      const store = makeStore();
+      store.expansion.expand(['r1', 'r2', 'r3']);
+      store.expansion.collapse(['r1', 'r3']);
+      return store;
+    }
+
+    it('release([id]) on a closed id removes it from everExpanded', () => {
+      const store = makeStoreWithClosedR1();
+
+      store.expansion.release(['r1']);
+
+      expect(store.expansion.everExpanded().has('r1')).toBe(false);
+    });
+
+    it('release([id]) on an open id leaves it in everExpanded', () => {
+      const store = makeStore();
+      store.expansion.toggle('r1');
+
+      store.expansion.release(['r1']);
+
+      expect(store.expansion.everExpanded().has('r1')).toBe(true);
+      expect(store.expansion().has('r1')).toBe(true);
+    });
+
+    it('release() with no ids removes every closed id and keeps the open ones', () => {
+      const store = makeStoreWithMixedState();
+
+      store.expansion.release();
+
+      expect([...store.expansion.everExpanded()]).toEqual(['r2']);
+    });
+
+    it('release() and release([id]) leave expansion() unchanged and emit nothing on changed', () => {
+      const store = makeStoreWithMixedState();
+      const emitted = collect(store);
+
+      store.expansion.release(['r1']);
+      store.expansion.release();
+
+      expect([...store.expansion()]).toEqual(['r2']);
+      expect(emitted).toEqual([]);
+    });
+
+    it('release([]) is a no-op and keeps the everExpanded reference', () => {
+      const store = makeStoreWithClosedR1();
+      const before = store.expansion.everExpanded();
+
+      store.expansion.release([]);
+
+      expect(store.expansion.everExpanded()).toBe(before);
+      expect(before.has('r1')).toBe(true);
+    });
+
+    it('unknown and already-released ids are ignored without throwing and keep the everExpanded reference', () => {
+      const store = makeStoreWithClosedR1();
+      store.expansion.release(['r1']);
+      const before = store.expansion.everExpanded();
+
+      expect(() => store.expansion.release(['r1', 'missing'])).not.toThrow();
+
+      expect(store.expansion.everExpanded()).toBe(before);
+    });
+
+    it('a release that removes ids notifies computed readers of everExpanded', () => {
+      const store = makeStoreWithClosedR1();
+      const hasR1 = computed(() => store.expansion.everExpanded().has('r1'));
+      expect(hasR1()).toBe(true);
+
+      store.expansion.release(['r1']);
+
+      expect(hasR1()).toBe(false);
+    });
+
+    it('a released id that is opened again is back in everExpanded', () => {
+      const store = makeStoreWithClosedR1();
+      store.expansion.release(['r1']);
+
+      store.expansion.toggle('r1');
+
+      expect(store.expansion.everExpanded().has('r1')).toBe(true);
+    });
+  });
+
   // -------------------------------------------------------------------------------------
   // Type-level assertions. The vitest executor does NOT typecheck `expectTypeOf` — it is
   // inert at runtime. These are only enforced by `tsc -p libs/table/tsconfig.spec.json
@@ -717,6 +827,18 @@ describe('withExpansion', () => {
       expectTypeOf(store).not.toBeAny();
       expectTypeOf(store.expansion).toMatchTypeOf<ExpansionSlice>();
       expectTypeOf(store.expansion()).toEqualTypeOf<ReadonlySet<RowId>>();
+    });
+
+    it('ExpansionSlice carries release(ids?: readonly RowId[]): void', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withExpansion(),
+        ),
+      );
+
+      expectTypeOf(store.expansion.release).toEqualTypeOf<(ids?: readonly RowId[]) => void>();
     });
 
     it('withComputed() as a trailing derive block adds a typed member derived from expansion()', () => {
