@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "runId": "expansion-release-20261010T095418Z",
+  "slug": "expansion-release",
+  "ticketRef": "#200",
+  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/200",
+  "domainPath": "libs/table",
+  "workspaceRoot": "libs/table/docs/work/expansion-release",
+  "stack": "angular",
+  "isComplex": null,
+  "decisionsPath": "libs/table/docs/work/expansion-release/1-decisions.md",
+  "capabilityLogPath": "libs/table/docs/decisions/expansion.md",
+  "specPath": null,
+  "architecturePath": null,
+  "githubIssues": [],
+  "createdAt": "2026-10-10T09:54:18Z",
+  "updatedAt": "2026-10-10T09:54:18Z"
+}
