@@ -1,6 +1,6 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { expectTypeOf } from 'vitest';
+import { expectTypeOf, vi } from 'vitest';
 import { removeRow } from '../../mutations/row-mutations';
 import { noData } from '../../table.mock';
 import { createColumns } from '../create-columns';
@@ -462,6 +462,237 @@ describe('withExpansion', () => {
         store.tree.toggle('r1');
         expect(store.renderRows().map((row) => row.id)).toEqual(['r1', 'c1', 'r2']);
       }
+    });
+  });
+
+  describe('multi: false (single-open)', () => {
+    function makeStore(config: { initial?: readonly RowId[]; multi?: boolean | (() => boolean) }) {
+      return inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withExpansion(config),
+        ),
+      );
+    }
+
+    function collect(store: ReturnType<typeof makeStore>): ExpansionChange[] {
+      const emitted: ExpansionChange[] = [];
+      store.expansion.changed.subscribe((change) => emitted.push(change));
+      return emitted;
+    }
+
+    it('defaults to multi-open when multi is omitted', () => {
+      const store = makeStore({});
+      store.expansion.toggle('r1');
+      store.expansion.toggle('r2');
+      expect([...store.expansion()]).toEqual(['r1', 'r2']);
+    });
+
+    it('toggle on another row displaces the open one in a single emission', () => {
+      const store = makeStore({ multi: false });
+      store.expansion.toggle('r1');
+      const emitted = collect(store);
+
+      store.expansion.toggle('r2');
+
+      expect([...store.expansion()]).toEqual(['r2']);
+      expect(emitted).toEqual([{ added: ['r2'], removed: ['r1'] }]);
+    });
+
+    it('toggle on the open row closes it, leaving none open', () => {
+      const store = makeStore({ multi: false });
+      store.expansion.toggle('r1');
+      const emitted = collect(store);
+
+      store.expansion.toggle('r1');
+
+      expect(store.expansion().size).toBe(0);
+      expect(emitted).toEqual([{ added: [], removed: ['r1'] }]);
+    });
+
+    it('expand(ids) keeps only the last id of the write', () => {
+      const store = makeStore({ multi: false });
+      store.expansion.expand(['r1', 'r2']);
+      expect([...store.expansion()]).toEqual(['r2']);
+    });
+
+    it('expand(ids) displaces a previously open row', () => {
+      const store = makeStore({ multi: false });
+      store.expansion.toggle('r1');
+      const emitted = collect(store);
+
+      store.expansion.expand(['r3']);
+
+      expect([...store.expansion()]).toEqual(['r3']);
+      expect(emitted).toEqual([{ added: ['r3'], removed: ['r1'] }]);
+    });
+
+    it('expand() with no ids keeps the last of rows()', () => {
+      const store = makeStore({ multi: false });
+      store.expansion.expand();
+      expect([...store.expansion()]).toEqual(['r3']);
+    });
+
+    it('set(ids) keeps the last id', () => {
+      const store = makeStore({ multi: false });
+      store.expansion.set(['r1', 'r2']);
+      expect([...store.expansion()]).toEqual(['r2']);
+    });
+
+    it('collapse is unchanged: collapse(ids) and collapse() close rows', () => {
+      const store = makeStore({ multi: false });
+      store.expansion.toggle('r1');
+      store.expansion.collapse(['r1']);
+      expect(store.expansion().size).toBe(0);
+
+      store.expansion.toggle('r2');
+      store.expansion.collapse();
+      expect(store.expansion().size).toBe(0);
+    });
+
+    it('emitEvent: false still trims to one open row and emits nothing', () => {
+      const store = makeStore({ multi: false });
+      const emitted = collect(store);
+
+      store.expansion.set(['r1', 'r2'], { emitEvent: false });
+      expect([...store.expansion()]).toEqual(['r2']);
+
+      store.expansion.toggle('r3', { emitEvent: false });
+      expect([...store.expansion()]).toEqual(['r3']);
+
+      expect(emitted).toEqual([]);
+    });
+
+    it('initial with several ids keeps the last, seeds everExpanded from it only, emits nothing', () => {
+      const emitted: ExpansionChange[] = [];
+      const store = inContext(() => {
+        const s = createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withExpansion({ initial: ['r1', 'r2'], multi: false }),
+        );
+        s.expansion.changed.subscribe((change) => emitted.push(change));
+        return s;
+      });
+
+      expect([...store.expansion()]).toEqual(['r2']);
+      expect([...store.expansion.everExpanded()]).toEqual(['r2']);
+      expect(emitted).toEqual([]);
+    });
+
+    it('a displaced row stays in everExpanded', () => {
+      const store = makeStore({ multi: false });
+      store.expansion.toggle('r1');
+      store.expansion.toggle('r2');
+
+      expect(store.expansion().has('r1')).toBe(false);
+      expect(store.expansion.everExpanded().has('r1')).toBe(true);
+      expect(store.expansion.everExpanded().has('r2')).toBe(true);
+    });
+
+    it('row removal still prunes the open row from expansion()', () => {
+      const data = signal(makeRows());
+      const store = inContext(() =>
+        createTable(
+          data,
+          { trackBy: 'id', columns: makeColumns() },
+          withExpansion({ multi: false }),
+        ),
+      );
+      store.expansion.toggle('r1');
+
+      data.update((rows) => rows.filter((row) => row.id !== 'r1'));
+      TestBed.tick();
+
+      expect(store.expansion().size).toBe(0);
+      expect(store.expansion.everExpanded().has('r1')).toBe(true);
+    });
+
+    describe('live accessor', () => {
+      it('flipping to false with several open closes all in one emission', () => {
+        const multi = signal(true);
+        const store = makeStore({ multi: () => multi() });
+        TestBed.tick();
+        store.expansion.expand(['r1', 'r2', 'r3']);
+        const emitted = collect(store);
+
+        multi.set(false);
+        TestBed.tick();
+
+        expect(store.expansion().size).toBe(0);
+        expect(emitted).toHaveLength(1);
+        expect([...emitted[0].removed].sort()).toEqual(['r1', 'r2', 'r3']);
+        expect(emitted[0].added).toEqual([]);
+      });
+
+      it('flipping to false with one open emits nothing and keeps it', () => {
+        const multi = signal(true);
+        const store = makeStore({ multi: () => multi() });
+        TestBed.tick();
+        store.expansion.toggle('r1');
+        const emitted = collect(store);
+
+        multi.set(false);
+        TestBed.tick();
+
+        expect([...store.expansion()]).toEqual(['r1']);
+        expect(emitted).toEqual([]);
+      });
+
+      it('flipping to false with none open emits nothing', () => {
+        const multi = signal(true);
+        const store = makeStore({ multi: () => multi() });
+        TestBed.tick();
+        const emitted = collect(store);
+
+        multi.set(false);
+        TestBed.tick();
+
+        expect(store.expansion().size).toBe(0);
+        expect(emitted).toEqual([]);
+      });
+
+      it('flipping back to true leaves state alone and allows multi-open again', () => {
+        const multi = signal(false);
+        const store = makeStore({ multi: () => multi() });
+        TestBed.tick();
+        store.expansion.toggle('r1');
+        const emitted = collect(store);
+
+        multi.set(true);
+        TestBed.tick();
+        expect([...store.expansion()]).toEqual(['r1']);
+        expect(emitted).toEqual([]);
+
+        store.expansion.toggle('r2');
+        expect([...store.expansion()]).toEqual(['r1', 'r2']);
+      });
+    });
+
+    describe('throwing accessor', () => {
+      it('is reported with console.error, treated as multi-open, and nothing throws out', () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+        try {
+          const store = makeStore({
+            multi: () => {
+              throw new Error('boom');
+            },
+          });
+
+          expect(() => {
+            store.expansion.toggle('r1');
+            store.expansion.toggle('r2');
+            store.expansion.set(['r1', 'r3']);
+            TestBed.tick();
+          }).not.toThrow();
+
+          expect([...store.expansion()]).toEqual(['r1', 'r3']);
+          expect(errorSpy).toHaveBeenCalled();
+        } finally {
+          errorSpy.mockRestore();
+        }
+      });
     });
   });
 
