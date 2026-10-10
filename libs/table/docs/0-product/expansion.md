@@ -520,15 +520,14 @@ Opt-in: `@if (expansion().has(id) || (keepMounted(row) && everExpanded().has(id)
 consumer predicate; a kept panel needs `[inert]="!isOpen"`. For panels with expensive inner state
 (peer: AG Grid's `keepDetailRows`). The library does nothing — the gate is consumer template code.
 _Part 2 — decided 2026-10-01: add `table.expansion.release(ids?: readonly RowId[]): void` (E39)._
-Removes the ids from `everExpanded` (no ids = clear); never touches the open set, so an open panel
-stays open; emits nothing on `changed` — nothing opened or closed. Why: `everExpanded` is
+Removes the closed ids from `everExpanded` (no ids = every closed id); open ids are skipped (#200,
+E62), so an open panel stays open; emits nothing on `changed` — nothing opened or closed. Why: `everExpanded` is
 grow-only library state, so a consumer cannot free a kept panel per row — the helper-or-recipe bar
-(`1-state/architecture.md`). Collapse-all then `release()` frees every kept panel. The ADR-0006
+(`1-state/architecture.md`). `release()` with no ids frees every closed kept panel. The ADR-0006
 exemption is unchanged: row removal still doesn't prune `everExpanded`; `release()` is the
 explicit consumer control. Name: `release` — `unmount` rejected (the library does no DOM work),
-`forget` the other candidate. _Still owes, in [#200](https://github.com/DvirMon/ng-table/issues/200):_ a spec via `/to-spec`; an ADR-0006 amendment ("an
-additive ledger by design" now has one explicit remover); an `index.ts` export check; decisions-log
-row E39 (added).
+`forget` the other candidate. The spec, the ADR-0006 amendment ("an additive ledger by design" now
+has one explicit remover) and the log row E39 landed in [#200](https://github.com/DvirMon/ng-table/issues/200).
 _Part 3 — decided 2026-10-01: the library ships panel a11y directives (E41);_ details settle in the
 UI spec rewrite. A **toggle directive** on the consumer's `<button>` binds `aria-expanded` and
 `aria-controls` (the panel's id); the native button keeps Enter/Space — OQ-exp-2's APG disclosure,

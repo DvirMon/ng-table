@@ -44,7 +44,9 @@ export function pruneByIds(
 **Exemptions are per feature, not centralized** — a core registry that reconciled every id-keyed
 slice uniformly couldn't express either: `withRowEdit()`'s `ABSENT` snapshots (D28's blank-row-add
 puts an id in `editing` before the row exists in `data`) and `withExpansion()`'s `everExpanded`
-(an additive ledger by design, answers "ever expanded", not "is this row live").
+(an additive ledger by design, answers "ever expanded", not "is this row live"). Row removal
+never prunes it. It has exactly one explicit, consumer-called remover, `release()`, which skips
+ids that are currently open.
 
 ## Alternatives considered
 
