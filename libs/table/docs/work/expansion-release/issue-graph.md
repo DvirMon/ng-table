@@ -7,7 +7,7 @@ Epic: [#200](https://github.com/DvirMon/ng-table/issues/200) —
 
 | #                                                      | Title                                               | Slice slug        | Depends on | Blocks                |
 | ------------------------------------------------------ | --------------------------------------------------- | ----------------- | ---------- | --------------------- |
-| [#200](https://github.com/DvirMon/ng-table/issues/200) | Table: withExpansion() release() — free kept panels | expansion-release | —          | #190 (story 2.3, E60) |
+| [#200](https://github.com/DvirMon/ng-table/issues/200) | Table: withExpansion() release() — free kept panels | expansion-release | —          | #190 (story 2.3, E63) |
 
 The slice slug is what `/to-tasks` uses in the issue's branch name, `<type>/<NN>-<slice-slug>`.
 
@@ -20,7 +20,7 @@ The slice slug is what `/to-tasks` uses in the issue's branch name, `<type>/<NN>
 ## Summary
 
 - **Parallel-safe:** — (single node)
-- **Sequenced:** #190's story 2.3 waits on #200's `release()` (D4, E60).
+- **Sequenced:** #190's story 2.3 waits on #200's `release()` (D4, E63).
 - **Starting frontier:** #200.
 
 ## Source

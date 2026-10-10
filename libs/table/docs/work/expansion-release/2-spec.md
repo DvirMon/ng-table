@@ -2,7 +2,7 @@
 
 Source: [#200](https://github.com/DvirMon/ng-table/issues/200) ·
 decisions: [`1-decisions.md`](1-decisions.md) · capability log:
-[`decisions/expansion.md`](../../decisions/expansion.md) (E39, E40, E59, E60)
+[`decisions/expansion.md`](../../decisions/expansion.md) (E39, E40, E62, E63)
 
 ## Problem Statement
 
@@ -97,7 +97,7 @@ A new method on the panel slice: `table.expansion.release(ids?)`.
   all times, so any `everExpanded().has(id)` gate (the fetch recipe
   from OQ-exp-5, the panel directive) never unmounts an open panel.
   Amends E39: "never touches the open set" stays true; "removes ids"
-  now means closed ids only (E59).
+  now means closed ids only (E62).
 - **Edge defaults (D2):**
   - `release([])` is a no-op. Only an omitted argument means "all
     closed" — the same rule `collapse()` follows.
@@ -132,10 +132,10 @@ A new method on the panel slice: `table.expansion.release(ids?)`.
     by design" now has one explicit, consumer-called remover that
     skips open ids. Row removal still never prunes it.
   - Capability log: E39's status becomes shipped (#200) at ship time.
-    E59/E60 already record this ticket's decisions.
+    E62/E63 already record this ticket's decisions.
   - Any other doc that still describes `release()` as clearing
     everything, or as pending, is corrected in the same change.
-- **#190 ordering (D4, E60):** #190's story 2.3 is written with a
+- **#190 ordering (D4, E63):** #190's story 2.3 is written with a
   "free kept panels" `release()` button from the start. #190 depends
   on #200. This ticket adds no story.
 
