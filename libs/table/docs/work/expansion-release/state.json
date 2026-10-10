@@ -12,7 +12,7 @@
   "capabilityLogPath": "libs/table/docs/decisions/expansion.md",
   "specPath": "libs/table/docs/work/expansion-release/2-spec.md",
   "architecturePath": null,
-  "githubIssues": [],
+  "githubIssues": ["#200"],
   "createdAt": "2026-10-10T09:54:18Z",
-  "updatedAt": "2026-10-10T13:00:00Z"
+  "updatedAt": "2026-10-10T13:30:00Z"
 }
