@@ -11,7 +11,7 @@ export * from './directives/ngp-table-row.directive';
 export * from './directives/ngp-table-tree-row.directive';
 export * from './directives/ngp-table-tree-toggle.directive';
 export * from './directives/ngp-table-panel.directive';
-export * from './directives/ngp-table-row-animation.directive';
+export * from './directives/ngp-table-row-move.directive';
 export * from './directives/ngp-table-header-cell.directive';
 export * from './directives/ngp-table-cell.directive';
 export * from './api/features/with-sorting';

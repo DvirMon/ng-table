@@ -1,6 +1,6 @@
 /* Opt-in only — not imported by any directive or index.ts. See
    docs/3-ui/directives/row-animation.md. The FLIP move needs no stylesheet: the
-   `ngpTableRowAnimation` directive animates rows itself (Web Animations API), timed by its
+   `ngpTableRowMove` directive animates rows itself (Web Animations API), timed by its
    `flipTiming` input. This file ships the enter/leave classes only.
    Consumer tables using row animation must also set `border-collapse: separate;
    border-spacing: 0;` — collapsed borders don't follow a transform. */
