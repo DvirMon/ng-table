@@ -10,9 +10,9 @@
   "isComplex": false,
   "decisionsPath": "libs/table/docs/1-state/work/expansion/active/expansion-single-open/1-decisions.md",
   "capabilityLogPath": "libs/table/docs/decisions/expansion.md",
-  "specPath": null,
+  "specPath": "libs/table/docs/1-state/work/expansion/active/expansion-single-open/2-spec.md",
   "architecturePath": null,
-  "githubIssues": [],
+  "githubIssues": [210],
   "createdAt": "2026-10-10T09:28:03Z",
-  "updatedAt": "2026-10-10T10:00:00Z"
+  "updatedAt": "2026-10-10T10:30:00Z"
 }
