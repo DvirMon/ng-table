@@ -52,17 +52,19 @@ interface ExpansionSlice {
 ```ts
 interface WithExpansionConfig {
   initial?: readonly RowId[];
+  multi?: boolean | (() => boolean); // default true
 }
 ```
 
 Not generic in `TRow` — nothing in it reads a row. `initial` is covered under
-[Initial State and Persistence](#initial-state-and-persistence).
+[Initial State and Persistence](#initial-state-and-persistence); `multi` under
+[Single-open](#single-open-multi).
 
 ## Behavior
 
-- **Multi-expand:** any number of rows can be open at once — no auto-collapse of siblings.
-  Single-open (incl. a side panel) is a consumer use of `set(isOpen ? [] : [id])`, not a mode —
-  `0-product/expansion.md` OQ-exp-1, OQ-exp-7.
+- **Multi-expand (default):** any number of rows can be open at once — no auto-collapse of
+  siblings. Single-open (incl. a side panel) is `multi: false` — see
+  [Single-open](#single-open-multi); `0-product/expansion.md` OQ-exp-1, OQ-exp-7.
 - **`everExpanded` — lazy-mount support:** a set recording every id that has been opened at least
   once. `expand()`/`toggle()`-to-open add to it; `collapse()` and `toggle()`-to-close never remove
   from it. It shrinks only through `release()` (E39, specced, not shipped) — exempt from
@@ -93,7 +95,7 @@ Not generic in `TRow` — nothing in it reads a row. `initial` is covered under
 | Method                                     | Description                                                                                                                                                                |
 | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `table.expansion.toggle(rowId, options?)`  | Toggle a single row's open state. Emits `changed` once.                                                                                                                    |
-| `table.expansion.expand(ids?, options?)`   | Adds. Omitted `ids`: every row in `rows()`, unioned with what's already open.                                                                                              |
+| `table.expansion.expand(ids?, options?)`   | Adds. Omitted `ids`: every row in `rows()`, unioned with what's already open; targets are ordered last, so single mode keeps the last target.                              |
 | `table.expansion.collapse(ids?, options?)` | Removes. Omitted `ids`: everything currently open.                                                                                                                         |
 | `table.expansion.set(ids, options?)`       | Atomic replace — the restore path.                                                                                                                                         |
 | `table.expansion.release(ids?)`            | **Specced, not shipped (E39, #200).** Removes ids from `everExpanded`; omitted `ids` clears it. Never touches the open set; emits nothing on `changed`. Frees kept panels. |
@@ -105,6 +107,26 @@ There is no tri-state `state` member on this slice — "are all panels open?" is
 meaningful toolbar question the way "are all groups expanded?" is. `withTree()` ships `state`
 for that reason (D5/E9); the panel's one-line equivalent, if a consumer ever needs it, is
 `table.expansion().size === table.rows().length` at the call site.
+
+## Single-open (`multi`)
+
+`multi` defaults to `true`. `multi: false` — or an accessor returning `false`, e.g.
+`() => !isWide()` — keeps at most one row open (E54, #210; `withRowEdit`'s `multiple` rule):
+
+- **Every write keeps the last id of the write:** `toggle`, `expand` (no `ids`: the last row of
+  `rows()`), `set([a, b, c])` keeps `c`, and `initial`. `toggle` of the open row closes it,
+  leaving none. No verb needs mode knowledge; the trim runs before the diff, so a displacing
+  write is **one** `changed` carrying opened + closed.
+- **`emitEvent: false` still trims** — the trim is state, not an event.
+- **Live flip.** An accessor is read reactively. Flipping to `false` with more than one row open
+  closes **all** of them (no survivor — a flip names no row) in one `changed`
+  (`{ added: [], removed: [...] }`); with one or none open nothing changes and nothing emits (E59).
+- **Throwing accessor** degrades to `true` (hides nothing) and is reported via `console.error` in
+  production too, once per evaluation, per [ADR-0014](../../adr/0014-runtime-error-policy.md); it
+  never propagates out of a write (E60). `withRowEdit`'s propagating `multiple` is not precedent.
+- **`everExpanded`** is seeded from the _trimmed_ `initial` (E61) and stays additive — a displaced
+  or flip-closed row remains in it. Trimming at construction emits nothing.
+- `onRowsRemoved` pruning and `withTree()` (its own store, no `multi`) are unaffected.
 
 ## Initial State and Persistence
 

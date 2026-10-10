@@ -9,8 +9,8 @@ status: >
   directive ships, and the UI spec (`3-ui/directives/expansion.md`, v0.4) predates the panel/tree
   split and would ship four bugs if built as written (§8.2 U2). Most stories here are "shipped,
   never shown", not "unbuilt". One is a genuine gap: a panel's loading/failure state is
-  consumer-owned with no recipe yet (3.1, OQ-exp-5). Single-open (OQ-exp-1) and the side panel
-  (OQ-exp-7, 1.6) are recipes on the shipped state; the panel ships no CSS (OQ-exp-6). Panel mount
+  consumer-owned with no recipe yet (3.1, OQ-exp-5). Single-open is state (`withExpansion({ multi })`, OQ-exp-1 reversed, E54/#210); the side panel
+  (OQ-exp-7, 1.6) is a recipe on the shipped state; the panel ships no CSS (OQ-exp-6). Panel mount
   lifetime is resolved (OQ-exp-8: unmount by default, `release()`, a11y directives in #199,
   virtualization deferred to the virtual-scroll spec); step-to-next-row is core keyboard navigation (OQ-exp-9, ADR-0029).
   Written after `features/expansion.md` (`spec: drilled`, code shipped) and ADR-0012 — this doc's
@@ -197,8 +197,8 @@ disables _every_ toggle (§8.2 U2).
 **Design status — shipped, never shown.** Multi-open is the default in every library that has a
 default (MUI, PrimeNG, TanStack). The end-user products document only one detail open at a time —
 but that is a side-panel constraint (one panel slot), not a choice an inline layout forces. A
-single-open is a recipe, `set(isOpen ? [] : [id])`, not a mode (**OQ-exp-1**, resolved; shown
-in 1.6).
+single-open is the `multi: false` setting on `withExpansion()` (**OQ-exp-1**, reversed by
+E54/#210; shown in 1.6).
 
 ## 1.5 — Open or close every panel at once — ❌ not covered
 
@@ -450,13 +450,11 @@ its control is the newer one and must be visually distinct from the tree's. ❌ 
 
 Each carries a recommendation and what would settle it. None silently picked.
 
-**OQ-exp-1 — Single-open mode: needed? — resolved 2026-09-30: no `mode` setting; a recipe.**
-`table.expansion.set(isOpen ? [] : [id])` in place of `toggle(id)`. A cheap one-liner with no
-index math and no `trackBy`, so it stays a recipe — the same test as the declined "all open?"
-member (`features/expansion.md:96-99`). Multi-open stays the default. Shown by story 1.6's
-side panel (#190 story D, `side-panel/`).
-
-> **Reversed 2026-10-01 (E54, #210).** Once `ngpTablePanelToggle` owns the click (#199, E53), the one-line recipe becomes a second write after the directive's. Single-open moves to `withExpansion({ multi })`, default `true`.
+**OQ-exp-1 — Single-open mode: needed? — resolved 2026-10-01 (E54, #210): `withExpansion({ multi })`, default `true`.**
+Reverses the 2026-09-30 ruling (a `set(isOpen ? [] : [id])` recipe): once `ngpTablePanelToggle`
+owns the click (#199, E53), a recipe becomes a second write after the directive's. In single
+mode every write keeps the last-opened row; multi-open stays the default. Shown by story 1.6's
+side panel (#190 story D, `side-panel/`). Contract: `features/expansion.md`, Single-open.
 
 **OQ-exp-2 — Where do `aria-expanded` and the toggle live for the panel? — resolved 2026-09-30.**
 The panel toggle follows the WAI-ARIA APG
