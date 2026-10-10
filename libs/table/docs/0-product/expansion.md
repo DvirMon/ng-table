@@ -254,8 +254,8 @@ expand-all _button_ — it is an API or a recipe in all five — and it keeps be
 **Coverage:** nothing on screen.
 
 **Design status — resolved 2026-09-30 (OQ-exp-7).** The state already supports it; the UI (drawer,
-split view, modal) is the consumer's. `withExpansion()` used single-open: `set([id])` to show,
-`set([])` / `collapse()` to close, `expansion()` to read; no inline panel markup. Keyed by id, so
+split view, modal) is the consumer's. `withExpansion({ multi: false })` keeps one panel open: `toggle(id)` / `set([id])` to show,
+`collapse()` to close, `expansion()` to read; no inline panel markup. Keyed by id, so
 it follows the row across sort and filter; `onRowsRemoved` prunes the open set, so deleting the row
 closes it. Stepping to the next/previous row is core keyboard navigation (**OQ-exp-9**, [#201](https://github.com/DvirMon/ng-table/issues/201)) — out of scope here.
 
@@ -550,7 +550,7 @@ _Sequencing:_ #190's 2.3 becomes the opt-in demo; 3.1 refetches on reopen under 
 
 **OQ-exp-7 — Is a side "peek" panel in scope? — resolved 2026-09-30: supported by the current
 state, not a non-goal.** The UI stays consumer-owned (drawer, split view, modal beside the table).
-Recipe: `withExpansion()` used single-open — write `set([id])`, close `set([])` / `collapse()`,
+Recipe: `withExpansion({ multi: false })` — write `toggle(id)` / `set([id])`, close `collapse()`,
 read `expansion()`; no inline panel markup. From existing state it gets: follows the row across
 sort/filter (keyed by id); closes when the row is deleted (`onRowsRemoved` prunes the open set);
 `changed` / a `computed` to load the shown row's data. A plain `signal<RowId | null>` also works
