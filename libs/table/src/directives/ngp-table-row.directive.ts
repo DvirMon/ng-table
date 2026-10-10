@@ -10,11 +10,11 @@ import {
   type Signal,
 } from '@angular/core';
 
-import { NGP_TABLE_ROW, NGP_TABLE_ROW_ANIMATION } from './table.tokens';
+import { NGP_TABLE_ROW, NGP_TABLE_ROW_MOVE } from './table.tokens';
 import type { RenderRow, RowId } from '../api/types';
 
 // Dual-tag selector, role set unconditionally regardless of host tag. FLIP move animation is
-// opt-in via `ngpTableRowAnimation` on the host table (ngp-table-row-animation.directive.ts),
+// opt-in via `ngpTableRowMove` on the host table (ngp-table-row-move.directive.ts),
 // which animates the row itself; this directive only registers its element there.
 @Directive({
   selector: 'tr[ngpTableRow], div[ngpTableRow]',
@@ -34,8 +34,8 @@ export class NgpTableRowDirective<TRow = unknown> {
   readonly rowId: Signal<RowId> = computed(() => this.ngpTableRow().id);
   readonly isGroupHeader: Signal<boolean> = computed(() => this.ngpTableRow().kind === 'group');
 
-  // Optional: absent when the host table has no `ngpTableRowAnimation` directive.
-  private readonly rowAnimation = inject(NGP_TABLE_ROW_ANIMATION, { optional: true });
+  // Optional: absent when the host table has no `ngpTableRowMove` directive.
+  private readonly rowMove = inject(NGP_TABLE_ROW_MOVE, { optional: true });
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   constructor() {
@@ -46,11 +46,11 @@ export class NgpTableRowDirective<TRow = unknown> {
     // `@for` tracks by row id, so this instance's id never changes and the effect runs exactly
     // once.
     effect(() => {
-      this.rowAnimation?.registerRowElement(this.rowId(), element);
+      this.rowMove?.registerRowElement(this.rowId(), element);
     });
 
     inject(DestroyRef).onDestroy(() => {
-      this.rowAnimation?.unregisterRowElement(this.rowId(), element);
+      this.rowMove?.unregisterRowElement(this.rowId(), element);
     });
   }
 }

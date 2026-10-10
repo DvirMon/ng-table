@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
 import { NgpTableDirective } from './ngp-table.directive';
-import { NgpTableRowAnimationDirective } from './ngp-table-row-animation.directive';
+import { NgpTableRowMoveDirective } from './ngp-table-row-move.directive';
 import { createMockTableStore } from '../table.mock';
 import type { RenderRow, RowId, TableStore } from '../api/types';
 
@@ -62,15 +62,15 @@ function tick(): void {
 }
 
 @Component({
-  imports: [NgpTableDirective, NgpTableRowAnimationDirective],
-  template: `<table [ngpTable]="store" ngpTableRowAnimation></table>`,
+  imports: [NgpTableDirective, NgpTableRowMoveDirective],
+  template: `<table [ngpTable]="store" ngpTableRowMove></table>`,
 })
 class HostComponent {
   store!: TableStore<unknown>;
 }
 
 function setup(): {
-  directive: NgpTableRowAnimationDirective<unknown>;
+  directive: NgpTableRowMoveDirective<unknown>;
   renderRows: WritableSignal<RenderRow<unknown>[]>;
 } {
   const { store, renderRows } = createControllableStore();
@@ -80,13 +80,13 @@ function setup(): {
   fixture.detectChanges();
 
   const directive = fixture.debugElement
-    .query(By.directive(NgpTableRowAnimationDirective))
-    .injector.get(NgpTableRowAnimationDirective) as NgpTableRowAnimationDirective<unknown>;
+    .query(By.directive(NgpTableRowMoveDirective))
+    .injector.get(NgpTableRowMoveDirective) as NgpTableRowMoveDirective<unknown>;
 
   return { directive, renderRows };
 }
 
-describe('NgpTableRowAnimationDirective — row-position measurement (FLIP)', () => {
+describe('NgpTableRowMoveDirective — row-position measurement (FLIP)', () => {
   beforeEach(() => stubReducedMotion(false));
   afterEach(() => vi.unstubAllGlobals());
 

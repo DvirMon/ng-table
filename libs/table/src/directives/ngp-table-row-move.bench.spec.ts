@@ -2,7 +2,7 @@ import { Component, signal, type Type, type WritableSignal } from '@angular/core
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { NgpTableDirective } from './ngp-table.directive';
-import { NgpTableRowAnimationDirective } from './ngp-table-row-animation.directive';
+import { NgpTableRowMoveDirective } from './ngp-table-row-move.directive';
 import { NgpTableRowDirective } from './ngp-table-row.directive';
 import { createColumns } from '../api/create-columns';
 import { createTable } from '../api/create-table';
@@ -67,12 +67,12 @@ interface BenchHost {
 // interpolation — the angular-eslint template extractor reads a decorator's `template`
 // property from raw source text, and a literal `${ROWS_TEMPLATE}` in that text reads as an
 // unescaped `{`, which it mistakes for an unterminated ICU expansion.
-const ANIMATED_BENCH_TEMPLATE = `<table class="bench-table" [ngpTable]="table" ngpTableRowAnimation>${ROWS_TEMPLATE}</table>`;
+const ANIMATED_BENCH_TEMPLATE = `<table class="bench-table" [ngpTable]="table" ngpTableRowMove>${ROWS_TEMPLATE}</table>`;
 const PLAIN_BENCH_TEMPLATE = `<table class="bench-table" [ngpTable]="table">${ROWS_TEMPLATE}</table>`;
 
 @Component({
   selector: 'ngp-flip-bench-animated',
-  imports: [NgpTableDirective, NgpTableRowAnimationDirective, NgpTableRowDirective],
+  imports: [NgpTableDirective, NgpTableRowMoveDirective, NgpTableRowDirective],
   template: ANIMATED_BENCH_TEMPLATE,
   styles: BENCH_STYLES,
 })
@@ -449,7 +449,7 @@ function isGatedSize(gatedRowCounts: readonly number[], rowCount: number): boole
   return gatedRowCounts.includes(rowCount);
 }
 
-describe('NgpTableRowAnimationDirective — real-browser FLIP benchmark', () => {
+describe('NgpTableRowMoveDirective — real-browser FLIP benchmark', () => {
   const results = new Map<number, SizeResult>();
 
   beforeEach(() => {
@@ -591,7 +591,7 @@ async function sampleProbe(table: HTMLTableElement, rows: HTMLElement[]): Promis
   return { forcedLayoutMs, offsetTopReadsMs, rectReadsMs, innerHeightReadsMs, animateCallsMs };
 }
 
-describe('NgpTableRowAnimationDirective — per-step cost probes (report-only)', () => {
+describe('NgpTableRowMoveDirective — per-step cost probes (report-only)', () => {
   it(`times forced layout, offsetTop/rect/innerHeight reads and animate() for ${PROBE_ROW_COUNT} bare rows`, async () => {
     const { table, rows } = mountProbeRows(PROBE_ROW_COUNT);
     const samples: ProbeSample[] = [];

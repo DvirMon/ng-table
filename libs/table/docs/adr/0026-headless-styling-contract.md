@@ -140,7 +140,8 @@ ngp-table` so unlayered consumer rules win without
 ## Amendment 2026-09-23 — row FLIP animates in the directive
 
 The row reorder (FLIP) move is now played by
-`ngpTableRowAnimation` through the Web Animations API
+`ngpTableRowMove` (renamed from `ngpTableRowAnimation` in
+#223) through the Web Animations API
 (`element.animate()`), not by a consumer CSS transition over
 an offset custom property. A CSS transition needs the
 inverted position to render before the play; the two ways to

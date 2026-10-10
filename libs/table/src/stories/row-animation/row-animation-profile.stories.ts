@@ -16,7 +16,7 @@ type Story = StoryObj<Host>;
 /**
  * Profile: 1,000 rows
  *
- * Reverses 1,000 rows with `ngpTableRowAnimation`. For recording a Chrome performance profile
+ * Reverses 1,000 rows with `ngpTableRowMove`. For recording a Chrome performance profile
  * of one reorder; mirrors the benchmark's table.
  */
 export const Profile1000Rows: Story = {
