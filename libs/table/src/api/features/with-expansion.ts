@@ -17,9 +17,9 @@ export interface WithExpansionConfig {
   initial?: readonly RowId[];
   /** Defaults to `true`. `false` keeps at most one row open: each write, `initial` included,
    *  keeps only its last id, and the displaced row closes in the same `changed` emission, even
-   *  with `emitEvent: false`. An accessor is read reactively; flipping it to `false` with more
-   *  than one row open closes them all. A throwing accessor is reported with `console.error`
-   *  and treated as `true`. */
+   *  with `emitEvent: false`. An accessor is read reactively; flipping it to `false` closes all
+   *  open rows if more than one. A throwing accessor is reported via `console.error` and
+   *  treated as `true`. */
   multi?: boolean | (() => boolean);
 }
 
@@ -42,6 +42,8 @@ function resolveMulti(multi: WithExpansionConfig['multi']): Signal<boolean> {
 
 export interface ExpansionSlice {
   (): ReadonlySet<RowId>;
+  /** Ids ever opened, kept so their panels stay mounted. Additive-only and not pruned when rows
+   *  leave `data`; `release()` frees them. */
   readonly everExpanded: Signal<ReadonlySet<RowId>>;
   /** One emission per write, carrying the whole symmetric difference. */
   readonly changed: Observable<ExpansionChange>;
@@ -70,8 +72,8 @@ function buildExpansionSpec<TRow>(
   multi: Signal<boolean>,
   config: WithExpansionConfig,
 ): TableFeatureSpec<TRow, ExpansionMembers> {
-  // Accumulated via the store's `onExpanded` hook, not the store itself — additive-only, exempt
-  // from `onRowsRemoved` pruning (see `ExpansionSlice.everExpanded`).
+  // Note: accumulated via the store's `onExpanded` hook, not the store itself. Additive-only and
+  // exempt from `onRowsRemoved` pruning.
   const everExpanded = signal(new Set<RowId>());
 
   // Single-open: keeps only the last id of the write. Runs inside the store's write funnel, so no
