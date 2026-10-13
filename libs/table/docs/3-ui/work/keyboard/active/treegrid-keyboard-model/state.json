@@ -12,7 +12,19 @@
   "capabilityLogPath": null,
   "specPath": "libs/table/docs/3-ui/work/keyboard/active/treegrid-keyboard-model/2-spec.md",
   "architecturePath": "libs/table/docs/3-ui/work/keyboard/active/treegrid-keyboard-model/3-architecture.md",
-  "githubIssues": [],
+  "githubIssues": [
+    { "number": 232, "slice": "store-focus-member" },
+    { "number": 233, "slice": "focus-recovery" },
+    { "number": 234, "slice": "expansion-follow-focus" },
+    { "number": 235, "slice": "grid-navigation-core" },
+    { "number": 236, "slice": "header-paging-rtl" },
+    { "number": 237, "slice": "widgets-in-cells" },
+    { "number": 238, "slice": "div-grid-parity" },
+    { "number": 239, "slice": "treegrid-row-navigation" },
+    { "number": 240, "slice": "group-header-stops" },
+    { "number": 241, "slice": "panel-arrow-stop" },
+    { "number": 242, "slice": "docs-virtual-scroll-focus-contract" }
+  ],
   "createdAt": "2026-10-10T16:16:41Z",
-  "updatedAt": "2026-10-13T14:00:00Z"
+  "updatedAt": "2026-10-13T15:00:00Z"
 }
