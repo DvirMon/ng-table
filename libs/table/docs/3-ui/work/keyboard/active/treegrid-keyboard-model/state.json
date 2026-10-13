@@ -10,9 +10,9 @@
   "isComplex": true,
   "decisionsPath": "libs/table/docs/3-ui/work/keyboard/active/treegrid-keyboard-model/1-decisions.md",
   "capabilityLogPath": null,
-  "specPath": null,
-  "architecturePath": null,
+  "specPath": "libs/table/docs/3-ui/work/keyboard/active/treegrid-keyboard-model/2-spec.md",
+  "architecturePath": "libs/table/docs/3-ui/work/keyboard/active/treegrid-keyboard-model/3-architecture.md",
   "githubIssues": [],
   "createdAt": "2026-10-10T16:16:41Z",
-  "updatedAt": "2026-10-13T12:00:00Z"
+  "updatedAt": "2026-10-13T14:00:00Z"
 }
