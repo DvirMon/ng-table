@@ -7,12 +7,12 @@
   "domainPath": "libs/table",
   "workspaceRoot": "libs/table/docs/3-ui/work/keyboard/active/treegrid-keyboard-model",
   "stack": "angular",
-  "isComplex": null,
+  "isComplex": true,
   "decisionsPath": "libs/table/docs/3-ui/work/keyboard/active/treegrid-keyboard-model/1-decisions.md",
   "capabilityLogPath": null,
   "specPath": null,
   "architecturePath": null,
   "githubIssues": [],
   "createdAt": "2026-10-10T16:16:41Z",
-  "updatedAt": "2026-10-10T16:16:41Z"
+  "updatedAt": "2026-10-13T12:00:00Z"
 }

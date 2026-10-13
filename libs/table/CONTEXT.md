@@ -36,6 +36,12 @@ value: a selection checkbox, a row-actions cell, an expand toggle. **This
 library has none.** It is headless, so those are markup the consumer writes;
 the concept exists here only to name what a carrier column is not.
 
+**Focused position** — the one row and column a keyboard user is on, held by
+the table as data (a row id and a column id), not as an element on screen. It
+outlives the row scrolling out of view, being re-sorted or being hidden, and is
+the single Tab stop's target. Readable from outside the table.
+_Avoid_: active cell, cursor, selection.
+
 **Schema entry** — the one place a feature's per-column rules are declared.
 Every feature that has per-column configuration owns exactly one, and they all
 share the same path vocabulary and the same plumbing. There is no second
