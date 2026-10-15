@@ -4,7 +4,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { cdp, commands } from 'vitest/browser';
 
 import { NgpTableDirective } from './ngp-table.directive';
-import { NgpTableRowAnimationDirective } from './ngp-table-row-animation.directive';
+import { NgpTableRowMoveDirective } from './ngp-table-row-move.directive';
 import { NgpTableRowDirective } from './ngp-table-row.directive';
 import { createColumns } from '../api/create-columns';
 import { createTable } from '../api/create-table';
@@ -13,7 +13,7 @@ import { createMockRows, type MockRow } from '../table.mock';
 
 // Diagnostic, not a gate (`nx run shared-table:bench-trace`). Records a Chrome performance trace
 // of one plain and one animated 1000-row reversal under the same setup as
-// ngp-table-row-animation.bench.spec.ts, and writes it to `bench-trace.json` at the repo root —
+// ngp-table-row-move.bench.spec.ts, and writes it to `bench-trace.json` at the repo root —
 // open it in DevTools › Performance, or read it with a script. The hosts mirror the bench's.
 
 const TRACE_ROW_COUNT = 1000;
@@ -55,7 +55,7 @@ const ROWS_TEMPLATE = `
   </tbody>
 `;
 
-const ANIMATED_TRACE_TEMPLATE = `<table class="bench-table" [ngpTable]="table" ngpTableRowAnimation>${ROWS_TEMPLATE}</table>`;
+const ANIMATED_TRACE_TEMPLATE = `<table class="bench-table" [ngpTable]="table" ngpTableRowMove>${ROWS_TEMPLATE}</table>`;
 const PLAIN_TRACE_TEMPLATE = `<table class="bench-table" [ngpTable]="table">${ROWS_TEMPLATE}</table>`;
 
 interface TraceHost {
@@ -64,7 +64,7 @@ interface TraceHost {
 
 @Component({
   selector: 'ngp-flip-trace-animated',
-  imports: [NgpTableDirective, NgpTableRowAnimationDirective, NgpTableRowDirective],
+  imports: [NgpTableDirective, NgpTableRowMoveDirective, NgpTableRowDirective],
   template: ANIMATED_TRACE_TEMPLATE,
   styles: TRACE_STYLES,
 })
@@ -223,7 +223,7 @@ async function copyStreamToFile(stream: string): Promise<number> {
   return bytes;
 }
 
-describe('NgpTableRowAnimationDirective — bench trace (diagnostic)', () => {
+describe('NgpTableRowMoveDirective — bench trace (diagnostic)', () => {
   beforeEach(() => {
     allowMotion();
     TestBed.configureTestingModule({ imports: [AnimatedTraceHost, PlainTraceHost] });
