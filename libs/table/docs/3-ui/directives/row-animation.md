@@ -1,8 +1,8 @@
 ---
-title: UI Layer — Row Reorder Animation (ngpTableRowAnimation FLIP)
+title: UI Layer — Row Reorder Animation (ngpTableRowMove FLIP)
 type: architecture
-version: 0.8
-date: 2026-09-25
+version: 0.9
+date: 2026-10-10
 capability: row-animation
 spec: drilled
 code: shipped
@@ -15,11 +15,12 @@ audience: developers
 
 FLIP-based animation for row reordering (any `renderRows()` reshuffle — sorting, drag,
 grouping, but not limited to any one of them), owned by its own opt-in directive,
-`ngpTableRowAnimation`, placed once on the table host. **Off unless that directive is
+`ngpTableRowMove`, placed once on the table host. **Off unless that directive is
 present** — without it, `ngpTableRow` registers nothing; a table with
 `ngpTable`/`ngpTableRow` alone gets no animation mechanism at all. The directive plays the
 move itself through the Web Animations API (`element.animate()`); consumers set its timing
-through the directive's `flipTiming` input, not a stylesheet.
+through the directive's `flipTiming` input, not a stylesheet. Renamed from
+`ngpTableRowAnimation` on 2026-10-10 (#223), because it animates row moves only.
 
 Grouping reshuffles (row moves triggered by `withGrouping()`) are covered by this same
 mechanism, no new API needed — it's already keyed on `renderRows()`, which animates any row
@@ -50,7 +51,7 @@ DOM reorder, measure again, animate the delta.
 
 ## Mechanism
 
-`ngpTableRowAnimation` (selector `table[ngpTableRowAnimation], div[ngpTableRowAnimation]`,
+`ngpTableRowMove` (selector `table[ngpTableRowMove], div[ngpTableRowMove]`,
 dual-tag per ADR-0005) is a separate, opt-in directive placed on the same host element as
 `ngpTable` — not folded into it, per the "opt-in behaviour gets its own public directive"
 rule in `CLAUDE.md`. It injects `NGP_TABLE_STORE` (required) to read `renderRows()` and runs
@@ -91,19 +92,19 @@ checks where the row is drawn, not its layout slot.
 `write` phase, so changing it never re-runs the effect — it applies from the next move.
 Reduced motion: rows still reorder, they just don't glide.
 
-It also writes the `data-row-animation` host attribute unconditionally and provides
-`NGP_TABLE_ROW_ANIMATION`, an `InjectionToken<NgpTableRowAnimationDirective<unknown>>` typed to
+It also writes the `data-row-move` host attribute unconditionally and provides
+`NGP_TABLE_ROW_MOVE`, an `InjectionToken<NgpTableRowMoveDirective<unknown>>` typed to
 the directive class itself and `useExisting`-provided, the same pattern as
 `NGP_TABLE_STORE`/`NGP_TABLE_ROW`.
 
 **Row registry, keyed by id, not DOM position.** `ngpTableRow` registers its own host element
-with `ngpTableRowAnimation` on construct and unregisters on destroy — guarded so a leaving
+with `ngpTableRowMove` on construct and unregisters on destroy — guarded so a leaving
 row's cleanup can't clobber a same-id row that re-entered before the leave animation finished.
 This is what lets a leaving row — still present in the DOM mid `animate.leave`, but no longer
 in `renderRows()` — get skipped during measurement instead of shifting the measured positions
 of every row after it.
 
-`ngpTableRow` injects `NGP_TABLE_ROW_ANIMATION` **optionally** and only registers/unregisters
+`ngpTableRow` injects `NGP_TABLE_ROW_MOVE` **optionally** and only registers/unregisters
 its element; it binds nothing for animation. No state attribute marks a row while it moves —
 dropped as unused, can return when a consumer needs it (ADR-0026 amendment).
 
@@ -132,7 +133,7 @@ The later custom-property/`data-*` offset contract hit two bugs on its first att
 `[style.--custom-prop.px]`'s unit-suffix syntax silently never reached the DOM, and measuring
 by querying `[ngpTableRow]` found nothing (a property binding is never reflected as a DOM
 attribute). The offset property is now gone entirely; measurement still reads the row
-registry, never a DOM query. `ngp-table-row-animation.directive.spec.ts` covers registry,
+registry, never a DOM query. `ngp-table-row-move.directive.spec.ts` covers registry,
 measurement, the `animate()` keyframes and reduced motion against a stubbed
 `animate`/`matchMedia` (jsdom implements neither).
 
@@ -146,7 +147,7 @@ clipped the row mid-transition. `<tr>` itself has no `overflow: hidden`.
 
 CDK drag-drop's sibling-shift (`sorting/single-axis-sort-strategy.ts`, verified against
 source) sets `transform` directly on the real sibling element with an always-on
-`transition: transform` in CSS — no wrapper, no cloning. `ngpTableRowAnimation` likewise
+`transition: transform` in CSS — no wrapper, no cloning. `ngpTableRowMove` likewise
 animates `transform` on the `<tr>` itself (via `animate()`).
 
 **Caveat that was real, now resolved:** `transform` transitions on `display: table-row`
@@ -167,12 +168,12 @@ stays a manual step the consumer must take on their own table CSS.
 
 ## Enabling the animation
 
-`ngpTableRow` writes nothing at all unless `ngpTableRowAnimation` is present on the host.
+`ngpTableRow` writes nothing at all unless `ngpTableRowMove` is present on the host.
 
 **1. Place the directive** — this alone enables the glide; no stylesheet is required for it:
 
 ```html
-<table [ngpTable]="table" ngpTableRowAnimation>
+<table [ngpTable]="table" ngpTableRowMove>
   <tr [ngpTableRow]="row">
     ...
   </tr>
@@ -195,7 +196,7 @@ table's selector):
 ```html
 <table
   [ngpTable]="table"
-  ngpTableRowAnimation
+  ngpTableRowMove
   [flipTiming]="{ duration: 200, easing: 'ease-out' }"
 ></table>
 ```
@@ -207,7 +208,7 @@ reduce` branch for those classes. Reduced motion for the FLIP move is handled in
 (`matchMedia`), not in CSS. The file is not imported by the directive or `index.ts`.
 
 **No package export yet.** The intended published shape is `@ngp/table/row-animation.css`
-(matching the directive's naming), but `libs/table` has no publishable-library build today —
+(matching the capability name), but `libs/table` has no publishable-library build today —
 `build` uses `@angular/build:application` (an app-style build), not `@nx/angular:package`
 (ng-packagr, the executor that would actually produce a consumable `package.json` with
 `exports`). Until that build exists, every consumer inside this repo imports the file by a
@@ -252,7 +253,7 @@ letting the browser finish the leave animation before touching layout.
 The measurement/timing logic is pure signal + DOM-read code, no structural DOM dependency:
 
 - Capture row positions by `RowId` lookup through the registry described above (`ngpTableRow`
-  registers its own element with `ngpTableRowAnimation` on construct, unregisters on destroy) —
+  registers its own element with `ngpTableRowMove` on construct, unregisters on destroy) —
   never a DOM query paired by array index. This is what lets a leaving row — still present in
   the DOM mid `animate.leave`, but no longer in `renderRows()` — get skipped instead of
   shifting the measured positions of every row after it (D2).
@@ -264,10 +265,49 @@ The measurement/timing logic is pure signal + DOM-read code, no structural DOM d
   last keyframe `none`. No separate invert render, no `requestAnimationFrame` — see "Why Web
   Animations" above.
 
-The position capture, delta computation and animation live in `ngpTableRowAnimation` (the
+The position capture, delta computation and animation live in `ngpTableRowMove` (the
 sibling directive on the table host, since it needs all rows' positions together, not
 `ngpTable` itself); each row only registers its element with it through the
-`NGP_TABLE_ROW_ANIMATION` injection token.
+`NGP_TABLE_ROW_MOVE` injection token.
+
+## Animation kinds and composition (decided 2026-10-10, not built)
+
+**D-a. Only moves need positions.** Three kinds of row animation, by the data they need:
+
+- **Move** (sort/filter/drag glide) — needs each row's old and new position. This
+  directive's job.
+- **Enter/leave** (fade on delete, staggered slide-in on load) — needs only "this row
+  arrived/left". Angular's `animate.enter`/`animate.leave` already provide it (D1).
+- **State/interaction** (hover pop, refresh ripple) — CSS on `:hover` or a `data-*`
+  attribute, staggered by `@for`'s `$index`.
+- So no generic "animation enabler" directive. If stagger effects become common, the
+  smallest addition is a per-row `--ngp-table-row-index` custom property on `ngpTableRow`
+  (ADR-0026: values as CSS custom properties), not a new directive.
+- A height change from CSS (e.g. hover pop) does not trigger a glide — the directive reacts
+  only to `renderRows()` changes.
+
+**D-b. Drag-and-drop composes this directive through `hostDirectives`.**
+
+- The future drag directive declares `hostDirectives: [NgpTableRowMoveDirective]`, so the
+  consumer places only the drag directive.
+- Allowed by the `CLAUDE.md` `hostDirectives` rule: drag is itself opt-in, not a core
+  directive.
+- Open: placing `ngpTableRowMove` by hand on the same host as well (duplicate directive
+  match) — verify Angular's behavior when built.
+- On drop, the dragged row is measured where it is drawn (`getBoundingClientRect` includes a
+  transform), so it should glide from the pointer position — to verify.
+
+**D-c. Consumer animators: a registration hook, called in the `write` phase.**
+
+- A consumer's own directive injects `NGP_TABLE_ROW_MOVE` and registers a function that
+  receives the moves (row id, element, old and new top) — e.g. `addMoveAnimator(fn)`.
+- It must run inside this directive's `afterRenderEffect` `write` phase. A signal read in
+  the consumer's own `effect` may run after paint, so the row would show at its new slot and
+  then jump.
+- Plus a boolean to turn off the built-in glide when replacing rather than adding — named
+  for the deviation, e.g. `disableGlide`.
+- Not built. Needs a spec for each new public symbol (the move type, the hook, the flag)
+  when drag-and-drop or a real consumer needs it.
 
 ## Open Questions
 
