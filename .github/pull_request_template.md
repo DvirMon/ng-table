@@ -9,7 +9,7 @@
 ## Evidence
 
 - Spec: <!-- specPath -->
-- Steps: <!-- <workspaceRoot>/4-tasks/issue-<N>/ -->
+- Steps: <!-- <workspaceRoot>/tasks/issue-<N>/ -->
 
 <!-- Issue PR: `Closes #N` (or `Refs #N` if it only partly delivers N).
      Planning PR (docs/<slug>): `Refs #<epic>` — closes nothing. -->
