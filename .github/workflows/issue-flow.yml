@@ -96,9 +96,15 @@ jobs:
       - name: Move epic workspace to archive
         id: move
         run: |
-          # Workspace = the active/<slug>/state.json whose githubIssues lists the epic.
+          # Workspace = the active/<slug>/state.json that names the epic:
+          # v4 ticketRef / units[].remoteRef ("#N"), or v3 githubIssues (N).
           state=$(git ls-files 'libs/*/docs/*/work/*/active/*/state.json' | while read -r f; do
-            jq -e --argjson n "$EPIC" '.githubIssues | index($n) != null' "$f" >/dev/null 2>&1 && echo "$f"
+            jq -e --argjson n "$EPIC" '
+              ("#\($n)") as $ref
+              | (.ticketRef | tostring) == $ref
+                or ((.units // []) | map(.remoteRef) | index($ref) != null)
+                or ((.githubIssues // []) | index($n) != null)
+            ' "$f" >/dev/null 2>&1 && echo "$f"
           done | head -n1)
           if [ -z "$state" ]; then
             echo "No active workspace lists #$EPIC — nothing to archive."
