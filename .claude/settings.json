@@ -1,10 +1,10 @@
 {
   "extraKnownMarketplaces": {
-    "sdlc-pipeline": {
-      "source": { "source": "github", "repo": "DvirMon/sdlc-pipeline" }
+    "ai-coding-guidelines": {
+      "source": { "source": "github", "repo": "DvirMon/ai-coding-guidelines" }
     }
   },
   "enabledPlugins": {
-    "sdlc@sdlc-pipeline": true
+    "sdlc@ai-coding-guidelines": true
   }
 }
