@@ -1,0 +1,10 @@
+{
+  "extraKnownMarketplaces": {
+    "sdlc-pipeline": {
+      "source": { "source": "github", "repo": "DvirMon/sdlc-pipeline" }
+    }
+  },
+  "enabledPlugins": {
+    "sdlc@sdlc-pipeline": true
+  }
+}
