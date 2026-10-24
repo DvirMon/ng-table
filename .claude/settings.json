@@ -1,0 +1,10 @@
+{
+  "extraKnownMarketplaces": {
+    "ai-coding-guidelines": {
+      "source": { "source": "github", "repo": "DvirMon/ai-coding-guidelines" }
+    }
+  },
+  "enabledPlugins": {
+    "sdlc@ai-coding-guidelines": true
+  }
+}

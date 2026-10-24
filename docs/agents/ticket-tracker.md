@@ -16,22 +16,8 @@ The issue body's `## Pipeline` block is the one body section stages update — s
 `gh issue create --title "..." --body "..."` (heredoc for multi-line bodies), using the template
 `/to-intake` provides.
 
-Parent epic, per `intake.epic` (unset → ask). The epic is an issue labelled `kind:epic`; the
-item becomes its **sub-issue**:
-
-- **link** — add the item to the existing epic (below).
-- **create** — `gh issue create --label kind:epic ...` for the epic first, then link.
-- **none** — no parent.
-
-**Link a sub-issue to an epic:**
-
-    gh api --method POST repos/<owner>/<repo>/issues/<epic>/sub_issues \
-      -F sub_issue_id=<item-db-id>
-
-`<item-db-id>` is the item's numeric **database id**
-(`gh api repos/<owner>/<repo>/issues/<n> --jq .id`), not its `#number`. The sub-issue must belong
-to the same repository owner as the epic. Source:
-`https://docs.github.com/en/rest/issues/sub-issues#add-sub-issue`.
+Labels `kind:epic` + `needs:triage`. No parent: with `prUnit: sub-issue` the item is itself the
+epic, and `/to-issues` later attaches its sub-issues to it.
 
 Return the issue number and URL.
 
