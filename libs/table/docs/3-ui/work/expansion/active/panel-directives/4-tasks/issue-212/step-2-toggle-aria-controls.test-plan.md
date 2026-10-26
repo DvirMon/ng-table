@@ -6,11 +6,12 @@ Step: [step-2-toggle-aria-controls.plan.md](step-2-toggle-aria-controls.plan.md)
 Spec file: `libs/table/src/directives/ngp-table-panel-toggle.directive.spec.ts`
 
 ## Stubs (red phase)
+
 - None. The tests import no new symbol from this step.
   `NgpTablePanelToggleDirective` comes from Step 1.
   `NGP_TABLE_PANEL_REGISTRY` and `NgpTablePanelDirective` already ship.
   `aria-controls` is a host binding, so red fails on assertions.
-  Each seam asserts that the attribute is *present* at least once.
+  Each seam asserts that the attribute is _present_ at least once.
   Without that, a test could pass against the unimplemented
   directive.
 
@@ -35,6 +36,7 @@ or a toggle click. Never read the registry.
 ## Seams — in red-green order
 
 ### A. Panel for the toggle's row is mounted → `aria-controls` equals that panel's id
+
 - Test: `it('points aria-controls at its row panel id once the panel mounts')`
 - Asserts: DefaultHost (`@if (table.expansion().has(row.id))`).
   Expand `t1` and run change detection. Then
@@ -48,6 +50,7 @@ or a toggle click. Never read the registry.
 - Order reason: independent. This is the base case.
 
 ### B. Panel unmounts → `aria-controls` is removed, not left stale or empty
+
 - Test: `it('removes aria-controls when its row panel unmounts')`
 - Asserts: DefaultHost. Expand `t1`. As a precondition,
   `aria-controls` is present. Collapse `t1` and run change
@@ -63,6 +66,7 @@ or a toggle click. Never read the registry.
   B removes it.
 
 ### C. Only the toggle's own row matters → another row's mounted panel does not set it
+
 - Test: `it('leaves aria-controls off a toggle whose own row has no panel while another row does')`
 - Asserts: DefaultHost. Expand `t1` only.
   `toggle('t1')` has `aria-controls === panel('t1').id`.
@@ -73,9 +77,11 @@ or a toggle click. Never read the registry.
   - the toggle uses the first registered id.
 
   A has a single open row, so it cannot see any of these.
+
 - Order reason: builds on A, which fixes the positive half.
 
 ### D. Kept-mounted panel while its row is closed → `aria-controls` stays
+
 - Test: `it('keeps aria-controls while a closed panel stays mounted')`
 - Asserts: KeptMountedHost
   (`@if (table.expansion.everExpanded().has(row.id))`).
@@ -90,6 +96,7 @@ or a toggle click. Never read the registry.
   expected result is the opposite because the panel stays mounted.
 
 ### E. Reused toggle view gets a new row id → `aria-controls` follows the new row
+
 - Test: `it('follows its row id when a reused view is moved to another row')`
 - Asserts: a host with `@for (row of table.renderRows(); track $index)`
   over a writable data signal, with `withExpansion({ initial: ['t1'] })`.
@@ -101,6 +108,7 @@ or a toggle click. Never read the registry.
 
   The labels are bound to `row.id`, so the element now labelled
   `t2` is the old `t1` button.
+
 - Why this seam: `registry.panelId(id)` returns a new computed on
   each call. A toggle that calls it once with the id it had at
   init keeps pointing at `t1` after its view is reused for `t2`.
@@ -110,9 +118,11 @@ or a toggle click. Never read the registry.
   E proves that keying follows a row id that changes.
 
 ## Types phase (written in red, proven by green's typecheck)
+
 None — no public type surface in this step.
 
 ## Not tested
+
 - Click, `aria-expanded`, `data-expanded`, missing-feature throw.
   Step 1 owns these. Re-asserting them here would fail on the
   same bugs as Step 1's tests.

@@ -100,11 +100,7 @@ class KeptMountedHost {
 })
 class ReusedViewHost {
   readonly data = signal<TaskTreeMockRow[]>([mockTaskTreeRows[0], mockTaskTreeRows[1]]);
-  readonly table = createTable(
-    this.data,
-    createToggleConfig(),
-    withExpansion({ initial: ['t1'] }),
-  );
+  readonly table = createTable(this.data, createToggleConfig(), withExpansion({ initial: ['t1'] }));
 }
 
 interface Setup {

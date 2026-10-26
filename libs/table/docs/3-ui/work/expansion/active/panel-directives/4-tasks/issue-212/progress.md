@@ -15,9 +15,9 @@ Parallel-safe: none (steps 1–3 edit the toggle file) · Dependency: 1 → 2 �
 
 ## Steps
 
-| Step | Title | Status |
-|---|---|---|
-| 1 | The ngpTablePanelToggle directive | ✅ done |
-| 2 | Toggle aria-controls | ✅ done |
-| 3 | Toggle registers with the panel registry | ✅ done |
-| 4 | Destroy-path focus return | ✅ done |
+| Step | Title                                    | Status  |
+| ---- | ---------------------------------------- | ------- |
+| 1    | The ngpTablePanelToggle directive        | ✅ done |
+| 2    | Toggle aria-controls                     | ✅ done |
+| 3    | Toggle registers with the panel registry | ✅ done |
+| 4    | Destroy-path focus return                | ✅ done |

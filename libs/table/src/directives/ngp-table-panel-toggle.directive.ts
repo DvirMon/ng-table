@@ -35,8 +35,8 @@ export class NgpTablePanelToggleDirective extends NgpTableCollapsibleTrigger {
   private readonly registry = inject(NGP_TABLE_PANEL_REGISTRY);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
-  protected readonly controlsId: Signal<string | null> = computed(
-    (): string | null => this.registry.panelId(this.row.ngpTableRow().id)(),
+  protected readonly controlsId: Signal<string | null> = computed((): string | null =>
+    this.registry.panelId(this.row.ngpTableRow().id)(),
   );
 
   protected override readonly isOpen: Signal<boolean> = computed((): boolean => {
