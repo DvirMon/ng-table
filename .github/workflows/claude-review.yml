@@ -44,7 +44,7 @@ jobs:
             2. Spec — does the diff do what the linked issue asks? The
                issue is the `Closes #N` in the PR body; read it with
                `gh issue view N --comments`, plus the spec and
-               4-tasks/issue-N/ files the PR body's Evidence points to.
+               tasks/issue-N/ files (4-tasks/ in older workspaces) the PR body's Evidence points to.
                Flag missing acceptance criteria and out-of-scope changes.
 
             Also check the commit story: one concern per commit, messages

@@ -2,20 +2,27 @@
 
 Issues and PRDs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 
-## Conventions
+## Fetch
 
-- **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
-- **Read an issue**: `gh issue view <number> --comments`, filtering comments by `jq` and also fetching labels.
-- **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
-- **Comment on an issue**: `gh issue comment <number> --body "..."`
-- **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
-- **Close**: `gh issue close <number> --comment "..."`
+Run `gh issue view <number> --comments`, also fetching labels.
 
-Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
+## Create a child
 
-## Pull requests as a triage surface
+Create a GitHub issue (`gh issue create`, see Conventions), then link it to the parent as a
+**sub-issue**:
 
-**PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
+    gh api --method POST repos/<owner>/<repo>/issues/<parent>/sub_issues \
+      -F sub_issue_id=<child-db-id>
+
+`<child-db-id>` is the child's numeric **database id**
+(`gh api repos/<owner>/<repo>/issues/<n> --jq .id`), not its `#number`. Source:
+`https://docs.github.com/en/rest/issues/sub-issues#add-sub-issue`. Return the issue number.
+
+## Readiness
+
+The rung and its dated `assessed:` reason live in the issue body's `## Pipeline` block — see
+`to-issues/references/pipeline-block.md`. `/impel` reads it there. That block is the one body
+section a stage updates.
 
 ## Issue references
 
@@ -30,7 +37,7 @@ commits. Issues close when that PR merges.
   accepted while the skills catch up).
 - **Story tag** `[#<issue> <stage>]` says where the commit sits in its issue's story, so one
   PR's commits read as a sequence in `git log --oneline` even when interleaved with other
-  work. Stage: `s<N>` for step N of the plan (`4-tasks/issue-<N>/step-<N>-*.plan.md`),
+  work. Stage: `s<N>` for step N of the plan (`tasks/issue-<N>/step-<N>-*.plan.md`),
   `plan` for the task and test plans, `review` for changes answering review. The tag's issue
   must also be in `Refs:`. Optional — omit it for `Refs: none` work and for commits that fit
   no stage.
@@ -68,10 +75,25 @@ An epic is any issue with native GitHub sub-issues. When its last sub-issue clos
 and carries `Closes #<epic>`. The same workflow comments `Unblocked → /to-tasks #M` on
 issues whose last blocker closed.
 
-## When a skill says "publish to the issue tracker"
+## Conventions
 
-Create a GitHub issue.
+- **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
+- **Read an issue**: `gh issue view <number> --comments`, filtering comments by `jq` and also fetching labels.
+- **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
+- **Comment on an issue**: `gh issue comment <number> --body "..."`
+- **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
+- **Close**: `gh issue close <number> --comment "..."`
 
-## When a skill says "fetch the relevant ticket"
+Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
 
-Run `gh issue view <number> --comments`.
+## Pull requests as a triage surface
+
+**PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
+
+When set to `yes`, PRs run through the same labels and states as issues, using the `gh pr` equivalents:
+
+- **Read a PR**: `gh pr view <number> --comments` and `gh pr diff <number>` for the diff.
+- **List external PRs for triage**: `gh pr list --state open --json number,title,body,labels,author,authorAssociation,comments` then keep only `authorAssociation` of `CONTRIBUTOR`, `FIRST_TIME_CONTRIBUTOR`, or `NONE` (drop `OWNER`/`MEMBER`/`COLLABORATOR`).
+- **Comment / label / close**: `gh pr comment`, `gh pr edit --add-label`/`--remove-label`, `gh pr close`.
+
+GitHub shares one number space across issues and PRs, so a bare `#42` may be either — resolve with `gh pr view 42` and fall back to `gh issue view 42`.
