@@ -6,6 +6,7 @@ Step: [step-3-toggle-registration.plan.md](step-3-toggle-registration.plan.md)
 Spec file: `libs/table/src/directives/ngp-table-panel.directive.spec.ts`
 
 ## Stubs (red phase)
+
 None. This step adds no symbols the tests import.
 The tests import `NgpTablePanelToggleDirective` (from step 1)
 and `NgpTableRowDirective` (already exists).
@@ -13,9 +14,10 @@ Red is real without stubs: `registerToggle` is never called
 today, so `toggleOf(id)` is `null` and focus never moves.
 
 Fixture changes, all in the spec:
+
 - `ClosePanelHost`: iterate `table.renderRows()`. Per row,
   render `<tr [ngpTableRow]="row"><td><button
-  ngpTablePanelToggle>Toggle {{ row.id }}</button></td></tr>`,
+ngpTablePanelToggle>Toggle {{ row.id }}</button></td></tr>`,
   then the existing panel `<tr>` under
   `@if (table.expansion().has(row.id))`. The panel `<tr>` gets
   no `ngpTableRow`. The toggle reads its row through
@@ -23,19 +25,21 @@ Fixture changes, all in the spec:
 - Add `NgpTableRowDirective` and `NgpTablePanelToggleDirective`
   to `IMPORTS`. This is safe for the other hosts.
 - New `ReusedToggleHost`: `@for (row of orderedRows(); track
-  $index)`, where `orderedRows = computed(() => reversed() ?
-  [...renderRows()].reverse() : renderRows())`. The toggle row
+$index)`, where `orderedRows = computed(() => reversed() ?
+[...renderRows()].reverse() : renderRows())`. The toggle row
   and panel row follow the `ClosePanelHost` shape. Use
   `withExpansion({ initial: ['t1', 't2'] })`. Following
   `ReorderedPanelHost`, the panel binds `[ngpTablePanel]=
-  "row.id"`, so `movePanel` keeps the panels correct and only
+"row.id"`, so `movePanel` keeps the panels correct and only
   the toggle side is under test.
 - Add a `toggle(name)` lookup to `setupClose()` beside
   `button(name)`. The existing `button()` already matches by
   text, so `button('Toggle t1')` works as it is.
 
 ## Seams — in red-green order
+
 ### A. Focus inside the panel, then `close()` → the row's toggle gets focus
+
 - Test: extend the existing test at `ngp-table-panel.directive.spec.ts:277` ("close() collapses only its own row") with a focus assertion. No new test.
 - Asserts: `button('Close t1').focus(); button('Close t1').click(); fixture.detectChanges();` → `document.activeElement` is `button('Toggle t1')`. It is not `Toggle t2`.
 - Why this seam: the base proof that the toggle registers
@@ -48,6 +52,7 @@ Fixture changes, all in the spec:
 - Order reason: independent. This is the base case.
 
 ### B. Esc inside the panel → the row's toggle gets focus
+
 - Test: extend the existing test at `ngp-table-panel.directive.spec.ts:286` the same way. No new test.
 - Asserts: `button('Close t1').focus(); pressEscape(button('Close t1')); fixture.detectChanges();` → `document.activeElement` is `button('Toggle t1')`.
 - Why this seam: the issue's acceptance criterion. It catches
@@ -57,6 +62,7 @@ Fixture changes, all in the spec:
 - Order reason: builds on A, which provides the registration.
 
 ### C. Focus on `<body>`, then `close()` → the toggle gets focus
+
 - Test: `it('close() returns focus to the toggle when focus is on <body>')`
 - Asserts: `(document.activeElement as HTMLElement | null)?.blur()` (or any blur that leaves `document.activeElement === document.body`; check this first), then `p.close()` through the `Close t1` button's click handler with no prior focus, then `detectChanges()` → `document.activeElement` is `button('Toggle t1')`.
 - Why this seam: the `allowBody` branch. It catches a
@@ -67,6 +73,7 @@ Fixture changes, all in the spec:
   different starting focus.
 
 ### D. No active element, then `close()` → the toggle gets focus
+
 - Test: `it('close() returns focus to the toggle when no element has focus')`
 - Asserts: stub `document.activeElement` to return `null` for this test only (`Object.defineProperty(document, 'activeElement', { configurable: true, get: () => null })`, then delete it in `finally`/`afterEach`). Call `close()` on t1 and assert `toggle.focus` was called: `vi.spyOn(button('Toggle t1'), 'focus')` was called once. A spy is needed because `activeElement` is stubbed.
 - Why this seam: the `active === null` half of the
@@ -76,6 +83,7 @@ Fixture changes, all in the spec:
   condition.
 
 ### E. Focus outside the panel, then `close()` → focus stays put
+
 - Test: `it('close() leaves focus alone when it was outside the panel')`
 - Asserts: `button('Toggle t2').focus()`, click `Close t1`, `detectChanges()` → `document.activeElement` is still `button('Toggle t2')`.
 - Why this seam: the guard against stealing focus. It catches
@@ -86,9 +94,10 @@ Fixture changes, all in the spec:
   it covers the destroy path with focus outside too; step 4
   cites it.
 - Order reason: builds on A. It needs a registered toggle to
-  show that the toggle was *not* focused.
+  show that the toggle was _not_ focused.
 
 ### F. A reused view changes row id → registration moves with it
+
 - Test: `it('returns focus to the toggle now rendering the row after reused views swap rows')`
 - Asserts: on `ReusedToggleHost`, `reversed.set(true); detectChanges()`. Then focus `Close t1`, click it, `detectChanges()` → `document.activeElement?.textContent?.trim()` is `'Toggle t1'`. Repeat for t2 on a fresh fixture, or in the same test before closing t1: focus `Close t2`, click it → `'Toggle t2'`.
 - Why this seam: with `track $index`, the toggle element at
@@ -105,9 +114,11 @@ Fixture changes, all in the spec:
   `row.ngpTableRow().id` itself.
 
 ## Types phase (written in red, proven by green's typecheck)
+
 None — no public type surface in this step.
 
 ## Not tested
+
 - Asserting on `registerToggle` / `unregisterToggle` /
   `toggleOf` directly. The spec's Testing Decisions say
   "never on the registry or private members". Every assertion

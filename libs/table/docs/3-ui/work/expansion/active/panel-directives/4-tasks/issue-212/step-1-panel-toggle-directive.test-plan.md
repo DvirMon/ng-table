@@ -6,12 +6,14 @@ Step: [step-1-panel-toggle-directive.plan.md](step-1-panel-toggle-directive.plan
 Spec file: `libs/table/src/directives/ngp-table-panel-toggle.directive.spec.ts`
 
 ## Stubs (red phase)
+
 - `@Directive({ selector: 'button[ngpTablePanelToggle]' }) export class NgpTablePanelToggleDirective extends NgpTableCollapsibleTrigger`, in `libs/table/src/directives/ngp-table-panel-toggle.directive.ts`.
   - `protected override readonly isOpen: Signal<boolean>`: a `computed` that throws `not implemented`.
   - `protected override toggle(): void`: throws `not implemented`.
 - Also exported from `libs/table/src/index.ts`, so the spec's import resolves in red.
 
 Host fixtures (spec-local, modeled on `ngp-table-tree-toggle.directive.spec.ts`):
+
 - `ExpansionHost`: `createTable(signal(mockTaskTreeRows), { trackBy: 'id', columns }, withExpansion())`.
   - Template: `@for (row of table.renderRows(); track row.id)` → `<tr [ngpTableRow]="row"><td><button ngpTablePanelToggle [attr.aria-label]="'Toggle ' + row.id">`.
   - `table` is public, so tests can read `table.expansion()` and call `table.expansion.expand([...])`.
@@ -21,7 +23,9 @@ Host fixtures (spec-local, modeled on `ngp-table-tree-toggle.directive.spec.ts`)
 - Rows `t1` and `t2` come from `mockTaskTreeRows`. No inline fixtures.
 
 ## Seams — in red-green order
+
 ### A. Click on a closed row's toggle → row is open in the store
+
 - Test: `it('opens its row on click: the store holds the row id')`
 - Asserts:
   - Before the click: `aria-expanded="false"` and no `data-expanded`.
@@ -32,6 +36,7 @@ Host fixtures (spec-local, modeled on `ngp-table-tree-toggle.directive.spec.ts`)
 - Order reason: independent. This is the base case; every later seam reuses its host and helpers.
 
 ### B. Second click on an open row → row is closed in the store, `aria-expanded="false"`, no `data-expanded`
+
 - Test: `it('closes its row on a second click: the store drops the row id, aria-expanded is "false" and data-expanded is gone')`
 - Asserts: after two clicks on `t1`:
   - `table.expansion().has('t1')` is `false`
@@ -41,6 +46,7 @@ Host fixtures (spec-local, modeled on `ngp-table-tree-toggle.directive.spec.ts`)
 - Order reason: builds on A, which must open the row first.
 
 ### C. Clicking row t1's toggle → only t1 opens; t2's toggle stays `aria-expanded="false"`
+
 - Test: `it('opens only its own row: another row's toggle stays closed')`
 - Asserts: after `clickToggle('t1')`:
   - `table.expansion().has('t2')` is `false`
@@ -51,6 +57,7 @@ Host fixtures (spec-local, modeled on `ngp-table-tree-toggle.directive.spec.ts`)
 - Order reason: builds on A (same click; adds the cross-row assertion).
 
 ### D. Store written outside the toggle (`table.expansion.expand(['t1'])`) → toggle shows `aria-expanded="true"`
+
 - Test: `it('reflects the store when the row is opened by something other than the toggle')`
 - Asserts: after `table.expansion.expand(['t1'])` and `detectChanges()`, the t1 toggle has:
   - `aria-expanded="true"`
@@ -61,6 +68,7 @@ Host fixtures (spec-local, modeled on `ngp-table-tree-toggle.directive.spec.ts`)
 - Order reason: builds on A's attribute assertions. It uses a different write path, so it is not a duplicate of A.
 
 ### E. Table without `withExpansion()` → first render throws, naming `ngpTablePanelToggle` and `withExpansion()`
+
 - Test: `it('throws on first render when the table has no withExpansion()')`
 - Asserts: `expect(() => setup(NoExpansionHost)).toThrow(/ngpTablePanelToggle[\s\S]*withExpansion\(\)/)`
 - Why this seam: catches a missing or misnamed construction check.
@@ -69,9 +77,11 @@ Host fixtures (spec-local, modeled on `ngp-table-tree-toggle.directive.spec.ts`)
 - Order reason: independent. It touches only the constructor check. It goes in its own `describe('... dev checks')`, as in the tree spec.
 
 ## Types phase (written in red, proven by green's typecheck)
+
 None — no public type surface in this step.
 
 ## Not tested
+
 - `type="button"` forced, and the click bubbling to the row without `preventDefault`.
   - That is the shared core's behavior (`NgpTableCollapsibleTrigger`).
   - The tree toggle spec already pins it.

@@ -151,7 +151,9 @@ class DuplicatePanelHost {
       <tbody>
         @for (row of table.renderRows(); track row.id) {
           <tr [ngpTableRow]="row">
-            <td><button type="button" ngpTablePanelToggle>Toggle {{ row.id }}</button></td>
+            <td>
+              <button type="button" ngpTablePanelToggle>Toggle {{ row.id }}</button>
+            </td>
           </tr>
           @if (table.expansion().has(row.id)) {
             <tr>
@@ -192,7 +194,9 @@ class ClosePanelHost {
       <tbody>
         @for (row of table.renderRows(); track row.id) {
           <tr [ngpTableRow]="row">
-            <td><button type="button" ngpTablePanelToggle>Toggle {{ row.id }}</button></td>
+            <td>
+              <button type="button" ngpTablePanelToggle>Toggle {{ row.id }}</button>
+            </td>
           </tr>
           @if (table.expansion().has(row.id)) {
             <tr>
@@ -224,7 +228,9 @@ class UnmountPanelHost {
       <tbody>
         @for (row of orderedRows(); track $index) {
           <tr [ngpTableRow]="row">
-            <td><button type="button" ngpTablePanelToggle>Toggle {{ row.id }}</button></td>
+            <td>
+              <button type="button" ngpTablePanelToggle>Toggle {{ row.id }}</button>
+            </td>
           </tr>
           @if (table.expansion().has(row.id)) {
             <tr>

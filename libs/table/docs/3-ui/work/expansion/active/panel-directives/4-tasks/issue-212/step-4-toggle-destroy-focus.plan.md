@@ -7,6 +7,7 @@ files:
   - libs/table/src/directives/ngp-table-panel.directive.ts
   - libs/table/src/directives/ngp-table-panel.directive.spec.ts
 ---
+
 # Step 4 — Destroy-path focus return
 
 This step makes focus return to the toggle when a panel is destroyed with focus inside, and pins it with specs.
@@ -14,9 +15,11 @@ This step makes focus return to the toggle when a panel is destroyed with focus 
 Decisions: [D4, D5, D8](../../1-decisions.md) · [E47, E48, E51](../../../../../../../decisions/expansion.md)
 
 ## Amended
+
 The first run of the specs found a defect in the panel directive. When `table.expansion.collapse()` removes the `@if` panel, Angular detaches its DOM before `ngOnDestroy` runs. Focus has already dropped to `<body>`, so `host.contains(document.activeElement)` is false and `returnFocus(id, { allowBody: false })` returns early. The original plan said "no source change"; that assumed focus was still inside at destroy time.
 
 ## Do
+
 Specs (already written in `ngp-table-panel.directive.spec.ts`, using the `UnmountPanelHost` fixture; keep them as they are):
 
 - Unmount with focus inside the panel. Collapse through `table.expansion.collapse()`, not `close()`. Focus returns to the toggle.
@@ -31,18 +34,22 @@ Source fix in `ngp-table-panel.directive.ts`:
 - `close()` keeps its current behavior (`allowBody: true`).
 
 ## Watch out
+
 - Use `table.expansion.collapse()` in the specs so the destroy path runs. `close()` returns focus on its own and would hide a broken destroy path.
 - A body-focused collapse must still not move focus: the flag is false when focus was never inside.
 - If the flag approach can't pass the ordering pin, report it; don't weaken the spec.
 - Keep the JSDoc/`//` contract on the directive (note why the flag exists).
 
 ## Out of scope
+
 - Registry changes. Toggle directive changes.
 - Single-open mode (#210).
 
 ## Done when
+
 - [ ] The four cases pass, and the rest of `ngp-table-panel.directive.spec.ts` still passes.
 - [ ] `nx run shared-table:typecheck` and `typecheck-spec` clean.
 
 ---
+
 ← [Step 3: Toggle registers with the panel registry](step-3-toggle-registration.plan.md)
