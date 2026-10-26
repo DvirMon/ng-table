@@ -1,6 +1,6 @@
 import { afterRenderEffect, Directive, inject, input, untracked } from '@angular/core';
 
-import { NGP_TABLE_ROW_ANIMATION, NGP_TABLE_STORE } from './table.tokens';
+import { NGP_TABLE_ROW_MOVE, NGP_TABLE_STORE } from './table.tokens';
 import type { RenderRow, RowId } from '../api/types';
 
 const DEFAULT_FLIP_TIMING: KeyframeAnimationOptions = {
@@ -53,13 +53,13 @@ function toTransform(offset: number): string {
 // Dual-tag selector, matches `ngpTable`'s pattern. Opt-in: without this directive on the host,
 // `ngpTableRow` registers nothing (docs/3-ui/directives/row-animation.md).
 @Directive({
-  selector: 'table[ngpTableRowAnimation], div[ngpTableRowAnimation]',
-  providers: [{ provide: NGP_TABLE_ROW_ANIMATION, useExisting: NgpTableRowAnimationDirective }],
+  selector: 'table[ngpTableRowMove], div[ngpTableRowMove]',
+  providers: [{ provide: NGP_TABLE_ROW_MOVE, useExisting: NgpTableRowMoveDirective }],
   host: {
-    'data-row-animation': '',
+    'data-row-move': '',
   },
 })
-export class NgpTableRowAnimationDirective<TRow = unknown> {
+export class NgpTableRowMoveDirective<TRow = unknown> {
   /** Duration, easing and any other Web Animations timing for a row's move. */
   readonly flipTiming = input<KeyframeAnimationOptions>(DEFAULT_FLIP_TIMING);
 

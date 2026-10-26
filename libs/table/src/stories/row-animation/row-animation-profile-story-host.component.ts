@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 
 import { NgpTableDirective } from '../../directives/ngp-table.directive';
-import { NgpTableRowAnimationDirective } from '../../directives/ngp-table-row-animation.directive';
+import { NgpTableRowMoveDirective } from '../../directives/ngp-table-row-move.directive';
 import { NgpTableRowDirective } from '../../directives/ngp-table-row.directive';
 import { createColumns } from '../../api/create-columns';
 import { createTable } from '../../api/create-table';
@@ -17,11 +17,11 @@ const PROFILE_TABLE_CONFIG: TableConfig<MockRow> = {
   columns: createColumns(profileRowsWitness, (col) => [col('name')]),
 };
 
-// Same table as the benchmark (ngp-table-row-animation.bench.spec.ts), outside the test
+// Same table as the benchmark (ngp-table-row-move.bench.spec.ts), outside the test
 // runner, so a Chrome performance profile of one reversal shows where the time goes.
 @Component({
   selector: 'ngp-row-animation-profile-story-host',
-  imports: [NgpTableDirective, NgpTableRowAnimationDirective, NgpTableRowDirective],
+  imports: [NgpTableDirective, NgpTableRowMoveDirective, NgpTableRowDirective],
   template: `
     <div class="story-host">
       <p class="story-host__hint">
@@ -32,7 +32,7 @@ const PROFILE_TABLE_CONFIG: TableConfig<MockRow> = {
         <button type="button" (click)="reverseRows()">Reverse {{ rowCount }} rows</button>
         <button type="button" (click)="moveFirstRowDown()">Move first row down 3</button>
       </div>
-      <table class="story-host__table" [ngpTable]="table" ngpTableRowAnimation>
+      <table class="story-host__table" [ngpTable]="table" ngpTableRowMove>
         <tbody>
           @for (row of table.renderRows(); track row.id) {
             <tr [ngpTableRow]="row">
