@@ -44,9 +44,7 @@ export class NgpTableDirective {
 
 ```ts
 // Consumer — no providers block, no store class, no token
-@Component({
-  /* ... */
-})
+@Component({/* ... */})
 export class ProductsComponent {
   protected readonly data = signal(products);
   protected readonly table = createTable(
