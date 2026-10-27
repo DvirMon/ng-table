@@ -1,4 +1,4 @@
-import { computed, DestroyRef, effect, inject, signal } from '@angular/core';
+import { computed, DestroyRef, effect, inject, signal, untracked } from '@angular/core';
 import type {
   AnyTableFeature,
   FocusMoveOptions,
@@ -72,8 +72,11 @@ function createFocus<TRow>(handle: TableCoreHandle<TRow>): TableFocus {
     computed((): FocusTarget | null => target()),
     {
       moveTo: (next: FocusTarget, options?: FocusMoveOptions): void => {
-        const renderedRowIds = new Set(handle.renderRows().map((row) => row.id));
-        const renderedColumnIds = new Set(handle.renderColumns().map((column) => column.id));
+        // untracked: a caller's effect must not re-run when the rendered rows or columns change.
+        const renderedRowIds = untracked(() => new Set(handle.renderRows().map((row) => row.id)));
+        const renderedColumnIds = untracked(
+          () => new Set(handle.renderColumns().map((column) => column.id)),
+        );
         const unrenderedId = findUnrenderedId(next, renderedRowIds, renderedColumnIds);
         if (unrenderedId !== undefined) {
           reportUnrenderedFocusTarget(unrenderedId);

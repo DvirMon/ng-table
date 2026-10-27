@@ -1,4 +1,4 @@
-import { computed, Injector, signal, type Signal } from '@angular/core';
+import { computed, effect, Injector, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
 import { createColumns } from './create-columns';
@@ -1297,6 +1297,27 @@ describe('focus.moveTo — unrendered target (#232)', () => {
 
       expect(spy).toHaveBeenCalledTimes(2);
     });
+  });
+
+  it('does not track rendered rows or columns when called inside an effect', () => {
+    const data = signal<Row[]>(rows);
+    const table = TestBed.runInInjectionContext(() =>
+      createTable(data, { trackBy: 'id', columns: makeRenderColumns() }),
+    );
+    let runs = 0;
+    TestBed.runInInjectionContext(() =>
+      effect(() => {
+        runs++;
+        table.focus.moveTo(start);
+      }),
+    );
+    TestBed.tick();
+    expect(runs).toBe(1);
+
+    data.update((current) => [...current, { id: 'r3', name: 'Cy', status: 'idle' }]);
+    TestBed.tick();
+
+    expect(runs).toBe(1);
   });
 
   it('reports an unrendered target even when ngDevMode is false', () => {
