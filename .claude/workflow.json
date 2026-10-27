@@ -3,6 +3,9 @@
   "capabilities": {
     "commit": { "skill": "atomic-commit" }
   },
+  "stages": {
+    "implementation": { "skills": ["source-docs"] }
+  },
   "projects": {
     "shared-table": {
       "path": "libs/table/**",
@@ -18,12 +21,17 @@
     "ng-table": {
       "path": "apps/site/**",
       "skills": {
-        "code": ["angular-developer"],
+        "code": ["angular-developer", "css-styling"],
         "test": ["unit-test"]
       },
       "executors": { "story": "story:implementer" },
       "typecheck": "npx nx run-many -t typecheck typecheck-spec -p ng-table",
       "test": "npx nx test ng-table --include {files}"
+    },
+    "table-bench": {
+      "path": "apps/table-bench/**",
+      "skills": { "code": ["angular-developer"] },
+      "typecheck": "npx nx run table-bench:typecheck"
     },
     "root": {
       "path": "**",
