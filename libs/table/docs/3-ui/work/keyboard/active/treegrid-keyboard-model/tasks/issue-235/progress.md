@@ -12,9 +12,9 @@ graph LR
 
 Parallel-safe: [S1, S2] first; S3 after both; S4 after S3.
 
-| Step | Title                                                            | Status    |
-| ---- | ---------------------------------------------------------------- | --------- |
-| 1    | [Key map, pure](step-1-key-map.plan.md)                          | ⬚ pending |
-| 2    | [Roles + roving tabindex](step-2-roles-roving-tabindex.plan.md)  | ⬚ pending |
-| 3    | [Keys, click and DOM focus](step-3-keys-click-dom-focus.plan.md) | ⬚ pending |
-| 4    | [Grid navigation docs](step-4-grid-nav-docs.plan.md)             | ⬚ pending |
+| Step | Title                                                            | Status         |
+| ---- | ---------------------------------------------------------------- | -------------- |
+| 1    | [Key map, pure](step-1-key-map.plan.md)                          | ✅ done        |
+| 2    | [Roles + roving tabindex](step-2-roles-roving-tabindex.plan.md)  | ▶ in progress |
+| 3    | [Keys, click and DOM focus](step-3-keys-click-dom-focus.plan.md) | ⬚ pending      |
+| 4    | [Grid navigation docs](step-4-grid-nav-docs.plan.md)             | ⬚ pending      |
