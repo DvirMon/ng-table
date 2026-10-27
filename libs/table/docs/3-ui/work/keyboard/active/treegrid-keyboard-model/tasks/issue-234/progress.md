@@ -10,7 +10,7 @@ graph LR
 
 Parallel-safe: S1, S2 — no edges
 
-| Step | Title                                                                     | Status    |
-| ---- | ------------------------------------------------------------------------- | --------- |
-| 1    | [Single-open panel follows focus](step-1-expansion-follows-focus.plan.md) | ⬚ pending |
-| 2    | [Document the follow-focus rule](step-2-follow-focus-docs.plan.md)        | ⬚ pending |
+| Step | Title                                                                     | Status         |
+| ---- | ------------------------------------------------------------------------- | -------------- |
+| 1    | [Single-open panel follows focus](step-1-expansion-follows-focus.plan.md) | ▶ in progress |
+| 2    | [Document the follow-focus rule](step-2-follow-focus-docs.plan.md)        | ✅ done        |

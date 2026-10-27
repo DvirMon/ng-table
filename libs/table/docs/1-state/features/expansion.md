@@ -123,6 +123,11 @@ for that reason (D5/E9); the panel's one-line equivalent, if a consumer ever nee
   never propagates out of a write (E60). `withRowEdit`'s propagating `multiple` is not precedent.
 - **`everExpanded`** is seeded from the _trimmed_ `initial` (E61) and stays additive — a displaced
   or flip-closed row remains in it. Trimming at construction emits nothing.
+- **Follows focus (K11, #234).** While one panel is open in single-open mode, moving
+  `table.focus()` to another data row switches the open panel to that row. With none open, focus
+  opens nothing. Group headers, header cells and panel targets never switch it. Same for inline
+  and side panels. Decision:
+  [K11](../../3-ui/work/keyboard/active/treegrid-keyboard-model/1-decisions.md).
 - `onRowsRemoved` pruning and `withTree()` (its own store, no `multi`) are unaffected.
 
 ## Initial State and Persistence
