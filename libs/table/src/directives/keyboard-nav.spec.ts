@@ -57,6 +57,9 @@ describe('nextBodyTarget', () => {
     ['PageDown', press('PageDown')],
     ['Escape', press('Escape')],
     ['Ctrl+ArrowRight', press('ArrowRight', { ctrlKey: true })],
+    ['Alt+ArrowLeft', press('ArrowLeft', { altKey: true })],
+    ['Shift+ArrowDown', press('ArrowDown', { shiftKey: true })],
+    ['Shift+End', press('End', { shiftKey: true })],
   ])('returns null for unhandled key %s', (_label, event) => {
     expect(nextBodyTarget(order, middle, event)).toBeNull();
   });

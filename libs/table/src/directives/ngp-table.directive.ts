@@ -79,6 +79,7 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
   // focused cell drops focus to `<body>` without a `focusout` inside the host.
   private hasFocusWithin = false;
   private lastSeenFocusRequests: number | null = null;
+  private lastSeenTable: TableStore<TRow, TValues> | null = null;
 
   constructor() {
     // Moves DOM focus to the stored position: always on a new `focusElement` request, otherwise
@@ -88,10 +89,19 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
       const focused = table.focus();
       const requests = table.focus.focusRequests();
 
+      // A swapped store starts a new count, so its first read is not a request either.
+      if (table !== this.lastSeenTable) {
+        this.lastSeenTable = table;
+        this.lastSeenFocusRequests = null;
+      }
+
       // Never treat the first read as a request: no focus steal on load.
       const previous = this.lastSeenFocusRequests;
       const hasNewRequest = previous !== null && requests > previous;
       this.lastSeenFocusRequests = requests;
+
+      // Focus lost to <body> (focused cell removed) still counts as inside; focus elsewhere does not.
+      if (!this.isFocusInsideOrLost()) this.hasFocusWithin = false;
 
       const shouldMoveDomFocus = hasNewRequest || this.hasFocusWithin;
       if (!shouldMoveDomFocus) return;
@@ -145,6 +155,12 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     const next = event.relatedTarget;
     const isStillInside = next instanceof Node && this.host.contains(next);
     if (!isStillInside) this.hasFocusWithin = false;
+  }
+
+  private isFocusInsideOrLost(): boolean {
+    const active = document.activeElement;
+    const isLost = active === null || active === document.body;
+    return isLost || this.host.contains(active);
   }
 
   private activeBodyCell(): BodyCell | null {

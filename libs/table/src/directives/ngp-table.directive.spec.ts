@@ -3,6 +3,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
 import { NgpTableDirective } from './ngp-table.directive';
+import { NGP_TABLE_STORE } from './table.tokens';
 import { NgpTableCellDirective } from './ngp-table-cell.directive';
 import { NgpTableRowDirective } from './ngp-table-row.directive';
 import { createColumns } from '../api/create-columns';
@@ -127,6 +128,12 @@ class BareCellHost {
   readonly table = createFlatTable(mockGroupingRows, ALL_COLUMNS);
 }
 
+@Component({
+  imports: [NgpTableCellDirective],
+  template: '<table><tbody><tr><td [ngpTableCell]="0">x</td></tr></tbody></table>',
+})
+class RegistrylessCellHost {}
+
 interface Setup<THost> {
   fixture: ComponentFixture<THost>;
   root: HTMLElement;
@@ -248,6 +255,22 @@ describe('NgpTableDirective roving tabindex', () => {
     expect(cell?.hasAttribute('tabindex')).toBe(false);
   });
 
+  it('renders a cell that has no focus registry without throwing', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: NGP_TABLE_STORE,
+          useValue: { ngpTable: () => ({ renderColumns: () => [] }), activeTarget: () => null },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(RegistrylessCellHost);
+
+    expect(() => fixture.detectChanges()).not.toThrow();
+    const cell = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('td');
+    expect(cell?.getAttribute('role')).toBe('gridcell');
+  });
+
   it.each([
     ['no data rows', EmptyHost],
     ['every column hidden', AllHiddenHost],
@@ -306,6 +329,27 @@ class ReversedRowsHost {
   readonly data = signal<MockRow[]>([...mockRows]);
   readonly table = createGridTable(this.data);
   protected readonly reversedRows = computed(() => [...this.table.renderRows()].reverse());
+}
+
+@Component({
+  imports: IMPORTS,
+  template: `
+    <button type="button" id="outside">Outside</button>
+    <table [ngpTable]="table()">
+      <tbody>
+        @for (row of table().renderRows(); track row.id) {
+          <tr [ngpTableRow]="row">
+            @for (column of table().renderColumns(); track column.id; let i = $index) {
+              <td [ngpTableCell]="i">{{ column.id }}</td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  `,
+})
+class SwappableStoreHost {
+  readonly table = signal(createGridTable(signal<MockRow[]>([...mockRows])));
 }
 
 describe('NgpTableDirective keyboard and DOM focus', () => {
@@ -461,6 +505,46 @@ describe('NgpTableDirective keyboard and DOM focus', () => {
     flush();
 
     expect(document.activeElement).toBe(rowThreeCell);
+  });
+
+  it('stops following focus once it moved outside after the focused cell was removed', () => {
+    const { host, flush, cell, outside } = setupGrid(GridHost);
+    cell(2, 'id').focus();
+    flush();
+
+    host.data.update((rows) => rows.filter((row) => row.id !== 2));
+    flush();
+    // Focus left the grid with no `focusout` inside it: the removed cell had already lost focus.
+    outside().focus();
+    flush();
+
+    host.table.focus.moveTo({ area: 'body', rowId: 3, columnId: 'id' });
+    flush();
+
+    expect(document.activeElement).toBe(outside());
+  });
+
+  it('does not treat a swapped-in store with a higher request count as a request', () => {
+    const fixture = TestBed.createComponent(SwappableStoreHost);
+    document.body.appendChild(fixture.nativeElement);
+    const flush = (): void => {
+      TestBed.tick();
+      fixture.detectChanges();
+    };
+    flush();
+    const host = fixture.componentInstance;
+    const next = TestBed.runInInjectionContext(() =>
+      createGridTable(signal<MockRow[]>([...mockRows])),
+    );
+    next.focus.moveTo({ area: 'body', rowId: 2, columnId: 'name' }, { focusElement: true });
+    next.focus.moveTo({ area: 'body', rowId: 3, columnId: 'name' }, { focusElement: true });
+    const outside = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('#outside');
+    outside?.focus();
+
+    host.table.set(next);
+    flush();
+
+    expect(document.activeElement).toBe(outside);
   });
 
   it('focuses a just-added row on a focusElement request once it renders', () => {

@@ -14,6 +14,10 @@ export function nextBodyTarget(order: NavOrder, current: BodyCell, event: NavKey
   const isCurrentInOrder = rowIndex !== -1 && columnIndex !== -1;
   if (!isCurrentInOrder) return null;
 
+  // Alt/Shift combinations belong to the browser and assistive tech, so they are not handled.
+  const hasUnhandledModifier = event.altKey === true || event.shiftKey === true;
+  if (hasUnhandledModifier) return null;
+
   const lastRow = order.rowIds.length - 1;
   const lastColumn = order.columnIds.length - 1;
   const isCtrl = event.ctrlKey || event.metaKey === true;
