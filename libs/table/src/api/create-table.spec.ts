@@ -13,6 +13,7 @@ import type { ColumnSchema, ColumnsSchemaFn } from '../columns-schema/types';
 import type { Feature, RowOf, Shape, TableFeatureSpec } from '../engine/types';
 import { stage } from '../schema/stage-rules';
 import { stageSchema } from '../schema/stage-schema';
+import { getNgDevMode, setNgDevMode } from '../ng-dev-mode.testing';
 import { noData } from '../table.mock';
 import type {
   ColumnDecl,
@@ -1197,5 +1198,119 @@ describe('focus', () => {
     first.focus.moveTo({ area: 'header', columnId: 'name' });
 
     expect(second.focus()).toBeNull();
+  });
+});
+
+describe('focus.moveTo — unrendered target (#232)', () => {
+  const rows: Row[] = [
+    { id: 'r1', name: 'Ann', status: 'active' },
+    { id: 'r2', name: 'Bob', status: 'idle' },
+  ];
+  const start: FocusTarget = { area: 'body', rowId: 'r1', columnId: 'name' };
+
+  /** Claims `s.tree` and drops `id` from the render output; the row stays in data/indexById/rows(). */
+  function withDroppedRow(id: string) {
+    return createTableFeature(() => ({
+      renderStages: stageSchema('render', (s) =>
+        stage(s.tree, { run: (nodes) => nodes.filter((node) => node.id !== id) }),
+      ),
+    }));
+  }
+
+  function makeFocusedStore(feature?: ReturnType<typeof withDroppedRow>): TableStore<Row> {
+    const table = feature
+      ? TestBed.runInInjectionContext(() =>
+          createTable(signal(rows), { trackBy: 'id', columns: makeRenderColumns() }, feature),
+        )
+      : makeStore(makeRenderColumns(), rows);
+    table.focus.moveTo(start);
+    return table;
+  }
+
+  function withConsoleErrorSpy(body: (spy: ReturnType<typeof vi.spyOn>) => void): void {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      body(spy);
+    } finally {
+      spy.mockRestore();
+    }
+  }
+
+  it.each<[string, FocusTarget, string]>([
+    [
+      'a body target with an unknown row',
+      { area: 'body', rowId: 'missing', columnId: 'name' },
+      'missing',
+    ],
+    [
+      'a body target with a hidden column',
+      { area: 'body', rowId: 'r2', columnId: 'status' },
+      'status',
+    ],
+    ['a header target with a hidden column', { area: 'header', columnId: 'status' }, 'status'],
+    ['a panel target with an unknown row', { area: 'panel', rowId: 'missing' }, 'missing'],
+  ])('ignores %s and reports it once', (_label, target, badId) => {
+    const table = makeFocusedStore();
+
+    withConsoleErrorSpy((spy) => {
+      expect(() => table.focus.moveTo(target)).not.toThrow();
+
+      expect(table.focus()).toEqual(start);
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(String(spy.mock.calls[0][0])).toContain(`"${badId}"`);
+    });
+  });
+
+  it('treats a row present in data but absent from renderRows as unrendered', () => {
+    const table = makeFocusedStore(withDroppedRow('r2'));
+
+    withConsoleErrorSpy((spy) => {
+      table.focus.moveTo({ area: 'body', rowId: 'r2', columnId: 'name' });
+
+      expect(table.focus()).toEqual(start);
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(String(spy.mock.calls[0][0])).toContain('"r2"');
+    });
+  });
+
+  it.each<[string, FocusTarget]>([
+    ['body', { area: 'body', rowId: 'r2', columnId: null }],
+    ['panel', { area: 'panel', rowId: 'r2' }],
+  ])('moves to a rendered %s target that carries no column id', (_label, target) => {
+    const table = makeFocusedStore();
+
+    withConsoleErrorSpy((spy) => {
+      table.focus.moveTo(target);
+
+      expect(table.focus()).toEqual(target);
+      expect(spy).not.toHaveBeenCalled();
+    });
+  });
+
+  it('reports each rejected write, not only the first', () => {
+    const table = makeFocusedStore();
+
+    withConsoleErrorSpy((spy) => {
+      table.focus.moveTo({ area: 'body', rowId: 'missing', columnId: 'name' });
+      table.focus.moveTo({ area: 'body', rowId: 'missing', columnId: 'name' });
+
+      expect(spy).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('reports an unrendered target even when ngDevMode is false', () => {
+    const table = makeFocusedStore();
+    const previous = getNgDevMode();
+    setNgDevMode(false);
+    try {
+      withConsoleErrorSpy((spy) => {
+        table.focus.moveTo({ area: 'body', rowId: 'missing', columnId: 'name' });
+
+        expect(table.focus()).toEqual(start);
+        expect(spy).toHaveBeenCalledTimes(1);
+      });
+    } finally {
+      setNgDevMode(previous);
+    }
   });
 });
