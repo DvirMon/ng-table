@@ -14,4 +14,6 @@ export type NavKey = {
   readonly key: string;
   readonly ctrlKey: boolean;
   readonly metaKey?: boolean;
+  readonly altKey?: boolean;
+  readonly shiftKey?: boolean;
 };

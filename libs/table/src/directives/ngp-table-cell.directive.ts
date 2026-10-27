@@ -39,7 +39,7 @@ export class NgpTableCellDirective {
   // Optional: a cell may sit in a plain `<tr>` without `ngpTableRow`.
   private readonly row = inject(NGP_TABLE_ROW, { optional: true });
   private readonly table = inject(NGP_TABLE_STORE);
-  private readonly focusRegistry = inject(NGP_TABLE_FOCUS_REGISTRY);
+  private readonly focusRegistry = inject(NGP_TABLE_FOCUS_REGISTRY, { optional: true });
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
 
   constructor() {
@@ -48,10 +48,12 @@ export class NgpTableCellDirective {
       const rowId = this.row?.rowId();
       const columnId = this.table.ngpTable().renderColumns()[this.ngpTableCell()]?.id;
       const isGroupRow = this.row?.isGroupHeader() ?? true;
+      const registry = this.focusRegistry;
+      if (registry === null) return;
       if (rowId === undefined || columnId === undefined || isGroupRow) return;
 
-      this.focusRegistry.register({ rowId, columnId }, this.element);
-      onCleanup(() => this.focusRegistry.unregister(this.element));
+      registry.register({ rowId, columnId }, this.element);
+      onCleanup(() => registry.unregister(this.element));
     });
   }
 
