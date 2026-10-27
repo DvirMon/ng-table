@@ -11,6 +11,28 @@ function reportAccessorError(columnId: string): void {
   );
 }
 
+// Note: one data evaluation spans two computeds — the pipeline (`rows`) and the cells build
+// (`renderRows`) — yet reports once per column (ADR-0014). Core opens this scope around the
+// pipeline so a stage reading an accessor shares the cells build's set without a
+// `StageContext` field.
+let activeReportedColumns: Set<string> | undefined;
+
+/** Runs `run` with `reportedColumns` as the ambient set `currentAccessorReports()` returns. */
+export function withAccessorReports<T>(reportedColumns: Set<string>, run: () => T): T {
+  const previous = activeReportedColumns;
+  activeReportedColumns = reportedColumns;
+  try {
+    return run();
+  } finally {
+    activeReportedColumns = previous;
+  }
+}
+
+/** The reported-columns set of the evaluation in progress; `undefined` outside one. */
+export function currentAccessorReports(): Set<string> | undefined {
+  return activeReportedColumns;
+}
+
 /**
  * Reads a column's resolved value for one row, degrading to `undefined` on a throw.
  *

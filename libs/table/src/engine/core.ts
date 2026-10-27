@@ -1,6 +1,6 @@
 import { computed, signal, type Signal } from '@angular/core';
 import type { ColumnDef, RenderRow, RowId } from '../api/types';
-import { buildDataCells, buildGroupCells } from './cells';
+import { buildDataCells, buildGroupCells, withAccessorReports } from './cells';
 import {
   foldColumnRules,
   resolveColumnDefs,
@@ -64,7 +64,17 @@ export function createTableCore<TRow>(config: TableEngineConfig<TRow>): TableCor
   // starts from.
   const seedRenderNodes = buildDefaultRenderNodes(trackBy);
 
-  const rows = computed(() => runPipeline(config.data(), stages, { parentOf: parentLink.value }));
+  // One accessor-report set per data evaluation, shared by pipeline stages and the cells build
+  // (ADR-0014): `rows` opens it, the next `renderRows` evaluation consumes it. A `renderRows`
+  // rerun without a fresh `rows` (e.g. a column change) starts its own.
+  let pendingAccessorReports: Set<string> | undefined;
+  const rows = computed(() => {
+    const reportedColumns = new Set<string>();
+    pendingAccessorReports = reportedColumns;
+    return withAccessorReports(reportedColumns, () =>
+      runPipeline(config.data(), stages, { parentOf: parentLink.value }),
+    );
+  });
 
   // Unions every contributed `expandedRows` set for `flattenVisible`. `undefined` when zero
   // features contributed the slot (a no-op — everything stays open); a defined — possibly
@@ -108,8 +118,11 @@ export function createTableCore<TRow>(config: TableEngineConfig<TRow>): TableCor
     const byId = indexById();
     const resolvedColumns = columns();
     const contextIds = context();
-    const reportedColumns = new Set<string>();
-    const tree = runRenderStages(seedRenderNodes(rows()), renderStages, {
+    // Read before taking the set, so a `rows` rerun has already replaced it.
+    const pipelineRows = rows();
+    const reportedColumns = pendingAccessorReports ?? new Set<string>();
+    pendingAccessorReports = undefined;
+    const tree = runRenderStages(seedRenderNodes(pipelineRows), renderStages, {
       parentOf: parentLink.value,
     });
     return flattenVisible(tree, expanded()).map((row, index) => {
