@@ -1405,3 +1405,128 @@ describe('focus.focusRequests (#232)', () => {
     expect(second.focus.focusRequests()).toBe(0);
   });
 });
+
+describe('focus recovery (#233)', () => {
+  const rows: Row[] = [
+    { id: 'r1', name: 'Ann', status: 'active' },
+    { id: 'r2', name: 'Bob', status: 'idle' },
+    { id: 'r3', name: 'Cy', status: 'idle' },
+  ];
+
+  /** Claims `s.filter` and drops the row whose id the signal holds; `data` is untouched. */
+  function withHiddenId(id: Signal<string | null>): Feature<TableStore<Row>, object> {
+    return createTableFeature(() => ({
+      stages: stageSchema<Row>('pipeline', (s) => {
+        stage(s.filter, { run: (current) => current.filter((row) => row.id !== id()) });
+      }),
+    }));
+  }
+
+  function setup() {
+    const data = signal<Row[]>(rows);
+    const table = TestBed.runInInjectionContext(() =>
+      createTable(data, { trackBy: 'id', columns: makeColumns() }),
+    );
+    return { data, table };
+  }
+
+  it('moves focus to the row now at the old index when the focused row is deleted', () => {
+    const { data, table } = setup();
+    table.focus.moveTo({ area: 'body', rowId: 'r2', columnId: 'status' });
+
+    data.update((current) => current.filter((row) => row.id !== 'r2'));
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: 'r3', columnId: 'status' });
+  });
+
+  it('clamps to the last row when the focused last row is deleted', () => {
+    const { data, table } = setup();
+    table.focus.moveTo({ area: 'body', rowId: 'r3', columnId: 'name' });
+
+    data.update((current) => current.filter((row) => row.id !== 'r3'));
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: 'r2', columnId: 'name' });
+  });
+
+  it('moves focus to the row now at the old index when the focused row is filtered out', () => {
+    const data = signal<Row[]>(rows);
+    const hidden = signal<string | null>(null);
+    const table = TestBed.runInInjectionContext(() =>
+      createTable(data, { trackBy: 'id', columns: makeColumns() }, withHiddenId(hidden)),
+    );
+    table.focus.moveTo({ area: 'body', rowId: 'r2', columnId: 'status' });
+
+    hidden.set('r2');
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: 'r3', columnId: 'status' });
+  });
+
+  it('follows the focused row id and column when sorting moves it', () => {
+    const data = signal<Row[]>(rows);
+    const table = TestBed.runInInjectionContext(() =>
+      createTable(data, { trackBy: 'id', columns: makeColumns() }, withReversibleSort()),
+    );
+    table.focus.moveTo({ area: 'body', rowId: 'r1', columnId: 'name' });
+
+    table.toggleReverse();
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: 'r1', columnId: 'name' });
+  });
+
+  it('moves focus to the first header cell when the table becomes empty', () => {
+    const { data, table } = setup();
+    table.focus.moveTo({ area: 'body', rowId: 'r2', columnId: 'status' });
+
+    data.set([]);
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'header', columnId: 'name' });
+  });
+
+  it('moves focus to the column now at the old index, clamped, when the focused column is hidden', () => {
+    const { table } = setup();
+    table.focus.moveTo({ area: 'body', rowId: 'r1', columnId: 'status' });
+
+    table.columns.update(toggleColumnVisibility('status'));
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: 'r1', columnId: 'name' });
+  });
+
+  it('applies the column rule to header targets', () => {
+    const { table } = setup();
+    table.focus.moveTo({ area: 'header', columnId: 'name' });
+
+    table.columns.update(toggleColumnVisibility('name'));
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'header', columnId: 'status' });
+  });
+
+  it('degrades to null, without throwing, when no valid target remains', () => {
+    const { table } = setup();
+    table.focus.moveTo({ area: 'body', rowId: 'r1', columnId: 'name' });
+
+    expect(() => {
+      table.columns.update(toggleColumnVisibility('name'));
+      table.columns.update(toggleColumnVisibility('status'));
+      TestBed.tick();
+    }).not.toThrow();
+
+    expect(table.focus()).toBeNull();
+  });
+
+  it('keeps row focus (columnId null) when the focused row is deleted', () => {
+    const { data, table } = setup();
+    table.focus.moveTo({ area: 'body', rowId: 'r2', columnId: null });
+
+    data.update((current) => current.filter((row) => row.id !== 'r2'));
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: 'r3', columnId: null });
+  });
+});

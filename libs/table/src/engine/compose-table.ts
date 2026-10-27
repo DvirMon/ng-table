@@ -1,4 +1,12 @@
-import { computed, DestroyRef, effect, inject, signal, untracked } from '@angular/core';
+import {
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  signal,
+  untracked,
+  type WritableSignal,
+} from '@angular/core';
 import type {
   AnyTableFeature,
   FocusMoveOptions,
@@ -8,7 +16,7 @@ import type {
   TableStore,
 } from '../api/types';
 import { createTableCore, type TableCoreHandle } from './core';
-import { findUnrenderedId } from './focus';
+import { findUnrenderedId, recoverFocus, type FocusSnapshot } from './focus';
 import type { PipelineStage, RowTransform } from './pipeline';
 import type { RenderNodeTransform, RenderStage } from './render-stages';
 import { diffRemovedIds } from './rows';
@@ -54,6 +62,18 @@ function labelFeatures<TRow, TFeature>(
   }));
 }
 
+function isSameFocusTarget(a: FocusTarget | null, b: FocusTarget | null): boolean {
+  if (a === null || b === null) {
+    return a === b;
+  }
+  if (a.area !== b.area) {
+    return false;
+  }
+  const sameRow = 'rowId' in a && 'rowId' in b ? a.rowId === b.rowId : true;
+  const sameColumn = 'columnId' in a && 'columnId' in b ? a.columnId === b.columnId : true;
+  return sameRow && sameColumn;
+}
+
 function reportUnrenderedFocusTarget(id: string): void {
   // eslint-disable-next-line no-console -- ADR-0014: floor reporting mechanism, no existing
   // runtime-degradation logging abstraction to reuse in this codebase yet.
@@ -65,10 +85,13 @@ function reportUnrenderedFocusTarget(id: string): void {
 // Per-call focus position, so two tables never share one. A target whose row or column is not
 // rendered is ignored and reported on every call, never thrown (ADR-0014). A move with
 // `focusElement: true` bumps `focusRequests` so the view layer can move DOM focus.
-function createFocus<TRow>(handle: TableCoreHandle<TRow>): TableFocus {
+function createFocus<TRow>(handle: TableCoreHandle<TRow>): {
+  readonly focus: TableFocus;
+  readonly target: WritableSignal<FocusTarget | null>;
+} {
   const target = signal<FocusTarget | null>(null);
   const requests = signal(0);
-  return Object.assign(
+  const focus = Object.assign(
     computed((): FocusTarget | null => target()),
     {
       moveTo: (next: FocusTarget, options?: FocusMoveOptions): void => {
@@ -90,11 +113,15 @@ function createFocus<TRow>(handle: TableCoreHandle<TRow>): TableFocus {
       focusRequests: requests.asReadonly(),
     },
   );
+  return { focus, target };
 }
 
 // Builds the core half of the store before any feature runs, so a feature factory already
 // sees `renderRows` and `totalRowCount` on the store it is handed.
-function createBaseStore<TRow>(handle: TableCoreHandle<TRow>): FoldingStore<TRow> {
+function createBaseStore<TRow>(
+  handle: TableCoreHandle<TRow>,
+  focus: TableFocus,
+): FoldingStore<TRow> {
   // Default is the row count before any virtualization/pagination trims what's actually
   // rendered — equals `renderRows().length` until a feature overrides it.
   const totalRowCount = computed(() => handle.core.rows().length);
@@ -108,7 +135,7 @@ function createBaseStore<TRow>(handle: TableCoreHandle<TRow>): FoldingStore<TRow
     renderColumns: handle.renderColumns,
     totalRowCount,
     indexById: handle.core.indexById,
-    focus: createFocus(handle),
+    focus,
   };
 }
 
@@ -218,7 +245,8 @@ export function composeTable<TRow>(
 
   // Stable reference — features that read it at factory time see the core members plus only
   // earlier features, features that read it from a method or computed see everything.
-  const store = createBaseStore(handle);
+  const { focus, target: focusTarget } = createFocus(handle);
+  const store = createBaseStore(handle, focus);
 
   // Note: `parentOf` is a getter over `handle.parentLink`. The contributing feature may fold
   // after a reader's factory runs; a copied value would stay `undefined` for earlier features.
@@ -284,6 +312,26 @@ export function composeTable<TRow>(
       }
     });
   }
+
+  // Repairs the focus target when rows or columns change. Unconditional: any table can hold
+  // focus. Writes `target` directly, not `moveTo` � recovery is silent and requests no DOM
+  // focus. The previous snapshot is seeded before the effect exists, like `previousIds` above.
+  let previousSnapshot: FocusSnapshot = untracked(() => ({
+    rows: handle.renderRows(),
+    columnIds: handle.renderColumns().map((column) => column.id),
+  }));
+  effect(() => {
+    const rows = handle.renderRows();
+    const columnIds = handle.renderColumns().map((column) => column.id);
+    const rowIds = new Set(handle.core.rows().map((row) => handle.core.trackBy(row)));
+    const recovered = untracked(() =>
+      recoverFocus(focusTarget(), previousSnapshot, { rows, columnIds, rowIds }),
+    );
+    previousSnapshot = { rows, columnIds };
+    if (!isSameFocusTarget(recovered, untracked(focusTarget))) {
+      focusTarget.set(recovered);
+    }
+  });
 
   // The one seam where static typing gives way to dynamic composition: feature members are
   // folded from a runtime-length array. The cast in `create-table.ts` is the static/dynamic
