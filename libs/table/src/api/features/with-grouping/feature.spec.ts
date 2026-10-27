@@ -2569,13 +2569,37 @@ describe('writes target rows; clustering re-derives', () => {
       expect(amountOf(store, US_HEADER_ID)).toBe(650);
     });
 
-    it('re-derives through store.value.update(patchRow) (ADR-0006 write path)', () => {
-      const { store } = setupWithSum();
+    it('a bucket that loses its last row disappears; the receiving bucket re-derives', () => {
+      const { store } = setupWithSum(['amount']);
+      expect(amountOf(store, 'group:>amount:number:300')).toBe(300);
+
+      store.value.update(patchRow<GroupingMockRow>(2, { amount: 100 }));
+      TestBed.tick();
+
+      expect(findHeader(store.renderRows(), 'group:>amount:number:300')).toBeUndefined();
+      expect(amountOf(store, 'group:>amount:number:100')).toBe(200);
+    });
+
+    it('a collapsed group header re-derives its aggregate', () => {
+      const data = signal<GroupingMockRow[]>([...mockGroupingRows]);
+      const store = inContext(() =>
+        createTable(
+          data,
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({
+            initial: ['region'],
+            schema: (path) => aggregate(path.amount, sumAmount),
+          }),
+          withTree(),
+        ),
+      );
+      // Default: nothing toggled, so US renders collapsed.
+      expect(findHeader(store.renderRows(), US_HEADER_ID)?.isExpanded).toBe(false);
+      expect(amountOf(store, US_HEADER_ID)).toBe(450);
 
       store.value.update(patchRow<GroupingMockRow>(2, { amount: 500 }));
       TestBed.tick();
 
-      expect(amountOf(store, US_ELECTRONICS_HEADER_ID)).toBe(600);
       expect(amountOf(store, US_HEADER_ID)).toBe(650);
     });
   });
