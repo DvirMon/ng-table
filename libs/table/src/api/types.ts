@@ -250,7 +250,7 @@ export interface FocusMoveOptions {
 export interface TableFocus<TCol extends string = string> {
   (): FocusTarget<TCol> | null;
   moveTo(target: FocusTarget<TCol>, options?: FocusMoveOptions): void;
-  /** Increments on each `moveTo` with `focusElement: true`, so the view can move DOM focus. */
+  /** Increments on each `moveTo` with `focusElement: true`, so the view can move DOM focus. Requests made in the same tick coalesce into one effect run; the counter still counts each. */
   readonly focusRequests: Signal<number>;
 }
 
