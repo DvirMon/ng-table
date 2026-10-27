@@ -1,6 +1,6 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { Subject, type Observable } from 'rxjs';
-import { readAccessor } from '../../../engine/cells';
+import { currentAccessorReports, readAccessor } from '../../../engine/cells';
 import { buildValueOfContext, type ValueOfContext } from '../../../engine/resolvers';
 import type {
   ColumnValuesOf,
@@ -199,7 +199,9 @@ function sortRows<TRow>(
     return rows;
   }
   const columnById = new Map(columns.map((column) => [column.id, column]));
-  const reportedAccessorColumns = new Set<string>();
+  // Shared with the cells build, so a throwing accessor reports once per evaluation, not once
+  // here and once there (ADR-0014).
+  const reportedAccessorColumns = currentAccessorReports() ?? new Set<string>();
   const reportedComparatorColumns = new Set<string>();
   const ctx = buildValueOfContext<TRow>(() => columns, knownIds, 'withSorting');
   const comparators = rules.flatMap((rule) => {
