@@ -65,33 +65,44 @@ jobs:
     needs: [checks]
     runs-on: ubuntu-latest
     steps:
-      # Names each failed job and step in the run summary and as
-      # annotations, so the gate row says why instead of only `exit 1`.
+      # Names each failed job and step, then copies the failed jobs'
+      # own annotations (vitest's per-test errors, lint/format errors)
+      # into this run summary, so the gate says why instead of `exit 1`.
       - name: All required jobs passed
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
         env:
           GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
           JOBS: repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}/jobs
         run: |
           failed=$(gh api "$JOBS" --jq '
             .jobs[]
             | select(.conclusion == "failure" or .conclusion == "cancelled")
-            | [.steps[] | select(.conclusion == "failure") | .name] as $steps
-            | "\(.name): \(.conclusion)"
-              + (if ($steps | length) > 0
-                 then " at step \"" + ($steps | join("\", \"")) + "\""
-                 else "" end)
+            | [.id, .name, .conclusion,
+               ([.steps[] | select(.conclusion == "failure") | .name] | join(", "))]
+            | @tsv
           ') || failed=""
+          echo "### CI failed" >> "$GITHUB_STEP_SUMMARY"
           if [ -z "$failed" ]; then
-            failed="a required job failed (see the jobs above)"
+            echo "::error title=CI failed::a required job failed (see the jobs above)"
+            exit 1
           fi
-          {
-            echo "### CI failed"
-            echo
-            printf '%s\n' "$failed" | sed 's/^/- /'
-          } >> "$GITHUB_STEP_SUMMARY"
-          printf '%s\n' "$failed" | while IFS= read -r line; do
+          while IFS=$'\t' read -r id name conclusion steps; do
+            line="$name: $conclusion${steps:+ at step \"$steps\"}"
             echo "::error title=CI failed::$line"
-          done
+            printf '\n#### %s\n\n' "$line" >> "$GITHUB_STEP_SUMMARY"
+            # Runner's own "exit code 1" notes live under .github; skip them.
+            gh api "repos/$REPO/check-runs/$id/annotations" --jq '
+              .[]
+              | select(.annotation_level == "failure" and .path != ".github")
+              | "\(.path):\(.start_line)"
+                + " — " + (.title // "" | split(" > ") | last)
+                + " — " + (.message | split("\n")[0] | .[0:200])
+            ' < /dev/null | head -n 20 > annotations.txt || true
+            while IFS= read -r a; do
+              echo "- $a" >> "$GITHUB_STEP_SUMMARY"
+              echo "::error title=$name::${a//%/%25}"
+            done < annotations.txt
+          done <<< "$failed"
           exit 1
       - run: echo "ci-gate green"
