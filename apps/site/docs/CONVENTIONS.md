@@ -11,6 +11,7 @@ domain's implementation must follow so parallel agents never need to coordinate 
   is the single source, a fallback duplicates it and can drift. The one accepted exception in this build is
   `index.html`'s inline `background` on `<html>`, which exists only to prevent a white flash before CSS
   loads and intentionally mirrors `--ngpt-bg-app`.
+- **Bind a directive once in snippets.** `<tr [ngpTableRow]="row">`, never `<tr ngpTableRow [ngpTableRow]="row">` — the binding already matches the selector. Applies to every directive whose selector is its own input.
 - **Dark-only.** No theme toggle, no `light-dark()`, no light-mode branch.
 - Read your spec's full front-matter (`owns` / `does_not_own` / `depends_on` / `states` / `a11y` /
   `tokens`) — one component spec is enough context to build that component.
