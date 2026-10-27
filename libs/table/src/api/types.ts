@@ -283,7 +283,18 @@ export interface TableStore<TRow, TValues extends ColumnValueMap = ColumnValueMa
    * `.update(updater)` — e.g. `table.value.update(insertRow(row, { at: 0 }))`. */
   readonly value: WritableView<TRow[], RowUpdater<TRow>>;
 
-  /** Read: the focused grid position, or `null` before any is set. Write: `.moveTo(target)`. */
+  /** Read: the focused grid position, or `null` before any is set. Write: `.moveTo(target)`.
+   *
+   * The store repairs the position when rows or columns change, so it never points at
+   * something that is gone:
+   * - a deleted or filtered-out row: the row now at its old position;
+   * - a moved row (sort, reorder, live update): followed to its new position;
+   * - a row hidden by a collapsed ancestor: its nearest visible ancestor;
+   * - an empty table: the first header cell, or `null` when there is none;
+   * - a hidden column: the column now at its old position;
+   * - a closed panel: its row.
+   *
+   * Repair only re-points the stored position; it never moves DOM focus. */
   readonly focus: TableFocus<ColumnIdIn<TValues>>;
 
   // Precedent: `FilterRule.__criterion` / `__row` (`engine/filters/types.ts`) use the same
