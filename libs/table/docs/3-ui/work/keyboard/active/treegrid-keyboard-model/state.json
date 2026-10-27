@@ -42,7 +42,15 @@
       "pr": 254,
       "readiness": "ready-for-agent",
       "assessed": "10-27 · task plan on disk"
+    },
+    {
+      "remoteRef": "#235",
+      "branch": "feat/235-grid-navigation-core",
+      "worktree": ".claude/worktrees/feat-235-grid-navigation-core",
+      "pr": null,
+      "readiness": "ready-for-agent",
+      "assessed": "10-27 · task plan on disk"
     }
   ],
-  "updatedAt": "2026-10-27T11:09:41Z"
+  "updatedAt": "2026-10-27T11:47:17Z"
 }
