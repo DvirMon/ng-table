@@ -15,8 +15,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  main:
+  # One job per check, so the PR checks list names what failed
+  # (`CI / lint`) instead of a single `CI / main`.
+  checks:
+    name: ${{ matrix.check }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Prettier on the files this PR changed.
+          - check: format
+            run: |
+              files=$(git diff --name-only --diff-filter=ACMR "$NX_BASE" "$NX_HEAD" | grep -E '\.(ts|html|css|scss|json|md)$' || true)
+              [ -z "$files" ] || echo "$files" | tr '\n' '\0' | xargs -0 npx prettier --check
+          - check: llms
+            run: npm run llms:check
+          - check: lint
+            run: npx nx affected -t lint
+          - check: typecheck
+            run: npx nx affected -t typecheck
+          # TEMPORARY: exclude carried over from acme for known-failing test until fixed
+          - check: test
+            run: npx nx affected -t test --exclude=ng-table
+          - check: build
+            run: npx nx affected -t build
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -32,26 +55,43 @@ jobs:
 
       - uses: nrwl/nx-set-shas@e602fada7ad5987b0f7b1905e7a99ea1c661514c # v5
 
-      - name: Check formatting of changed files
-        run: |
-          files=$(git diff --name-only --diff-filter=ACMR "$NX_BASE" "$NX_HEAD" | grep -E '\.(ts|html|css|scss|json|md)$' || true)
-          [ -z "$files" ] || echo "$files" | tr '\n' '\0' | xargs -0 npx prettier --check
-
-      - run: npm run llms:check
-      - run: npx nx affected -t lint typecheck
-
-      # TEMPORARY: exclude carried over from acme for known-failing test until fixed
-      - run: npx nx affected -t test --exclude=ng-table
-      - run: npx nx affected -t build
+      - name: ${{ matrix.check }}
+        run: ${{ matrix.run }}
 
   # The one CI check the main ruleset requires. List every other job in
   # `needs`; a skipped (affected-only) job counts as ok.
   ci-gate:
     if: always()
-    needs: [main]
+    needs: [checks]
     runs-on: ubuntu-latest
     steps:
+      # Names each failed job and step in the run summary and as
+      # annotations, so the gate row says why instead of only `exit 1`.
       - name: All required jobs passed
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
-        run: exit 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOBS: repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}/jobs
+        run: |
+          failed=$(gh api "$JOBS" --jq '
+            .jobs[]
+            | select(.conclusion == "failure" or .conclusion == "cancelled")
+            | [.steps[] | select(.conclusion == "failure") | .name] as $steps
+            | "\(.name): \(.conclusion)"
+              + (if ($steps | length) > 0
+                 then " at step \"" + ($steps | join("\", \"")) + "\""
+                 else "" end)
+          ') || failed=""
+          if [ -z "$failed" ]; then
+            failed="a required job failed (see the jobs above)"
+          fi
+          {
+            echo "### CI failed"
+            echo
+            printf '%s\n' "$failed" | sed 's/^/- /'
+          } >> "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' "$failed" | while IFS= read -r line; do
+            echo "::error title=CI failed::$line"
+          done
+          exit 1
       - run: echo "ci-gate green"
