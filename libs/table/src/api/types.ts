@@ -294,7 +294,8 @@ export interface TableStore<TRow, TValues extends ColumnValueMap = ColumnValueMa
    * - a hidden column: the column now at its old position;
    * - a closed panel: its row.
    *
-   * Repair only re-points the stored position; it never moves DOM focus. */
+   * The engine only re-points the stored position; the directive layer moves DOM
+   * focus when focus is inside the grid. */
   readonly focus: TableFocus<ColumnIdIn<TValues>>;
 
   // Precedent: `FilterRule.__criterion` / `__row` (`engine/filters/types.ts`) use the same

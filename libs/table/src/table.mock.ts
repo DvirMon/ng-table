@@ -295,3 +295,23 @@ export function makeFlatRows(): FlatRow[] {
     { id: 'c2', name: 'D Child Two', parentId: 'r1' },
   ];
 }
+
+export interface StatusMockRow {
+  id: string;
+  name: string;
+  status: string;
+}
+
+/** Three-row name/status set for focus-recovery specs (#233). Fresh array per call: tests mutate. */
+export function makeStatusRows(): StatusMockRow[] {
+  return [
+    { id: 'r1', name: 'Ann', status: 'active' },
+    { id: 'r2', name: 'Bob', status: 'idle' },
+    { id: 'r3', name: 'Cy', status: 'idle' },
+  ];
+}
+
+/** Two-row prefix of {@link makeStatusRows}, for the closed-panel focus specs (#233). */
+export function makeStatusRowsPair(): StatusMockRow[] {
+  return makeStatusRows().slice(0, 2);
+}

@@ -19,6 +19,8 @@ import { stageSchema } from '../schema/stage-schema';
 import { getNgDevMode, setNgDevMode } from '../ng-dev-mode.testing';
 import {
   makeFlatRows,
+  makeStatusRows,
+  makeStatusRowsPair,
   mockGroupingRows,
   mockGroupingTrackBy,
   noData,
@@ -1417,11 +1419,7 @@ describe('focus.focusRequests (#232)', () => {
 });
 
 describe('focus recovery (#233)', () => {
-  const rows: Row[] = [
-    { id: 'r1', name: 'Ann', status: 'active' },
-    { id: 'r2', name: 'Bob', status: 'idle' },
-    { id: 'r3', name: 'Cy', status: 'idle' },
-  ];
+  const rows: Row[] = makeStatusRows();
 
   /** Claims `s.filter` and drops the row whose id the signal holds; `data` is untouched. */
   function withHiddenId(id: Signal<string | null>): Feature<TableStore<Row>, object> {
@@ -1439,6 +1437,16 @@ describe('focus recovery (#233)', () => {
     );
     return { data, table };
   }
+
+  it('keeps the focused column id when columns are reordered', () => {
+    const { table } = setup();
+    table.focus.moveTo({ area: 'body', rowId: 'r2', columnId: 'status' });
+
+    table.columns.update(reorderColumns(['status', 'name']));
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: 'r2', columnId: 'status' });
+  });
 
   it('moves focus to the row now at the old index when the focused row is deleted', () => {
     const { data, table } = setup();
@@ -1639,10 +1647,7 @@ describe('focus recovery — collapse (#233)', () => {
 });
 
 describe('focus recovery — closed panel (#233)', () => {
-  const rows: Row[] = [
-    { id: 'r1', name: 'Ann', status: 'active' },
-    { id: 'r2', name: 'Bob', status: 'idle' },
-  ];
+  const rows: Row[] = makeStatusRowsPair();
 
   function setupGrid(columns: ReturnType<typeof makeColumns> = makeColumns()) {
     const data = signal<Row[]>(rows);
