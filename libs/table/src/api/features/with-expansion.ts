@@ -2,7 +2,7 @@ import { computed, effect, signal, untracked, type Signal } from '@angular/core'
 import type { Observable } from 'rxjs';
 import type { Feature, RowOf, TableFeatureSpec } from '../../engine/types';
 import { createTableFeature } from '../create-table-feature';
-import type { DerivedDict, RowId, TableStore } from '../types';
+import type { DerivedDict, FocusTarget, RowId, TableStore } from '../types';
 import {
   createExpansionStore,
   type ExpansionChange,
@@ -168,9 +168,18 @@ function buildExpansionSpec<TRow>(
 
   // Single-open: moves the one open panel to the newly focused data row. Only `focus()` is
   // tracked; tracking `expanded()` would snap a manual toggle back to the focused row.
+  let previousTarget: FocusTarget | null = null;
   function followFocus(): void {
     const target = input.focus();
     untracked(() => {
+      const previous = previousTarget;
+      previousTarget = target;
+      // Focus recovery off a closed panel is not a request to open its row again.
+      const isRecoveryFromPanel =
+        previous?.area === 'panel' && target?.area === 'body' && previous.rowId === target.rowId;
+      if (isRecoveryFromPanel) {
+        return;
+      }
       const isSingleOpen = !multi();
       const open = store.expanded();
       const hasExactlyOneOpen = open.size === 1;

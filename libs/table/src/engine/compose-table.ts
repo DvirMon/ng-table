@@ -324,8 +324,16 @@ export function composeTable<TRow>(
     const rows = handle.renderRows();
     const columnIds = handle.renderColumns().map((column) => column.id);
     const rowIds = new Set(handle.core.rows().map((row) => handle.core.trackBy(row)));
+    // Read only when `withExpansion()` is composed; the effect then re-runs when a panel closes.
+    const openPanelRowIds = hasMember(store, 'expansion') ? store.expansion() : undefined;
+    const isTreegrid = 'tree' in store;
     const recovered = untracked(() =>
-      recoverFocus(focusTarget(), previousSnapshot, { rows, columnIds, rowIds }),
+      recoverFocus(
+        focusTarget(),
+        previousSnapshot,
+        { rows, columnIds, rowIds },
+        { openPanelRowIds, isTreegrid },
+      ),
     );
     previousSnapshot = { rows, columnIds };
     if (!isSameFocusTarget(recovered, untracked(focusTarget))) {
@@ -337,4 +345,12 @@ export function composeTable<TRow>(
   // folded from a runtime-length array. The cast in `create-table.ts` is the static/dynamic
   // boundary.
   return store;
+}
+
+// Feature members are folded at runtime, so presence is checked by key, not by static type.
+function hasMember<K extends string>(
+  value: object,
+  key: K,
+): value is Record<K, () => ReadonlySet<RowId>> {
+  return key in value;
 }
