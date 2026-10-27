@@ -1,5 +1,5 @@
 import { describe, expectTypeOf, it } from 'vitest';
-import type { RenderRow, RowId } from './types';
+import type { FocusTarget, RenderRow, RowId } from './types';
 
 /**
  * Compile-time seam for `RenderRow.parentId` (ADR-0017) â€” `parentId`'s optionality is a type
@@ -63,6 +63,30 @@ describe('RenderRow.parentId', () => {
         parentId: true,
       };
       expectTypeOf(row).toEqualTypeOf<RenderRow<Row>>();
+    });
+  });
+});
+
+describe('FocusTarget', () => {
+  it('only the body arm allows a null columnId', () => {
+    typecheckOnly(() => {
+      const body: FocusTarget<'a'> = { area: 'body', rowId: 'r1', columnId: null };
+
+      // @ts-expect-error — the header arm requires a column id; null is body-only
+      const header: FocusTarget<'a'> = { area: 'header', columnId: null };
+
+      void [body, header];
+    });
+  });
+
+  it('the panel arm carries no column', () => {
+    typecheckOnly(() => {
+      const panel: FocusTarget<'a'> = { area: 'panel', rowId: 'r1' };
+
+      // @ts-expect-error — the panel arm has no columnId
+      const withColumn: FocusTarget<'a'> = { area: 'panel', rowId: 'r1', columnId: 'a' };
+
+      void [panel, withColumn];
     });
   });
 });

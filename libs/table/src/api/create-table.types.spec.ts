@@ -4,7 +4,7 @@ import { createTable } from './create-table';
 import { createTableFeature } from './create-table-feature';
 import { composeFeatures } from './features/compose-features';
 import { withComputed } from './features/with-computed';
-import type { ColumnDecl, ColumnSet, TableDataInput } from './types';
+import type { ColumnDecl, ColumnSet, TableDataInput, TableFocus } from './types';
 import type { ColumnsPath } from '../columns-schema/types';
 import type { ColumnIdOf, ColumnValuesOf, RowOf, Shape } from '../engine/types';
 import { noData } from '../table.mock';
@@ -450,6 +450,37 @@ describe('ColumnValuesOf / TableConfig â€” carriage proofs (#131, step 5)', () =
         owner: string;
         status: string;
       }>();
+    });
+  });
+});
+
+describe('focus — column-id carriage', () => {
+  it('narrows TCol to the declared column-id union', () => {
+    typecheckOnly(() => {
+      const table = createTable(data, { trackBy: 'id', columns: makeColumns() });
+
+      expectTypeOf(table.focus).toEqualTypeOf<TableFocus<'name' | 'status'>>();
+    });
+  });
+
+  it('rejects a column id never declared in columns', () => {
+    typecheckOnly(() => {
+      const table = createTable(data, { trackBy: 'id', columns: makeColumns() });
+
+      // @ts-expect-error — 'statuss' was never declared in columns
+      table.focus.moveTo({ area: 'header', columnId: 'statuss' });
+
+      // Positive, beside it: a declared id is legal.
+      table.focus.moveTo({ area: 'header', columnId: 'status' });
+      expectTypeOf(table.focus).toEqualTypeOf<TableFocus<'name' | 'status'>>();
+    });
+  });
+
+  it('widens TCol to string when the columns return type is annotated', () => {
+    typecheckOnly(() => {
+      const table = createTable(data, { trackBy: 'id', columns: makeWidenedColumns() });
+
+      expectTypeOf(table.focus).toEqualTypeOf<TableFocus<string>>();
     });
   });
 });

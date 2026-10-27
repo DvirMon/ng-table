@@ -18,6 +18,7 @@ import type {
   ColumnDecl,
   ColumnSet,
   ColumnValueMap,
+  FocusTarget,
   ReadonlyStore,
   RenderRow,
   RowId,
@@ -1150,5 +1151,51 @@ describe('createTable', () => {
         Feature<TableStore<Invoice>, { a: Signal<number> } & { b(): void }>
       >();
     });
+  });
+});
+
+describe('focus', () => {
+  const rows: Row[] = [
+    { id: 'r1', name: 'Ann', status: 'active' },
+    { id: 'r2', name: 'Bob', status: 'idle' },
+  ];
+
+  it('is null until a target is written', () => {
+    expect(makeStore(makeColumns(), rows).focus()).toBeNull();
+  });
+
+  it('returns the last target written by moveTo, for header, body row, body cell and panel', () => {
+    const table = makeStore(makeColumns(), rows);
+    const targets: FocusTarget[] = [
+      { area: 'header', columnId: 'name' },
+      { area: 'body', rowId: 'r1', columnId: null },
+      { area: 'body', rowId: 'r2', columnId: 'status' },
+      { area: 'panel', rowId: 'r1' },
+    ];
+
+    for (const target of targets) {
+      table.focus.moveTo(target);
+      expect(table.focus()).toEqual(target);
+    }
+  });
+
+  it('is reactive: a computed reading focus() updates after moveTo', () => {
+    const table = makeStore(makeColumns(), rows);
+    const area = computed(() => table.focus()?.area ?? 'none');
+
+    expect(area()).toBe('none');
+
+    table.focus.moveTo({ area: 'header', columnId: 'name' });
+
+    expect(area()).toBe('header');
+  });
+
+  it('gives each table its own focus position', () => {
+    const first = makeStore(makeColumns(), rows);
+    const second = makeStore(makeColumns(), rows);
+
+    first.focus.moveTo({ area: 'header', columnId: 'name' });
+
+    expect(second.focus()).toBeNull();
   });
 });

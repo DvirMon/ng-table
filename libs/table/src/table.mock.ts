@@ -8,8 +8,24 @@ import {
   type EditingState,
   type EditingUpdater,
 } from './api/features/editing/state';
-import type { ColumnDef, RenderRow, RowId, RowUpdater, TableStore, TrackByFn } from './api/types';
+import type {
+  ColumnDef,
+  FocusTarget,
+  RenderRow,
+  RowId,
+  RowUpdater,
+  TableFocus,
+  TableStore,
+  TrackByFn,
+} from './api/types';
 import { createWritableView } from './engine/writable-view';
+
+/** Inert `table.focus` for the mock stores: reads `null`, `moveTo` is a no-op. */
+function createMockFocus(): TableFocus {
+  return Object.assign((): FocusTarget | null => null, {
+    moveTo: (): void => undefined,
+  });
+}
 
 /** Minimal `TableStore<unknown>` stub for directive DI-wiring tests — no real store behavior. */
 export function createMockTableStore(): TableStore<unknown> {
@@ -24,6 +40,7 @@ export function createMockTableStore(): TableStore<unknown> {
     totalRowCount: signal(0),
     trackBy: () => 'stub-id',
     indexById: signal(new Map<RowId, number>()),
+    focus: createMockFocus(),
     value: createWritableView<unknown[], never>(
       () => [],
       () => undefined,
@@ -181,6 +198,7 @@ export function createMockTableStoreWithData<TRow>(
     renderColumns: signal<ColumnDef<TRow>[]>([]),
     totalRowCount: signal(rows.length),
     indexById,
+    focus: createMockFocus(),
     trackBy,
     value: createWritableView<TRow[], RowUpdater<TRow>>(
       () => data(),
@@ -231,6 +249,7 @@ export function createMockTableStoreWithEditing<TRow>(
     renderColumns: signal<ColumnDef<TRow>[]>([]),
     totalRowCount: signal(rows.length),
     indexById,
+    focus: createMockFocus(),
     trackBy,
     value,
     editing,

@@ -1,5 +1,12 @@
-import { computed, DestroyRef, effect, inject } from '@angular/core';
-import type { AnyTableFeature, RowId, TableStore } from '../api/types';
+import { computed, DestroyRef, effect, inject, signal } from '@angular/core';
+import type {
+  AnyTableFeature,
+  FocusMoveOptions,
+  FocusTarget,
+  RowId,
+  TableFocus,
+  TableStore,
+} from '../api/types';
 import { createTableCore, type TableCoreHandle } from './core';
 import type { PipelineStage, RowTransform } from './pipeline';
 import type { RenderNodeTransform, RenderStage } from './render-stages';
@@ -46,6 +53,20 @@ function labelFeatures<TRow, TFeature>(
   }));
 }
 
+// Per-call focus position, so two tables never share one. `options` is accepted for the
+// final signature and ignored until validation and DOM focus land.
+function createFocus(): TableFocus {
+  const target = signal<FocusTarget | null>(null);
+  return Object.assign(
+    computed((): FocusTarget | null => target()),
+    {
+      moveTo: (next: FocusTarget, _options?: FocusMoveOptions): void => {
+        target.set(next);
+      },
+    },
+  );
+}
+
 // Builds the core half of the store before any feature runs, so a feature factory already
 // sees `renderRows` and `totalRowCount` on the store it is handed.
 function createBaseStore<TRow>(handle: TableCoreHandle<TRow>): FoldingStore<TRow> {
@@ -62,6 +83,7 @@ function createBaseStore<TRow>(handle: TableCoreHandle<TRow>): FoldingStore<TRow
     renderColumns: handle.renderColumns,
     totalRowCount,
     indexById: handle.core.indexById,
+    focus: createFocus(),
   };
 }
 

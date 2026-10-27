@@ -235,6 +235,22 @@ export type RowUpdater<TRow> = (
   ctx: { trackBy: TrackByFn<TRow>; indexById: ReadonlyMap<RowId, number> },
 ) => TRow[];
 
+/** A position the grid's roving focus can rest on. */
+export type FocusTarget<TCol extends string = string> =
+  | { readonly area: 'header'; readonly columnId: TCol }
+  | { readonly area: 'body'; readonly rowId: RowId; readonly columnId: TCol | null }
+  | { readonly area: 'panel'; readonly rowId: RowId };
+
+export interface FocusMoveOptions {
+  /** Also move DOM focus, even when focus is outside the grid. */
+  readonly focusElement?: boolean;
+}
+
+export interface TableFocus<TCol extends string = string> {
+  (): FocusTarget<TCol> | null;
+  moveTo(target: FocusTarget<TCol>, options?: FocusMoveOptions): void;
+}
+
 /** Public surface of a store returned by `createTable()` — the contract consumers program
  * against. Never references engine types, so swapping the internal implementation is not a
  * breaking change. */
@@ -263,6 +279,9 @@ export interface TableStore<TRow, TValues extends ColumnValueMap = ColumnValueMa
   /** Read: the row data — the consumer's own signal, single source of truth. Write:
    * `.update(updater)` — e.g. `table.value.update(insertRow(row, { at: 0 }))`. */
   readonly value: WritableView<TRow[], RowUpdater<TRow>>;
+
+  /** Read: the focused grid position, or `null` before any is set. Write: `.moveTo(target)`. */
+  readonly focus: TableFocus<ColumnIdIn<TValues>>;
 
   // Precedent: `FilterRule.__criterion` / `__row` (`engine/filters/types.ts`) use the same
   // phantom-property pattern.
