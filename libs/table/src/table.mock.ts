@@ -24,6 +24,7 @@ import { createWritableView } from './engine/writable-view';
 function createMockFocus(): TableFocus {
   return Object.assign((): FocusTarget | null => null, {
     moveTo: (): void => undefined,
+    focusRequests: signal(0).asReadonly(),
   });
 }
 

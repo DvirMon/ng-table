@@ -72,7 +72,7 @@ describe('FocusTarget', () => {
     typecheckOnly(() => {
       const body: FocusTarget<'a'> = { area: 'body', rowId: 'r1', columnId: null };
 
-      // @ts-expect-error — the header arm requires a column id; null is body-only
+      // @ts-expect-error â€” the header arm requires a column id; null is body-only
       const header: FocusTarget<'a'> = { area: 'header', columnId: null };
 
       void [body, header];
@@ -83,7 +83,7 @@ describe('FocusTarget', () => {
     typecheckOnly(() => {
       const panel: FocusTarget<'a'> = { area: 'panel', rowId: 'r1' };
 
-      // @ts-expect-error — the panel arm has no columnId
+      // @ts-expect-error â€” the panel arm has no columnId
       const withColumn: FocusTarget<'a'> = { area: 'panel', rowId: 'r1', columnId: 'a' };
 
       void [panel, withColumn];

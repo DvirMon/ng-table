@@ -19,6 +19,7 @@ import type {
   ColumnDecl,
   ColumnSet,
   ColumnValueMap,
+  FocusMoveOptions,
   FocusTarget,
   ReadonlyStore,
   RenderRow,
@@ -1312,5 +1313,74 @@ describe('focus.moveTo — unrendered target (#232)', () => {
     } finally {
       setNgDevMode(previous);
     }
+  });
+});
+
+describe('focus.focusRequests (#232)', () => {
+  const rows: Row[] = [{ id: 'r1', name: 'Ann', status: 'active' }];
+  const header: FocusTarget = { area: 'header', columnId: 'name' };
+  const rejected: FocusTarget = { area: 'body', rowId: 'missing', columnId: 'name' };
+
+  it('increments focusRequests on an accepted moveTo with focusElement: true', () => {
+    const table = makeStore(makeColumns(), rows);
+    expect(table.focus.focusRequests()).toBe(0);
+
+    table.focus.moveTo(header, { focusElement: true });
+
+    expect(table.focus.focusRequests()).toBe(1);
+  });
+
+  it('counts repeated identical focusElement requests separately', () => {
+    const table = makeStore(makeColumns(), rows);
+
+    table.focus.moveTo(header, { focusElement: true });
+    table.focus.moveTo(header, { focusElement: true });
+
+    expect(table.focus.focusRequests()).toBe(2);
+  });
+
+  it.each<[string, FocusMoveOptions | undefined]>([
+    ['a write with no options', undefined],
+    ['a write with focusElement: false', { focusElement: false }],
+  ])('does not increment focusRequests on %s', (_label, options) => {
+    const table = makeStore(makeColumns(), rows);
+
+    table.focus.moveTo(header, options);
+
+    expect(table.focus.focusRequests()).toBe(0);
+    expect(table.focus()).toEqual(header);
+  });
+
+  it('does not increment focusRequests when moveTo rejects the target', () => {
+    const table = makeStore(makeColumns(), rows);
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      table.focus.moveTo(rejected, { focusElement: true });
+
+      expect(table.focus.focusRequests()).toBe(0);
+      expect(table.focus()).toBeNull();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('exposes focusRequests as a reactive signal', () => {
+    const table = makeStore(makeColumns(), rows);
+    const seen = computed(() => table.focus.focusRequests());
+    expect(seen()).toBe(0);
+
+    table.focus.moveTo(header, { focusElement: true });
+
+    expect(seen()).toBe(1);
+  });
+
+  it('keeps a separate focusRequests counter per table', () => {
+    const first = makeStore(makeColumns(), rows);
+    const second = makeStore(makeColumns(), rows);
+
+    first.focus.moveTo(header, { focusElement: true });
+
+    expect(first.focus.focusRequests()).toBe(1);
+    expect(second.focus.focusRequests()).toBe(0);
   });
 });

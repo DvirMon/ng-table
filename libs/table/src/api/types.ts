@@ -249,6 +249,7 @@ export interface FocusMoveOptions {
 export interface TableFocus<TCol extends string = string> {
   (): FocusTarget<TCol> | null;
   moveTo(target: FocusTarget<TCol>, options?: FocusMoveOptions): void;
+  readonly focusRequests: Signal<number>;
 }
 
 /** Public surface of a store returned by `createTable()` — the contract consumers program

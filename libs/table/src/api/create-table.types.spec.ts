@@ -1,3 +1,4 @@
+import type { Signal } from '@angular/core';
 import { describe, expectTypeOf, it } from 'vitest';
 import { createColumns } from './create-columns';
 import { createTable } from './create-table';
@@ -454,7 +455,7 @@ describe('ColumnValuesOf / TableConfig â€” carriage proofs (#131, step 5)', () =
   });
 });
 
-describe('focus — column-id carriage', () => {
+describe('focus â€” column-id carriage', () => {
   it('narrows TCol to the declared column-id union', () => {
     typecheckOnly(() => {
       const table = createTable(data, { trackBy: 'id', columns: makeColumns() });
@@ -467,7 +468,7 @@ describe('focus — column-id carriage', () => {
     typecheckOnly(() => {
       const table = createTable(data, { trackBy: 'id', columns: makeColumns() });
 
-      // @ts-expect-error — 'statuss' was never declared in columns
+      // @ts-expect-error â€” 'statuss' was never declared in columns
       table.focus.moveTo({ area: 'header', columnId: 'statuss' });
 
       // Positive, beside it: a declared id is legal.
@@ -481,6 +482,16 @@ describe('focus — column-id carriage', () => {
       const table = createTable(data, { trackBy: 'id', columns: makeWidenedColumns() });
 
       expectTypeOf(table.focus).toEqualTypeOf<TableFocus<string>>();
+    });
+  });
+});
+
+describe('focus - focusRequests declaration', () => {
+  it('is declared as a read-only Signal<number>', () => {
+    typecheckOnly(() => {
+      const table = createTable(data, { trackBy: 'id', columns: makeColumns() });
+
+      expectTypeOf(table.focus.focusRequests).toEqualTypeOf<Signal<number>>();
     });
   });
 });

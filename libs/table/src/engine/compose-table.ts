@@ -63,14 +63,15 @@ function reportUnrenderedFocusTarget(id: string): void {
 }
 
 // Per-call focus position, so two tables never share one. A target whose row or column is not
-// rendered is ignored and reported on every call, never thrown (ADR-0014). `options` is
-// accepted for the final signature and ignored until DOM focus lands.
+// rendered is ignored and reported on every call, never thrown (ADR-0014). A move with
+// `focusElement: true` bumps `focusRequests` so the view layer can move DOM focus.
 function createFocus<TRow>(handle: TableCoreHandle<TRow>): TableFocus {
   const target = signal<FocusTarget | null>(null);
+  const requests = signal(0);
   return Object.assign(
     computed((): FocusTarget | null => target()),
     {
-      moveTo: (next: FocusTarget, _options?: FocusMoveOptions): void => {
+      moveTo: (next: FocusTarget, options?: FocusMoveOptions): void => {
         const renderedRowIds = new Set(handle.renderRows().map((row) => row.id));
         const renderedColumnIds = new Set(handle.renderColumns().map((column) => column.id));
         const unrenderedId = findUnrenderedId(next, renderedRowIds, renderedColumnIds);
@@ -79,7 +80,11 @@ function createFocus<TRow>(handle: TableCoreHandle<TRow>): TableFocus {
           return;
         }
         target.set(next);
+        if (options?.focusElement === true) {
+          requests.update((count) => count + 1);
+        }
       },
+      focusRequests: requests.asReadonly(),
     },
   );
 }
