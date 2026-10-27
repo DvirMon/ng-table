@@ -6,6 +6,8 @@ import { createTable } from './create-table';
 import { createTableFeature } from './create-table-feature';
 import { composeFeatures } from './features/compose-features';
 import { withComputed } from './features/with-computed';
+import { withGrouping } from './features/with-grouping';
+import { withTree } from './features/with-tree/feature';
 import { columnSchema } from '../columns-schema/schema';
 import { visible } from '../columns-schema/rules';
 import { reorderColumns, setColumns, toggleColumnVisibility } from '../mutations/update-columns';
@@ -14,7 +16,14 @@ import type { Feature, RowOf, Shape, TableFeatureSpec } from '../engine/types';
 import { stage } from '../schema/stage-rules';
 import { stageSchema } from '../schema/stage-schema';
 import { getNgDevMode, setNgDevMode } from '../ng-dev-mode.testing';
-import { noData } from '../table.mock';
+import {
+  makeFlatRows,
+  mockGroupingRows,
+  mockGroupingTrackBy,
+  noData,
+  type FlatRow,
+  type GroupingMockRow,
+} from '../table.mock';
 import type {
   ColumnDecl,
   ColumnSet,
@@ -1528,5 +1537,102 @@ describe('focus recovery (#233)', () => {
     TestBed.tick();
 
     expect(table.focus()).toEqual({ area: 'body', rowId: 'r3', columnId: null });
+  });
+});
+
+describe('focus recovery — collapse (#233)', () => {
+  const US_HEADER_ID = 'group:>region:string:US';
+  const US_ELECTRONICS_HEADER_ID = 'group:>region:string:US>category:string:Electronics';
+
+  function makeFlatColumns(): ColumnSet<FlatRow, readonly ColumnDecl<FlatRow, string, unknown>[]> {
+    return createColumns(noData<FlatRow>(), (col) => [col('name')]);
+  }
+
+  function makeGroupingColumns(): ColumnSet<
+    GroupingMockRow,
+    readonly ColumnDecl<GroupingMockRow, string, unknown>[]
+  > {
+    return createColumns(noData<GroupingMockRow>(), (col) => [
+      col('region', { label: 'Region' }),
+      col('category', { label: 'Category' }),
+    ]);
+  }
+
+  // Render order: r1(0), c1(1), g1(2), c2(1), r2(0).
+  function setupTree() {
+    const data = signal<FlatRow[]>(makeFlatRows());
+    const table = TestBed.runInInjectionContext(() =>
+      createTable(
+        data,
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId, initial: ['r1', 'c1'] }),
+      ),
+    );
+    return { data, table };
+  }
+
+  function setupGrouping(groupBy: string[]) {
+    return TestBed.runInInjectionContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeGroupingColumns() },
+        withGrouping({ initial: groupBy }),
+        withTree(),
+      ),
+    );
+  }
+
+  it('moves focus to the parent row when collapsing it hides the focused child', () => {
+    const { table } = setupTree();
+    table.focus.moveTo({ area: 'body', rowId: 'c2', columnId: 'name' });
+
+    table.tree.collapse(['r1']);
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: 'r1', columnId: null });
+  });
+
+  it('skips a hidden ancestor and continues to the nearest rendered one on collapse-all', () => {
+    const { table } = setupTree();
+    table.focus.moveTo({ area: 'body', rowId: 'g1', columnId: 'name' });
+
+    table.tree.collapse();
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: 'r1', columnId: null });
+  });
+
+  it('treats a group header as an ancestor when its collapse hides the focused row', () => {
+    const table = setupGrouping(['region']);
+    table.tree.toggle(US_HEADER_ID);
+    TestBed.tick();
+    table.focus.moveTo({ area: 'body', rowId: 3, columnId: 'region' });
+
+    table.tree.collapse([US_HEADER_ID]);
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: US_HEADER_ID, columnId: null });
+  });
+
+  it('uses the old-index rule, not the ancestor walk, for a row deleted from data under a tree', () => {
+    const { data, table } = setupTree();
+    table.focus.moveTo({ area: 'body', rowId: 'c2', columnId: 'name' });
+
+    data.update((current) => current.filter((row) => row.id !== 'c2'));
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: 'r2', columnId: 'name' });
+  });
+
+  it('moves focus to the outer header when its collapse hides a focused inner header', () => {
+    const table = setupGrouping(['region', 'category']);
+    table.tree.toggle(US_HEADER_ID);
+    TestBed.tick();
+    table.focus.moveTo({ area: 'body', rowId: US_ELECTRONICS_HEADER_ID, columnId: null });
+
+    table.tree.collapse([US_HEADER_ID]);
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: US_HEADER_ID, columnId: null });
   });
 });

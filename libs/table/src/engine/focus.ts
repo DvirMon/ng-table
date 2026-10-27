@@ -53,6 +53,46 @@ function recoverId<TId>(id: TId, previous: readonly TId[], next: readonly TId[])
 }
 
 /**
+ * Finds the nearest rendered ancestor of a row that a collapse hid, or `undefined` when the
+ * row was not hidden by a collapse (deleted, filtered, regrouped, or still rendered).
+ *
+ * @remarks
+ * Note: a data row is hidden when its id is still in `next.rowIds` but not rendered. A group
+ * header is never in `rows()`, so it counts as hidden only when its nearest rendered ancestor
+ * in `prev` now has `isExpanded === false`. The walk uses a strict `<` depth bound that
+ * tightens to each skipped (unrendered) ancestor's depth.
+ */
+function findCollapseAncestorId(
+  rowId: RowId,
+  prev: FocusSnapshot,
+  next: NextFocusSnapshot,
+): RowId | undefined {
+  const nextById = new Map(next.rows.map((row) => [row.id, row]));
+  const oldIndex = prev.rows.findIndex((row) => row.id === rowId);
+  const oldRow = prev.rows[oldIndex];
+  if (oldRow === undefined || nextById.has(rowId)) {
+    return undefined;
+  }
+
+  let depthBound = oldRow.depth;
+  for (let i = oldIndex - 1; i >= 0; i--) {
+    const candidate = prev.rows[i];
+    if (candidate === undefined || candidate.depth >= depthBound) {
+      continue;
+    }
+    const rendered = nextById.get(candidate.id);
+    if (rendered === undefined) {
+      depthBound = candidate.depth;
+      continue;
+    }
+    const isHiddenByCollapse =
+      oldRow.data !== null ? next.rowIds.has(rowId) : rendered.isExpanded === false;
+    return isHiddenByCollapse ? rendered.id : undefined;
+  }
+  return undefined;
+}
+
+/**
  * Repairs a focus target after rows or columns changed.
  *
  * @remarks
@@ -95,6 +135,12 @@ function recoverTarget(
     return firstColumnId === undefined ? null : { area: 'header', columnId: firstColumnId };
   }
 
+  const ancestorId = findCollapseAncestorId(current.rowId, prev, next);
+  if (ancestorId !== undefined) {
+    return current.area === 'panel'
+      ? { area: 'panel', rowId: ancestorId }
+      : { area: 'body', rowId: ancestorId, columnId: null };
+  }
   const rowId = recoverId(
     current.rowId,
     prev.rows.map((row) => row.id),
