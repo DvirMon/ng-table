@@ -29,20 +29,20 @@ export function findUnrenderedId(
   return undefined;
 }
 
-/** What `recoverFocus` needs to know about one moment of the table. */
+/** The rendered rows and column ids at one moment, as `recoverFocus` compares them. */
 export interface FocusSnapshot {
   readonly rows: readonly RenderRow<unknown>[];
   readonly columnIds: readonly string[];
 }
 
-/** The newer snapshot also carries the `rows()` id set, which collapse recovery reads. */
+/** The newer snapshot, which also carries the `rows()` id set that collapse recovery reads. */
 export interface NextFocusSnapshot extends FocusSnapshot {
   readonly rowIds: ReadonlySet<RowId>;
 }
 
-/** What the panel rule needs: which rows have an open panel, and whether the table is a treegrid. */
+/** What the closed-panel rule needs: which rows have an open panel, and whether the table is a treegrid. */
 export interface PanelRecoveryContext {
-  /** `undefined` when `withExpansion()` is not composed  panel targets are then left alone. */
+  /** `undefined` when `withExpansion()` is not composed; panel targets are then left alone. */
   readonly openPanelRowIds: ReadonlySet<RowId> | undefined;
   readonly isTreegrid: boolean;
 }
@@ -59,16 +59,12 @@ function recoverId<TId>(id: TId, previous: readonly TId[], next: readonly TId[])
   return next[clampIndex(previous.indexOf(id), next.length)];
 }
 
-/**
- * Finds the nearest rendered ancestor of a row that a collapse hid, or `undefined` when the
- * row was not hidden by a collapse (deleted, filtered, regrouped, or still rendered).
- *
- * @remarks
- * Note: a data row is hidden when its id is still in `next.rowIds` but not rendered. A group
- * header is never in `rows()`, so it counts as hidden only when its nearest rendered ancestor
- * in `prev` now has `isExpanded === false`. The walk uses a strict `<` depth bound that
- * tightens to each skipped (unrendered) ancestor's depth.
- */
+// Returns the nearest rendered ancestor of a row that a collapse hid, or `undefined` when the
+// row was not hidden by a collapse (deleted, filtered, regrouped, or still rendered).
+// Note: a data row counts as hidden when its id is still in `next.rowIds` but not rendered.
+// A group header is never in `rows()`, so it counts only when its nearest rendered ancestor in
+// `prev` now has `isExpanded === false`. The walk's depth bound is strict `<` and tightens to
+// each skipped (unrendered) ancestor's depth.
 function findCollapseAncestorId(
   rowId: RowId,
   prev: FocusSnapshot,

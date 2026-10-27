@@ -314,8 +314,8 @@ export function composeTable<TRow>(
   }
 
   // Repairs the focus target when rows or columns change. Unconditional: any table can hold
-  // focus. Writes `target` directly, not `moveTo` — recovery is silent and requests no DOM
-  // focus. The previous snapshot is seeded before the effect exists, like `previousIds` above.
+  // focus. Writes `target` directly, not `moveTo`: recovery is silent and requests no DOM focus.
+  // The previous snapshot is seeded before the effect exists, like `previousIds` above.
   let previousSnapshot: FocusSnapshot = untracked(() => ({
     rows: handle.renderRows(),
     columnIds: handle.renderColumns().map((column) => column.id),
