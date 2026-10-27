@@ -70,19 +70,9 @@ This decision was made in this UI-layer session _before_ virtual scroll was dril
 
 ## `role="table"` vs `role="grid"`
 
-**Decision:** Default is `role="table"` (current, hardcoded in `ngp-table.directive.ts`). `role="grid"` + roving-tabindex is an opt-in variant (`ngpTableGrid`, not yet built), triggered by a functional requirement — never applied as a blanket "better accessibility" upgrade.
+**Decision:** the host is `role="grid"` always, and becomes a `treegrid` with `withTree()`. The earlier table-by-default decision is superseded by [ADR-0030](../../adr/0030-table-wide-keyboard-model.md), which holds the rationale and the keyboard model.
 
-**Why not default to grid:** WAI-ARIA `grid` puts the whole table into application/forms mode for screen readers at all times, not just when an interactive cell has focus. Without real 2D keyboard navigation to back it up, switching a static table to `grid` role makes the experience _worse_ — it forwent the free SR table-navigation mode (`Ctrl+Alt+Arrow` / `VO+Arrow`) that `role="table"` gives for free, and gave nothing back.
-
-**When `grid` is warranted** — arrow-key cell-to-cell navigation is a real functional requirement, not a nice-to-have:
-
-- **Editable cells** — every cell is an interactive focus target; roving-tabindex is required to enter edit mode without a plain-Tab bottleneck. Reserved for the future `ngpTableCellEdit` directive (see `aria-live` section above).
-- **Cell-level selection** — spreadsheet-style range-select / copy-paste.
-- **Dense interactive-cell tables at scale** — many rows × interactive elements per row (e.g. an actions column) where linear Tab order becomes the bottleneck (Tab must visit every button sequentially to reach row N). Threshold is row/interactive-element count, not the mere presence of buttons.
-
-**Sorting/filtering does not warrant grid.** Both live on the `<th>` (interactive `<button>` + `aria-sort`, see `sort.md`); the table body stays non-interactive, `role="table"` is correct, SR table-mode still works.
-
-**A single action button per row does not warrant grid either.** A `<button>` inside a `<td>` is a normal focusable element, reachable via plain Tab — `role="table"` is fine at low-to-moderate row counts. Only reconsider once row count makes sequential Tab traversal impractical.
+Shipped: `ngpTable` sets `role="grid"` and `ngpTableCell` sets `role="gridcell"`. The body is one Tab stop through a roving tabindex, moved with the arrow keys (see [`core.md`](../directives/core.md)).
 
 ---
 

@@ -94,6 +94,7 @@ No `*`-prefixed (Angular structural) directives anywhere in NGP Table — locked
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Role    | Root directive and **store anchor**. Takes the `createTable()` instance as its input and provides _itself_ under `NGP_TABLE_STORE` (see Store Connection Pattern above), so descendants resolve the store through DI without any consumer-authored providers. Also the anchor selector for `table[ngpTable]`-scoped styling. Instantiates nothing — the store's lifetime belongs to the component field that created it. |
 | Inputs  | `[ngpTable]="table"` — required, the `createTable()` instance                                                                                                                                                                                                                                                                                                                                                            |
+| ARIA    | `role="grid"`, `aria-rowcount`, `aria-colcount`. Keyboard model: see [Grid navigation](#grid-navigation).                                                                                                                                                                                                                                                                                                                |
 | Notes   | Coexists with `style="table-layout: fixed;"` when virtual scroll is in use (see `virtual-scroll.md`)                                                                                                                                                                                                                                                                                                                     |
 
 ---
@@ -132,7 +133,7 @@ export class NgpTableRowDirective {
 }
 ```
 
-`data-row-kind` / `data-depth` follow `styling-tokens.md`'s convention (state as `data-*`), so group headers and nesting indentation are styleable without a second input. `--ngp-table-row-depth` carries the same depth as a CSS custom property, so one `calc(var(--ngp-table-row-depth) * <step>)` rule indents any depth and inherits into cells and buttons. The row's attribute set is `role`, `data-row-kind`, `data-depth`, `aria-rowindex` and `--ngp-table-row-depth`. It carries no `aria-expanded`: ARIA allows that on a row only inside a `treegrid`, and the table stays `role="table"` — expansion state lives on the toggle button.
+`data-row-kind` / `data-depth` follow `styling-tokens.md`'s convention (state as `data-*`), so group headers and nesting indentation are styleable without a second input. `--ngp-table-row-depth` carries the same depth as a CSS custom property, so one `calc(var(--ngp-table-row-depth) * <step>)` rule indents any depth and inherits into cells and buttons. The row's attribute set is `role`, `data-row-kind`, `data-depth`, `aria-rowindex` and `--ngp-table-row-depth`. It carries no `aria-expanded` yet: ARIA allows that on a row only inside a `treegrid`, and the host is `role="grid"` until `withTree()` (ADR-0030) — expansion state lives on the toggle button.
 
 Row-scoped feature directives then read the row from DI — no repeated binding per directive:
 
@@ -156,7 +157,7 @@ export class NgpTableExpandToggleDirective {
 
 | Element                             | `<td>`                                                                                                                                                                                                                                                                  |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Role                                | Data cell. Applies token-driven default styling + `data-*` attributes (e.g. `data-column-id`). No behavior logic yet (no click handling, no value formatting).                                                                                                          |
+| Role                                | Data cell, `role="gridcell"`, and a roving `tabindex` (see [Grid navigation](#grid-navigation)). Applies token-driven default styling + `data-*` attributes (e.g. `data-column-id`). No behavior logic yet (no click handling, no value formatting).                    |
 | Inputs                              | `[ngpTableCell]="columnId"`                                                                                                                                                                                                                                             |
 | Why a directive and not bare markup | Kept minimal deliberately, so it's queryable/extensible later (e.g. via `@ContentChildren` or host injection) without a breaking template change — a future `ngpTableCellEdit` or `ngpTableDragHandle` could target it without altering the consumer's existing markup. |
 | Accessibility                       | No default `aria-label` (see `accessibility.md` — text content is the accessible name). No `aria-live` (see `accessibility.md` and `virtual-scroll.md` — CDK recycles `<td>` nodes; per-cell live regions would fire spurious announcements on scroll).                 |
@@ -166,6 +167,19 @@ export class NgpTableExpandToggleDirective {
   {{ renderRow.data ? col.accessor(renderRow.data) : '' }}
 </td>
 ```
+
+---
+
+## Grid navigation
+
+The body is a `grid` of `gridcell`s with one Tab stop ([ADR-0030](../../adr/0030-table-wide-keyboard-model.md)).
+
+- **Roving tabindex.** The cell at the stored position has `tabindex="0"`; every other data cell has `-1`. Group rows bind no `tabindex`.
+- **Entry.** With no stored position, the Tab stop is the first data row's first cell. Afterwards it is the last focused cell.
+- **Keys.** Arrow keys move one cell. `Home` / `End` go to the row's first / last cell. `Ctrl` (`Cmd`) + `Home` / `End` go to the grid's first / last cell. There is no wrap: at an edge the position stays and the key is still handled. `Ctrl` + an arrow key is not handled.
+- **Click.** Focus landing in a cell, by click or otherwise, moves the position to that cell.
+- **DOM focus.** The position always moves. DOM focus follows only while focus is already inside the grid, or when the move was made with `focus.moveTo(target, { focusElement: true })`. No focus is taken on load.
+- **Opt out.** A key whose `keydown` was already `preventDefault()`-ed (for example by an inner control) is ignored by the grid.
 
 ---
 
