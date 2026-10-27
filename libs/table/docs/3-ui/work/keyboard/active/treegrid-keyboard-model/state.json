@@ -47,7 +47,7 @@
       "remoteRef": "#235",
       "branch": "feat/235-grid-navigation-core",
       "worktree": ".claude/worktrees/feat-235-grid-navigation-core",
-      "pr": null,
+      "pr": 255,
       "readiness": "ready-for-agent",
       "assessed": "10-27 · task plan on disk"
     }
