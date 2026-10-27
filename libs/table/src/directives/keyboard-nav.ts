@@ -1,13 +1,12 @@
 import type { BodyCell, NavKey, NavOrder } from './keyboard-nav.types';
 
 /**
- * Next body cell for a navigation key press, from ids only.
+ * Returns the body cell a navigation key press moves to, computed from ids only.
  *
- * An edge returns the current position (handled, no wrap); the caller calls
- * `preventDefault()` only on a non-null result.
- *
- * @returns the target cell, or `null` for an unhandled key or a current
- * position that is not in the order.
+ * @remarks
+ * At an edge it returns the current cell (handled, no wrap), so the caller should call
+ * `preventDefault()` only on a non-null result. Returns `null` for an unhandled key or a
+ * current cell that is not in the order.
  */
 export function nextBodyTarget(order: NavOrder, current: BodyCell, event: NavKey): BodyCell | null {
   const rowIndex = order.rowIds.indexOf(current.rowId);

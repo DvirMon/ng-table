@@ -53,7 +53,7 @@ export function createFocusRegistry(): FocusRegistry {
   return { register, unregister, elementOf, cellContaining };
 }
 
-/** Injects the focus registry of the nearest `ngpTable` host. */
+/** Token for the focus registry of the nearest `ngpTable` host. */
 export const NGP_TABLE_FOCUS_REGISTRY = new InjectionToken<FocusRegistry>(
   'NGP_TABLE_FOCUS_REGISTRY',
 );

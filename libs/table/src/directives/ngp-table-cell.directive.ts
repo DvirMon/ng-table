@@ -12,18 +12,28 @@ import {
 import { NGP_TABLE_FOCUS_REGISTRY } from './focus-registry';
 import { NGP_TABLE_ROW, NGP_TABLE_STORE } from './table.tokens';
 
-// Dual-tag selector, role set unconditionally. See `ngp-table-header-cell.directive.ts` for
-// why this is a separate directive rather than one shared directive with an `isHeader` flag.
+/**
+ * Marks a `<td>` or `<div>` as a grid body cell and makes it a roving-tabindex stop.
+ *
+ * @remarks
+ * Sets `role="gridcell"` and `aria-colindex`. Only the active cell is a Tab stop; group rows
+ * bind no `tabindex`.
+ *
+ * @example
+ * <td [ngpTableCell]="0">{{ row.name }}</td>
+ */
 @Directive({
   selector: 'td[ngpTableCell], div[ngpTableCell]',
   host: {
+    // Note: role is set unconditionally on both tags. See `ngp-table-header-cell.directive.ts`
+    // for why this is a separate directive rather than one with an `isHeader` flag.
     role: 'gridcell',
     '[attr.aria-colindex]': 'ngpTableCell() + 1',
     '[attr.tabindex]': 'tabindex()',
   },
 })
 export class NgpTableCellDirective {
-  // aria-colindex is 1-based per WAI-ARIA; the input is the 0-based column position.
+  /** The 0-based column position of this cell, bound as the 1-based `aria-colindex`. */
   readonly ngpTableCell: InputSignal<number> = input.required<number>();
 
   // Optional: a cell may sit in a plain `<tr>` without `ngpTableRow`.
