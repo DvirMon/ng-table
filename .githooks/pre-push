@@ -1,10 +1,19 @@
 #!/bin/sh
-# Reject pushes to the default branch; validate every pushed branch name.
+# Reject pushes to the default branch; validate every pushed branch name;
+# reject pushed commits whose changed files fail `prettier --check` (as CI does).
 # stdin: <local ref> <local sha> <remote ref> <remote sha>
 default=$(git symbolic-ref --short -q refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@')
 status=0
+zero=0000000000000000000000000000000000000000
 
-while read -r local_ref _local_sha remote_ref _remote_sha; do
+# Falls back to the primary checkout's prettier (worktrees).
+prettier=node_modules/.bin/prettier
+if [ ! -x "$prettier" ]; then
+  primary=$(cd "$(git rev-parse --git-common-dir)/.." && pwd)
+  prettier="$primary/node_modules/.bin/prettier"
+fi
+
+while read -r local_ref local_sha remote_ref _remote_sha; do
   target=${remote_ref#refs/heads/}
   for protected in main master $default; do
     if [ "$target" = "$protected" ]; then
@@ -18,6 +27,22 @@ while read -r local_ref _local_sha remote_ref _remote_sha; do
       node tools/validate-branch-name.mjs "${local_ref#refs/heads/}" || status=1
       ;;
   esac
+
+  # Check the pushed commit's content, not the working tree. Skip branch deletes.
+  [ "$local_sha" = "$zero" ] && continue
+  if [ ! -x "$prettier" ]; then
+    echo "pre-push: prettier not found — run npm ci, then push again." >&2
+    status=1
+    continue
+  fi
+  files=$(git diff --name-only --diff-filter=ACMR "origin/$default...$local_sha" 2>/dev/null |
+    grep -E '\.(ts|html|css|scss|json|md)$')
+  for f in $files; do
+    if ! git show "$local_sha:$f" | "$prettier" --stdin-filepath "$f" --check >/dev/null 2>&1; then
+      echo "✋ $f is not prettier-formatted — run prettier --write, commit, push again." >&2
+      status=1
+    fi
+  done
 done
 
 exit $status
