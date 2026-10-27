@@ -64,6 +64,13 @@ column, so naming the path is enough. The data register holds one value per
 row — a column being a cross-section of every row rather than one of them — so
 a resolver reading it must also name the subject.
 
+## Third-party feature
+
+A `with-*()` feature written by the consumer's own teams while using `@ngp/table` (e.g. a
+design-system team and an app team in one company). Not an outside publisher shipping packages
+into the library. Frame extensibility scenarios as in-house: whoever hits a composition error
+can edit both features, so strict construction throws are acceptable.
+
 ## Selector prefix: `ngp`
 
 All directives use the `ngp` prefix (`ngpTable`, `ngpTableRow`, `ngpTableCell`,
