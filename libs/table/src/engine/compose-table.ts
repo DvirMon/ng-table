@@ -8,6 +8,7 @@ import type {
   TableStore,
 } from '../api/types';
 import { createTableCore, type TableCoreHandle } from './core';
+import { findUnrenderedId } from './focus';
 import type { PipelineStage, RowTransform } from './pipeline';
 import type { RenderNodeTransform, RenderStage } from './render-stages';
 import { diffRemovedIds } from './rows';
@@ -53,14 +54,30 @@ function labelFeatures<TRow, TFeature>(
   }));
 }
 
-// Per-call focus position, so two tables never share one. `options` is accepted for the
-// final signature and ignored until validation and DOM focus land.
-function createFocus(): TableFocus {
+function reportUnrenderedFocusTarget(id: string): void {
+  // eslint-disable-next-line no-console -- ADR-0014: floor reporting mechanism, no existing
+  // runtime-degradation logging abstraction to reuse in this codebase yet.
+  console.error(
+    `[createTable] focus.moveTo ignored: "${id}" is not rendered. Focus stays where it was.`,
+  );
+}
+
+// Per-call focus position, so two tables never share one. A target whose row or column is not
+// rendered is ignored and reported on every call, never thrown (ADR-0014). `options` is
+// accepted for the final signature and ignored until DOM focus lands.
+function createFocus<TRow>(handle: TableCoreHandle<TRow>): TableFocus {
   const target = signal<FocusTarget | null>(null);
   return Object.assign(
     computed((): FocusTarget | null => target()),
     {
       moveTo: (next: FocusTarget, _options?: FocusMoveOptions): void => {
+        const renderedRowIds = new Set(handle.renderRows().map((row) => row.id));
+        const renderedColumnIds = new Set(handle.renderColumns().map((column) => column.id));
+        const unrenderedId = findUnrenderedId(next, renderedRowIds, renderedColumnIds);
+        if (unrenderedId !== undefined) {
+          reportUnrenderedFocusTarget(unrenderedId);
+          return;
+        }
         target.set(next);
       },
     },
@@ -83,7 +100,7 @@ function createBaseStore<TRow>(handle: TableCoreHandle<TRow>): FoldingStore<TRow
     renderColumns: handle.renderColumns,
     totalRowCount,
     indexById: handle.core.indexById,
-    focus: createFocus(),
+    focus: createFocus(handle),
   };
 }
 
