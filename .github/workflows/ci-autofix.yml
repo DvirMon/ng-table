@@ -1,0 +1,214 @@
+# Pushes fixes for mechanical CI failures to same-repo PRs:
+#   - CI `format` job failed      -> prettier --write the PR's changed
+#                                    files, commit, push.
+#   - PR conventions failed and
+#     the branch has merge commits -> rebase onto the base branch (drops
+#                                    merges), push --force-with-lease,
+#                                    comment. On conflict: comment the
+#                                    local commands instead.
+# Judgment failures (types, tests, lint, commit wording) are left alone.
+#
+# Runs on workflow_run, so it is the default branch's copy of this file
+# that runs, with secrets, never the PR's. Fork PRs (empty
+# `pull_requests`, foreign head repo) and bot-authored PRs are skipped.
+# Needs secret: PIPELINE_TOKEN (same as rebase-behind-prs.yml). Pushes
+# with GITHUB_TOKEN would not re-trigger CI on the PR; add the
+# "workflows" permission if PR branches touch .github/workflows.
+# Pin actions by SHA at install.
+name: CI autofix
+
+on:
+  workflow_run:
+    workflows: [CI, PR conventions]
+    types: [completed]
+
+concurrency:
+  group: ci-autofix-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+
+env:
+  BOT_NAME: github-actions[bot]
+  BOT_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+  FORMAT_SUBJECT: '🎨 chore(root): format changed files'
+  REPO: ${{ github.repository }}
+  PR: ${{ github.event.workflow_run.pull_requests[0].number }}
+  BRANCH: ${{ github.event.workflow_run.head_branch }}
+  HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+  RUN_ID: ${{ github.event.workflow_run.id }}
+
+jobs:
+  format:
+    if: >-
+      github.event.workflow_run.name == 'CI' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.pull_requests[0].number
+    runs-on: ubuntu-latest
+    steps:
+      # Every skip reason in one place; later steps run only on go=true.
+      - name: Should fix
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          skip() { echo "Skip: $1"; echo "go=false" >> "$GITHUB_OUTPUT"; exit 0; }
+
+          pr=$(gh api "repos/$REPO/pulls/$PR" \
+            --jq '[.state, .user.type, .head.sha] | @tsv')
+          IFS=$'\t' read -r state author_type pr_head <<< "$pr"
+          [ "$state" = open ] || skip "PR #$PR is $state"
+          [ "$author_type" != Bot ] || skip "bot-authored PR"
+          [ "$pr_head" = "$HEAD_SHA" ] || skip "PR moved past $HEAD_SHA"
+
+          failed=$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" \
+            --jq '[.jobs[] | select(.name == "format"
+              and .conclusion == "failure")] | length')
+          [ "$failed" -gt 0 ] || skip "format job did not fail"
+
+          # Loop guard: prettier still failing after our own fix.
+          head=$(gh api "repos/$REPO/commits/$HEAD_SHA" \
+            --jq '[.commit.author.email,
+              (.commit.message | split("\n")[0])] | @tsv')
+          [ "$head" != "$BOT_EMAIL"$'\t'"$FORMAT_SUBJECT" ] ||
+            skip "head commit is already the autofix"
+
+          echo "go=true" >> "$GITHUB_OUTPUT"
+
+      - if: steps.gate.outputs.go == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          token: ${{ secrets.PIPELINE_TOKEN }}
+          fetch-depth: 0
+
+      - if: steps.gate.outputs.go == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      # Only prettier is needed; skip lifecycle scripts.
+      - if: steps.gate.outputs.go == 'true'
+        run: npm ci --ignore-scripts --prefer-offline --no-audit --fund=false
+
+      # Same file set as the CI `format` check.
+      - name: Format and push
+        if: steps.gate.outputs.go == 'true'
+        env:
+          BASE_REF: ${{ github.event.workflow_run.pull_requests[0].base.ref }}
+        run: |
+          [ "$(git rev-parse HEAD)" = "$HEAD_SHA" ] || {
+            echo "Branch moved past $HEAD_SHA — skip"; exit 0; }
+
+          git fetch origin "$BASE_REF"
+          base=$(git merge-base "origin/$BASE_REF" HEAD)
+          files=$(git diff --name-only --diff-filter=ACMR "$base" HEAD |
+            grep -E '\.(ts|html|css|scss|json|md)$' || true)
+          [ -n "$files" ] || { echo "No changed files to format"; exit 0; }
+          echo "$files" | tr '\n' '\0' | xargs -0 npx prettier --write
+
+          if git diff --quiet; then
+            echo "Prettier changed nothing — leaving the failure for a person"
+            exit 0
+          fi
+
+          # Issue branches (<type>/<N>-<slug>) reference their issue.
+          issue=$(printf '%s' "$BRANCH" | sed -nE 's@^[a-z]+/([0-9]+)-.*@\1@p')
+          if [ -n "$issue" ]; then refs="Refs: #$issue"; else refs="Refs: none"; fi
+
+          git config user.name "$BOT_NAME"
+          git config user.email "$BOT_EMAIL"
+          git commit -qam "$FORMAT_SUBJECT" -m "$refs"
+          node tools/check-commit-trailers.cjs --range HEAD~1..HEAD
+          git push origin "HEAD:$BRANCH"
+
+  merge-commits:
+    if: >-
+      github.event.workflow_run.name == 'PR conventions' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.pull_requests[0].number
+    runs-on: ubuntu-latest
+    steps:
+      - name: Should fix
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          skip() { echo "Skip: $1"; echo "go=false" >> "$GITHUB_OUTPUT"; exit 0; }
+
+          pr=$(gh api "repos/$REPO/pulls/$PR" \
+            --jq '[.state, .user.type, .head.sha] | @tsv')
+          IFS=$'\t' read -r state author_type pr_head <<< "$pr"
+          [ "$state" = open ] || skip "PR #$PR is $state"
+          [ "$author_type" != Bot ] || skip "bot-authored PR"
+          [ "$pr_head" = "$HEAD_SHA" ] || skip "PR moved past $HEAD_SHA"
+
+          echo "go=true" >> "$GITHUB_OUTPUT"
+
+      - if: steps.gate.outputs.go == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          token: ${{ secrets.PIPELINE_TOKEN }}
+          fetch-depth: 0
+
+      # Acts only when merge commits are present — a header or trailer
+      # failure on its own is left for a person. After a successful
+      # rebase there are no merges, so a repeat failure is a no-op.
+      - name: Rebase and push
+        if: steps.gate.outputs.go == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PIPELINE_TOKEN }}
+          BASE_REF: ${{ github.event.workflow_run.pull_requests[0].base.ref }}
+        run: |
+          [ "$(git rev-parse HEAD)" = "$HEAD_SHA" ] || {
+            echo "Branch moved past $HEAD_SHA — skip"; exit 0; }
+
+          git fetch origin "$BASE_REF"
+          merges=$(git log --merges --format='%h %s' "origin/$BASE_REF..HEAD")
+          [ -n "$merges" ] || { echo "No merge commits — nothing to do"; exit 0; }
+
+          git config user.name "$BOT_NAME"
+          git config user.email "$BOT_EMAIL"
+          MARKER='<!-- ci-autofix:merge-commits -->'
+
+          # Plain rebase (no --rebase-merges) replays only the branch's own
+          # commits and drops the merges.
+          if git rebase "origin/$BASE_REF"; then
+            git push --force-with-lease="$BRANCH:$HEAD_SHA" origin "HEAD:$BRANCH"
+            gh pr comment "$PR" --body "$MARKER
+          Branch rewritten: rebased onto \`$BASE_REF\` to drop merge commits.
+
+          \`\`\`
+          $merges
+          \`\`\`
+
+          Old head: \`$HEAD_SHA\`. Reset a local checkout with:
+
+          \`\`\`bash
+          git fetch origin
+          git switch $BRANCH
+          git reset --hard origin/$BRANCH
+          \`\`\`"
+          else
+            git rebase --abort
+            gh pr comment "$PR" --body "$MARKER
+          This branch has merge commits, and rebasing it onto \`$BASE_REF\`
+          hits conflicts, so it was not rewritten. Rebase locally:
+
+          \`\`\`bash
+          git fetch origin
+          git switch $BRANCH
+          git rebase origin/$BASE_REF
+          # resolve each conflict, git add <files>, git rebase --continue
+          git push --force-with-lease
+          \`\`\`"
+          fi
