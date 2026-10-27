@@ -2464,6 +2464,121 @@ describe('writes target rows; clustering re-derives', () => {
     expect(rendered[headerIndex + 1]?.data?.id).toBe(4);
     expect(rendered[headerIndex + 2]?.data?.id).toBe(7);
   });
+
+  describe('aggregates re-derive on live writes (#164)', () => {
+    const sumAmount = (rows: GroupingMockRow[]): number =>
+      rows.reduce((total, row) => total + row.amount, 0);
+
+    function setupWithSum(initial: MockColumnId[] = ['region', 'category']) {
+      const data = signal<GroupingMockRow[]>([...mockGroupingRows]);
+      const store = inContext(() =>
+        createTable(
+          data,
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({ initial, schema: (path) => aggregate(path.amount, sumAmount) }),
+        ),
+      );
+      return { data, store };
+    }
+
+    /** One header's `amount` aggregate, read off the rendered rows only. */
+    function amountOf(
+      store: { renderRows: () => readonly RenderRow<GroupingMockRow>[] },
+      id: string,
+    ): unknown {
+      return findHeader(store.renderRows(), id)?.aggregates?.['amount'];
+    }
+
+    const US_FURNITURE_HEADER_ID = 'group:>region:string:US>category:string:Furniture';
+    const EU_FURNITURE_HEADER_ID = 'group:>region:string:EU>category:string:Furniture';
+
+    it('editing the aggregated field updates the row cluster and its parent only', () => {
+      const { store } = setupWithSum();
+      expect(amountOf(store, US_ELECTRONICS_HEADER_ID)).toBe(400);
+      expect(amountOf(store, US_HEADER_ID)).toBe(450);
+
+      store.value.update(patchRow<GroupingMockRow>(2, { amount: 500 }));
+      TestBed.tick();
+
+      expect(amountOf(store, US_ELECTRONICS_HEADER_ID)).toBe(600);
+      expect(amountOf(store, US_HEADER_ID)).toBe(650);
+      expect(amountOf(store, US_FURNITURE_HEADER_ID)).toBe(50);
+      expect(amountOf(store, EU_HEADER_ID)).toBe(120);
+      expect(amountOf(store, EU_ELECTRONICS_HEADER_ID)).toBe(20);
+      expect(amountOf(store, EU_FURNITURE_HEADER_ID)).toBe(100);
+    });
+
+    it('editing the group field updates the old and new clusters and both regions', () => {
+      const { store } = setupWithSum();
+
+      store.value.update(patchRow<GroupingMockRow>(1, { region: 'EU' }));
+      TestBed.tick();
+
+      expect(amountOf(store, US_ELECTRONICS_HEADER_ID)).toBe(300);
+      expect(amountOf(store, US_HEADER_ID)).toBe(350);
+      expect(amountOf(store, EU_ELECTRONICS_HEADER_ID)).toBe(120);
+      expect(amountOf(store, EU_HEADER_ID)).toBe(220);
+    });
+
+    it('grouping by the aggregated field: moving a row between amount buckets updates both sums', () => {
+      const { store } = setupWithSum(['amount']);
+      // Make bucket 300 hold two rows so it survives row 2 leaving it.
+      store.value.update(
+        insertRow<GroupingMockRow>({ id: 7, region: 'US', category: 'Furniture', amount: 300 }),
+      );
+      TestBed.tick();
+      expect(amountOf(store, 'group:>amount:number:300')).toBe(600);
+      expect(amountOf(store, 'group:>amount:number:100')).toBe(100);
+
+      store.value.update(patchRow<GroupingMockRow>(2, { amount: 100 }));
+      TestBed.tick();
+
+      expect(amountOf(store, 'group:>amount:number:300')).toBe(300);
+      expect(amountOf(store, 'group:>amount:number:100')).toBe(200);
+    });
+
+    it('an inserted row adds to its cluster and its parent', () => {
+      const { store } = setupWithSum();
+
+      store.value.update(
+        insertRow<GroupingMockRow>({ id: 7, region: 'EU', category: 'Electronics', amount: 40 }),
+      );
+      TestBed.tick();
+
+      expect(amountOf(store, EU_ELECTRONICS_HEADER_ID)).toBe(60);
+      expect(amountOf(store, EU_HEADER_ID)).toBe(160);
+    });
+
+    it('a removed row subtracts from its cluster and its parent', () => {
+      const { store } = setupWithSum();
+
+      store.value.update(removeRow<GroupingMockRow>(1));
+      TestBed.tick();
+
+      expect(amountOf(store, US_ELECTRONICS_HEADER_ID)).toBe(300);
+      expect(amountOf(store, US_HEADER_ID)).toBe(350);
+    });
+
+    it('re-derives through the raw data signal write path', () => {
+      const { store, data } = setupWithSum();
+
+      data.update((rows) => rows.map((row) => (row.id === 2 ? { ...row, amount: 500 } : row)));
+      TestBed.tick();
+
+      expect(amountOf(store, US_ELECTRONICS_HEADER_ID)).toBe(600);
+      expect(amountOf(store, US_HEADER_ID)).toBe(650);
+    });
+
+    it('re-derives through store.value.update(patchRow) (ADR-0006 write path)', () => {
+      const { store } = setupWithSum();
+
+      store.value.update(patchRow<GroupingMockRow>(2, { amount: 500 }));
+      TestBed.tick();
+
+      expect(amountOf(store, US_ELECTRONICS_HEADER_ID)).toBe(600);
+      expect(amountOf(store, US_HEADER_ID)).toBe(650);
+    });
+  });
 });
 
 describe('parent link (#170)', () => {
