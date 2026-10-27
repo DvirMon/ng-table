@@ -32,9 +32,9 @@ issues with sub-issues. See `docs/agents/ticket-tracker.md`.
 
 ### Domain docs
 
-Single-context. See `docs/agents/domain.md`.
+Multi-context — one `CONTEXT.md` + `docs/adr/` per Nx project. See `docs/agents/domain.md`.
 
 ### Workflow config
 
-`.claude/workflow.json` — library, sub-issue PRs, worktrees.
+`.claude/workflow.json` — one entry per Nx project, sub-issue PRs, worktrees.
 Personal overrides go in `.claude/workflow.local.json`.

@@ -1,4 +1,33 @@
 {
-  "version": 1,
-  "projectKind": "library"
+  "version": 2,
+  "capabilities": {
+    "commit": { "skill": "atomic-commit" }
+  },
+  "projects": {
+    "shared-table": {
+      "path": "libs/table/**",
+      "skills": {
+        "code": ["angular-developer"],
+        "test": ["unit-test"]
+      },
+      "executors": { "story": "story:implementer" },
+      "typecheck": "npx nx run-many -t typecheck typecheck-spec -p shared-table",
+      "test": "npx nx test shared-table --include {files}",
+      "docs": { "prdWriter": "story:discovery" }
+    },
+    "ng-table": {
+      "path": "apps/site/**",
+      "skills": {
+        "code": ["angular-developer"],
+        "test": ["unit-test"]
+      },
+      "executors": { "story": "story:implementer" },
+      "typecheck": "npx nx run-many -t typecheck typecheck-spec -p ng-table",
+      "test": "npx nx test ng-table --include {files}"
+    },
+    "root": {
+      "path": "**",
+      "skills": {}
+    }
+  }
 }
