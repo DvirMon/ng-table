@@ -502,9 +502,12 @@ describe('withSorting', () => {
             withSorting(),
           ),
         );
+        // Construction already ran one (unsorted) evaluation; assert only the sorted one.
+        errorSpy.mockClear();
 
         store.toggleSort('name');
         store.rows();
+        store.renderRows();
 
         expect(errorSpy).toHaveBeenCalledTimes(1);
       } finally {
@@ -586,10 +589,13 @@ describe('withSorting', () => {
             }),
           ),
         );
+        // Construction already ran one (unsorted) evaluation; assert only the sorted one.
+        errorSpy.mockClear();
 
         store.toggleSort('name');
         store.toggleSort('age');
         store.rows();
+        store.renderRows();
 
         expect(errorSpy).toHaveBeenCalledTimes(2);
         const messages = errorSpy.mock.calls.map((call) => String(call[0]));
