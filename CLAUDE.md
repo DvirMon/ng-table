@@ -11,7 +11,7 @@ Two Nx projects, each owning its own `CLAUDE.md` (maintainer invariants), `CONTE
 
 ## File organization
 
-Code under `libs/**` and `apps/**` splits by concern (types, store, mock data, utils, …). See `.claude/rules/file-organization.md` and `.claude/rules/extract-encapsulated-logic.md`.
+Code under `libs/**` and `apps/**` splits by concern (types, store, mock data, utils, …). Rules: global `file-organization` and `extract-encapsulated-logic`; this repo's worked example is `.claude/rules/file-organization.md`.
 
 ## Typechecking
 
