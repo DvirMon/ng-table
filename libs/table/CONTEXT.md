@@ -41,7 +41,7 @@ the table as data (a row id and a column id), not as an element on screen. It
 outlives the row scrolling out of view, being re-sorted or being hidden, and is
 the single Tab stop's target. Readable from outside the table. Held as a
 `FocusTarget`: a header column, a body row and column (or the row alone), or
-a row's detail panel.
+a row's detail panel. The engine keeps it valid when rows or columns change.
 _Avoid_: active cell, cursor, selection.
 
 **Schema entry** — the one place a feature's per-column rules are declared.
