@@ -34,6 +34,7 @@ export const CORE_MEMBER_KEYS = exhaustiveCoreMemberKeys([
   'renderRows',
   'renderColumns',
   'indexById',
+  'focus',
   '__columnValues',
 ]);
 
