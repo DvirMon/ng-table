@@ -50,7 +50,15 @@
       "pr": 255,
       "readiness": "ready-for-agent",
       "assessed": "10-27 · task plan on disk"
+    },
+    {
+      "remoteRef": "#233",
+      "branch": "feat/233-focus-recovery",
+      "worktree": ".claude/worktrees/feat-233-focus-recovery",
+      "pr": 256,
+      "readiness": "ready-for-agent",
+      "assessed": "10-27 · task plan on disk"
     }
   ],
-  "updatedAt": "2026-10-27T11:47:17Z"
+  "updatedAt": "2026-10-27T14:19:57Z"
 }
