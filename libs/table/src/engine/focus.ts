@@ -40,6 +40,13 @@ export interface NextFocusSnapshot extends FocusSnapshot {
   readonly rowIds: ReadonlySet<RowId>;
 }
 
+/** What the panel rule needs: which rows have an open panel, and whether the table is a treegrid. */
+export interface PanelRecoveryContext {
+  /** `undefined` when `withExpansion()` is not composed  panel targets are then left alone. */
+  readonly openPanelRowIds: ReadonlySet<RowId> | undefined;
+  readonly isTreegrid: boolean;
+}
+
 function clampIndex(index: number, length: number): number {
   return Math.min(Math.max(index, 0), length - 1);
 }
@@ -98,26 +105,44 @@ function findCollapseAncestorId(
  * @remarks
  * Row half (body and panel): the row follows its id; a vanished row yields the row now at its
  * old index in `prev`, clamped. No rows left falls back to the first header cell. Column half
- * runs independently the same way. Returns `null` when nothing valid remains. Never throws.
+ * runs independently the same way. A panel target whose row has no open panel then becomes a
+ * body target on that row: the first render column in a grid, row focus in a treegrid. Returns
+ * `null` when nothing valid remains. Never throws.
  */
 export function recoverFocus(
   current: FocusTarget | null,
   prev: FocusSnapshot,
   next: NextFocusSnapshot,
+  panels?: PanelRecoveryContext,
 ): FocusTarget | null {
   if (current === null) {
     return null;
   }
-  const recovered = recoverTarget(current, prev, next);
-  if (recovered === null) {
+  const rowRecovered = recoverTarget(current, prev, next);
+  if (rowRecovered === null) {
     return null;
   }
+  const recovered = recoverClosedPanel(rowRecovered, next, panels);
   const unrendered = findUnrenderedId(
     recovered,
     new Set(next.rows.map((row) => row.id)),
     new Set(next.columnIds),
   );
   return unrendered === undefined ? recovered : null;
+}
+
+// A closed panel is never mounted, so focus moves to its row.
+function recoverClosedPanel(
+  target: FocusTarget,
+  next: NextFocusSnapshot,
+  panels: PanelRecoveryContext | undefined,
+): FocusTarget {
+  const open = panels?.openPanelRowIds;
+  if (target.area !== 'panel' || open === undefined || open.has(target.rowId)) {
+    return target;
+  }
+  const columnId = panels?.isTreegrid ? null : (next.columnIds[0] ?? null);
+  return { area: 'body', rowId: target.rowId, columnId };
 }
 
 function recoverTarget(

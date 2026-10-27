@@ -6,6 +6,7 @@ import { createTable } from './create-table';
 import { createTableFeature } from './create-table-feature';
 import { composeFeatures } from './features/compose-features';
 import { withComputed } from './features/with-computed';
+import { withExpansion } from './features/with-expansion';
 import { withGrouping } from './features/with-grouping';
 import { withTree } from './features/with-tree/feature';
 import { columnSchema } from '../columns-schema/schema';
@@ -1634,5 +1635,112 @@ describe('focus recovery — collapse (#233)', () => {
     TestBed.tick();
 
     expect(table.focus()).toEqual({ area: 'body', rowId: US_HEADER_ID, columnId: null });
+  });
+});
+
+describe('focus recovery — closed panel (#233)', () => {
+  const rows: Row[] = [
+    { id: 'r1', name: 'Ann', status: 'active' },
+    { id: 'r2', name: 'Bob', status: 'idle' },
+  ];
+
+  function setupGrid(columns: ReturnType<typeof makeColumns> = makeColumns()) {
+    const data = signal<Row[]>(rows);
+    const table = TestBed.runInInjectionContext(() =>
+      createTable(data, { trackBy: 'id', columns }, withExpansion()),
+    );
+    return { data, table };
+  }
+
+  function focusOpenPanel(table: ReturnType<typeof setupGrid>['table'], rowId: string): void {
+    table.expansion.toggle(rowId);
+    table.focus.moveTo({ area: 'panel', rowId });
+    TestBed.tick();
+  }
+
+  function setupTreegrid() {
+    const columns = createColumns(noData<FlatRow>(), (col) => [col('name')]);
+    return TestBed.runInInjectionContext(() =>
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns },
+        withTree({ parentId: (row) => row.parentId }),
+        withExpansion(),
+      ),
+    );
+  }
+
+  it("moves a panel target to its row's first cell when the panel closes (grid)", () => {
+    const { table } = setupGrid();
+    focusOpenPanel(table, 'r1');
+
+    table.expansion.collapse(['r1']);
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: 'r1', columnId: 'name' });
+  });
+
+  it('keeps a panel target while its panel stays open', () => {
+    const { table } = setupGrid();
+    focusOpenPanel(table, 'r1');
+
+    table.expansion.toggle('r2');
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'panel', rowId: 'r1' });
+  });
+
+  it('moves a panel target to row focus when the panel closes (treegrid)', () => {
+    const table = setupTreegrid();
+    table.expansion.toggle('r1');
+    table.focus.moveTo({ area: 'panel', rowId: 'r1' });
+    TestBed.tick();
+
+    table.expansion.collapse(['r1']);
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: 'r1', columnId: null });
+  });
+
+  it('targets the first rendered column, not the first declared one', () => {
+    const { table } = setupGrid(makeRenderColumns());
+    focusOpenPanel(table, 'r1');
+
+    table.expansion.collapse(['r1']);
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: 'r1', columnId: 'name' });
+  });
+
+  it('leaves a panel target alone when withExpansion() is not composed', () => {
+    const table = makeStore(makeColumns(), rows);
+    table.focus.moveTo({ area: 'panel', rowId: 'r1' });
+
+    expect(() => TestBed.tick()).not.toThrow();
+
+    expect(table.focus()).toEqual({ area: 'panel', rowId: 'r1' });
+  });
+
+  it("applies the row rule, not the panel rule, when the panel's row is deleted", () => {
+    const { data, table } = setupGrid();
+    focusOpenPanel(table, 'r1');
+
+    data.update((current) => current.filter((row) => row.id !== 'r1'));
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: 'r2', columnId: 'name' });
+  });
+
+  it('applies the collapse rule to a panel target whose row is hidden, even with the panel open', () => {
+    const table = setupTreegrid();
+    table.tree.toggle('r1');
+    table.expansion.toggle('c1');
+    table.focus.moveTo({ area: 'panel', rowId: 'c1' });
+    TestBed.tick();
+
+    table.tree.toggle('r1');
+    TestBed.tick();
+
+    expect(table.focus()).toEqual({ area: 'body', rowId: 'r1', columnId: null });
   });
 });

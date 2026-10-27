@@ -718,9 +718,27 @@ describe('withExpansion', () => {
         expect([...store.expansion()]).toEqual(['r3']);
       });
 
+      it('does not reopen the previous row when recovery moves focus off its closed panel', () => {
+        const store = makeStore({ multi: false });
+        store.expansion.toggle('r1');
+        store.focus.moveTo({ area: 'panel', rowId: 'r1' });
+        TestBed.tick();
+
+        store.expansion.toggle('r2');
+        TestBed.tick();
+
+        expect([...store.expansion()]).toEqual(['r2']);
+        expect(store.focus()).toEqual({ area: 'body', rowId: 'r1', columnId: 'name' });
+
+        // Positive control: the follow effect is live.
+        focusBody(store, 'r3');
+        expect([...store.expansion()]).toEqual(['r3']);
+      });
+
       it.each([
         ['header', { area: 'header', columnId: 'name' } as const],
-        ['panel', { area: 'panel', rowId: 'r2' } as const],
+        // A closed panel is never mounted, so the panel target sits on the open row.
+        ['panel', { area: 'panel', rowId: 'r1' } as const],
       ])('does not follow focus to a %s target', (_name, target) => {
         const store = makeStore({ multi: false });
         store.expansion.toggle('r1');
