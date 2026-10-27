@@ -20,7 +20,7 @@ import type {
 } from './api/types';
 import { createWritableView } from './engine/writable-view';
 
-/** Inert `table.focus` for the mock stores: reads `null`, `moveTo` is a no-op. */
+// Inert `table.focus`: reads `null`, `moveTo` is a no-op.
 function createMockFocus(): TableFocus {
   return Object.assign((): FocusTarget | null => null, {
     moveTo: (): void => undefined,
