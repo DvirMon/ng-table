@@ -47,6 +47,8 @@ export interface FocusMoveOptions {
 export interface TableFocus<TCol extends string = string> {
   (): FocusTarget<TCol> | null;
   moveTo(target: FocusTarget<TCol>, options?: FocusMoveOptions): void;
+  /** Goes up by 1 per accepted `focusElement: true` write. */
+  focusRequests(): number;
 }
 
 // TableStore gains:
@@ -54,9 +56,9 @@ readonly focus: TableFocus<ColumnIdIn<TValues>>;
 ```
 
 `focusElement` is a request the store cannot fulfil (no DOM). The
-store records it as a one-shot flag next to the position; the
-`ngpTable` directive consumes it on its next sync. Shape of that
-internal channel is an implementation detail (open question 1).
+store counts it: `focusRequests` goes up by 1 per accepted
+`focusElement: true` write, and `ngpTable`'s sync effect reads it
+and moves DOM focus when the count changes (K15).
 
 ## Engine: recovery
 
@@ -134,8 +136,9 @@ spec'd in S1 through `createTable`); the effect in
 
 ## Open questions (for `/to-tasks`, not for the spec)
 
-1. Internal channel for the `focusElement` one-shot flag: a
-   non-exported store symbol vs a plain signal the directive reads.
+1. ~~Internal channel for the `focusElement` one-shot flag.~~
+   Resolved: a request counter, `focusRequests`
+   ([K15](1-decisions.md)).
 2. Keeping cell descendants at `tabindex="-1"` (K6a): a
    `MutationObserver` per cell vs a sweep on `focusin`/`focusout`
    of the cell. Edit mode swaps inputs in and out, so a one-time

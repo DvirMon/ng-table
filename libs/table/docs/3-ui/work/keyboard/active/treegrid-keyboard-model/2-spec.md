@@ -280,7 +280,11 @@ type FocusTarget =
 
 table.focus(); // FocusTarget | null
 table.focus.moveTo(target, { focusElement?: boolean });
+table.focus.focusRequests(); // number
 ```
+
+- `focusRequests()` goes up by 1 per accepted `focusElement: true`
+  write; the grid directive reads it to move DOM focus (K15).
 
 - `columnId: null` on a body target means row focus (treegrid) or
   the single full-width cell of a group header row (grid).
