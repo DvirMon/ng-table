@@ -1,4 +1,4 @@
-import { Component, signal, type Type } from '@angular/core';
+import { Component, computed, signal, type Type, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
@@ -8,7 +8,15 @@ import { NgpTableRowDirective } from './ngp-table-row.directive';
 import { createColumns } from '../api/create-columns';
 import { createTable } from '../api/create-table';
 import { withGrouping } from '../api/features/with-grouping/feature';
-import { mockGroupingRows, mockGroupingTrackBy, noData, type GroupingMockRow } from '../table.mock';
+import {
+  mockGroupingRows,
+  mockGroupingTrackBy,
+  mockRows,
+  mockTrackBy,
+  noData,
+  type GroupingMockRow,
+  type MockRow,
+} from '../table.mock';
 
 const US_HEADER_ID = 'group:>region:string:US';
 
@@ -247,5 +255,243 @@ describe('NgpTableDirective roving tabindex', () => {
     const { directive } = setup<EmptyHost | AllHiddenHost>(hostType);
 
     expect(directive().activeTarget()).toBeNull();
+  });
+});
+
+const GRID_HEAD = `
+  <button type="button" id="outside">Outside</button>
+  <table [ngpTable]="table">
+    <tbody>
+`;
+
+const GRID_ROW = `
+        <tr [ngpTableRow]="row">
+          @for (column of table.renderColumns(); track column.id; let i = $index) {
+            <td [ngpTableCell]="i">
+              {{ column.id }}
+              @if (row.id === 2 && column.id === 'name') {
+                <button type="button">Act</button>
+              }
+            </td>
+          }
+        </tr>
+`;
+
+const GRID_TAIL = `
+    </tbody>
+  </table>
+`;
+
+const GRID_TEMPLATE = `${GRID_HEAD}
+      @for (row of table.renderRows(); track row.id) {${GRID_ROW}      }${GRID_TAIL}`;
+
+const REVERSED_GRID_TEMPLATE = `${GRID_HEAD}
+      @for (row of reversedRows(); track row.id) {${GRID_ROW}      }${GRID_TAIL}`;
+
+function createGridTable(data: WritableSignal<MockRow[]>) {
+  return createTable(data, {
+    trackBy: mockTrackBy,
+    columns: createColumns(noData<MockRow>(), (col) => [col('id'), col('name')]),
+  });
+}
+
+@Component({ imports: IMPORTS, template: GRID_TEMPLATE })
+class GridHost {
+  readonly data = signal<MockRow[]>([...mockRows]);
+  readonly table = createGridTable(this.data);
+}
+
+@Component({ imports: IMPORTS, template: REVERSED_GRID_TEMPLATE })
+class ReversedRowsHost {
+  readonly data = signal<MockRow[]>([...mockRows]);
+  readonly table = createGridTable(this.data);
+  protected readonly reversedRows = computed(() => [...this.table.renderRows()].reverse());
+}
+
+describe('NgpTableDirective keyboard and DOM focus', () => {
+  type GridColumn = 'id' | 'name';
+
+  function setupGrid<THost extends GridHost | ReversedRowsHost>(hostType: Type<THost>) {
+    const fixture = TestBed.createComponent(hostType);
+    const root: HTMLElement = fixture.nativeElement;
+    document.body.appendChild(root);
+    const flush = (): void => {
+      TestBed.tick();
+      fixture.detectChanges();
+    };
+    flush();
+
+    const cell = (rowId: number, columnId: GridColumn): HTMLElement => {
+      const colIndex = columnId === 'id' ? '1' : '2';
+      const found = root.querySelector<HTMLElement>(
+        `[aria-rowindex="${rowId}"] [aria-colindex="${colIndex}"]`,
+      );
+      if (found === null) throw new Error(`no cell ${rowId}/${columnId}`);
+      return found;
+    };
+    const outside = (): HTMLElement => {
+      const found = root.querySelector<HTMLElement>('#outside');
+      if (found === null) throw new Error('no outside button');
+      return found;
+    };
+    const press = (target: HTMLElement, init: KeyboardEventInit): KeyboardEvent => {
+      const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init });
+      target.dispatchEvent(event);
+      return event;
+    };
+    const tabStops = (): HTMLElement[] =>
+      Array.from(root.querySelectorAll<HTMLElement>('[tabindex="0"]'));
+
+    return { fixture, host: fixture.componentInstance, flush, cell, outside, press, tabStops };
+  }
+
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
+
+  it.each([
+    ['ArrowDown', { key: 'ArrowDown' }, 2, 'id'],
+    ['ArrowRight', { key: 'ArrowRight' }, 1, 'name'],
+    ['End', { key: 'End' }, 1, 'name'],
+    ['Ctrl+End', { key: 'End', ctrlKey: true }, 3, 'name'],
+  ] as const)('moves to the next cell on %s', (_name, init, rowId, columnId) => {
+    const { host, flush, cell, press, tabStops } = setupGrid(GridHost);
+    cell(1, 'id').focus();
+    flush();
+
+    const event = press(cell(1, 'id'), init);
+    flush();
+
+    expect(host.table.focus()).toEqual({ area: 'body', rowId, columnId });
+    expect(document.activeElement).toBe(cell(rowId, columnId));
+    expect(tabStops()).toEqual([cell(rowId, columnId)]);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('ignores a key event a consumer already prevented', () => {
+    const { host, flush, cell, press } = setupGrid(GridHost);
+    cell(1, 'id').focus();
+    flush();
+
+    const prevented = new KeyboardEvent('keydown', {
+      key: 'ArrowDown',
+      bubbles: true,
+      cancelable: true,
+    });
+    prevented.preventDefault();
+    cell(1, 'id').dispatchEvent(prevented);
+    flush();
+
+    expect(host.table.focus()).toBeNull();
+    expect(document.activeElement).toBe(cell(1, 'id'));
+
+    press(cell(1, 'id'), { key: 'ArrowDown' });
+    flush();
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 2, columnId: 'id' });
+  });
+
+  it.each(['Tab', 'a'])('leaves an unhandled %s key alone', (key) => {
+    const { host, flush, cell, press } = setupGrid(GridHost);
+    cell(1, 'id').focus();
+    flush();
+
+    const event = press(cell(1, 'id'), { key });
+    flush();
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(host.table.focus()).toBeNull();
+
+    press(cell(1, 'id'), { key: 'ArrowDown' });
+    flush();
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 2, columnId: 'id' });
+  });
+
+  it('takes the next row from renderRows() order, not DOM order', () => {
+    const { host, flush, cell, press } = setupGrid(ReversedRowsHost);
+    cell(1, 'id').focus();
+    flush();
+
+    press(cell(1, 'id'), { key: 'ArrowDown' });
+    flush();
+
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 2, columnId: 'id' });
+    expect(document.activeElement).toBe(cell(2, 'id'));
+  });
+
+  it.each([
+    ['the cell itself', false],
+    ['a button inside the cell', true],
+  ] as const)('writes the focused cell to the store on focusin (%s)', (_name, useButton) => {
+    const { host, flush, cell, tabStops } = setupGrid(GridHost);
+    const button = cell(2, 'name').querySelector<HTMLElement>('button');
+    const target = useButton ? button : cell(2, 'name');
+    if (target === null) throw new Error('no focus target');
+
+    target.focus();
+    flush();
+
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 2, columnId: 'name' });
+    expect(tabStops()).toEqual([cell(2, 'name')]);
+    expect(document.activeElement).toBe(target);
+  });
+
+  it('moves DOM focus with a moveTo while focus is inside the grid', () => {
+    const { host, flush, cell } = setupGrid(GridHost);
+    cell(1, 'id').focus();
+    flush();
+
+    host.table.focus.moveTo({ area: 'body', rowId: 3, columnId: 'name' });
+    flush();
+
+    expect(document.activeElement).toBe(cell(3, 'name'));
+  });
+
+  it('still moves DOM focus after the focused cell was removed from the DOM', () => {
+    const { host, flush, cell } = setupGrid(GridHost);
+    // Looked up before removal: aria-rowindex shifts once row 2 is gone, the element does not.
+    const rowThreeCell = cell(3, 'id');
+    cell(2, 'id').focus();
+    flush();
+
+    host.data.update((rows) => rows.filter((row) => row.id !== 2));
+    flush();
+    expect(document.activeElement).toBe(document.body);
+
+    host.table.focus.moveTo({ area: 'body', rowId: 3, columnId: 'id' });
+    flush();
+
+    expect(document.activeElement).toBe(rowThreeCell);
+  });
+
+  it('focuses a just-added row on a focusElement request once it renders', () => {
+    const { host, flush, cell, outside } = setupGrid(GridHost);
+    outside().focus();
+    flush();
+
+    host.data.update((rows) => [...rows, { id: 4, name: 'Dee' }]);
+    host.table.focus.moveTo({ area: 'body', rowId: 4, columnId: 'name' }, { focusElement: true });
+    flush();
+
+    expect(document.activeElement).toBe(cell(4, 'name'));
+  });
+
+  it('never moves DOM focus from outside the grid without a focusElement request', () => {
+    const { host, flush, cell, outside, tabStops } = setupGrid(GridHost);
+    expect(document.activeElement).toBe(document.body);
+
+    outside().focus();
+    host.table.focus.moveTo({ area: 'body', rowId: 3, columnId: 'name' });
+    flush();
+    expect(document.activeElement).toBe(outside());
+    expect(tabStops()).toEqual([cell(3, 'name')]);
+
+    host.table.focus.moveTo({ area: 'body', rowId: 2, columnId: 'name' }, { focusElement: true });
+    flush();
+    expect(document.activeElement).toBe(cell(2, 'name'));
+
+    outside().focus();
+    host.table.focus.moveTo({ area: 'body', rowId: 1, columnId: 'id' });
+    flush();
+    expect(document.activeElement).toBe(outside());
   });
 });

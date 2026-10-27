@@ -1,5 +1,15 @@
-import { computed, Directive, inject, input, type InputSignal, type Signal } from '@angular/core';
+import {
+  computed,
+  Directive,
+  effect,
+  ElementRef,
+  inject,
+  input,
+  type InputSignal,
+  type Signal,
+} from '@angular/core';
 
+import { NGP_TABLE_FOCUS_REGISTRY } from './focus-registry';
 import { NGP_TABLE_ROW, NGP_TABLE_STORE } from './table.tokens';
 
 // Dual-tag selector, role set unconditionally. See `ngp-table-header-cell.directive.ts` for
@@ -19,6 +29,21 @@ export class NgpTableCellDirective {
   // Optional: a cell may sit in a plain `<tr>` without `ngpTableRow`.
   private readonly row = inject(NGP_TABLE_ROW, { optional: true });
   private readonly table = inject(NGP_TABLE_STORE);
+  private readonly focusRegistry = inject(NGP_TABLE_FOCUS_REGISTRY);
+  private readonly element = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+
+  constructor() {
+    // Registers this cell's element for DOM focus; the cleanup also runs on destroy.
+    effect((onCleanup) => {
+      const rowId = this.row?.rowId();
+      const columnId = this.table.ngpTable().renderColumns()[this.ngpTableCell()]?.id;
+      const isGroupRow = this.row?.isGroupHeader() ?? true;
+      if (rowId === undefined || columnId === undefined || isGroupRow) return;
+
+      this.focusRegistry.register({ rowId, columnId }, this.element);
+      onCleanup(() => this.focusRegistry.unregister(this.element));
+    });
+  }
 
   // Roving tabindex: the one cell matching `activeTarget` is the Tab stop. Group rows bind no
   // attribute (group stops are #240).
