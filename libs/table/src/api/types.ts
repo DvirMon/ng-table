@@ -246,9 +246,11 @@ export interface FocusMoveOptions {
   readonly focusElement?: boolean;
 }
 
+/** The store's roving-focus position: call it to read, `moveTo` to write. */
 export interface TableFocus<TCol extends string = string> {
   (): FocusTarget<TCol> | null;
   moveTo(target: FocusTarget<TCol>, options?: FocusMoveOptions): void;
+  /** Increments on each `moveTo` with `focusElement: true`, so the view can move DOM focus. */
   readonly focusRequests: Signal<number>;
 }
 
