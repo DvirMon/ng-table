@@ -16,9 +16,9 @@ import type { ParentLink, TableCore, TableEngineConfig } from './types';
 import { createWritableView } from './writable-view';
 
 /**
- * `composeTable()`'s return from core construction. `stages`, `renderStages` and
- * `columnRules` are mutable registries read at evaluation time, so a feature registering
- * mid-fold is visible before any consumer reads them.
+ * `createTableCore()`'s return, consumed by `composeTable()`. `stages`, `renderStages` and
+ * `columnRules` are mutable registries read at evaluation time: `columnRules` fills during the
+ * fold, the stage registries once after it — all before any consumer reads them.
  */
 export interface TableCoreHandle<TRow> {
   readonly core: TableCore<TRow>;
@@ -35,18 +35,16 @@ export interface TableCoreHandle<TRow> {
   readonly contextSources: Signal<ReadonlySet<RowId>>[];
   /** The union of every contributed `contextRows` set; `undefined` when none contributed. */
   readonly contextRows: Signal<ReadonlySet<RowId> | undefined>;
-  // Note: a box, not a reassigned property, so `rows`/`renderRows` read `value` at evaluation
-  // time. Captured at construction it is always `undefined` — the fold sets it later.
-  // Passed to stages unwrapped: a throwing link degrades to root in the contributor's own
-  // stage (ADR-0014, ADR-0028), which owns the fallback — the engine only hands it over.
+  // Note: a box, so `rows`/`renderRows` read `value` at evaluation time — the fold sets it
+  // after construction.
   /** The contributed parent link, set at most once during `composeTable()`'s fold. */
   readonly parentLink: { value?: ParentLink<TRow> };
 }
 
 /**
- * Builds the feature-independent half of the store: the writable source signals
- * (`baseColumns`, `data`), the derived `columns`, and the pipeline computeds. Knows nothing
- * about features.
+ * Builds the feature-independent half of the store: the writable `baseColumns` signal, the
+ * derived `columns`, and the pipeline computeds over the consumer's `config.data`. Owns the
+ * slots features contribute to, but knows nothing about any specific feature.
  */
 export function createTableCore<TRow>(config: TableEngineConfig<TRow>): TableCoreHandle<TRow> {
   // Normalized once at construction so there's zero branching at render/comparison time.
@@ -99,14 +97,13 @@ export function createTableCore<TRow>(config: TableEngineConfig<TRow>): TableCor
     return map;
   });
 
-  // Downstream of `rows` (the pipeline output), not `data` directly — recomputes on every
-  // filter/group/sort/expand change, not just when the consumer's `data` signal re-emits.
-  // `index`, `sourceIndex` and `cells` are assigned here, centrally, rather than by any render
-  // stage: `index` is purely the row's position in the final array (feeds `aria-rowindex`),
-  // assigned once after the whole render-stage chain runs, and `sourceIndex` resolves via
-  // `indexById` — `undefined` for a synthesized row (`row.data === null`) since there is no
-  // `data()` entry to point to. `cells` reads `columns()`, so any column change recomputes
-  // every render row (ADR-0022).
+  // Depends on `rows` and on `data` (via `indexById`) — recomputes on every
+  // filter/group/sort/expand change, not only when `data` re-emits.
+  // `index`, `sourceIndex` and `cells` are assigned here, not by a render stage: `index` is the
+  // row's position in the final array (feeds `aria-rowindex`), set after the whole render-stage
+  // chain runs; `sourceIndex` resolves via `indexById`, `undefined` for a synthesized row
+  // (`row.data === null`, no `data()` entry). `cells` reads `columns()`, so any column change
+  // recomputes every render row (ADR-0022).
   const renderRows = computed(() => {
     const byId = indexById();
     const resolvedColumns = columns();

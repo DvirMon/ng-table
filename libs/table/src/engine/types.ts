@@ -62,12 +62,12 @@ export interface TableCore<TRow, TValues extends ColumnValueMap = ColumnValueMap
   // before any consumer can read it, so this and `renderRows` below are safe to close over
   // during composition.
   readonly rows: Signal<TRow[]>;
-  /** The render-layer output every render stage chain produced, `index`/`sourceIndex` already stamped. */
+  /** The render-layer output every render stage chain produced, `index`/`sourceIndex`/`isContextRow`/`cells` already stamped. */
   readonly renderRows: Signal<RenderRow<TRow>[]>;
   /** The visible columns of `columns`, in render order. */
   readonly renderColumns: Signal<ColumnDef<TRow, ColumnIdIn<TValues>>[]>;
   readonly trackBy: TrackByFn<TRow>;
-  /** Maps a row's trackBy id to its position in `data()`. Feeds the removal-reconciliation diff. */
+  /** Maps a row's trackBy id to its position in `data()`. Feeds `sourceIndex` and the removal-reconciliation diff. */
   readonly indexById: Signal<ReadonlyMap<RowId, number>>;
   /** Read: the consumer's row data, never copied. Write: `.update()` writes through, resolving `trackBy` for id-based updaters. */
   readonly value: WritableView<TRow[], RowUpdater<TRow>>;

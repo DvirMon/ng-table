@@ -45,9 +45,9 @@ export function assertUniqueColumnIds<TRow>(
 }
 
 /**
- * Fills in `accessor`/`visible`/`order`/`label` for any column def that omitted them, so the
- * resolved state (`store.columns()`) is always a full `ColumnDef[]` regardless of how sparse
- * the author-facing `ColumnDefInput[]` was.
+ * Fills in `accessor`/`visible`/`order`/`label` for any column def that omitted
+ * them, so the resolved state (`store.columns()`) is always a full `ColumnDef[]`
+ * regardless of how sparse the author-facing `ColumnDefInput[]` was.
  *
  * @remarks
  * Throws on a duplicate `id` in dev mode — see `assertUniqueColumnIds`. `label` names the
