@@ -69,3 +69,6 @@ bench-trace.json
 
 # personal workflow overrides
 .claude/workflow.local.json
+
+# task plans for issues with no workspace (/to-tasks)
+.pipeline/
