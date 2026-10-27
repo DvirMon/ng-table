@@ -30,6 +30,7 @@ Architectural constraints agreed in drilling sessions. Changing them requires cr
 - **`createTable()` returns an instance, not a class.** Consumers call `const table = createTable(…)`, not `new Table(…)`.
 - **`rows()` never returns wrapper objects.** Store yields `RenderRow<TRow>[]` directly.
 - **State as `data-*` attributes, values as CSS custom properties.** No inline styles on directives; no attribute duplication for styling and data.
+- **No shipped CSS by default.** ng-primitives is the reference: ship `data-*` hooks and output custom properties, document the CSS as a consumer recipe. Add a stylesheet only when a behavior cannot work without one. ADR-0026 permits per-capability sheets; that is not a default.
 
 ## Code layout — folders by lifecycle phase
 
@@ -245,7 +246,7 @@ sort) regardless of it. No `.pipe()` chaining, no builder pattern. Type-level ca
 ## Testing
 
 - Unit tests in `*.spec.ts` (colocated with source) — logic-only, `TestBed` or `vitest`.
-- **Everything in `engine/` except `compose-table.ts` is pure** — no signals, no Angular. Reaching for `TestBed` there means the logic is in the wrong file.
+- **`engine/` transforms are pure** — stages, `flatten`, `cells`, `rows` and the like use no signals, no Angular. Signals belong only in the files that wire state (`compose-table.ts`, `core.ts`, `writable-view.ts`, a capability's `wiring.ts`/`state.ts`/`rules.ts`). Reaching for `TestBed` to test a transform means the logic is in the wrong file.
 - No content/structural tests (rendering, DOM projection) — those belong in directive specs.
 - Mock row data in `table.mock.ts` (exported, reusable); don't inline fixtures.
 
