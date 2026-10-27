@@ -26,5 +26,15 @@
     { "number": 242, "slice": "docs-virtual-scroll-focus-contract" }
   ],
   "createdAt": "2026-10-10T16:16:41Z",
-  "updatedAt": "2026-10-13T15:00:00Z"
+  "units": [
+    {
+      "remoteRef": "#232",
+      "branch": "feat/232-store-focus-member",
+      "worktree": ".claude/worktrees/feat-232-store-focus-member",
+      "pr": null,
+      "readiness": "ready-for-agent",
+      "assessed": "10-27 · task plan on disk"
+    }
+  ],
+  "updatedAt": "2026-10-27T12:00:00Z"
 }
