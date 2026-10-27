@@ -1,4 +1,4 @@
-import { computed, effect, signal, type Signal } from '@angular/core';
+import { computed, effect, signal, untracked, type Signal } from '@angular/core';
 import type { Observable } from 'rxjs';
 import type { Feature, RowOf, TableFeatureSpec } from '../../engine/types';
 import { createTableFeature } from '../create-table-feature';
@@ -19,7 +19,8 @@ export interface WithExpansionConfig {
    *  keeps only its last id, and the displaced row closes in the same `changed` emission, even
    *  with `emitEvent: false`. An accessor is read reactively; flipping it to `false` closes all
    *  open rows if more than one. A throwing accessor is reported via `console.error` and
-   *  treated as `true`. */
+   *  treated as `true`. With `false`, an open panel follows `table.focus()` to the next focused
+   *  data row; with none open, focus opens nothing. */
   multi?: boolean | (() => boolean);
 }
 
@@ -65,10 +66,10 @@ export interface ExpansionMembers {
 }
 
 // F-bounded so a factory body gets `input.rows(): RowOf<In>[]` with no cast.
-type ExpansionInput<In> = Pick<TableStore<RowOf<In>>, 'rows' | 'trackBy'>;
+type ExpansionInput<In> = Pick<TableStore<RowOf<In>>, 'rows' | 'trackBy' | 'focus' | 'indexById'>;
 
 function buildExpansionSpec<TRow>(
-  input: Pick<TableStore<TRow>, 'rows' | 'trackBy'>,
+  input: Pick<TableStore<TRow>, 'rows' | 'trackBy' | 'focus' | 'indexById'>,
   multi: Signal<boolean>,
   config: WithExpansionConfig,
 ): TableFeatureSpec<TRow, ExpansionMembers> {
@@ -165,9 +166,33 @@ function buildExpansionSpec<TRow>(
     }
   }
 
+  // Single-open: moves the one open panel to the newly focused data row. Only `focus()` is
+  // tracked; tracking `expanded()` would snap a manual toggle back to the focused row.
+  function followFocus(): void {
+    const target = input.focus();
+    untracked(() => {
+      const isSingleOpen = !multi();
+      const open = store.expanded();
+      const hasExactlyOneOpen = open.size === 1;
+      const isBodyTarget = target?.area === 'body';
+      if (!isSingleOpen || !hasExactlyOneOpen || !isBodyTarget) {
+        return;
+      }
+      const rowId = target.rowId;
+      const isOtherRow = !open.has(rowId);
+      const isDataRow = input.indexById().has(rowId);
+      if (isOtherRow && isDataRow) {
+        store.setExpanded([rowId]);
+      }
+    });
+  }
+
   return {
     members: { expansion },
-    setup: () => effect(onMultiChanged),
+    setup: () => {
+      effect(onMultiChanged);
+      effect(followFocus);
+    },
     onDestroy: () => store.destroy(),
     onRowsRemoved: (ids) => store.onRowsRemoved(ids),
   };

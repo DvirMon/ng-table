@@ -609,6 +609,154 @@ describe('withExpansion', () => {
       expect(store.expansion.everExpanded().has('r1')).toBe(true);
     });
 
+    describe('follows focus', () => {
+      function focusBody(store: ReturnType<typeof makeStore>, rowId: RowId): void {
+        store.focus.moveTo({ area: 'body', rowId, columnId: 'name' });
+        TestBed.tick();
+      }
+
+      it('switches the open panel to the newly focused data row', () => {
+        const store = makeStore({ multi: false });
+        store.expansion.toggle('r1');
+        focusBody(store, 'r1');
+        const emitted = collect(store);
+
+        focusBody(store, 'r2');
+
+        expect([...store.expansion()]).toEqual(['r2']);
+        expect(emitted).toEqual([{ added: ['r2'], removed: ['r1'] }]);
+      });
+
+      it('opens nothing when focus moves with no panel open', () => {
+        const store = makeStore({ multi: false });
+        TestBed.tick();
+        const emitted = collect(store);
+
+        focusBody(store, 'r2');
+
+        expect(store.expansion().size).toBe(0);
+        expect(emitted).toEqual([]);
+
+        // Positive control: the follow effect is live.
+        store.expansion.toggle('r2');
+        focusBody(store, 'r3');
+        expect([...store.expansion()]).toEqual(['r3']);
+      });
+
+      it('leaves the open panel on its row when focus moves to a group header', () => {
+        interface GroupRow {
+          id: string;
+          name: string;
+          team: string;
+        }
+        const columns = createColumns(noData<GroupRow>(), (col) => [col('name'), col('team')]);
+        const rows: GroupRow[] = [
+          { id: 'r1', name: 'Row 1', team: 'A' },
+          { id: 'r2', name: 'Row 2', team: 'A' },
+          { id: 'r3', name: 'Row 3', team: 'B' },
+        ];
+        const store = inContext(() =>
+          createTable(
+            signal(rows),
+            { trackBy: 'id', columns },
+            withGrouping({ initial: ['team'] }),
+            withExpansion({ multi: false }),
+          ),
+        );
+        const header = store.renderRows().find((row) => row.kind === 'group');
+        if (header === undefined) {
+          throw new Error('expected a group header row');
+        }
+        const emitted: ExpansionChange[] = [];
+        store.expansion.changed.subscribe((change) => emitted.push(change));
+        store.expansion.toggle('r1');
+        emitted.length = 0;
+
+        store.focus.moveTo({ area: 'body', rowId: header.id, columnId: 'name' });
+        TestBed.tick();
+
+        expect([...store.expansion()]).toEqual(['r1']);
+        expect(emitted).toEqual([]);
+
+        // Positive control: the follow effect is live.
+        store.focus.moveTo({ area: 'body', rowId: 'r2', columnId: 'name' });
+        TestBed.tick();
+        expect([...store.expansion()]).toEqual(['r2']);
+      });
+
+      it('does not follow focus in multi-open mode', () => {
+        const multi = signal(true);
+        const store = makeStore({ multi: () => multi() });
+        TestBed.tick();
+        store.expansion.toggle('r1');
+        const emitted = collect(store);
+
+        focusBody(store, 'r2');
+
+        expect([...store.expansion()]).toEqual(['r1']);
+        expect(emitted).toEqual([]);
+
+        // Positive control: the follow effect is live once single-open.
+        multi.set(false);
+        TestBed.tick();
+        focusBody(store, 'r3');
+        expect([...store.expansion()]).toEqual(['r3']);
+      });
+
+      it('does not snap back to the focused row after a programmatic toggle', () => {
+        const store = makeStore({ multi: false });
+        store.expansion.toggle('r1');
+        focusBody(store, 'r1');
+
+        store.expansion.toggle('r2');
+        TestBed.tick();
+
+        expect([...store.expansion()]).toEqual(['r2']);
+
+        // Positive control: the follow effect is live.
+        focusBody(store, 'r3');
+        expect([...store.expansion()]).toEqual(['r3']);
+      });
+
+      it.each([
+        ['header', { area: 'header', columnId: 'name' } as const],
+        ['panel', { area: 'panel', rowId: 'r2' } as const],
+      ])('does not follow focus to a %s target', (_name, target) => {
+        const store = makeStore({ multi: false });
+        store.expansion.toggle('r1');
+        const emitted = collect(store);
+
+        store.focus.moveTo(target);
+        TestBed.tick();
+
+        expect([...store.expansion()]).toEqual(['r1']);
+        expect(emitted).toEqual([]);
+
+        // Positive control: the follow effect is live.
+        focusBody(store, 'r3');
+        expect([...store.expansion()]).toEqual(['r3']);
+      });
+
+      it('does not follow when only the mode flips', () => {
+        const multi = signal(true);
+        const store = makeStore({ multi: () => multi() });
+        TestBed.tick();
+        store.expansion.toggle('r1');
+        focusBody(store, 'r2');
+        const emitted = collect(store);
+
+        multi.set(false);
+        TestBed.tick();
+
+        expect([...store.expansion()]).toEqual(['r1']);
+        expect(emitted).toEqual([]);
+
+        // Positive control: the follow effect is live.
+        focusBody(store, 'r3');
+        expect([...store.expansion()]).toEqual(['r3']);
+      });
+    });
+
     describe('live accessor', () => {
       it('flipping to false with several open closes all in one emission', () => {
         const multi = signal(true);
