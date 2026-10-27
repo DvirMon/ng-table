@@ -19,4 +19,11 @@ if (PATTERN.test(branch)) {
 console.error(`Branch name "${branch}" doesn't match required pattern: <type>/<slug>`);
 console.error(`Allowed types: ${ALLOWED_TYPES.join(', ')}`);
 console.error('Example: feat/105-delete-coupled-surface, docs/table-filtering');
+// Annotation for the check summary in GitHub Actions.
+if (process.env.GITHUB_ACTIONS === 'true') {
+  console.log(
+    `::error title=Branch name::"${branch}" must match <type>/<slug>` +
+    `%0AAllowed types: ${ALLOWED_TYPES.join(', ')}`,
+  );
+}
 process.exit(1);

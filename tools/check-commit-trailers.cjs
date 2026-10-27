@@ -11,6 +11,17 @@ const { lintMessage, lintTitle } = require('./commit-trailers.cjs');
 const RECORD_SEP = '\x1e';
 const FIELD_SEP = '\x1f';
 
+// In GitHub Actions, also emit an `::error` annotation so the reason
+// shows on the check summary, not only in the raw log.
+function annotate(title, lines) {
+  if (process.env.GITHUB_ACTIONS !== 'true') return;
+  const data = lines.join('\n')
+    .replace(/%/g, '%25')
+    .replace(/\r/g, '%0D')
+    .replace(/\n/g, '%0A');
+  console.log(`::error title=${title}::${data}`);
+}
+
 function git(args) {
   return execFileSync('git', args, {
     encoding: 'utf8',
@@ -71,6 +82,10 @@ for (const merge of merges) {
   failed++;
   console.error(`✗ ${merge}`);
   console.error('    Merge commit — rebase onto origin/main instead of merging.');
+  annotate('Merge commit', [
+    merge,
+    'Rebase onto origin/main instead of merging.',
+  ]);
 }
 for (const { label, message, lint } of targets) {
   const problems = lint(message);
@@ -79,6 +94,7 @@ for (const { label, message, lint } of targets) {
   const subject = message.split(/\r?\n/)[0];
   console.error(`✗ ${label}  ${subject}`);
   for (const problem of problems) console.error(`    ${problem}`);
+  annotate(`Rejected ${label}`, [subject, ...problems]);
 }
 
 if (failed > 0) {
