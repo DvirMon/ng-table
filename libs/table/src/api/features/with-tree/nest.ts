@@ -60,9 +60,10 @@ function guardIsExpandable<TRow>(
 function reportBrokenLinksOnce(
   broken: Readonly<Record<BrokenLinkKind, readonly RowId[]>>,
   reported: Record<BrokenLinkKind, boolean>,
+  parentIdThrew: ReportFlag,
 ): void {
   (['self', 'absent', 'cycle'] as const).forEach((kind: BrokenLinkKind) => {
-    const shouldReportKind = broken[kind].length > 0 && !reported[kind];
+    const shouldReportKind = broken[kind].length > 0 && !reported[kind] && !parentIdThrew.done;
     if (shouldReportKind) {
       reported[kind] = true;
       reportCallbackError(
@@ -89,6 +90,7 @@ interface NestContext<TRow> {
   readonly parentOf: ParentLink<TRow>;
   readonly isExpandableGuarded: ((row: TRow) => boolean) | undefined;
   readonly reported: Record<BrokenLinkKind, boolean>;
+  readonly parentIdThrew: ReportFlag;
 }
 
 // Nests one flat pool of sibling rows — either the top-level input or a single group header's
@@ -109,7 +111,7 @@ function nestFlatPool<TRow>(
     parentOf: ctx.parentOf,
     trackBy: ctx.trackBy,
   });
-  reportBrokenLinksOnce(broken, ctx.reported);
+  reportBrokenLinksOnce(broken, ctx.reported, ctx.parentIdThrew);
 
   const childIdsByParent = new Map<RowId, RowId[]>();
   const rootIds: RowId[] = [];
@@ -194,6 +196,7 @@ export function buildFlatTreeStage<TRow>(
       parentOf,
       isExpandableGuarded: guardIsExpandable(config),
       reported,
+      parentIdThrew: parentIdReported,
     };
     return nestFlatSiblings(nodes, ctx);
   };
