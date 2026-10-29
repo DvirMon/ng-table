@@ -1,0 +1,21 @@
+**Issue:** #236 — Table: header row, Page Up/Down and RTL in grid navigation
+**Branch:** feat/236-header-paging-rtl
+**Worktree:** .claude/worktrees/feat-236-header-paging-rtl
+
+```mermaid
+graph LR
+  S1 --> S4
+  S2 --> S4
+  S3 --> S4
+  S4 --> S5
+```
+
+Parallel-safe: [S1, S2, S3] first; S4 after all three; S5 after S4.
+
+| Step | Title                                                                    | Status    |
+| ---- | ------------------------------------------------------------------------ | --------- |
+| 1    | [Key map: header, paging, RTL](step-1-key-map-header-paging-rtl.plan.md) | ⬚ pending |
+| 2    | [Page step and direction](step-2-page-step-and-direction.plan.md)        | ⬚ pending |
+| 3    | [Header cell focus targets](step-3-header-cell-focus-targets.plan.md)    | ⬚ pending |
+| 4    | [Header, paging, RTL keys](step-4-header-paging-rtl-keys.plan.md)        | ⬚ pending |
+| 5    | [Header, paging, RTL docs](step-5-header-paging-rtl-docs.plan.md)        | ⬚ pending |
