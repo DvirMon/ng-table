@@ -33,6 +33,8 @@ Read direction and page step inside the handler. Never in a `computed` or at con
 
 Add new `describe` blocks and hosts in `ngp-table.directive.spec.ts`; the existing `setupGrid` helper and its tests stay as they are.
 
+#237's editable-target skip has to guard this handler once #237 merges. Step 6 checks it.
+
 ## Out of scope
 
 - Group header stops (#240), treegrid (#239), widgets in cells (#237).
