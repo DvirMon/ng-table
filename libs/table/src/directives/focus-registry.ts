@@ -11,15 +11,15 @@ import {
   setSavedTabindex,
   writeTabindex,
 } from './cell-widgets';
-import type { BodyCell } from './keyboard-nav.types';
+import type { BodyCell, HeaderCell } from './keyboard-nav.types';
 
 /** One table's lookup between body cells and their rendered elements. */
 export interface FocusRegistry {
-  register(cell: BodyCell, element: HTMLElement): void;
+  register(cell: BodyCell | HeaderCell, element: HTMLElement): void;
   unregister(element: HTMLElement): void;
-  elementOf(cell: BodyCell): HTMLElement | null;
+  elementOf(cell: BodyCell | HeaderCell): HTMLElement | null;
   /** The registered cell at or above `node`, stopping at `boundary`. */
-  cellContaining(node: Node, boundary: HTMLElement): BodyCell | null;
+  cellContaining(node: Node, boundary: HTMLElement): BodyCell | HeaderCell | null;
   /**
    * Takes controls added under `node` out of the Tab order. Does nothing when `node` is outside
    * every registered cell.
@@ -34,16 +34,16 @@ export interface FocusRegistry {
    * Keeps exactly one Tab stop: the active cell's lone widget when it has one, else the cell.
    * The previous widget drops back to `-1`.
    */
-  syncTabStop(active: BodyCell | null): void;
+  syncTabStop(active: BodyCell | HeaderCell | null): void;
   /** The element focus should land on for `cell`: its lone widget, else the cell itself. */
-  focusTargetOf(cell: BodyCell): HTMLElement | null;
+  focusTargetOf(cell: BodyCell | HeaderCell): HTMLElement | null;
   /** The element of the cell currently in entered mode, or `null` in navigation mode. */
   enteredElement(): HTMLElement | null;
   /**
    * Puts `cell`'s widgets back in the Tab order so Tab walks them natively.
    * Returns the first widget, for the caller to focus; `null` when there is none.
    */
-  enterCell(cell: BodyCell): HTMLElement | null;
+  enterCell(cell: BodyCell | HeaderCell): HTMLElement | null;
   /**
    * Returns the entered cell to navigation mode and takes its widgets out of the Tab order again.
    * Returns the cell's element, or `null` when no cell was entered.
@@ -54,16 +54,18 @@ export interface FocusRegistry {
 /** Creates the registry one `ngpTable` host provides to its cells. */
 export function createFocusRegistry(): FocusRegistry {
   const elementByKey = new Map<string, HTMLElement>();
-  const cellByElement = new Map<HTMLElement, BodyCell>();
+  const cellByElement = new Map<HTMLElement, BodyCell | HeaderCell>();
   let tabStopWidget: HTMLElement | null = null;
   let entered: HTMLElement | null = null;
 
-  // Note: the key carries the id's type so row `1` and row `'1'` stay distinct.
-  function keyOf(cell: BodyCell): string {
+  // Note: the key carries the id's type so row `1` and row `'1'` stay distinct. Header keys start
+  // with `header|`, which no body key can (those start with a `typeof` name and `:`).
+  function keyOf(cell: BodyCell | HeaderCell): string {
+    if ('area' in cell) return `header|${cell.columnId}`;
     return `${typeof cell.rowId}:${String(cell.rowId)}|${cell.columnId}`;
   }
 
-  function register(cell: BodyCell, element: HTMLElement): void {
+  function register(cell: BodyCell | HeaderCell, element: HTMLElement): void {
     unregister(element);
     elementByKey.set(keyOf(cell), element);
     cellByElement.set(element, cell);
@@ -85,11 +87,11 @@ export function createFocusRegistry(): FocusRegistry {
     if (isRegisteredElement) elementByKey.delete(key);
   }
 
-  function elementOf(cell: BodyCell): HTMLElement | null {
+  function elementOf(cell: BodyCell | HeaderCell): HTMLElement | null {
     return elementByKey.get(keyOf(cell)) ?? null;
   }
 
-  function cellContaining(node: Node, boundary: HTMLElement): BodyCell | null {
+  function cellContaining(node: Node, boundary: HTMLElement): BodyCell | HeaderCell | null {
     let current: Node | null = node;
     while (current !== null && current !== boundary) {
       const cell = current instanceof HTMLElement ? cellByElement.get(current) : undefined;
@@ -130,13 +132,13 @@ export function createFocusRegistry(): FocusRegistry {
     saveBindingTabindex(target, record);
   }
 
-  function focusTargetOf(cell: BodyCell): HTMLElement | null {
+  function focusTargetOf(cell: BodyCell | HeaderCell): HTMLElement | null {
     const element = elementByKey.get(keyOf(cell));
     if (element === undefined) return null;
     return findSingleWidget(element) ?? element;
   }
 
-  function syncTabStop(active: BodyCell | null): void {
+  function syncTabStop(active: BodyCell | HeaderCell | null): void {
     const element = active === null ? undefined : elementByKey.get(keyOf(active));
     const widget = element === undefined ? null : findSingleWidget(element);
 
@@ -165,7 +167,7 @@ export function createFocusRegistry(): FocusRegistry {
     return entered;
   }
 
-  function enterCell(cell: BodyCell): HTMLElement | null {
+  function enterCell(cell: BodyCell | HeaderCell): HTMLElement | null {
     const element = elementByKey.get(keyOf(cell));
     if (element === undefined) return null;
     const isSwitchingCell = entered !== null && entered !== element;

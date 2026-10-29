@@ -5,6 +5,7 @@ import { By } from '@angular/platform-browser';
 import { NgpTableDirective } from './ngp-table.directive';
 import { NGP_TABLE_STORE } from './table.tokens';
 import { NgpTableCellDirective } from './ngp-table-cell.directive';
+import { NgpTableHeaderCellDirective } from './ngp-table-header-cell.directive';
 import { NgpTableRowDirective } from './ngp-table-row.directive';
 import { createColumns } from '../api/create-columns';
 import { createTable } from '../api/create-table';
@@ -1425,5 +1426,145 @@ describe('NgpTableDirective entered cell recovery', () => {
     flush();
 
     expect(query('td button').getAttribute('tabindex')).toBe('-1');
+  });
+});
+
+const HEADER_IMPORTS = [...IMPORTS, NgpTableHeaderCellDirective];
+
+const HEADER_TEMPLATE = `
+  <table [ngpTable]="table">
+    <thead>
+      <tr>
+        @for (column of table.renderColumns(); track column.id; let i = $index) {
+          <th [ngpTableHeaderCell]="i">
+            {{ column.id }}
+            <button type="button">Sort</button>
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        <tr [ngpTableRow]="row">
+          @for (column of table.renderColumns(); track column.id; let i = $index) {
+            <td [ngpTableCell]="i">{{ column.id }}</td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+`;
+
+@Component({ imports: HEADER_IMPORTS, template: HEADER_TEMPLATE })
+class HeaderGridHost {
+  readonly table = createGridTable(signal<MockRow[]>([...mockRows]));
+}
+
+@Component({ imports: HEADER_IMPORTS, template: HEADER_TEMPLATE })
+class HiddenFirstColumnHeaderHost {
+  readonly table = createFlatTable(mockGroupingRows, [
+    { id: 'region', visible: false },
+    { id: 'category' },
+    { id: 'amount' },
+  ]);
+}
+
+describe('NgpTableDirective header cells', () => {
+  function setupHeader<THost extends HeaderGridHost | HiddenFirstColumnHeaderHost>(
+    hostType: Type<THost>,
+  ) {
+    const fixture = TestBed.createComponent(hostType);
+    const root: HTMLElement = fixture.nativeElement;
+    document.body.appendChild(root);
+    const flush = (): void => {
+      TestBed.tick();
+      fixture.detectChanges();
+    };
+    flush();
+
+    const query = (selector: string): HTMLElement => {
+      const found = root.querySelector<HTMLElement>(selector);
+      if (found === null) throw new Error(`no element ${selector}`);
+      return found;
+    };
+    // 1-based column position, as in `aria-colindex`.
+    const headerCell = (colIndex: number): HTMLElement => query(`th[aria-colindex="${colIndex}"]`);
+    const headerButton = (colIndex: number): HTMLElement =>
+      query(`th[aria-colindex="${colIndex}"] button`);
+    const bodyCell = (rowId: number, colIndex: number): HTMLElement =>
+      query(`[aria-rowindex="${rowId}"] [aria-colindex="${colIndex}"]`);
+    const headerCells = (): HTMLElement[] =>
+      Array.from(root.querySelectorAll<HTMLElement>('th[role="columnheader"]'));
+    const tabStops = (): HTMLElement[] =>
+      Array.from(root.querySelectorAll<HTMLElement>('[tabindex="0"]'));
+
+    return {
+      host: fixture.componentInstance,
+      flush,
+      headerCell,
+      headerButton,
+      headerCells,
+      bodyCell,
+      tabStops,
+    };
+  }
+
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
+
+  it('keeps header cells out of the tab order while a body cell of the same column is active', () => {
+    const { host, flush, headerCells, bodyCell, tabStops } = setupHeader(HeaderGridHost);
+
+    // Nothing focused: the first-entry default stays the first data row.
+    expect(tabStops()).toEqual([bodyCell(1, 1)]);
+    expect(headerCells().map((cell) => cell.getAttribute('tabindex'))).toEqual(['-1', '-1']);
+
+    host.table.focus.moveTo({ area: 'body', rowId: 1, columnId: 'name' });
+    flush();
+
+    expect(headerCells().map((cell) => cell.getAttribute('tabindex'))).toEqual(['-1', '-1']);
+    expect(tabStops()).toEqual([bodyCell(1, 2)]);
+  });
+
+  it('moves the single tabindex="0" to the header cell named by focus.moveTo', () => {
+    const { host, flush, headerCell, headerCells, tabStops } = setupHeader(HeaderGridHost);
+
+    host.table.focus.moveTo({ area: 'header', columnId: 'name' });
+    flush();
+
+    expect(tabStops()).toEqual([headerCell(2)]);
+    expect(headerCells().map((cell) => cell.getAttribute('tabindex'))).toEqual(['-1', '0']);
+  });
+
+  it("resolves a header cell's column through renderColumns() when the first declared column is hidden", () => {
+    const { host, flush, headerCell, tabStops } = setupHeader(HiddenFirstColumnHeaderHost);
+
+    host.table.focus.moveTo({ area: 'header', columnId: 'category' });
+    flush();
+
+    expect(tabStops()).toEqual([headerCell(1)]);
+    expect(headerCell(1).getAttribute('aria-colindex')).toBe('1');
+  });
+
+  it.each([
+    ['the header cell itself', false],
+    ['a button inside the header cell', true],
+  ])('writes the focused header cell to the store on focusin (%s)', (_name, isInnerButton) => {
+    const { host, flush, headerCell, headerButton, bodyCell, tabStops } =
+      setupHeader(HeaderGridHost);
+    host.table.focus.moveTo({ area: 'body', rowId: 1, columnId: 'name' });
+    flush();
+    bodyCell(1, 2).focus();
+    flush();
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 1, columnId: 'name' });
+
+    const target = isInnerButton ? headerButton(2) : headerCell(2);
+    target.focus();
+    flush();
+
+    expect(host.table.focus()).toEqual({ area: 'header', columnId: 'name' });
+    expect(tabStops()).toEqual([headerCell(2)]);
+    expect(document.activeElement).toBe(target);
   });
 });
