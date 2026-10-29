@@ -230,6 +230,16 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     const cell = this.focusRegistry.cellContaining(event.target, this.host);
     if (cell === null) return;
 
+    if ('area' in cell) {
+      // Compares `area` too: a body cell and a header cell share column ids.
+      const target = this.activeTarget();
+      const isHeaderAlreadyActive = target?.area === 'header' && target.columnId === cell.columnId;
+      if (isHeaderAlreadyActive) return;
+
+      this.ngpTable().focus.moveTo({ area: 'header', columnId: cell.columnId });
+      return;
+    }
+
     // A pointer click straight into a composite cell's widget enters the cell.
     const cellElement = this.focusRegistry.elementOf(cell);
     const isWidgetOfComposite =
