@@ -493,18 +493,22 @@ describe('NgpTableDirective keyboard and DOM focus', () => {
   it('still moves DOM focus after the focused cell was removed from the DOM', () => {
     const { host, flush, cell } = setupGrid(GridHost);
     // Looked up before removal: aria-rowindex shifts once row 2 is gone, the element does not.
-    const rowThreeCell = cell(3, 'id');
+    const rowOneCell = cell(1, 'id');
     cell(2, 'id').focus();
     flush();
 
     host.data.update((rows) => rows.filter((row) => row.id !== 2));
     flush();
-    expect(document.activeElement).toBe(document.body);
+    // K9d: recovery moves DOM focus into the grid while focus was inside it, so it is not <body>.
+    const recovered = document.activeElement;
+    expect(recovered?.getAttribute('role')).toBe('gridcell');
+    expect(recovered?.closest('[role="grid"], [role="treegrid"]')).not.toBeNull();
+    expect(recovered).not.toBe(rowOneCell);
 
-    host.table.focus.moveTo({ area: 'body', rowId: 3, columnId: 'id' });
+    host.table.focus.moveTo({ area: 'body', rowId: 1, columnId: 'id' });
     flush();
 
-    expect(document.activeElement).toBe(rowThreeCell);
+    expect(document.activeElement).toBe(rowOneCell);
   });
 
   it('stops following focus once it moved outside after the focused cell was removed', () => {
