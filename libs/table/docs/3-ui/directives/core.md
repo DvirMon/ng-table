@@ -149,7 +149,7 @@ export class NgpTableExpandToggleDirective {
 }
 ```
 
-**Header rows:** the `<tr>` inside `<thead>` has no `RenderRow`. It carries no `ngpTableRow` at all — it is not a data row, nothing row-scoped is ever nested in it, and giving it a sentinel `RenderRow` would be a lie the type system can't catch. Header `<th>`s are addressed by `ngpTableColumn` (see `columns.md`).
+**Header rows:** the `<tr>` inside `<thead>` has no `RenderRow`. It carries no `ngpTableRow` at all — it is not a data row, nothing row-scoped is ever nested in it, and giving it a sentinel `RenderRow` would be a lie the type system can't catch. Header `<th>`s are addressed by `ngpTableColumn` (see `columns.md`) and are keyboard focus targets, not rows (see [Grid navigation](#grid-navigation)).
 
 ---
 
@@ -176,7 +176,10 @@ The body is a `grid` of `gridcell`s with one Tab stop ([ADR-0030](../../adr/0030
 
 - **Roving tabindex.** The cell at the stored position has `tabindex="0"`; every other data cell has `-1`. Group rows bind no `tabindex`.
 - **Entry.** With no stored position, the Tab stop is the first data row's first cell. Afterwards it is the last focused cell.
-- **Keys.** Arrow keys move one cell. `Home` / `End` go to the row's first / last cell. `Ctrl` (`Cmd`) + `Home` / `End` go to the grid's first / last cell. There is no wrap: at an edge the position stays and the key is still handled. `Ctrl` + an arrow key is not handled.
+- **Keys.** Arrow keys move one cell. `Home` / `End` go to the row's first / last cell. `Ctrl` (`Cmd`) + `Home` goes to the first header cell; `Ctrl` (`Cmd`) + `End` to the last cell of the last row. There is no wrap: at an edge the position stays and the key is still handled. `Ctrl` + an arrow key, and `Alt` / `Shift` combinations, are not handled.
+- **Header row.** Header cells are arrow stops. `↑` from the first data row reaches the same-column header cell; `↓` returns to the same column. `←` / `→` / `Home` / `End` move across header cells. No wrap.
+- **Paging.** `Page Up` / `Page Down` move by the visible row count in the same column and stop at the first / last row. The count is the nearest vertically scrollable ancestor's height divided by the focused row's height, read at keypress; it falls back to 10 when there is no scrollable ancestor or a height is 0. On a header cell the page keys do not move.
+- **RTL.** When the host's computed `direction` is `rtl`, read at keypress, `←` / `→` swap meaning.
 - **Click.** Focus landing in a cell, by click or otherwise, moves the position to that cell.
 - **DOM focus.** The position always moves. DOM focus follows only while focus is already inside the grid, or when the move was made with `focus.moveTo(target, { focusElement: true })`. No focus is taken on load.
 - **Opt out.** A key whose `keydown` was already `preventDefault()`-ed (for example by an inner control) is ignored by the grid.
