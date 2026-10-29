@@ -63,7 +63,15 @@
       "remoteRef": "#237",
       "branch": "feat/237-widgets-in-cells",
       "worktree": ".claude/worktrees/feat-237-widgets-in-cells"
+    },
+    {
+      "remoteRef": "#236",
+      "branch": "feat/236-header-paging-rtl",
+      "worktree": ".claude/worktrees/feat-236-header-paging-rtl",
+      "pr": null,
+      "readiness": "ready-for-agent",
+      "assessed": "10-29 · task plan on disk"
     }
   ],
-  "updatedAt": "2026-10-27T15:09:23Z"
+  "updatedAt": "2026-10-29T19:41:00Z"
 }
