@@ -17,3 +17,15 @@ export type NavKey = {
   readonly altKey?: boolean;
   readonly shiftKey?: boolean;
 };
+
+/** A column header cell addressed by its column id. */
+export type HeaderCell = { readonly area: 'header'; readonly columnId: string };
+
+/** A body cell tagged with its grid area. */
+export type GridBodyCell = { readonly area: 'body' } & BodyCell;
+
+/** Any cell grid navigation can address: a header cell or a body cell. */
+export type GridCell = HeaderCell | GridBodyCell;
+
+/** Inputs grid navigation needs beyond the key press: text direction and rows per page. */
+export type GridNavOptions = { readonly isRtl: boolean; readonly pageSize: number };
