@@ -16,7 +16,7 @@ import type {
   TableStore,
 } from '../api/types';
 import { createTableCore, type TableCoreHandle } from './core';
-import { findUnrenderedId, recoverFocus, type FocusSnapshot } from './focus';
+import { findUnrenderedId, recoverFocus } from './focus';
 import type { PipelineStage, RowTransform } from './pipeline';
 import type { RenderNodeTransform, RenderStage } from './render-stages';
 import { diffRemovedIds } from './rows';
@@ -62,6 +62,17 @@ function labelFeatures<TRow, TFeature>(
   }));
 }
 
+type RenderedRows<TRow> = ReturnType<TableCoreHandle<TRow>['renderRows']>;
+type RenderedColumns<TRow> = ReturnType<TableCoreHandle<TRow>['renderColumns']>;
+
+// What focus recovery compares against: the rendered layout when focus was last placed or
+// repaired, plus the open-panel set the closed-panel rule reads.
+interface FocusLayout<TRow> {
+  readonly rows: RenderedRows<TRow>;
+  readonly columns: RenderedColumns<TRow>;
+  readonly openPanelRowIds: ReadonlySet<RowId> | undefined;
+}
+
 function isSameFocusTarget(a: FocusTarget | null, b: FocusTarget | null): boolean {
   if (a === null || b === null) {
     return a === b;
@@ -85,7 +96,10 @@ function reportUnrenderedFocusTarget(id: string): void {
 // Per-call focus position, so two tables never share one. A target whose row or column is not
 // rendered is ignored and reported on every call, never thrown (ADR-0014). A move with
 // `focusElement: true` bumps `focusRequests` so the view layer can move DOM focus.
-function createFocus<TRow>(handle: TableCoreHandle<TRow>): {
+function createFocus<TRow>(
+  handle: TableCoreHandle<TRow>,
+  onPlaced: (rows: RenderedRows<TRow>, columns: RenderedColumns<TRow>) => void,
+): {
   readonly focus: TableFocus;
   readonly target: WritableSignal<FocusTarget | null>;
 } {
@@ -96,15 +110,18 @@ function createFocus<TRow>(handle: TableCoreHandle<TRow>): {
     {
       moveTo: (next: FocusTarget, options?: FocusMoveOptions): void => {
         // untracked: a caller's effect must not re-run when the rendered rows or columns change.
-        const renderedRowIds = untracked(() => new Set(handle.renderRows().map((row) => row.id)));
-        const renderedColumnIds = untracked(
-          () => new Set(handle.renderColumns().map((column) => column.id)),
-        );
+        const rows = untracked(() => handle.renderRows());
+        const columns = untracked(() => handle.renderColumns());
+        const renderedRowIds = new Set(rows.map((row) => row.id));
+        const renderedColumnIds = new Set(columns.map((column) => column.id));
         const unrenderedId = findUnrenderedId(next, renderedRowIds, renderedColumnIds);
         if (unrenderedId !== undefined) {
           reportUnrenderedFocusTarget(unrenderedId);
           return;
         }
+        // The layout focus was placed on, so recovery diffs against it without `createTable()`
+        // having to build `renderRows` up front (K31).
+        onPlaced(rows, columns);
         target.set(next);
         if (options?.focusElement === true) {
           requests.update((count) => count + 1);
@@ -245,8 +262,16 @@ export function composeTable<TRow>(
 
   // Stable reference — features that read it at factory time see the core members plus only
   // earlier features, features that read it from a method or computed see everything.
-  const { focus, target: focusTarget } = createFocus(handle);
+  let focusLayout: FocusLayout<TRow> | undefined;
+  const { focus, target: focusTarget } = createFocus(handle, (rows, columns) => {
+    focusLayout = { rows, columns, openPanelRowIds: untracked(() => readOpenPanelRowIds()) };
+  });
   const store = createBaseStore(handle, focus);
+  // Read only when `withExpansion()` is composed. Declared after `store` it closes over; called
+  // only once a `moveTo` or the recovery effect runs.
+  function readOpenPanelRowIds(): ReadonlySet<RowId> | undefined {
+    return hasMember(store, 'expansion') ? store.expansion() : undefined;
+  }
 
   // Note: `parentOf` is a getter over `handle.parentLink`. The contributing feature may fold
   // after a reader's factory runs; a copied value would stay `undefined` for earlier features.
@@ -315,28 +340,39 @@ export function composeTable<TRow>(
 
   // Repairs the focus target when rows or columns change. Unconditional: any table can hold
   // focus. Writes `target` directly, not `moveTo`: recovery is silent and requests no DOM focus.
-  // The previous snapshot is seeded before the effect exists, like `previousIds` above.
-  let previousSnapshot: FocusSnapshot = untracked(() => ({
-    rows: handle.renderRows(),
-    columnIds: handle.renderColumns().map((column) => column.id),
-  }));
+  // Reads nothing but the target while focus is unset, so a table nobody focused builds no
+  // `renderRows` here. `moveTo` records the layout it placed focus on; the effect compares
+  // against that and skips when rows, columns and open panels are the same references (K31).
   effect(() => {
+    const current = focusTarget();
+    if (current === null) {
+      focusLayout = undefined;
+      return;
+    }
     const rows = handle.renderRows();
-    const columnIds = handle.renderColumns().map((column) => column.id);
+    const columns = handle.renderColumns();
+    const openPanelRowIds = readOpenPanelRowIds();
+    const previous = focusLayout ?? { rows, columns, openPanelRowIds };
+    const isLayoutUnchanged =
+      previous.rows === rows &&
+      previous.columns === columns &&
+      previous.openPanelRowIds === openPanelRowIds;
+    focusLayout = { rows, columns, openPanelRowIds };
+    if (isLayoutUnchanged) {
+      return;
+    }
+    const columnIds = columns.map((column) => column.id);
     const rowIds = new Set(handle.core.rows().map((row) => handle.core.trackBy(row)));
-    // Read only when `withExpansion()` is composed; the effect then re-runs when a panel closes.
-    const openPanelRowIds = hasMember(store, 'expansion') ? store.expansion() : undefined;
     const isTreegrid = 'tree' in store;
     const recovered = untracked(() =>
       recoverFocus(
-        focusTarget(),
-        previousSnapshot,
+        current,
+        { rows: previous.rows, columnIds: previous.columns.map((column) => column.id) },
         { rows, columnIds, rowIds },
         { openPanelRowIds, isTreegrid },
       ),
     );
-    previousSnapshot = { rows, columnIds };
-    if (!isSameFocusTarget(recovered, untracked(focusTarget))) {
+    if (!isSameFocusTarget(recovered, current)) {
       focusTarget.set(recovered);
     }
   });
