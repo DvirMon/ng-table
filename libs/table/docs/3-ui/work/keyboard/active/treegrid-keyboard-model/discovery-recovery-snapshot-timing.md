@@ -42,3 +42,7 @@ ADR-0014 evaluation); the specs now `mockClear()` after construction.
 
 A large-table startup profile shows the construction build, or the snapshot's retained
 `RenderRow[]` shows in memory.
+
+> **Update (2026-10-29):** K31 supersedes K30's eager seed. The seed made `createTable()` build
+> `renderRows`, which broke 7 ADR-0014 specs. See
+> [discovery-k30-test-collision.md](discovery-k30-test-collision.md).
