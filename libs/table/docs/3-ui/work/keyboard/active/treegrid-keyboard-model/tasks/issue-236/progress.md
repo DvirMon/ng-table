@@ -8,9 +8,10 @@ graph LR
   S2 --> S4
   S3 --> S4
   S4 --> S5
+  S4 --> S6
 ```
 
-Parallel-safe: [S1, S2, S3] first; S4 after all three; S5 after S4.
+Parallel-safe: [S1, S2, S3] first; S4 after all three; S5 and S6 after S4. S6 also waits for #237 to merge.
 
 | Step | Title                                                                    | Status    |
 | ---- | ------------------------------------------------------------------------ | --------- |
@@ -19,3 +20,4 @@ Parallel-safe: [S1, S2, S3] first; S4 after all three; S5 after S4.
 | 3    | [Header cell focus targets](step-3-header-cell-focus-targets.plan.md)    | ⬚ pending |
 | 4    | [Header, paging, RTL keys](step-4-header-paging-rtl-keys.plan.md)        | ⬚ pending |
 | 5    | [Header, paging, RTL docs](step-5-header-paging-rtl-docs.plan.md)        | ⬚ pending |
+| 6    | [Header widgets](step-6-header-widgets.plan.md)                          | ⬚ pending |

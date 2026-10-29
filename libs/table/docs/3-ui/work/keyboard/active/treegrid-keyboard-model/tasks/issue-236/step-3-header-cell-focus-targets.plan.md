@@ -44,7 +44,7 @@ The stale spec `libs/table/docs/3-ui/directives/ngp-table-header-cell.directive.
 ## Out of scope
 
 - Keys, paging, RTL and DOM focus on header cells (step 4).
-- The sort button inside a header cell (#237; `ngpTableSort` has no code yet).
+- Widgets inside header cells: the sort button and the filter input (step 6, after #237).
 - Treegrid (#239), group headers (#240).
 
 ## Done when
