@@ -15,8 +15,9 @@ import {
 
 import { classifyCellWidgets, isEditableTarget } from './cell-widgets';
 import { createFocusRegistry, NGP_TABLE_FOCUS_REGISTRY } from './focus-registry';
-import { nextBodyTarget } from './keyboard-nav';
-import type { BodyCell } from './keyboard-nav.types';
+import { nextGridTarget } from './keyboard-nav';
+import type { BodyCell, GridCell, HeaderCell } from './keyboard-nav.types';
+import { isRtlAt, pageStepOf } from './page-step';
 import { createPanelRegistry, NGP_TABLE_PANEL_REGISTRY } from './panel-registry';
 import { NGP_TABLE_STORE } from './table.tokens';
 import type { ColumnValueMap, FocusTarget, TableStore } from '../api/types';
@@ -45,7 +46,7 @@ import type { ColumnValueMap, FocusTarget, TableStore } from '../api/types';
     role: 'grid',
     '[attr.aria-rowcount]': 'ariaRowCount()',
     '[attr.aria-colcount]': 'ariaColCount()',
-    '(keydown)': 'navigateBodyOnKeydown($event)',
+    '(keydown)': 'navigateGridOnKeydown($event)',
     '(focusin)': 'followFocusIn($event)',
     '(focusout)': 'trackFocusOut($event)',
   },
@@ -120,9 +121,9 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
 
       const shouldMoveDomFocus = hasNewRequest || this.hasFocusWithin;
       if (!shouldMoveDomFocus) return;
-      if (focused?.area !== 'body' || focused.columnId === null) return;
+      const cell = this.toGridCell(focused);
+      if (cell === null) return;
 
-      const cell: BodyCell = { rowId: focused.rowId, columnId: focused.columnId };
       afterNextRender(() => this.focusCellElement(cell), { injector: this.injector });
     });
   }
@@ -160,11 +161,11 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     return () => markAdded(observer.takeRecords());
   }
 
-  protected navigateBodyOnKeydown(event: Event): void {
+  protected navigateGridOnKeydown(event: Event): void {
     if (!(event instanceof KeyboardEvent)) return;
     if (event.defaultPrevented) return;
 
-    const current = this.activeBodyCell();
+    const current = this.toGridCell(this.activeTarget());
     if (current === null) return;
 
     if (this.handleCompositeCellKey(event)) return;
@@ -178,10 +179,24 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
         .map((row) => row.id),
       columnIds: table.renderColumns().map((column) => column.id),
     };
-    const next = nextBodyTarget(order, current, event);
+    // Note: direction and page step are read here, per keypress, so a host that changes either
+    // between presses is followed.
+    const focusedElement = this.elementOfGridCell(current) ?? this.host;
+    const next = nextGridTarget(order, current, event, {
+      isRtl: isRtlAt(this.host),
+      pageSize: pageStepOf(this.host, focusedElement),
+    });
     if (next === null) return;
 
-    table.focus.moveTo({ area: 'body', rowId: next.rowId, columnId: next.columnId });
+    // A header target with no registered header cell has no element to hold focus: stay put.
+    const hasNoHeaderElement = next.area === 'header' && this.elementOfGridCell(next) === null;
+    if (hasNoHeaderElement) {
+      table.focus.moveTo(current);
+      event.preventDefault();
+      return;
+    }
+
+    table.focus.moveTo(next);
     event.preventDefault();
   }
 
@@ -286,12 +301,28 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     return { rowId: target.rowId, columnId: target.columnId };
   }
 
-  private focusCellElement(cell: BodyCell): void {
-    const element = this.focusRegistry.elementOf(cell);
+  private toGridCell(target: FocusTarget | null): GridCell | null {
+    if (target?.area === 'header') return { area: 'header', columnId: target.columnId };
+    if (target?.area !== 'body' || target.columnId === null) return null;
+    return { area: 'body', rowId: target.rowId, columnId: target.columnId };
+  }
+
+  // Note: the registry tells header from body by an `area` key, so a body cell is passed without it.
+  private registryCellOf(cell: GridCell): BodyCell | HeaderCell {
+    if (cell.area === 'header') return cell;
+    return { rowId: cell.rowId, columnId: cell.columnId };
+  }
+
+  private elementOfGridCell(cell: GridCell): HTMLElement | null {
+    return this.focusRegistry.elementOf(this.registryCellOf(cell));
+  }
+
+  private focusCellElement(cell: GridCell): void {
+    const element = this.elementOfGridCell(cell);
     if (element === null) return;
 
     const isFocusAlreadyInCell = element.contains(document.activeElement);
     if (isFocusAlreadyInCell) return;
-    (this.focusRegistry.focusTargetOf(cell) ?? element).focus();
+    (this.focusRegistry.focusTargetOf(this.registryCellOf(cell)) ?? element).focus();
   }
 }

@@ -104,6 +104,7 @@ Fixture notes for the red phase:
 - Risk: damage high, likelihood low
 - Why this seam: without the guard the store points at a header target that has no element. The roving tabindex then leaves no Tab stop and DOM focus drops to `<body>`.
 - Order reason: builds on A (same key, no-header host).
+- Red result: passes against today's handler (it already stays and calls `preventDefault()`). Kept as a regression guard: it fails if green adds header movement without the "no header registered" check.
 
 ## Types phase (after green)
 

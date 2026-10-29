@@ -11,6 +11,7 @@ import { createColumns } from '../api/create-columns';
 import { createTable } from '../api/create-table';
 import { withGrouping } from '../api/features/with-grouping/feature';
 import {
+  createMockRows,
   mockGroupingRows,
   mockGroupingTrackBy,
   mockRows,
@@ -1566,5 +1567,200 @@ describe('NgpTableDirective header cells', () => {
     expect(host.table.focus()).toEqual({ area: 'header', columnId: 'name' });
     expect(tabStops()).toEqual([headerCell(2)]);
     expect(document.activeElement).toBe(target);
+  });
+});
+
+const NAV_BODY = `
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        <tr [ngpTableRow]="row">
+          @for (column of table.renderColumns(); track column.id; let i = $index) {
+            <td [ngpTableCell]="i">{{ column.id }}</td>
+          }
+        </tr>
+      }
+    </tbody>
+`;
+
+const NAV_HEADER_TEMPLATE = `
+  <button type="button" id="outside">Outside</button>
+  <table [ngpTable]="table">
+    <thead>
+      <tr>
+        @for (column of table.renderColumns(); track column.id; let i = $index) {
+          <th [ngpTableHeaderCell]="i">{{ column.id }}</th>
+        }
+      </tr>
+    </thead>${NAV_BODY}
+  </table>
+`;
+
+const NAV_PAGING_TEMPLATE = `
+  <table [ngpTable]="table">${NAV_BODY}
+  </table>
+`;
+
+@Component({ imports: HEADER_IMPORTS, template: NAV_HEADER_TEMPLATE })
+class NavHeaderHost {
+  readonly table = createGridTable(signal<MockRow[]>([...mockRows]));
+}
+
+@Component({ imports: IMPORTS, template: NAV_PAGING_TEMPLATE })
+class NavPagingHost {
+  readonly table = createGridTable(signal<MockRow[]>(createMockRows(25)));
+}
+
+describe('NgpTableDirective header, paging and RTL keys', () => {
+  type NavColumn = 'id' | 'name';
+
+  function setupNav<THost extends NavHeaderHost | NavPagingHost | GridHost>(hostType: Type<THost>) {
+    const fixture = TestBed.createComponent(hostType);
+    const root: HTMLElement = fixture.nativeElement;
+    document.body.appendChild(root);
+    const flush = (): void => {
+      TestBed.tick();
+      fixture.detectChanges();
+    };
+    flush();
+
+    const query = (selector: string): HTMLElement => {
+      const found = root.querySelector<HTMLElement>(selector);
+      if (found === null) throw new Error(`no element ${selector}`);
+      return found;
+    };
+    const colIndexOf = (columnId: NavColumn): string => (columnId === 'id' ? '1' : '2');
+    // `position` is the 1-based `aria-rowindex` of the body row.
+    const cell = (position: number, columnId: NavColumn): HTMLElement =>
+      query(`[aria-rowindex="${position}"] [aria-colindex="${colIndexOf(columnId)}"]`);
+    const headerCell = (columnId: NavColumn): HTMLElement =>
+      query(`[role="columnheader"][aria-colindex="${colIndexOf(columnId)}"]`);
+    const press = (target: HTMLElement, init: KeyboardEventInit): KeyboardEvent => {
+      const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init });
+      target.dispatchEvent(event);
+      flush();
+      return event;
+    };
+    const tabStops = (): HTMLElement[] =>
+      Array.from(root.querySelectorAll<HTMLElement>('[tabindex="0"]'));
+
+    return { host: fixture.componentInstance, flush, query, cell, headerCell, press, tabStops };
+  }
+
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
+
+  it('moves to the first header cell on ArrowUp from the first data row', () => {
+    const { host, flush, cell, headerCell, press, tabStops } = setupNav(NavHeaderHost);
+    cell(1, 'id').focus();
+    flush();
+
+    const event = press(cell(1, 'id'), { key: 'ArrowUp' });
+
+    expect(host.table.focus()).toEqual({ area: 'header', columnId: 'id' });
+    expect(document.activeElement).toBe(headerCell('id'));
+    expect(tabStops()).toEqual([headerCell('id')]);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('moves across header cells with ArrowRight and stops at the last one', () => {
+    const { host, flush, cell, headerCell, press } = setupNav(NavHeaderHost);
+    cell(1, 'id').focus();
+    flush();
+    press(cell(1, 'id'), { key: 'ArrowUp' });
+
+    press(headerCell('id'), { key: 'ArrowRight' });
+    expect(host.table.focus()).toEqual({ area: 'header', columnId: 'name' });
+    expect(document.activeElement).toBe(headerCell('name'));
+
+    const edge = press(headerCell('name'), { key: 'ArrowRight' });
+    expect(host.table.focus()).toEqual({ area: 'header', columnId: 'name' });
+    expect(document.activeElement).toBe(headerCell('name'));
+    expect(edge.defaultPrevented).toBe(true);
+  });
+
+  it('returns to the first data row in the same column on ArrowDown from a header cell', () => {
+    const { host, flush, cell, headerCell, press } = setupNav(NavHeaderHost);
+    cell(1, 'id').focus();
+    flush();
+    press(cell(1, 'id'), { key: 'ArrowUp' });
+    press(headerCell('id'), { key: 'ArrowRight' });
+
+    press(headerCell('name'), { key: 'ArrowDown' });
+
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 1, columnId: 'name' });
+    expect(document.activeElement).toBe(cell(1, 'name'));
+  });
+
+  it('focuses a header cell from outside the grid only on a focusElement request', () => {
+    const { host, flush, query, headerCell, tabStops } = setupNav(NavHeaderHost);
+    const outside = query('#outside');
+    outside.focus();
+    flush();
+
+    host.table.focus.moveTo({ area: 'header', columnId: 'name' });
+    flush();
+    expect(document.activeElement).toBe(outside);
+    expect(tabStops()).toEqual([headerCell('name')]);
+
+    host.table.focus.moveTo({ area: 'header', columnId: 'name' }, { focusElement: true });
+    flush();
+    expect(document.activeElement).toBe(headerCell('name'));
+  });
+
+  it('moves PageDown by the fallback step of 10 rows when nothing can be measured', () => {
+    const { host, flush, cell, press } = setupNav(NavPagingHost);
+    cell(1, 'name').focus();
+    flush();
+
+    const event = press(cell(1, 'name'), { key: 'PageDown' });
+
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 10, columnId: 'name' });
+    expect(document.activeElement).toBe(cell(11, 'name'));
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('reads the host direction at keypress, so ArrowRight follows RTL once the host switches', () => {
+    const { host, flush, query, cell, press } = setupNav(NavHeaderHost);
+    cell(1, 'id').focus();
+    flush();
+
+    press(cell(1, 'id'), { key: 'ArrowRight' });
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 1, columnId: 'name' });
+
+    query('table').style.direction = 'rtl';
+    press(cell(1, 'name'), { key: 'ArrowRight' });
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 1, columnId: 'id' });
+
+    press(cell(1, 'id'), { key: 'ArrowLeft' });
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 1, columnId: 'name' });
+  });
+
+  it('moves PageDown by the measured number of visible rows', () => {
+    const { host, flush, query, cell, press } = setupNav(NavPagingHost);
+    const tableHost = query('table');
+    tableHost.style.overflowY = 'auto';
+    Object.defineProperty(tableHost, 'clientHeight', { configurable: true, value: 200 });
+    const focused = cell(1, 'name');
+    Object.defineProperty(focused, 'offsetHeight', { configurable: true, value: 40 });
+    focused.focus();
+    flush();
+
+    press(focused, { key: 'PageDown' });
+
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 5, columnId: 'name' });
+    expect(document.activeElement).toBe(cell(6, 'name'));
+  });
+
+  it('stays on the first row on ArrowUp when the table has no header cell', () => {
+    const { host, flush, cell, press } = setupNav(GridHost);
+    cell(1, 'id').focus();
+    flush();
+
+    const event = press(cell(1, 'id'), { key: 'ArrowUp' });
+
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 1, columnId: 'id' });
+    expect(document.activeElement).toBe(cell(1, 'id'));
+    expect(event.defaultPrevented).toBe(true);
   });
 });
