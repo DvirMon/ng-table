@@ -4,6 +4,7 @@
 
 ```mermaid
 graph LR
+  S1 --> S3
   S1 --> S4
   S2 --> S4
   S3 --> S4
@@ -11,13 +12,13 @@ graph LR
   S4 --> S6
 ```
 
-Parallel-safe: [S1, S2, S3] first; S4 after all three; S5 and S6 after S4. S6 also waits for #237 to merge.
+Parallel-safe: [S1, S2] first; S3 after S1 (shares the HeaderCell type); S4 after S1-S3; S5 and S6 after S4. S6 also waits for #237 to merge.
 
-| Step | Title                                                                    | Status    |
-| ---- | ------------------------------------------------------------------------ | --------- |
-| 1    | [Key map: header, paging, RTL](step-1-key-map-header-paging-rtl.plan.md) | ⬚ pending |
-| 2    | [Page step and direction](step-2-page-step-and-direction.plan.md)        | ⬚ pending |
-| 3    | [Header cell focus targets](step-3-header-cell-focus-targets.plan.md)    | ⬚ pending |
-| 4    | [Header, paging, RTL keys](step-4-header-paging-rtl-keys.plan.md)        | ⬚ pending |
-| 5    | [Header, paging, RTL docs](step-5-header-paging-rtl-docs.plan.md)        | ⬚ pending |
-| 6    | [Header widgets](step-6-header-widgets.plan.md)                          | ⬚ pending |
+| Step | Title                                                                    | Status         |
+| ---- | ------------------------------------------------------------------------ | -------------- |
+| 1    | [Key map: header, paging, RTL](step-1-key-map-header-paging-rtl.plan.md) | ✅ done        |
+| 2    | [Page step and direction](step-2-page-step-and-direction.plan.md)        | ▶ in progress |
+| 3    | [Header cell focus targets](step-3-header-cell-focus-targets.plan.md)    | ⬚ pending      |
+| 4    | [Header, paging, RTL keys](step-4-header-paging-rtl-keys.plan.md)        | ⬚ pending      |
+| 5    | [Header, paging, RTL docs](step-5-header-paging-rtl-docs.plan.md)        | ⬚ pending      |
+| 6    | [Header widgets](step-6-header-widgets.plan.md)                          | ⬚ pending      |

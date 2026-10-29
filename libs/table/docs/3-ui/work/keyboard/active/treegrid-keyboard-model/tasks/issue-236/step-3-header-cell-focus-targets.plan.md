@@ -2,7 +2,7 @@
 step: 3
 type: code
 commit: feat
-depends_on: []
+depends_on: [1]
 files:
   - libs/table/src/directives/focus-registry.ts
   - libs/table/src/directives/ngp-table-header-cell.directive.ts
