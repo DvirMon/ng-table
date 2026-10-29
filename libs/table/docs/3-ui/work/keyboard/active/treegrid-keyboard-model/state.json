@@ -58,6 +58,11 @@
       "pr": 256,
       "readiness": "ready-for-agent",
       "assessed": "10-27 · task plan on disk"
+    },
+    {
+      "remoteRef": "#237",
+      "branch": "feat/237-widgets-in-cells",
+      "worktree": ".claude/worktrees/feat-237-widgets-in-cells"
     }
   ],
   "updatedAt": "2026-10-27T15:09:23Z"
