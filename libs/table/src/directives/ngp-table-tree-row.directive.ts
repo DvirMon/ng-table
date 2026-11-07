@@ -1,11 +1,7 @@
 import { computed, Directive, ElementRef, inject, type Signal } from '@angular/core';
 
+import { hasTree } from './has-tree';
 import { NGP_TABLE_ROW, NGP_TABLE_STORE } from './table.tokens';
-import type { TreeMembers } from '../api/features/with-tree/types';
-
-function hasTree(table: unknown): table is TreeMembers {
-  return typeof table === 'object' && table !== null && 'tree' in table;
-}
 
 /**
  * Marks a tree row with presence-only `data-context-row` (ancestor kept for a filter match),

@@ -5,10 +5,7 @@ import { NgpTableCellDirective } from './ngp-table-cell.directive';
 import { NgpTableRowDirective } from './ngp-table-row.directive';
 import { NgpTableTreeRowDirective } from './ngp-table-tree-row.directive';
 import { NgpTableDirective } from './ngp-table.directive';
-import { createColumns } from '../api/create-columns';
-import { createTable } from '../api/create-table';
-import { withTree } from '../api/features/with-tree/feature';
-import { mockDataRenderRow, mockTaskTreeRows, noData, type TaskTreeMockRow } from '../table.mock';
+import { createTaskTreeTable, mockDataRenderRow } from '../table.mock';
 import type { RenderRow } from '../api/types';
 
 @Component({
@@ -165,14 +162,7 @@ describe('NgpTableTreeRowDirective ARIA', () => {
   `,
 })
 class KeysHostComponent {
-  readonly table = createTable(
-    signal<TaskTreeMockRow[]>([...mockTaskTreeRows]),
-    {
-      trackBy: 'id',
-      columns: createColumns(noData<TaskTreeMockRow>(), (col) => [col('id'), col('status')]),
-    },
-    withTree({ parentId: (row) => row.parentId }),
-  );
+  readonly table = createTaskTreeTable();
 }
 
 interface KeysSetup {
