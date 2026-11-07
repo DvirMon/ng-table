@@ -273,13 +273,16 @@ describe('NgpTableDirective roving tabindex', () => {
     expect(cell?.getAttribute('role')).toBe('gridcell');
   });
 
-  it.each([
-    ['no data rows', EmptyHost],
-    ['every column hidden', AllHiddenHost],
-  ] as const)('reports a null activeTarget when the table has %s', (_name, hostType) => {
-    const { directive } = setup<EmptyHost | AllHiddenHost>(hostType);
+  it('reports a null activeTarget when every column is hidden', () => {
+    const { directive } = setup<AllHiddenHost>(AllHiddenHost);
 
     expect(directive().activeTarget()).toBeNull();
+  });
+
+  it('reports the first header as the activeTarget when the table has no data rows', () => {
+    const { directive } = setup<EmptyHost>(EmptyHost);
+
+    expect(directive().activeTarget()).toEqual({ area: 'header', columnId: 'region' });
   });
 });
 
