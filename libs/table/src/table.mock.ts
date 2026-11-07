@@ -1,6 +1,9 @@
 import { computed, signal } from '@angular/core';
 
+import { createColumns } from './api/create-columns';
+import { createTable } from './api/create-table';
 import type { RowEditMembers } from './api/features/with-row-edit';
+import { withTree } from './api/features/with-tree/feature';
 import { createDraftRows } from './api/features/editing/draft-rows';
 import {
   pendingIds,
@@ -131,6 +134,18 @@ export const mockTaskTreeRows: TaskTreeMockRow[] = [
   { id: 't1a', status: 'done', parentId: 't1' },
   { id: 't1a1', status: 'blocked', parentId: 't1a' },
 ];
+
+/** A `withTree()` table over `mockTaskTreeRows` with `id` and `status` columns. */
+export function createTaskTreeTable() {
+  return createTable(
+    signal<TaskTreeMockRow[]>([...mockTaskTreeRows]),
+    {
+      trackBy: 'id',
+      columns: createColumns(noData<TaskTreeMockRow>(), (col) => [col('id'), col('status')]),
+    },
+    withTree({ parentId: (row) => row.parentId }),
+  );
+}
 
 /** A task row whose id contains a space, for id-escaping cases. */
 export const mockSpacedIdRow: TaskTreeMockRow = { id: 'task 5', status: 'open' };

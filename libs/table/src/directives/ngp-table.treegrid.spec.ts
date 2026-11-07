@@ -11,6 +11,7 @@ import { createTable } from '../api/create-table';
 import { withExpansion } from '../api/features/with-expansion';
 import { withTree } from '../api/features/with-tree/feature';
 import {
+  createTaskTreeTable,
   mockGroupingRows,
   mockGroupingTrackBy,
   mockTaskTreeRows,
@@ -46,14 +47,6 @@ function createTaskColumns() {
   return createColumns(noData<TaskTreeMockRow>(), (col) => [col('id'), col('status')]);
 }
 
-function createTreeTable() {
-  return createTable(
-    signal<TaskTreeMockRow[]>([...mockTaskTreeRows]),
-    { trackBy: 'id', columns: createTaskColumns() },
-    withTree({ parentId: (row) => row.parentId }),
-  );
-}
-
 function createPlainTable() {
   return createTable(signal<TaskTreeMockRow[]>([...mockTaskTreeRows]), {
     trackBy: 'id',
@@ -63,7 +56,7 @@ function createPlainTable() {
 
 @Component({ imports: IMPORTS, template: templateFor('table') })
 class TreeHost {
-  readonly table = createTreeTable();
+  readonly table = createTaskTreeTable();
   protected readonly text = textOf;
 }
 
@@ -102,9 +95,9 @@ class ExpansionOnlyHost {
 
 @Component({ imports: IMPORTS, template: templateFor('table()') })
 class SwappableHost {
-  readonly table = signal<ReturnType<typeof createTreeTable> | ReturnType<typeof createPlainTable>>(
-    createTreeTable(),
-  );
+  readonly table = signal<
+    ReturnType<typeof createTaskTreeTable> | ReturnType<typeof createPlainTable>
+  >(createTaskTreeTable());
   protected readonly text = textOf;
 }
 
