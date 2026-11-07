@@ -191,7 +191,9 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     if (!(target instanceof Node)) return false;
 
     const entered = this.focusRegistry.enteredElement();
-    const isInsideEntered = entered !== null && entered.contains(target);
+    // Note: focus on the entered cell itself is not inside it; it ends the entered state.
+    if (entered !== null && entered === target) this.focusRegistry.exitCell();
+    const isInsideEntered = entered !== null && entered !== target && entered.contains(target);
     if (isInsideEntered) {
       if (event.key === 'Escape' || event.key === 'F2') {
         this.focusRegistry.exitCell()?.focus();
@@ -215,6 +217,10 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
   protected followFocusIn(event: Event): void {
     this.hasFocusWithin = true;
     if (!(event.target instanceof Node)) return;
+
+    // Focus back on the entered cell itself (Shift+Tab from its first widget, or its focused
+    // widget removed) restores navigation.
+    if (event.target === this.focusRegistry.enteredElement()) this.focusRegistry.exitCell();
 
     const cell = this.focusRegistry.cellContaining(event.target, this.host);
     if (cell === null) return;
@@ -245,8 +251,10 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     if (!isStillInside) this.hasFocusWithin = false;
 
     const entered = this.focusRegistry.enteredElement();
+    // Note: a null `relatedTarget` with the document unfocused is a window blur, not a focus move.
+    const isWindowBlur = next === null && !document.hasFocus();
     const hasLeftEnteredCell =
-      entered !== null && !(next instanceof Node && entered.contains(next));
+      entered !== null && !isWindowBlur && !(next instanceof Node && entered.contains(next));
     if (hasLeftEnteredCell) this.focusRegistry.exitCell();
   }
 

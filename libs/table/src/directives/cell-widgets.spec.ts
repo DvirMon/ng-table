@@ -1,4 +1,10 @@
-import { classifyCellWidgets, removeFromTabOrder, restoreTabOrder } from './cell-widgets';
+import {
+  classifyCellWidgets,
+  isOwnTabindexWrite,
+  removeFromTabOrder,
+  restoreTabOrder,
+  writeTabindex,
+} from './cell-widgets';
 import type { CellWidgetKind } from './cell-widgets.types';
 
 function cellWith(html: string): HTMLTableCellElement {
@@ -75,5 +81,34 @@ describe('classifyCellWidgets', () => {
     ['a focusable listbox', '<div role="listbox" tabindex="0">x</div>'],
   ])('classifies a cell holding %s as composite', (_name, html) => {
     expect(classifyCellWidgets(cellWith(html))).toBe('composite');
+  });
+});
+
+describe('classifyCellWidgets with hidden controls', () => {
+  it.each([
+    ['a hidden-attribute button', '<button hidden>x</button>'],
+    ['a display:none button', '<button style="display:none">x</button>'],
+    ['a hidden-attribute checkbox', '<input type="checkbox" hidden>'],
+    ['a button inside a hidden wrapper', '<span hidden><button>x</button></span>'],
+  ])('ignores %s next to a visible checkbox', (_name, hiddenHtml) => {
+    const td = cellWith(`<input type="checkbox">${hiddenHtml}`);
+
+    expect(classifyCellWidgets(td)).toBe('single');
+  });
+});
+
+describe('isOwnTabindexWrite with writes that produce no record', () => {
+  it('does not mistake a later binding write for an own write', async () => {
+    const button = document.createElement('button');
+    writeTabindex(button, '-1');
+
+    const observer = new MutationObserver(() => undefined);
+    observer.observe(button, { attributes: true, attributeFilter: ['tabindex'] });
+    button.setAttribute('tabindex', '3');
+    const records = observer.takeRecords();
+    observer.disconnect();
+
+    expect(records).toHaveLength(1);
+    expect(isOwnTabindexWrite(records[0])).toBe(false);
   });
 });

@@ -111,6 +111,8 @@ export function writeTabindex(element: Element, value: string | null): void {
   if (element.getAttribute('tabindex') === value) return;
   if (value === null) element.removeAttribute('tabindex');
   else element.setAttribute('tabindex', value);
+  // Note: a detached element queues no observer record, so counting it would leave a stale count.
+  if (!element.isConnected) return;
   pendingOwnWrites.set(element, (pendingOwnWrites.get(element) ?? 0) + 1);
 }
 
@@ -171,7 +173,16 @@ function isCountedWidget(element: Element): boolean {
   const isHiddenInput = element instanceof HTMLInputElement && element.type === 'hidden';
   const isAriaHidden = element.closest('[aria-hidden="true"]') !== null;
   const isOutOfTabOrder = savedOrLiveTabindex(element) === '-1';
-  return !isDisabled && !isHiddenInput && !isAriaHidden && !isOutOfTabOrder;
+  return !isDisabled && !isHiddenInput && !isAriaHidden && !isOutOfTabOrder && !isHidden(element);
+}
+
+// Note: reads the `hidden` attribute and inline `display:none` only; a test DOM has no layout.
+function isHidden(element: Element): boolean {
+  for (let current: Element | null = element; current !== null; current = current.parentElement) {
+    if (current.hasAttribute('hidden')) return true;
+    if (current instanceof HTMLElement && current.style.display === 'none') return true;
+  }
+  return false;
 }
 
 function isSimpleWidget(element: Element): boolean {
