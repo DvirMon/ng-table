@@ -21,7 +21,7 @@ Wiring accessibility is never part of the consumer's normal job.
 
 1. **Semantics and roles:** native elements first; roles injected where the host is a `<div>` grid (ADR-0005).
 
-2. **States and properties:** `aria-sort`, `aria-expanded` on the toggle button (never on a `role="table"` row), `aria-controls`, `aria-selected`, `aria-level`, `aria-rowindex`/`aria-rowcount`.
+2. **States and properties:** `aria-sort`, `aria-expanded` on the toggle button (never on a `role="table"` row; _superseded for a `treegrid` by [ADR-0030](0030-table-wide-keyboard-model.md): the tree row owns `aria-expanded`/`aria-level`, the toggle is pointer-only_), `aria-controls`, `aria-selected`, `aria-level`, `aria-rowindex`/`aria-rowcount`.
 
 3. **Accessible names:** consumer-owned (amended 2026-10-01, #199 E55). The library writes no text: no label input, no generic default, no dev warning. The consumer names the control on the native element (`aria-label` or visible text). The library owns the relations only: `aria-controls`, `aria-labelledby` wiring, ids. Same as ng-primitives 0.130.3, whose collapsible trigger binds only `aria-controls`/`aria-expanded` and whose pagination icon buttons ship no label.
 
