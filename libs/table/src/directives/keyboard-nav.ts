@@ -74,7 +74,18 @@ export function nextGridTarget(
   const key = options.isRtl ? swapHorizontal(event.key) : event.key;
   return current.area === 'header'
     ? nextFromHeader(order, current, key, isCtrl)
-    : nextFromBody(order, current, { ...event, key }, isCtrl, options.pageSize);
+    : nextFromBody(order, current, withKey(event, key), isCtrl, options.pageSize);
+}
+
+// Note: copies the fields by name; spreading a real `KeyboardEvent` loses its prototype getters.
+function withKey(event: NavKey, key: string): NavKey {
+  return {
+    key,
+    ctrlKey: event.ctrlKey,
+    metaKey: event.metaKey,
+    altKey: event.altKey,
+    shiftKey: event.shiftKey,
+  };
 }
 
 function nextFromHeader(
