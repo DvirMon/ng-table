@@ -1764,3 +1764,135 @@ describe('NgpTableDirective header, paging and RTL keys', () => {
     expect(event.defaultPrevented).toBe(true);
   });
 });
+
+const HEADER_WIDGETS_TEMPLATE = `
+  <table [ngpTable]="table">
+    <thead>
+      <tr>
+        @for (column of table.renderColumns(); track column.id; let i = $index) {
+          <th [ngpTableHeaderCell]="i">
+            @if (column.id === 'id') {
+              <input type="text" aria-label="Filter id" />
+            } @else {
+              <button type="button">Sort name</button>
+            }
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {${GRID_ROW}      }
+    </tbody>
+  </table>
+`;
+
+@Component({ imports: HEADER_IMPORTS, template: HEADER_WIDGETS_TEMPLATE })
+class HeaderWidgetsHost {
+  readonly table = createGridTable(signal<MockRow[]>([...mockRows]));
+}
+
+describe('NgpTableDirective header widgets', () => {
+  type HeaderColumn = 'id' | 'name';
+
+  function setupHeaderWidgets() {
+    const fixture = TestBed.createComponent(HeaderWidgetsHost);
+    const root: HTMLElement = fixture.nativeElement;
+    document.body.appendChild(root);
+    const flush = (): void => {
+      TestBed.tick();
+      fixture.detectChanges();
+    };
+    flush();
+
+    const query = (selector: string): HTMLElement => {
+      const found = root.querySelector<HTMLElement>(selector);
+      if (found === null) throw new Error(`no element ${selector}`);
+      return found;
+    };
+    const colIndexOf = (columnId: HeaderColumn): string => (columnId === 'id' ? '1' : '2');
+    const cell = (position: number, columnId: HeaderColumn): HTMLElement =>
+      query(`[aria-rowindex="${position}"] [aria-colindex="${colIndexOf(columnId)}"]`);
+    const headerCell = (columnId: HeaderColumn): HTMLElement =>
+      query(`[role="columnheader"][aria-colindex="${colIndexOf(columnId)}"]`);
+    const filterInput = (): HTMLElement => query('input[aria-label="Filter id"]');
+    const sortButton = (): HTMLElement => query('th button');
+    const press = (target: HTMLElement, init: KeyboardEventInit): KeyboardEvent => {
+      const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init });
+      target.dispatchEvent(event);
+      flush();
+      return event;
+    };
+    const tabStops = (): HTMLElement[] =>
+      Array.from(root.querySelectorAll<HTMLElement>('[tabindex="0"]'));
+
+    return {
+      host: fixture.componentInstance,
+      flush,
+      cell,
+      headerCell,
+      filterInput,
+      sortButton,
+      press,
+      tabStops,
+    };
+  }
+
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
+
+  it('focuses the single button of a header cell when arrowing onto it', () => {
+    const { host, flush, cell, sortButton, press } = setupHeaderWidgets();
+    cell(1, 'name').focus();
+    flush();
+
+    const event = press(cell(1, 'name'), { key: 'ArrowUp' });
+
+    expect(document.activeElement).toBe(sortButton());
+    expect(host.table.focus()).toEqual({ area: 'header', columnId: 'name' });
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it.each(['Enter', 'F2'])('enters the filter input of a header cell on %s', (key) => {
+    const { host, flush, cell, headerCell, filterInput, press } = setupHeaderWidgets();
+    cell(1, 'id').focus();
+    flush();
+    press(cell(1, 'id'), { key: 'ArrowUp' });
+
+    expect(document.activeElement).toBe(headerCell('id'));
+    expect(host.table.focus()).toEqual({ area: 'header', columnId: 'id' });
+
+    const event = press(headerCell('id'), { key });
+
+    expect(document.activeElement).toBe(filterInput());
+    expect(host.table.focus()).toEqual({ area: 'header', columnId: 'id' });
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it.each(['ArrowDown', 'ArrowLeft'])(
+    'leaves %s typed in a header filter input to the caret',
+    (key) => {
+      const { host, flush, cell, headerCell, filterInput, press } = setupHeaderWidgets();
+      cell(1, 'id').focus();
+      flush();
+      press(cell(1, 'id'), { key: 'ArrowUp' });
+      press(headerCell('id'), { key: 'Enter' });
+
+      const event = press(filterInput(), { key });
+
+      expect(event.defaultPrevented).toBe(false);
+      expect(document.activeElement).toBe(filterInput());
+      expect(host.table.focus()).toEqual({ area: 'header', columnId: 'id' });
+    },
+  );
+
+  it('keeps widgets inside header cells out of the tab order', () => {
+    const { flush, cell, filterInput, sortButton, tabStops } = setupHeaderWidgets();
+    cell(1, 'id').focus();
+    flush();
+
+    expect(filterInput().getAttribute('tabindex')).toBe('-1');
+    expect(sortButton().getAttribute('tabindex')).toBe('-1');
+    expect(tabStops()).toEqual([cell(1, 'id')]);
+  });
+});

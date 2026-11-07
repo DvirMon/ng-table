@@ -96,6 +96,8 @@ None — no public type surface in this step.
 - S30: a consumer's Esc handler with `preventDefault()` keeps focus in the input. K6b skips prevented events before any target is resolved, so there is no header branch. Covered by the existing 'ignores a key event a consumer already prevented' and by #237's Esc test (name to confirm after the rebase).
 - S35s: Enter/Space actually sorts. `ngpTableSort` has no code; the grid's only job here is not to take the key (B).
 - Arrowing away from a focused header button: the current target comes from `activeTarget()`, not the event target. Expected to be covered by #237's single-widget body test plus step 4 seams B and C. Bring it back if #237 has no such test.
+- B: Enter/Space on a header sort button stay native. Passed in red with no step 6 change; the same key rule is covered by #237's body-cell button test (no header branch).
+- D: Esc in a header filter input returns focus to the header cell. Passed in red; `exitCell` and `handleCompositeCellKey` have no header branch and #237 tests Esc on body cells.
 - Tab from the header input leaving the grid: native behaviour once F holds.
 - `focusin` on the input or button writing the header target: covered by step 3 seam E (button variant, same `cellContaining` path).
 - A cell with several widgets, a `<select>` or a `contenteditable` in a header: same classification path as C; body coverage belongs to #237.
