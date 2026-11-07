@@ -95,7 +95,7 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     // a stray Tab stop.
     afterEveryRender(() => {
       flushAddedWidgets();
-      this.focusRegistry.syncTabStop(this.activeBodyCell());
+      this.focusRegistry.syncTabStop(this.activeRegistryCell());
     });
 
     // Moves DOM focus to the stored position: always on a new `focusElement` request, otherwise
@@ -149,7 +149,7 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     };
     const observer = new MutationObserver((records) => {
       markAdded(records);
-      this.focusRegistry.syncTabStop(this.activeBodyCell());
+      this.focusRegistry.syncTabStop(this.activeRegistryCell());
     });
     observer.observe(this.host, {
       childList: true,
@@ -245,16 +245,6 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     const cell = this.focusRegistry.cellContaining(event.target, this.host);
     if (cell === null) return;
 
-    if ('area' in cell) {
-      // Compares `area` too: a body cell and a header cell share column ids.
-      const target = this.activeTarget();
-      const isHeaderAlreadyActive = target?.area === 'header' && target.columnId === cell.columnId;
-      if (isHeaderAlreadyActive) return;
-
-      this.ngpTable().focus.moveTo({ area: 'header', columnId: cell.columnId });
-      return;
-    }
-
     // A pointer click straight into a composite cell's widget enters the cell.
     const cellElement = this.focusRegistry.elementOf(cell);
     const isWidgetOfComposite =
@@ -264,6 +254,16 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     const isCellNotYetEntered = this.focusRegistry.enteredElement() !== cellElement;
     if (isWidgetOfComposite && isCellNotYetEntered) {
       this.focusRegistry.enterCell(cell);
+    }
+
+    if ('area' in cell) {
+      // Compares `area` too: a body cell and a header cell share column ids.
+      const target = this.activeTarget();
+      const isHeaderAlreadyActive = target?.area === 'header' && target.columnId === cell.columnId;
+      if (isHeaderAlreadyActive) return;
+
+      this.ngpTable().focus.moveTo({ area: 'header', columnId: cell.columnId });
+      return;
     }
 
     // Focus landing on the cell the store already points at writes nothing.
@@ -293,6 +293,11 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     const active = document.activeElement;
     const isLost = active === null || active === document.body;
     return isLost || this.host.contains(active);
+  }
+
+  private activeRegistryCell(): BodyCell | HeaderCell | null {
+    const cell = this.toGridCell(this.activeTarget());
+    return cell === null ? null : this.registryCellOf(cell);
   }
 
   private activeBodyCell(): BodyCell | null {
