@@ -171,6 +171,11 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     return () => markAdded(observer.takeRecords());
   }
 
+  /** Whether the host reads right-to-left now. Read per call, so a direction change is followed. */
+  isRtl(): boolean {
+    return isRtlAt(this.host);
+  }
+
   protected navigateGridOnKeydown(event: Event): void {
     if (!(event instanceof KeyboardEvent)) return;
     if (event.defaultPrevented) return;

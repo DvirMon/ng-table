@@ -1,9 +1,14 @@
 import { Component, signal, type WritableSignal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
+import { NgpTableCellDirective } from './ngp-table-cell.directive';
 import { NgpTableRowDirective } from './ngp-table-row.directive';
 import { NgpTableTreeRowDirective } from './ngp-table-tree-row.directive';
-import { mockDataRenderRow } from '../table.mock';
+import { NgpTableDirective } from './ngp-table.directive';
+import { createColumns } from '../api/create-columns';
+import { createTable } from '../api/create-table';
+import { withTree } from '../api/features/with-tree/feature';
+import { mockDataRenderRow, mockTaskTreeRows, noData, type TaskTreeMockRow } from '../table.mock';
 import type { RenderRow } from '../api/types';
 
 @Component({
@@ -106,4 +111,209 @@ describe('NgpTableTreeRowDirective', () => {
       expect(rowEl().hasAttribute(attribute)).toBe(false);
     },
   );
+});
+
+describe('NgpTableTreeRowDirective ARIA', () => {
+  it.each([
+    [0, '1'],
+    [2, '3'],
+  ])('binds aria-level for depth %s as "%s"', (depth, expected) => {
+    const { rowEl } = setup({ depth });
+
+    expect(rowEl().getAttribute('aria-level')).toBe(expected);
+  });
+
+  it.each([
+    [true, 'true'],
+    [false, 'false'],
+    [undefined, 'false'],
+  ])(
+    'binds aria-expanded on an expandable row when isExpanded is %s as "%s"',
+    (isExpanded, expected) => {
+      const { rowEl } = setup({ hasChildren: true, isExpanded });
+
+      expect(rowEl().getAttribute('aria-expanded')).toBe(expected);
+    },
+  );
+
+  it.each([false, undefined])(
+    'omits aria-expanded on a leaf row when hasChildren is %s',
+    (value) => {
+      const { rowEl } = setup({ hasChildren: value, isExpanded: true });
+
+      expect(rowEl().hasAttribute('aria-expanded')).toBe(false);
+    },
+  );
+});
+
+@Component({
+  imports: [
+    NgpTableDirective,
+    NgpTableRowDirective,
+    NgpTableTreeRowDirective,
+    NgpTableCellDirective,
+  ],
+  template: `
+    <div [ngpTable]="table">
+      @for (row of table.renderRows(); track row.id) {
+        <div [ngpTableRow]="row" ngpTableTreeRow>
+          <div [ngpTableCell]="0"><button type="button">act</button></div>
+          <div [ngpTableCell]="1">{{ row.id }}</div>
+        </div>
+      }
+    </div>
+  `,
+})
+class KeysHostComponent {
+  readonly table = createTable(
+    signal<TaskTreeMockRow[]>([...mockTaskTreeRows]),
+    {
+      trackBy: 'id',
+      columns: createColumns(noData<TaskTreeMockRow>(), (col) => [col('id'), col('status')]),
+    },
+    withTree({ parentId: (row) => row.parentId }),
+  );
+}
+
+interface KeysSetup {
+  host: KeysHostComponent;
+  flush: () => void;
+  rowIds: () => string[];
+  rowEl: (id: string) => HTMLElement;
+  press: (target: HTMLElement, key: string) => void;
+  probe: (id: string) => () => boolean;
+}
+
+function setupKeys(options: { rtl?: boolean } = {}): KeysSetup {
+  const fixture = TestBed.createComponent(KeysHostComponent);
+  const root: HTMLElement = fixture.nativeElement;
+  document.body.appendChild(root);
+  const flush = (): void => {
+    TestBed.tick();
+    fixture.detectChanges();
+  };
+  flush();
+  if (options.rtl === true) {
+    const tableEl = root.firstElementChild;
+    if (!(tableEl instanceof HTMLElement)) throw new Error('no table host');
+    tableEl.style.direction = 'rtl';
+  }
+  const rows = (): HTMLElement[] => Array.from(root.querySelectorAll<HTMLElement>('[role="row"]'));
+  const idOf = (row: HTMLElement): string =>
+    (row.querySelectorAll('[role="gridcell"]')[1].textContent ?? '').trim();
+  const rowIds = (): string[] => rows().map(idOf);
+  const rowEl = (id: string): HTMLElement => {
+    const found = rows().find((row) => idOf(row) === id);
+    if (found === undefined) throw new Error(`no row ${id}`);
+    return found;
+  };
+  const press = (target: HTMLElement, key: string): void => {
+    target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+    flush();
+  };
+  const probe = (id: string): (() => boolean) => {
+    let prevented = false;
+    rowEl(id).addEventListener('keydown', (event) => {
+      prevented = event.defaultPrevented;
+    });
+    return () => prevented;
+  };
+  return { host: fixture.componentInstance, flush, rowIds, rowEl, press, probe };
+}
+
+describe('NgpTableTreeRowDirective keys', () => {
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
+
+  it('expands a collapsed row on ArrowRight and prevents default', () => {
+    const { rowIds, rowEl, press, probe } = setupKeys();
+    const prevented = probe('t1');
+
+    press(rowEl('t1'), 'ArrowRight');
+
+    expect(rowIds()).toContain('t1a');
+    expect(rowEl('t1').getAttribute('aria-expanded')).toBe('true');
+    expect(prevented()).toBe(true);
+  });
+
+  it('collapses an expanded row on ArrowLeft and prevents default', () => {
+    const { host, flush, rowIds, rowEl, press, probe } = setupKeys();
+    host.table.tree.expand(['t1']);
+    flush();
+    expect(rowIds()).toContain('t1a');
+    const prevented = probe('t1');
+
+    press(rowEl('t1'), 'ArrowLeft');
+
+    expect(rowIds()).not.toContain('t1a');
+    expect(rowEl('t1').getAttribute('aria-expanded')).toBe('false');
+    expect(prevented()).toBe(true);
+  });
+
+  it('toggles an expandable row open and closed on Enter and prevents default', () => {
+    const { rowIds, rowEl, press, probe } = setupKeys();
+    const prevented = probe('t1');
+
+    press(rowEl('t1'), 'Enter');
+    expect(rowIds()).toContain('t1a');
+    expect(prevented()).toBe(true);
+
+    press(rowEl('t1'), 'Enter');
+    expect(rowIds()).not.toContain('t1a');
+    expect(prevented()).toBe(true);
+  });
+
+  it.each([
+    ['ArrowRight', 't1', true],
+    ['ArrowLeft', 't1', false],
+    ['ArrowRight', 't2', false],
+    ['ArrowLeft', 't2', false],
+    ['Enter', 't2', false],
+  ])('leaves %s unhandled on row %s (expanded: %s)', (key, id, expanded) => {
+    const { host, flush, rowIds, rowEl, press, probe } = setupKeys();
+    if (expanded) {
+      host.table.tree.expand(['t1']);
+      flush();
+    }
+    const before = rowIds();
+    const prevented = probe(id);
+
+    press(rowEl(id), key);
+
+    expect(prevented()).toBe(false);
+    expect(rowIds()).toEqual(before);
+  });
+
+  it.each(['cell', 'button'])(
+    'ignores Enter and ArrowRight whose target is a %s inside the row',
+    (kind) => {
+      const { rowIds, rowEl, press, probe } = setupKeys();
+      const prevented = probe('t1');
+      const inner =
+        kind === 'button'
+          ? rowEl('t1').querySelector<HTMLElement>('button')
+          : rowEl('t1').querySelectorAll<HTMLElement>('[role="gridcell"]')[1];
+      if (inner === null) throw new Error('no inner target');
+
+      press(inner, 'Enter');
+      press(inner, 'ArrowRight');
+
+      expect(rowIds()).not.toContain('t1a');
+      expect(prevented()).toBe(false);
+    },
+  );
+
+  it('expands on ArrowLeft and collapses on ArrowRight under RTL', () => {
+    const { rowIds, rowEl, press, probe } = setupKeys({ rtl: true });
+    const prevented = probe('t1');
+
+    press(rowEl('t1'), 'ArrowLeft');
+    expect(rowIds()).toContain('t1a');
+    expect(prevented()).toBe(true);
+
+    press(rowEl('t1'), 'ArrowRight');
+    expect(rowIds()).not.toContain('t1a');
+    expect(prevented()).toBe(true);
+  });
 });
