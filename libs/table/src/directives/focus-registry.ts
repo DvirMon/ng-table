@@ -1,7 +1,6 @@
 import { InjectionToken } from '@angular/core';
 
 import {
-  classifyCellWidgets,
   findFirstWidget,
   findSingleWidget,
   isOwnTabindexWrite,
@@ -12,7 +11,6 @@ import {
   setSavedTabindex,
   writeTabindex,
 } from './cell-widgets';
-import type { CellWidgetKind } from './cell-widgets.types';
 import type { BodyCell } from './keyboard-nav.types';
 
 /** One table's lookup between body cells and their rendered elements. */
@@ -22,11 +20,9 @@ export interface FocusRegistry {
   elementOf(cell: BodyCell): HTMLElement | null;
   /** The registered cell at or above `node`, stopping at `boundary`. */
   cellContaining(node: Node, boundary: HTMLElement): BodyCell | null;
-  /** The widget kind last computed for `cell`; `'none'` when it is not registered. */
-  widgetKindOf(cell: BodyCell): CellWidgetKind;
   /**
-   * Takes controls added under `node` out of the Tab order and refreshes the owning cell's
-   * widget kind. Does nothing when `node` is outside every registered cell.
+   * Takes controls added under `node` out of the Tab order. Does nothing when `node` is outside
+   * every registered cell.
    */
   refreshWidgets(node: Node, boundary: HTMLElement): void;
   /**
@@ -59,7 +55,6 @@ export interface FocusRegistry {
 export function createFocusRegistry(): FocusRegistry {
   const elementByKey = new Map<string, HTMLElement>();
   const cellByElement = new Map<HTMLElement, BodyCell>();
-  const kindByElement = new Map<HTMLElement, CellWidgetKind>();
   let tabStopWidget: HTMLElement | null = null;
   let entered: HTMLElement | null = null;
 
@@ -73,7 +68,6 @@ export function createFocusRegistry(): FocusRegistry {
     elementByKey.set(keyOf(cell), element);
     cellByElement.set(element, cell);
     markDescendants(element);
-    kindByElement.set(element, classifyCellWidgets(element));
   }
 
   // Note: never marks the cell element itself; it carries the roving tabindex.
@@ -85,7 +79,6 @@ export function createFocusRegistry(): FocusRegistry {
     const cell = cellByElement.get(element);
     if (cell === undefined) return;
     cellByElement.delete(element);
-    kindByElement.delete(element);
     if (entered === element) entered = null;
     const key = keyOf(cell);
     const isRegisteredElement = elementByKey.get(key) === element;
@@ -106,11 +99,6 @@ export function createFocusRegistry(): FocusRegistry {
     return null;
   }
 
-  function widgetKindOf(cell: BodyCell): CellWidgetKind {
-    const element = elementByKey.get(keyOf(cell));
-    return (element && kindByElement.get(element)) ?? 'none';
-  }
-
   function refreshWidgets(node: Node, boundary: HTMLElement): void {
     const cell = cellContaining(node, boundary);
     if (cell === null) return;
@@ -118,18 +106,18 @@ export function createFocusRegistry(): FocusRegistry {
     if (element === undefined) return;
 
     // Note: an entered cell keeps its controls in the Tab order; exit re-marks them.
-    if (element !== entered) {
-      if (node === element) markDescendants(element);
-      else removeFromTabOrder(node);
-    }
-    kindByElement.set(element, classifyCellWidgets(element));
+    const isEnteredCell = element === entered;
+    if (isEnteredCell) return;
+    if (node === element) markDescendants(element);
+    else removeFromTabOrder(node);
   }
 
   function retrackTabindex(record: MutationRecord, boundary: HTMLElement): void {
     // Note: judged for every record, so the own-write count stays in step.
     const isOwnWrite = isOwnTabindexWrite(record);
     const target = record.target;
-    if (isOwnWrite || !(target instanceof HTMLElement)) return;
+    const isNotBindingElement = isOwnWrite || !(target instanceof HTMLElement);
+    if (isNotBindingElement) return;
 
     const cell = cellContaining(target, boundary);
     if (cell === null) return;
@@ -152,11 +140,12 @@ export function createFocusRegistry(): FocusRegistry {
     const element = active === null ? undefined : elementByKey.get(keyOf(active));
     const widget = element === undefined ? null : findSingleWidget(element);
 
-    if (tabStopWidget !== null && tabStopWidget !== widget) writeTabindex(tabStopWidget, '-1');
+    const previousWidget = tabStopWidget;
+    const hasStaleTabStop = previousWidget !== null && previousWidget !== widget;
+    if (hasStaleTabStop) writeTabindex(previousWidget, '-1');
     tabStopWidget = widget;
     if (element === undefined) return;
 
-    kindByElement.set(element, classifyCellWidgets(element));
     if (widget === null) {
       setCellTabindex(element, '0');
     } else {
@@ -179,7 +168,8 @@ export function createFocusRegistry(): FocusRegistry {
   function enterCell(cell: BodyCell): HTMLElement | null {
     const element = elementByKey.get(keyOf(cell));
     if (element === undefined) return null;
-    if (entered !== null && entered !== element) exitCell();
+    const isSwitchingCell = entered !== null && entered !== element;
+    if (isSwitchingCell) exitCell();
     entered = element;
     restoreTabOrder(element);
     return findFirstWidget(element);
@@ -198,7 +188,6 @@ export function createFocusRegistry(): FocusRegistry {
     unregister,
     elementOf,
     cellContaining,
-    widgetKindOf,
     refreshWidgets,
     retrackTabindex,
     syncTabStop,

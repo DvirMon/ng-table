@@ -134,16 +134,17 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     if (typeof MutationObserver === 'undefined') return () => undefined;
 
     const markAdded = (records: MutationRecord[]): void => {
+      // Note: a node touched by several records is refreshed once per batch.
+      const touched = new Set<Node>();
       for (const record of records) {
         if (record.type === 'attributes') {
           this.focusRegistry.retrackTabindex(record, this.host);
           continue;
         }
-        for (const added of Array.from(record.addedNodes)) {
-          this.focusRegistry.refreshWidgets(added, this.host);
-        }
-        this.focusRegistry.refreshWidgets(record.target, this.host);
+        for (const added of Array.from(record.addedNodes)) touched.add(added);
+        touched.add(record.target);
       }
+      for (const node of touched) this.focusRegistry.refreshWidgets(node, this.host);
     };
     const observer = new MutationObserver((records) => {
       markAdded(records);
@@ -192,22 +193,26 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
 
     const entered = this.focusRegistry.enteredElement();
     // Note: focus on the entered cell itself is not inside it; it ends the entered state.
-    if (entered !== null && entered === target) this.focusRegistry.exitCell();
+    const isTargetEnteredCell = entered !== null && entered === target;
+    if (isTargetEnteredCell) this.focusRegistry.exitCell();
     const isInsideEntered = entered !== null && entered !== target && entered.contains(target);
     if (isInsideEntered) {
-      if (event.key === 'Escape' || event.key === 'F2') {
+      const isExitKey = event.key === 'Escape' || event.key === 'F2';
+      if (isExitKey) {
         this.focusRegistry.exitCell()?.focus();
         event.preventDefault();
       }
       return true;
     }
 
-    if (event.key !== 'Enter' && event.key !== 'F2') return false;
+    const isEnterKey = event.key === 'Enter' || event.key === 'F2';
+    if (!isEnterKey) return false;
     const cell = this.focusRegistry.cellContaining(target, this.host);
     if (cell === null) return false;
     const element = this.focusRegistry.elementOf(cell);
     const isCellItself = element !== null && element === target;
-    if (!isCellItself || classifyCellWidgets(element) !== 'composite') return false;
+    const isCompositeCell = isCellItself && classifyCellWidgets(element) === 'composite';
+    if (!isCompositeCell) return false;
 
     this.focusRegistry.enterCell(cell)?.focus();
     event.preventDefault();
@@ -231,7 +236,8 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
       cellElement !== null &&
       cellElement !== event.target &&
       classifyCellWidgets(cellElement) === 'composite';
-    if (isWidgetOfComposite && this.focusRegistry.enteredElement() !== cellElement) {
+    const isCellNotYetEntered = this.focusRegistry.enteredElement() !== cellElement;
+    if (isWidgetOfComposite && isCellNotYetEntered) {
       this.focusRegistry.enterCell(cell);
     }
 
@@ -253,8 +259,8 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     const entered = this.focusRegistry.enteredElement();
     // Note: a null `relatedTarget` with the document unfocused is a window blur, not a focus move.
     const isWindowBlur = next === null && !document.hasFocus();
-    const hasLeftEnteredCell =
-      entered !== null && !isWindowBlur && !(next instanceof Node && entered.contains(next));
+    const isFocusInsideEntered = next instanceof Node && entered?.contains(next) === true;
+    const hasLeftEnteredCell = entered !== null && !isWindowBlur && !isFocusInsideEntered;
     if (hasLeftEnteredCell) this.focusRegistry.exitCell();
   }
 
