@@ -27,16 +27,22 @@ these directives reflect it and toggle it.
 </tr>
 ```
 
-The table stays `role="table"`. Rows carry no `aria-level` and no
-`aria-expanded`; `aria-expanded` lives on the toggle button
-(disclosure pattern). Treegrid is a separate, table-wide piece of
-work (TR34).
+With `withTree()` composed the host is `role="treegrid"`. Rows and
+cells are both keyboard stops. The row carries `aria-level` and
+`aria-expanded`; the toggle button carries neither (TR51).
 
 ## `ngpTableTreeRow`
 
 Selector: `tr[ngpTableRow][ngpTableTreeRow]`,
 `div[ngpTableRow][ngpTableTreeRow]`. Reads the row from
 `NGP_TABLE_ROW`; no inputs.
+
+ARIA, set on the row:
+
+| Attribute       | Value                                                                 |
+| --------------- | --------------------------------------------------------------------- |
+| `aria-level`    | `depth + 1`, on every tree row                                        |
+| `aria-expanded` | `"true"` / `"false"` on an expandable row; absent on a leaf row       |
 
 Presence-only hooks (ADR-0026 rule 1) — `""` when true, absent
 otherwise:
@@ -50,26 +56,48 @@ otherwise:
 Named `data-expandable`, not `data-has-children`: the hook names
 what CSS keys on, not the field.
 
+### Keyboard
+
+Row focus is part of the treegrid arrow order; the full map is in
+[`core.md`](core.md#grid-navigation). The directive handles three
+keys, only when the row element itself is the event target. Keys from
+a cell or widget inside the row are left alone. Each handled key calls
+`preventDefault()`, so core navigation skips it.
+
+| Key     | Collapsed expandable row | Expanded row                                   | Leaf row                           |
+| ------- | ------------------------ | ---------------------------------------------- | ---------------------------------- |
+| →       | expands                  | enters the row's first cell (core)             | enters the row's first cell (core) |
+| ←       | goes to the parent (core) | collapses                                      | goes to the parent (core)          |
+| `Enter` | expands                  | collapses                                      | nothing                            |
+
+- A top-level row has no parent, so ← on it stays put.
+- The parent is the nearest earlier row with a smaller `depth`.
+- Under `dir="rtl"` → and ← swap: ← expands, → collapses.
+- Tab on a focused row walks the operable widgets in its cells, then
+  leaves the grid (see [`core.md`](core.md#widgets-in-cells)).
+
 ## `ngpTableTreeToggle`
 
-Selector: `button[ngpTableTreeToggle]` only. Native click, Enter,
-Space and focus — no keyboard handlers, no host-type branching, no
-nesting guard. The button is always `type="button"`, even over a
-template `type`.
+Selector: `button[ngpTableTreeToggle]` only. Pointer-only: a click
+toggles, and there are no keyboard handlers, no host-type branching
+and no nesting guard. The button is always `type="button"`, even over
+a template `type`.
 
 - **Identity.** Row from the ancestor row directive's token
   (`NGP_TABLE_ROW`), table from the table directive's token
   (`NGP_TABLE_STORE`). No inputs.
-- **Activation.** A click calls `table.tree.toggle(row.id)`. It
+- **Activation.** A click calls `table.tree.toggle(row.id)`, then
+  moves the table's focus to that row and focuses the row element. It
   never calls `preventDefault()` or `stopPropagation()`, so other
   row listeners still receive the click.
-- **State.** `aria-expanded` and `data-expanded` follow the row's
+- **Out of the keyboard and screen-reader path.** Always
+  `tabindex="-1"` and `aria-hidden="true"`. It has no `aria-expanded`;
+  the row owns that state. `data-expanded` follows the row's
   `isExpanded`.
-- **Non-expandable row.** The toggle sets `disabled`,
-  `aria-hidden="true"` and presence `data-disabled`, and shows
-  `aria-expanded="false"`. It stays in the DOM so its width is kept and leaf
-  labels align with parent labels. Hiding it visually is consumer
-  CSS; the consumer may also `@if` it away.
+- **Non-expandable row.** The toggle also sets `disabled` and
+  presence `data-disabled`. It stays in the DOM so its width is kept
+  and leaf labels align with parent labels. Hiding it visually is
+  consumer CSS; the consumer may also `@if` it away.
 - **Accessible name.** Consumer-owned — the library ships no text.
   Name it with `aria-label`, `aria-labelledby` or text content.
 - **No `ngpTableTreeRow` needed.** The toggle reads its row from
@@ -80,18 +108,18 @@ template `type`.
 
 No attribute is bound by two directives on one element:
 
-| Directive                      | Element | Binds                                                                           |
-| ------------------------------ | ------- | ------------------------------------------------------------------------------- |
-| `ngpTableRow`                  | row     | `role`, `data-row-kind`, `data-depth`, `aria-rowindex`, `--ngp-table-row-depth` |
-| `ngpTableTreeRow`              | row     | `data-expandable`, `data-expanded`, `data-context-row`                          |
-| Shared trigger core (internal) | button  | `type`, `aria-expanded`, `data-expanded`                                        |
-| `ngpTableTreeToggle`           | button  | `disabled`, `aria-hidden`, `data-disabled`                                      |
+| Directive                      | Element | Binds                                                                                          |
+| ------------------------------ | ------- | ---------------------------------------------------------------------------------------------- |
+| `ngpTableRow`                  | row     | `role`, `data-row-kind`, `data-depth`, `aria-rowindex`, `--ngp-table-row-depth`                |
+| `ngpTableTreeRow`              | row     | `aria-level`, `aria-expanded`, `data-expandable`, `data-expanded`, `data-context-row`          |
+| Shared trigger core (internal) | button  | `type`, `data-expanded`                                                                        |
+| `ngpTableTreeToggle`           | button  | `tabindex`, `aria-hidden`, `disabled`, `data-disabled`                                         |
 
 ## Toggle-only is the default
 
-The button is the trigger. A `<tr>` host is not supported: it adds a
-stray focus stop per row and cannot carry a valid `aria-expanded` in
-`role="table"`.
+The button is the pointer trigger. A `<tr>` host is not supported for
+the toggle directive. The keyboard trigger is the focused row itself
+(→, ←, `Enter`).
 
 ### Whole-row click
 
@@ -176,8 +204,7 @@ A missing `ngpTableTreeRow` on the `<tr>` is not an error.
 
 ## Out of scope
 
-- Treegrid — `role="treegrid"`, `gridcell`, row `aria-level` /
-  `aria-expanded`, arrow-key focus.
+- Group-header and detail-panel stops in the arrow order.
 - A shipped stylesheet or default look.
 - Library-provided toggle text.
 - A per-row "loading children" affordance for lazy parents —
