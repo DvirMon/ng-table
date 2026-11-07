@@ -6,3 +6,6 @@
 .angular
 
 .nx/self-healing
+
+# Library docs: embedded code fences are not stable under prettier 3.9
+/libs/table/docs/**/*.md
