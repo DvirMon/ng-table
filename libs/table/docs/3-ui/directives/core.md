@@ -44,7 +44,9 @@ export class NgpTableDirective {
 
 ```ts
 // Consumer — no providers block, no store class, no token
-@Component({/* ... */})
+@Component({
+  /* ... */
+})
 export class ProductsComponent {
   protected readonly data = signal(products);
   protected readonly table = createTable(
@@ -153,12 +155,12 @@ export class NgpTableExpandToggleDirective {
 
 ## Directive: `ngpTableCell`
 
-| Element                             | `<td>`                                                                                                                                                                                                                                                                  |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Role                                | Data cell, `role="gridcell"`, and a roving `tabindex` (see [Grid navigation](#grid-navigation)). Applies token-driven default styling + `data-*` attributes (e.g. `data-column-id`). No behavior logic yet (no click handling, no value formatting).                    |
-| Inputs                              | `[ngpTableCell]="columnId"`                                                                                                                                                                                                                                             |
-| Why a directive and not bare markup | Kept minimal deliberately, so it's queryable/extensible later (e.g. via `@ContentChildren` or host injection) without a breaking template change — a future `ngpTableCellEdit` or `ngpTableDragHandle` could target it without altering the consumer's existing markup. |
-| Accessibility                       | No default `aria-label` (see `accessibility.md` — text content is the accessible name). No `aria-live` (see `accessibility.md` and `virtual-scroll.md` — CDK recycles `<td>` nodes; per-cell live regions would fire spurious announcements on scroll).                 |
+| Element                             | `<td>`                                                                                                                                                                                                                                                                                                                                            |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Role                                | Data cell, `role="gridcell"`, and a roving `tabindex` (see [Grid navigation](#grid-navigation)). Applies token-driven default styling + `data-*` attributes (e.g. `data-column-id`). Cell widgets are handled by the table host (see [Widgets in cells](#widgets-in-cells)); the cell directive itself has no click handling or value formatting. |
+| Inputs                              | `[ngpTableCell]="columnId"`                                                                                                                                                                                                                                                                                                                       |
+| Why a directive and not bare markup | Kept minimal deliberately, so it's queryable/extensible later (e.g. via `@ContentChildren` or host injection) without a breaking template change — a future `ngpTableCellEdit` or `ngpTableDragHandle` could target it without altering the consumer's existing markup.                                                                           |
+| Accessibility                       | No default `aria-label` (see `accessibility.md` — text content is the accessible name). No `aria-live` (see `accessibility.md` and `virtual-scroll.md` — CDK recycles `<td>` nodes; per-cell live regions would fire spurious announcements on scroll).                                                                                           |
 
 ```html
 <td [ngpTableCell]="col.id" [attr.data-column-id]="col.id">
@@ -178,6 +180,21 @@ The body is a `grid` of `gridcell`s with one Tab stop ([ADR-0030](../../adr/0030
 - **Click.** Focus landing in a cell, by click or otherwise, moves the position to that cell.
 - **DOM focus.** The position always moves. DOM focus follows only while focus is already inside the grid, or when the move was made with `focus.moveTo(target, { focusElement: true })`. No focus is taken on load.
 - **Opt out.** A key whose `keydown` was already `preventDefault()`-ed (for example by an inner control) is ignored by the grid.
+
+### Widgets in cells
+
+A body cell is classified by the focusable elements it holds. Disabled, `aria-hidden`, hidden inputs and `tabindex="-1"` elements are not counted.
+
+- **Single-widget cell.** Exactly one counted widget, and it is a button, a link, a checkbox or a radio. The widget holds the Tab stop when its cell is the position. Focus lands on the widget, not the cell. No second Tab stop appears.
+- **Composite cell.** Two or more counted widgets, one text-like or `contenteditable` widget, or any `grid`, `treegrid`, `listbox` or `tree` inside. The cell itself is the Tab stop.
+  - `Enter` or `F2` on the cell enters it: its widgets join the Tab order and focus moves to the first one.
+  - `Esc` or `F2` inside an entered cell exits it and returns focus to the cell. Both keys are consumed.
+  - A pointer click into a widget of a composite cell enters it.
+  - Focus leaving the entered cell exits it.
+  - Arrow keys inside an entered cell are left to its widgets.
+- **Tab order.** Every cell descendant outside an entered cell has `tabindex="-1"`, so the table has one Tab stop. The original `tabindex` is restored on entry, and a binding that changes it later is tracked.
+- **Editable targets.** Keys typed in a text input, textarea, select or `contenteditable` element never navigate the grid. A widget that calls `preventDefault()` keeps any key.
+- **Nested grid.** A `grid` or `treegrid` inside a cell makes it a composite cell. The inner grid owns its keys once the cell is entered.
 
 ---
 

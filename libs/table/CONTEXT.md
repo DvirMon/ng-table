@@ -44,6 +44,16 @@ the single Tab stop's target. Readable from outside the table. Held as a
 a row's detail panel. The engine keeps it valid when rows or columns change.
 _Avoid_: active cell, cursor, selection.
 
+**Single-widget cell** — a body cell holding exactly one counted widget that
+needs no keys of its own: a button, a link, a checkbox or a radio. The widget,
+not the cell, holds the table's Tab stop while the cell is the focused position.
+_Avoid_: interactive cell.
+
+**Composite cell** — a body cell holding several widgets, a text-like or
+`contenteditable` widget, or a nested grid. The cell is the Tab stop; `Enter` or
+`F2` enters it so its widgets take keys, and `Esc` or `F2` leaves it.
+_Avoid_: edit mode.
+
 **Schema entry** — the one place a feature's per-column rules are declared.
 Every feature that has per-column configuration owns exactly one, and they all
 share the same path vocabulary and the same plumbing. There is no second
