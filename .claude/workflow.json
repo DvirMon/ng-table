@@ -4,7 +4,7 @@
     "commit": { "skill": "atomic-commit" }
   },
   "stages": {
-    "implementation": { "skills": ["source-docs"] }
+    "implement": { "skills": ["source-docs"] }
   },
   "projects": {
     "shared-table": {
