@@ -71,7 +71,12 @@
       "pr": 267,
       "readiness": "ready-for-agent",
       "assessed": "10-29 · task plan on disk"
+    },
+    {
+      "remoteRef": "#239",
+      "branch": "feat/239-treegrid-row-navigation",
+      "worktree": ".claude/worktrees/feat-239-treegrid-row-navigation"
     }
   ],
-  "updatedAt": "2026-10-29T19:41:00Z"
+  "updatedAt": "2026-11-07T00:00:00Z"
 }
