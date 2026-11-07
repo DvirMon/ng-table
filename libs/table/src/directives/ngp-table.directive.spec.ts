@@ -1791,6 +1791,33 @@ class HeaderWidgetsHost {
   readonly table = createGridTable(signal<MockRow[]>([...mockRows]));
 }
 
+const HEADER_COMPOSITE_TEMPLATE = `
+  <table [ngpTable]="table">
+    <thead>
+      <tr>
+        @for (column of table.renderColumns(); track column.id; let i = $index) {
+          <th [ngpTableHeaderCell]="i">
+            @if (column.id === 'name') {
+              <button type="button" id="first-action">First</button>
+              <button type="button" id="second-action">Second</button>
+            } @else {
+              {{ column.id }}
+            }
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {${GRID_ROW}      }
+    </tbody>
+  </table>
+`;
+
+@Component({ imports: HEADER_IMPORTS, template: HEADER_COMPOSITE_TEMPLATE })
+class HeaderCompositeHost {
+  readonly table = createGridTable(signal<MockRow[]>([...mockRows]));
+}
+
 describe('NgpTableDirective header widgets', () => {
   type HeaderColumn = 'id' | 'name';
 
@@ -1894,5 +1921,38 @@ describe('NgpTableDirective header widgets', () => {
     expect(filterInput().getAttribute('tabindex')).toBe('-1');
     expect(sortButton().getAttribute('tabindex')).toBe('-1');
     expect(tabStops()).toEqual([cell(1, 'id')]);
+  });
+
+  it('gives the lone widget of the active header cell the roving tab stop', () => {
+    const { host, flush, cell, headerCell, sortButton, press, tabStops } = setupHeaderWidgets();
+    cell(1, 'name').focus();
+    flush();
+    press(cell(1, 'name'), { key: 'ArrowUp' });
+
+    expect(host.table.focus()).toEqual({ area: 'header', columnId: 'name' });
+    expect(sortButton().getAttribute('tabindex')).toBe('0');
+    expect(headerCell('name').getAttribute('tabindex')).toBe('-1');
+    expect(tabStops()).toEqual([sortButton()]);
+  });
+
+  it('enters a composite header cell when focus lands on one of its widgets', () => {
+    const fixture = TestBed.createComponent(HeaderCompositeHost);
+    const root: HTMLElement = fixture.nativeElement;
+    document.body.appendChild(root);
+    TestBed.tick();
+    fixture.detectChanges();
+
+    const first = root.querySelector<HTMLElement>('#first-action');
+    const second = root.querySelector<HTMLElement>('#second-action');
+    if (first === null || second === null) throw new Error('no header widgets');
+    expect(first.getAttribute('tabindex')).toBe('-1');
+
+    first.focus();
+    TestBed.tick();
+    fixture.detectChanges();
+
+    expect(first.getAttribute('tabindex')).not.toBe('-1');
+    expect(second.getAttribute('tabindex')).not.toBe('-1');
+    expect(fixture.componentInstance.table.focus()).toEqual({ area: 'header', columnId: 'name' });
   });
 });
