@@ -871,3 +871,252 @@ describe('NgpTableDirective cell widgets tab order', () => {
     expect(root.querySelector('.cell-btn')?.getAttribute('tabindex')).toBe('-1');
   });
 });
+
+@Component({
+  imports: IMPORTS,
+  template: `
+    <button type="button" id="outside">Outside</button>
+    <table [ngpTable]="table">
+      <tbody>
+        @for (row of table.renderRows(); track row.id) {
+          <tr [ngpTableRow]="row">
+            @for (column of table.renderColumns(); track column.id; let i = $index) {
+              <td [ngpTableCell]="i">
+                @if (row.id === 1 && column.id === 'name') {
+                  @switch (editor()) {
+                    @case ('input') {
+                      <input aria-label="Name" />
+                      <button type="button" tabindex="0">Save</button>
+                    }
+                    @case ('textarea') {
+                      <textarea aria-label="Name"></textarea>
+                    }
+                    @case ('select') {
+                      <select aria-label="Name">
+                        <option>a</option>
+                      </select>
+                    }
+                    @case ('contenteditable') {
+                      <div contenteditable="true" aria-label="Name">x</div>
+                    }
+                  }
+                } @else if (row.id === 2 && column.id === 'name') {
+                  <button type="button">Act</button>
+                } @else {
+                  {{ column.id }}
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  `,
+})
+class CompositeCellHost {
+  readonly data = signal<MockRow[]>([...mockRows]);
+  readonly table = createGridTable(this.data);
+  readonly editor = signal<'input' | 'textarea' | 'select' | 'contenteditable'>('input');
+}
+
+describe('NgpTableDirective composite cell modes', () => {
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
+
+  function setupComposite() {
+    const grid = TestBed.createComponent(CompositeCellHost);
+    const root: HTMLElement = grid.nativeElement;
+    document.body.appendChild(root);
+    const flush = (): void => {
+      TestBed.tick();
+      grid.detectChanges();
+    };
+    flush();
+    const host = grid.componentInstance;
+
+    const cell = (rowId: number, columnId: 'id' | 'name'): HTMLElement => {
+      const colIndex = columnId === 'id' ? '1' : '2';
+      const found = root.querySelector<HTMLElement>(
+        `[aria-rowindex="${rowId}"] [aria-colindex="${colIndex}"]`,
+      );
+      if (found === null) throw new Error(`no cell ${rowId}/${columnId}`);
+      return found;
+    };
+    const query = (selector: string): HTMLElement => {
+      const found = root.querySelector<HTMLElement>(selector);
+      if (found === null) throw new Error(`no element ${selector}`);
+      return found;
+    };
+    const outside = (): HTMLElement => query('#outside');
+    const input = (): HTMLElement => query('input');
+    const saveButton = (): HTMLElement => query('td button');
+    const press = (target: HTMLElement, init: KeyboardEventInit): KeyboardEvent => {
+      const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init });
+      target.dispatchEvent(event);
+      return event;
+    };
+    const tabStops = (): HTMLElement[] =>
+      Array.from(root.querySelectorAll<HTMLElement>('[tabindex="0"]'));
+
+    const arrowOntoCell = (): void => {
+      cell(1, 'id').focus();
+      flush();
+      press(cell(1, 'id'), { key: 'ArrowRight' });
+      flush();
+    };
+    const enterCell = (): void => {
+      arrowOntoCell();
+      press(cell(1, 'name'), { key: 'Enter' });
+      flush();
+    };
+
+    return {
+      host,
+      flush,
+      cell,
+      query,
+      outside,
+      input,
+      saveButton,
+      press,
+      tabStops,
+      arrowOntoCell,
+      enterCell,
+    };
+  }
+
+  it.each(['Enter', 'F2'])('enters a composite cell on %s', (key) => {
+    const { host, flush, cell, input, saveButton, press, arrowOntoCell } = setupComposite();
+    arrowOntoCell();
+    expect(document.activeElement).toBe(cell(1, 'name'));
+
+    const event = press(cell(1, 'name'), { key });
+    flush();
+
+    expect(document.activeElement).toBe(input());
+    expect(input().hasAttribute('tabindex')).toBe(false);
+    expect(saveButton().getAttribute('tabindex')).toBe('0');
+    expect(event.defaultPrevented).toBe(true);
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 1, columnId: 'name' });
+  });
+
+  it.each(['Escape', 'F2'])('leaves an entered cell on %s and focuses the cell', (key) => {
+    const { flush, cell, input, saveButton, press, tabStops, enterCell } = setupComposite();
+    enterCell();
+
+    const event = press(input(), { key });
+    flush();
+
+    expect(document.activeElement).toBe(cell(1, 'name'));
+    expect(input().getAttribute('tabindex')).toBe('-1');
+    expect(saveButton().getAttribute('tabindex')).toBe('-1');
+    expect(tabStops()).toEqual([cell(1, 'name')]);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('leaves Enter on a single-widget cell button to the button', () => {
+    const { host, flush, cell, press, tabStops } = setupComposite();
+    cell(2, 'id').focus();
+    flush();
+    press(cell(2, 'id'), { key: 'ArrowRight' });
+    flush();
+    const act = cell(2, 'name').querySelector('button');
+    if (act === null) throw new Error('no Act button');
+    expect(document.activeElement).toBe(act);
+
+    const event = press(act, { key: 'Enter' });
+    flush();
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(document.activeElement).toBe(act);
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 2, columnId: 'name' });
+    expect(tabStops()).toEqual([act]);
+  });
+
+  it('keeps focus in the input when the consumer prevented Escape', () => {
+    const { flush, cell, input, saveButton, press, enterCell } = setupComposite();
+    enterCell();
+
+    const prevented = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    });
+    prevented.preventDefault();
+    input().dispatchEvent(prevented);
+    flush();
+
+    expect(document.activeElement).toBe(input());
+    expect(saveButton().getAttribute('tabindex')).toBe('0');
+
+    press(input(), { key: 'Escape' });
+    flush();
+    expect(document.activeElement).toBe(cell(1, 'name'));
+  });
+
+  it.each(['input', 'textarea', 'select', 'contenteditable'] as const)(
+    'never moves the grid on an arrow key typed in a %s',
+    (editor) => {
+      const { host, flush, cell, query, press, arrowOntoCell } = setupComposite();
+      host.editor.set(editor);
+      flush();
+      arrowOntoCell();
+      const before = host.table.focus();
+      expect(document.activeElement).toBe(cell(1, 'name'));
+      const target = query(editor === 'contenteditable' ? '[contenteditable]' : editor);
+
+      for (const key of ['ArrowDown', 'Home']) {
+        const event = press(target, { key });
+        flush();
+
+        expect(event.defaultPrevented).toBe(false);
+        expect(host.table.focus()).toEqual(before);
+        expect(document.activeElement).toBe(cell(1, 'name'));
+      }
+    },
+  );
+
+  it.each(['Enter', 'ArrowDown'])(
+    'leaves %s on a widget inside an entered cell to the widget',
+    (key) => {
+      const { host, flush, saveButton, press, enterCell } = setupComposite();
+      enterCell();
+      saveButton().focus();
+      flush();
+
+      const event = press(saveButton(), { key });
+      flush();
+
+      expect(event.defaultPrevented).toBe(false);
+      expect(document.activeElement).toBe(saveButton());
+      expect(host.table.focus()).toEqual({ area: 'body', rowId: 1, columnId: 'name' });
+    },
+  );
+
+  it('enters a composite cell when focus lands on its widget from a pointer click', () => {
+    const { host, flush, cell, input, saveButton, press } = setupComposite();
+
+    input().focus();
+    flush();
+
+    expect(saveButton().getAttribute('tabindex')).toBe('0');
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 1, columnId: 'name' });
+
+    press(input(), { key: 'Escape' });
+    flush();
+    expect(document.activeElement).toBe(cell(1, 'name'));
+  });
+
+  it('returns an entered cell to navigation mode when focus leaves it', () => {
+    const { flush, cell, input, saveButton, outside, tabStops, enterCell } = setupComposite();
+    enterCell();
+
+    outside().focus();
+    flush();
+
+    expect(input().getAttribute('tabindex')).toBe('-1');
+    expect(saveButton().getAttribute('tabindex')).toBe('-1');
+    expect(tabStops()).toEqual([cell(1, 'name')]);
+  });
+});

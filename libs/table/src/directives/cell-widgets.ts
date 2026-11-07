@@ -37,6 +37,29 @@ export function classifyCellWidgets(cell: HTMLElement): CellWidgetKind {
   return isSimpleWidget(widgets[0]) ? 'single' : 'composite';
 }
 
+/** The first counted widget in `cell` in document order, or `null` when it has none. */
+export function findFirstWidget(cell: HTMLElement): HTMLElement | null {
+  const widget = Array.from(cell.querySelectorAll(FOCUSABLE_SELECTOR)).find(isCountedWidget);
+  return widget instanceof HTMLElement ? widget : null;
+}
+
+const NON_TEXT_INPUT_TYPES = new Set(['checkbox', 'radio', 'button', 'submit', 'reset', 'image']);
+
+/**
+ * Whether keys typed on `target` belong to the user typing: a text input, textarea, select or
+ * contenteditable element.
+ *
+ * @remarks
+ * Checks the `contenteditable` attribute rather than `isContentEditable`, which a test DOM may
+ * not implement.
+ */
+export function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return true;
+  if (target instanceof HTMLInputElement) return !NON_TEXT_INPUT_TYPES.has(target.type);
+  return target.closest('[contenteditable]:not([contenteditable="false"])') !== null;
+}
+
 /** The one counted widget in `cell` when it is a `single` cell, else `null`. */
 export function findSingleWidget(cell: HTMLElement): HTMLElement | null {
   if (classifyCellWidgets(cell) !== 'single') return null;
