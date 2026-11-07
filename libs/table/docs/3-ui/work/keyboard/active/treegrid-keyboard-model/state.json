@@ -68,7 +68,7 @@
       "remoteRef": "#236",
       "branch": "feat/236-header-paging-rtl",
       "worktree": ".claude/worktrees/feat-236-header-paging-rtl",
-      "pr": null,
+      "pr": 267,
       "readiness": "ready-for-agent",
       "assessed": "10-29 · task plan on disk"
     }
