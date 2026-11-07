@@ -1,6 +1,12 @@
 import { InjectionToken } from '@angular/core';
 
-import { classifyCellWidgets, findSingleWidget, removeFromTabOrder } from './cell-widgets';
+import {
+  classifyCellWidgets,
+  findFirstWidget,
+  findSingleWidget,
+  removeFromTabOrder,
+  restoreTabOrder,
+} from './cell-widgets';
 import type { CellWidgetKind } from './cell-widgets.types';
 import type { BodyCell } from './keyboard-nav.types';
 
@@ -25,6 +31,18 @@ export interface FocusRegistry {
   syncTabStop(active: BodyCell | null): void;
   /** The element focus should land on for `cell`: its lone widget, else the cell itself. */
   focusTargetOf(cell: BodyCell): HTMLElement | null;
+  /** The element of the cell currently in entered mode, or `null` in navigation mode. */
+  enteredElement(): HTMLElement | null;
+  /**
+   * Puts `cell`'s widgets back in the Tab order so Tab walks them natively.
+   * Returns the first widget, for the caller to focus; `null` when there is none.
+   */
+  enterCell(cell: BodyCell): HTMLElement | null;
+  /**
+   * Returns the entered cell to navigation mode and takes its widgets out of the Tab order again.
+   * Returns the cell's element, or `null` when no cell was entered.
+   */
+  exitCell(): HTMLElement | null;
 }
 
 /** Creates the registry one `ngpTable` host provides to its cells. */
@@ -33,6 +51,7 @@ export function createFocusRegistry(): FocusRegistry {
   const cellByElement = new Map<HTMLElement, BodyCell>();
   const kindByElement = new Map<HTMLElement, CellWidgetKind>();
   let tabStopWidget: HTMLElement | null = null;
+  let entered: HTMLElement | null = null;
 
   // Note: the key carries the id's type so row `1` and row `'1'` stay distinct.
   function keyOf(cell: BodyCell): string {
@@ -57,6 +76,7 @@ export function createFocusRegistry(): FocusRegistry {
     if (cell === undefined) return;
     cellByElement.delete(element);
     kindByElement.delete(element);
+    if (entered === element) entered = null;
     const key = keyOf(cell);
     const isRegisteredElement = elementByKey.get(key) === element;
     if (isRegisteredElement) elementByKey.delete(key);
@@ -87,8 +107,11 @@ export function createFocusRegistry(): FocusRegistry {
     const element = elementByKey.get(keyOf(cell));
     if (element === undefined) return;
 
-    if (node === element) markDescendants(element);
-    else removeFromTabOrder(node);
+    // Note: an entered cell keeps its controls in the Tab order; exit re-marks them.
+    if (element !== entered) {
+      if (node === element) markDescendants(element);
+      else removeFromTabOrder(node);
+    }
     kindByElement.set(element, classifyCellWidgets(element));
   }
 
@@ -116,6 +139,27 @@ export function createFocusRegistry(): FocusRegistry {
     }
   }
 
+  function enteredElement(): HTMLElement | null {
+    return entered;
+  }
+
+  function enterCell(cell: BodyCell): HTMLElement | null {
+    const element = elementByKey.get(keyOf(cell));
+    if (element === undefined) return null;
+    if (entered !== null && entered !== element) exitCell();
+    entered = element;
+    restoreTabOrder(element);
+    return findFirstWidget(element);
+  }
+
+  function exitCell(): HTMLElement | null {
+    const element = entered;
+    if (element === null) return null;
+    entered = null;
+    markDescendants(element);
+    return element;
+  }
+
   return {
     register,
     unregister,
@@ -125,6 +169,9 @@ export function createFocusRegistry(): FocusRegistry {
     refreshWidgets,
     syncTabStop,
     focusTargetOf,
+    enteredElement,
+    enterCell,
+    exitCell,
   };
 }
 

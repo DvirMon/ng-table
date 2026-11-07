@@ -13,6 +13,7 @@ import {
   type Signal,
 } from '@angular/core';
 
+import { classifyCellWidgets, isEditableTarget } from './cell-widgets';
 import { createFocusRegistry, NGP_TABLE_FOCUS_REGISTRY } from './focus-registry';
 import { nextBodyTarget } from './keyboard-nav';
 import type { BodyCell } from './keyboard-nav.types';
@@ -85,11 +86,16 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
   private lastSeenTable: TableStore<TRow, TValues> | null = null;
 
   constructor() {
-    this.keepAddedWidgetsOutOfTabOrder();
+    const flushAddedWidgets = this.keepAddedWidgetsOutOfTabOrder();
 
     // Cell bindings write the roving tabindex on the cell; this moves it onto a lone widget.
     // Runs after every render because a widget can appear or vanish without any signal change.
-    afterEveryRender(() => this.focusRegistry.syncTabStop(this.activeBodyCell()));
+    // Controls the observer has not delivered yet are marked first, so the render never ends with
+    // a stray Tab stop.
+    afterEveryRender(() => {
+      flushAddedWidgets();
+      this.focusRegistry.syncTabStop(this.activeBodyCell());
+    });
 
     // Moves DOM focus to the stored position: always on a new `focusElement` request, otherwise
     // only while focus is already inside the grid. Else only the tabindex moves.
@@ -123,20 +129,25 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
 
   // Controls rendered into a cell after it registered (an edit mode, a swapped widget) must not
   // become Tab stops either.
-  private keepAddedWidgetsOutOfTabOrder(): void {
-    if (typeof MutationObserver === 'undefined') return;
+  // Returns a function that handles the records the observer has queued but not yet delivered.
+  private keepAddedWidgetsOutOfTabOrder(): () => void {
+    if (typeof MutationObserver === 'undefined') return () => undefined;
 
-    const observer = new MutationObserver((records) => {
+    const markAdded = (records: MutationRecord[]): void => {
       for (const record of records) {
         for (const added of Array.from(record.addedNodes)) {
           this.focusRegistry.refreshWidgets(added, this.host);
         }
         this.focusRegistry.refreshWidgets(record.target, this.host);
       }
+    };
+    const observer = new MutationObserver((records) => {
+      markAdded(records);
       this.focusRegistry.syncTabStop(this.activeBodyCell());
     });
     observer.observe(this.host, { childList: true, subtree: true });
     this.destroyRef.onDestroy(() => observer.disconnect());
+    return () => markAdded(observer.takeRecords());
   }
 
   protected navigateBodyOnKeydown(event: Event): void {
@@ -145,6 +156,9 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
 
     const current = this.activeBodyCell();
     if (current === null) return;
+
+    if (this.handleCompositeCellKey(event)) return;
+    if (isEditableTarget(event.target)) return;
 
     const table = this.ngpTable();
     const order = {
@@ -161,12 +175,50 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     event.preventDefault();
   }
 
+  // Returns true when the key is settled here: handled as enter/exit, or left to an entered
+  // cell's widgets. Esc/F2 exit runs before the widget and editable skips.
+  private handleCompositeCellKey(event: KeyboardEvent): boolean {
+    const target = event.target;
+    if (!(target instanceof Node)) return false;
+
+    const entered = this.focusRegistry.enteredElement();
+    const isInsideEntered = entered !== null && entered.contains(target);
+    if (isInsideEntered) {
+      if (event.key === 'Escape' || event.key === 'F2') {
+        this.focusRegistry.exitCell()?.focus();
+        event.preventDefault();
+      }
+      return true;
+    }
+
+    if (event.key !== 'Enter' && event.key !== 'F2') return false;
+    const cell = this.focusRegistry.cellContaining(target, this.host);
+    if (cell === null) return false;
+    const element = this.focusRegistry.elementOf(cell);
+    const isCellItself = element !== null && element === target;
+    if (!isCellItself || classifyCellWidgets(element) !== 'composite') return false;
+
+    this.focusRegistry.enterCell(cell)?.focus();
+    event.preventDefault();
+    return true;
+  }
+
   protected followFocusIn(event: Event): void {
     this.hasFocusWithin = true;
     if (!(event.target instanceof Node)) return;
 
     const cell = this.focusRegistry.cellContaining(event.target, this.host);
     if (cell === null) return;
+
+    // A pointer click straight into a composite cell's widget enters the cell.
+    const cellElement = this.focusRegistry.elementOf(cell);
+    const isWidgetOfComposite =
+      cellElement !== null &&
+      cellElement !== event.target &&
+      classifyCellWidgets(cellElement) === 'composite';
+    if (isWidgetOfComposite && this.focusRegistry.enteredElement() !== cellElement) {
+      this.focusRegistry.enterCell(cell);
+    }
 
     // Focus landing on the cell the store already points at writes nothing.
     const active = this.activeBodyCell();
@@ -182,6 +234,11 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     const next = event.relatedTarget;
     const isStillInside = next instanceof Node && this.host.contains(next);
     if (!isStillInside) this.hasFocusWithin = false;
+
+    const entered = this.focusRegistry.enteredElement();
+    const hasLeftEnteredCell =
+      entered !== null && !(next instanceof Node && entered.contains(next));
+    if (hasLeftEnteredCell) this.focusRegistry.exitCell();
   }
 
   private isFocusInsideOrLost(): boolean {
