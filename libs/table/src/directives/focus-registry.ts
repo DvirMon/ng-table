@@ -3,9 +3,11 @@ import { InjectionToken } from '@angular/core';
 import {
   findFirstWidget,
   findSingleWidget,
+  hasCompositeRole,
   isOwnTabindexWrite,
   isTakenOutOfTabOrder,
   removeFromTabOrder,
+  restoreCountedWidgets,
   restoreTabOrder,
   retrackTabindex as saveBindingTabindex,
   setSavedTabindex,
@@ -49,6 +51,18 @@ export interface FocusRegistry {
    * Returns the cell's element, or `null` when no cell was entered.
    */
   exitCell(): HTMLElement | null;
+  /**
+   * Puts the operable widgets in `row`'s cells back in the Tab order so Tab walks them, then
+   * leaves the grid. Switches from any other row; does nothing when `row` is already entered.
+   */
+  enterRow(row: RowTarget): void;
+  /** Takes the entered row's widgets out of the Tab order again. Does nothing outside row mode. */
+  exitRow(): void;
+  /**
+   * Whether `target` is a control inside a cell of the entered row, so focus landing on it is the
+   * row's Tab walk and not a move to that cell. A nested composite cell is not part of the walk.
+   */
+  isRowWalkTarget(target: Node, boundary: HTMLElement): boolean;
 }
 
 /** Creates the registry one `ngpTable` host provides to its cells. */
@@ -57,6 +71,7 @@ export function createFocusRegistry(): FocusRegistry {
   const cellByElement = new Map<HTMLElement, RegistryCell>();
   let tabStopWidget: HTMLElement | null = null;
   let entered: HTMLElement | null = null;
+  let rowEntered: HTMLElement | null = null;
 
   // Note: a row has its own `row|` prefix, so a column whose id is `'null'` cannot collide with it.
   function isRow(cell: RegistryCell): cell is RowTarget {
@@ -90,6 +105,7 @@ export function createFocusRegistry(): FocusRegistry {
     if (cell === undefined) return;
     cellByElement.delete(element);
     if (entered === element) entered = null;
+    if (rowEntered === element) rowEntered = null;
     const key = keyOf(cell);
     const isRegisteredElement = elementByKey.get(key) === element;
     if (isRegisteredElement) elementByKey.delete(key);
@@ -115,9 +131,10 @@ export function createFocusRegistry(): FocusRegistry {
     const element = elementByKey.get(keyOf(cell));
     if (element === undefined) return;
 
-    // Note: an entered cell keeps its controls in the Tab order; exit re-marks them.
+    // Note: an entered cell, or a cell of the entered row, keeps its controls in the Tab order;
+    // exit re-marks them.
     const isEnteredCell = element === entered;
-    if (isEnteredCell) return;
+    if (isEnteredCell || isWalkedCell(element)) return;
     if (node === element) markDescendants(element);
     else removeFromTabOrder(node);
   }
@@ -134,10 +151,20 @@ export function createFocusRegistry(): FocusRegistry {
     const cellElement = elementByKey.get(keyOf(cell));
     // Note: the cell element carries the roving tabindex; an entered cell keeps its controls live.
     const isIgnored =
-      cellElement === undefined || cellElement === target || cellElement === entered;
+      cellElement === undefined ||
+      cellElement === target ||
+      cellElement === entered ||
+      isWalkedCell(cellElement);
     if (isIgnored) return;
 
     saveBindingTabindex(target, record);
+  }
+
+  // Note: a nested composite cell is never walked; its own grid owns its Tab stop.
+  function isWalkedCell(cellElement: HTMLElement): boolean {
+    return (
+      rowEntered !== null && rowEntered.contains(cellElement) && !hasCompositeRole(cellElement)
+    );
   }
 
   function focusTargetOf(cell: RegistryCell): HTMLElement | null {
@@ -153,7 +180,9 @@ export function createFocusRegistry(): FocusRegistry {
     const widget = element === undefined || isRowStop ? null : findSingleWidget(element);
 
     const previousWidget = tabStopWidget;
-    const hasStaleTabStop = previousWidget !== null && previousWidget !== widget;
+    // Note: a widget the row walk restored keeps its restored value.
+    const isWalked = previousWidget !== null && rowEntered?.contains(previousWidget) === true;
+    const hasStaleTabStop = previousWidget !== null && previousWidget !== widget && !isWalked;
     if (hasStaleTabStop) writeTabindex(previousWidget, '-1');
     tabStopWidget = widget;
     if (element === undefined) return;
@@ -195,6 +224,39 @@ export function createFocusRegistry(): FocusRegistry {
     return element;
   }
 
+  function cellElementsOf(row: HTMLElement): HTMLElement[] {
+    const cellElements: HTMLElement[] = [];
+    for (const [cellElement, cell] of cellByElement) {
+      if (!isRow(cell) && row.contains(cellElement)) cellElements.push(cellElement);
+    }
+    return cellElements;
+  }
+
+  function enterRow(row: RowTarget): void {
+    const element = elementByKey.get(keyOf(row));
+    if (element !== undefined && element === rowEntered) return;
+    exitRow();
+    if (element === undefined) return;
+    rowEntered = element;
+    for (const cellElement of cellElementsOf(element)) restoreCountedWidgets(cellElement);
+  }
+
+  function exitRow(): void {
+    const element = rowEntered;
+    if (element === null) return;
+    rowEntered = null;
+    for (const cellElement of cellElementsOf(element)) markDescendants(cellElement);
+  }
+
+  function isRowWalkTarget(target: Node, boundary: HTMLElement): boolean {
+    if (rowEntered === null) return false;
+    const cell = cellContaining(target, boundary);
+    if (cell === null || isRow(cell)) return false;
+    const cellElement = elementByKey.get(keyOf(cell));
+    if (cellElement === undefined || cellElement === target) return false;
+    return isWalkedCell(cellElement);
+  }
+
   return {
     register,
     unregister,
@@ -207,6 +269,9 @@ export function createFocusRegistry(): FocusRegistry {
     enteredElement,
     enterCell,
     exitCell,
+    enterRow,
+    exitRow,
+    isRowWalkTarget,
   };
 }
 

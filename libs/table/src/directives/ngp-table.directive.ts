@@ -95,6 +95,9 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
   private hasFocusWithin = false;
   private lastSeenFocusRequests: number | null = null;
   private lastSeenTable: TableStore<TRow, TValues> | null = null;
+  // Note: set when focus leaves the grid; the row stays the Tab stop but its widgets go back to
+  // `-1` until focus returns.
+  private isRowWalkSuspended = false;
 
   constructor() {
     const flushAddedWidgets = this.keepAddedWidgetsOutOfTabOrder();
@@ -105,6 +108,7 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     // a stray Tab stop.
     afterEveryRender(() => {
       flushAddedWidgets();
+      this.syncRowWalk();
       this.focusRegistry.syncTabStop(this.activeRegistryCell());
     });
 
@@ -159,6 +163,7 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     };
     const observer = new MutationObserver((records) => {
       markAdded(records);
+      this.syncRowWalk();
       this.focusRegistry.syncTabStop(this.activeRegistryCell());
     });
     observer.observe(this.host, {
@@ -169,6 +174,14 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     });
     this.destroyRef.onDestroy(() => observer.disconnect());
     return () => markAdded(observer.takeRecords());
+  }
+
+  // A focused row lets Tab walk its widgets; any other target puts them back to `-1`.
+  private syncRowWalk(): void {
+    const target = this.toFocusableCell(this.activeTarget());
+    const isRowActive = target?.area === 'body' && target.columnId === null;
+    if (isRowActive && !this.isRowWalkSuspended) this.focusRegistry.enterRow(target);
+    else this.focusRegistry.exitRow();
   }
 
   /** Whether the host reads right-to-left now. Read per call, so a direction change is followed. */
@@ -262,7 +275,11 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
 
   protected followFocusIn(event: Event): void {
     this.hasFocusWithin = true;
+    this.isRowWalkSuspended = false;
     if (!(event.target instanceof Node)) return;
+
+    // Tab landing on a widget of the focused row is the row's walk, not a move to its cell.
+    if (this.focusRegistry.isRowWalkTarget(event.target, this.host)) return;
 
     // Focus back on the entered cell itself (Shift+Tab from its first widget, or its focused
     // widget removed) restores navigation.
@@ -311,6 +328,12 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     const next = event.relatedTarget;
     const isStillInside = next instanceof Node && this.host.contains(next);
     if (!isStillInside) this.hasFocusWithin = false;
+
+    const isGridBlur = next === null && !document.hasFocus();
+    if (!isStillInside && !isGridBlur) {
+      this.isRowWalkSuspended = true;
+      this.focusRegistry.exitRow();
+    }
 
     const entered = this.focusRegistry.enteredElement();
     // Note: a null `relatedTarget` with the document unfocused is a window blur, not a focus move.

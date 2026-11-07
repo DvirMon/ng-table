@@ -31,6 +31,28 @@ export function classifyCellWidgets(cell: HTMLElement): CellWidgetKind {
   return inspectCell(cell).kind;
 }
 
+/** Whether `cell` holds a nested composite (a grid, listbox or tree) by role. */
+export function hasCompositeRole(cell: HTMLElement): boolean {
+  return cell.querySelector(COMPOSITE_ROLE_SELECTOR) !== null;
+}
+
+/**
+ * Puts back the saved tabindex of every operable widget in `cell`, so native Tab walks them.
+ *
+ * @remarks
+ * Skips a cell holding a nested composite by role, and every control that does not count as a
+ * widget (disabled, hidden, `aria-hidden`, or authored `tabindex="-1"`).
+ */
+export function restoreCountedWidgets(cell: HTMLElement): void {
+  if (hasCompositeRole(cell)) return;
+  for (const element of countedWidgets(cell)) {
+    if (!originalTabindex.has(element)) continue;
+    const original = originalTabindex.get(element);
+    originalTabindex.delete(element);
+    writeTabindex(element, original ?? null);
+  }
+}
+
 /** The first counted widget in `cell` in document order, or `null` when it has none. */
 export function findFirstWidget(cell: HTMLElement): HTMLElement | null {
   const [widget] = countedWidgets(cell);
@@ -44,8 +66,7 @@ function countedWidgets(cell: HTMLElement): Element[] {
 // Note: one query pass yields both the kind and the counted widgets, so a caller needing both
 // does not classify twice.
 function inspectCell(cell: HTMLElement): { kind: CellWidgetKind; widgets: Element[] } {
-  const hasCompositeRole = cell.querySelector(COMPOSITE_ROLE_SELECTOR) !== null;
-  if (hasCompositeRole) return { kind: 'composite', widgets: [] };
+  if (hasCompositeRole(cell)) return { kind: 'composite', widgets: [] };
 
   const widgets = countedWidgets(cell);
   const hasNoWidgets = widgets.length === 0;
