@@ -62,7 +62,7 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
   /** The column count bound to `aria-colcount`. */
   readonly ariaColCount: Signal<number> = computed(() => this.ngpTable().columns().length);
 
-  /** The grid position the single Tab stop sits on, or `null` when the grid has none. */
+  /** The grid position the single Tab stop sits on, or `null` when the grid has no column. */
   readonly activeTarget: Signal<FocusTarget | null> = computed((): FocusTarget | null => {
     const table = this.ngpTable();
     const focused = table.focus();
@@ -70,7 +70,11 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
 
     const firstDataRow = table.renderRows().find((row) => row.kind !== 'group');
     const firstColumn = table.renderColumns()[0];
-    if (firstDataRow === undefined || firstColumn === undefined) return null;
+    if (firstColumn === undefined) return null;
+
+    // Note: with no data row the header is the only place for the Tab stop; without it the grid
+    // (and any sort control in the header) could not be reached by keyboard.
+    if (firstDataRow === undefined) return { area: 'header', columnId: firstColumn.id };
 
     return { area: 'body', rowId: firstDataRow.id, columnId: firstColumn.id };
   });
