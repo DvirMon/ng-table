@@ -105,6 +105,8 @@ export class NgpTableSortDirective {
 }
 ```
 
+The sort button is the sole widget of its header cell, so the header is a single-widget cell (see `core.md` [Widgets in cells](core.md#widgets-in-cells)). The table does not give header cells a Tab stop yet; that arrives with #236.
+
 **Note the button no longer has a `(click)` handler at all.** The directive's host listener on `<th>` catches the bubbled click (and, per the explicit implementation decision, also listens to `keydown.enter`/`keydown.space` directly rather than relying solely on the browser's native click-synthesis from keyboard-activated buttons — belt-and-suspenders for any future markup variant that doesn't use a native `<button>`).
 
 **Reading the modifier off the triggering event, never inferred after the fact:** `onActivate` reads `event.shiftKey`/`ctrlKey`/`metaKey` directly from whichever event fired it (`MouseEvent` for click, `KeyboardEvent` for the keydown handlers) — there's no separate "was a modifier held recently" state tracked across events.
