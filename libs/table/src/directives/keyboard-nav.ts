@@ -171,12 +171,10 @@ function cellAt(order: NavOrder, rowIndex: number, columnIndex: number): BodyCel
  * Returns the treegrid target a navigation key press moves to, adding row focus to the grid map.
  *
  * @remarks
- * A row is a focus target of its own: up/down/Home/End/paging move between rows, right enters
- * the row's first cell and left goes to the parent row. Every cell key behaves as in grid,
- * except left on a row's first cell (back to the row), up from the first row and down from a
- * header (both cross the header boundary by row). At an edge it returns the current target.
- * Returns `null` for an unhandled key, a Ctrl/Cmd + Arrow, an Alt/Shift combination, or a
- * current target not in the order.
+ * A row is a focus target: up, down, Home, End and paging move between rows, right enters the
+ * first cell and left goes to the parent row. Cell keys behave as in grid, except left on a
+ * first cell returns to its row. At an edge it returns the current target. Returns `null` for
+ * an unhandled key, a Ctrl/Cmd + Arrow, an Alt/Shift combination, or a target not in the order.
  */
 export function nextTreegridTarget(
   order: TreegridNavOrder,

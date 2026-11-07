@@ -27,8 +27,9 @@ import type { ColumnValueMap, FocusTarget, TableStore } from '../api/types';
  *
  * @remarks
  * Provides the store, a panel registry and a focus registry to the row, cell and panel
- * directives inside it. Sets `role="grid"`, `aria-rowcount` and `aria-colcount`, and moves
- * cell focus with the arrow, Home and End keys.
+ * directives inside it. Sets `role="grid"` (`treegrid` when the store composes `withTree()`),
+ * `aria-rowcount` and `aria-colcount`, and moves focus with the arrow, Home, End and page keys.
+ * In a treegrid a whole row is a focus target.
  *
  * @example
  * <table [ngpTable]="table"></table>
