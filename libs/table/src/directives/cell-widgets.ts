@@ -28,19 +28,31 @@ const originalTabindex = new WeakMap<Element, string | null>();
  * `removeFromTabOrder`.
  */
 export function classifyCellWidgets(cell: HTMLElement): CellWidgetKind {
-  const hasCompositeRole = cell.querySelector(COMPOSITE_ROLE_SELECTOR) !== null;
-  if (hasCompositeRole) return 'composite';
-
-  const widgets = Array.from(cell.querySelectorAll(FOCUSABLE_SELECTOR)).filter(isCountedWidget);
-  if (widgets.length === 0) return 'none';
-  if (widgets.length > 1) return 'composite';
-  return isSimpleWidget(widgets[0]) ? 'single' : 'composite';
+  return inspectCell(cell).kind;
 }
 
 /** The first counted widget in `cell` in document order, or `null` when it has none. */
 export function findFirstWidget(cell: HTMLElement): HTMLElement | null {
-  const widget = Array.from(cell.querySelectorAll(FOCUSABLE_SELECTOR)).find(isCountedWidget);
+  const [widget] = countedWidgets(cell);
   return widget instanceof HTMLElement ? widget : null;
+}
+
+function countedWidgets(cell: HTMLElement): Element[] {
+  return Array.from(cell.querySelectorAll(FOCUSABLE_SELECTOR)).filter(isCountedWidget);
+}
+
+// Note: one query pass yields both the kind and the counted widgets, so a caller needing both
+// does not classify twice.
+function inspectCell(cell: HTMLElement): { kind: CellWidgetKind; widgets: Element[] } {
+  const hasCompositeRole = cell.querySelector(COMPOSITE_ROLE_SELECTOR) !== null;
+  if (hasCompositeRole) return { kind: 'composite', widgets: [] };
+
+  const widgets = countedWidgets(cell);
+  const hasNoWidgets = widgets.length === 0;
+  const hasSeveralWidgets = widgets.length > 1;
+  if (hasNoWidgets) return { kind: 'none', widgets };
+  if (hasSeveralWidgets) return { kind: 'composite', widgets };
+  return { kind: isSimpleWidget(widgets[0]) ? 'single' : 'composite', widgets };
 }
 
 const NON_TEXT_INPUT_TYPES = new Set(['checkbox', 'radio', 'button', 'submit', 'reset', 'image']);
@@ -55,15 +67,18 @@ const NON_TEXT_INPUT_TYPES = new Set(['checkbox', 'radio', 'button', 'submit', '
  */
 export function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
-  if (target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return true;
+  const isTextControl =
+    target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement;
+  if (isTextControl) return true;
   if (target instanceof HTMLInputElement) return !NON_TEXT_INPUT_TYPES.has(target.type);
   return target.closest('[contenteditable]:not([contenteditable="false"])') !== null;
 }
 
 /** The one counted widget in `cell` when it is a `single` cell, else `null`. */
 export function findSingleWidget(cell: HTMLElement): HTMLElement | null {
-  if (classifyCellWidgets(cell) !== 'single') return null;
-  const widget = Array.from(cell.querySelectorAll(FOCUSABLE_SELECTOR)).find(isCountedWidget);
+  const { kind, widgets } = inspectCell(cell);
+  if (kind !== 'single') return null;
+  const [widget] = widgets;
   return widget instanceof HTMLElement ? widget : null;
 }
 
@@ -139,7 +154,8 @@ export function isOwnTabindexWrite(record: MutationRecord): boolean {
   const target = record.target;
   const pending = target instanceof Element ? (pendingOwnWrites.get(target) ?? 0) : 0;
   const isOwn = pending > 0;
-  if (isOwn && target instanceof Element) pendingOwnWrites.set(target, pending - 1);
+  const isOwnWriteOnElement = isOwn && target instanceof Element;
+  if (isOwnWriteOnElement) pendingOwnWrites.set(target, pending - 1);
   ownWriteVerdicts.set(record, isOwn);
   return isOwn;
 }
@@ -173,24 +189,29 @@ function isCountedWidget(element: Element): boolean {
   const isHiddenInput = element instanceof HTMLInputElement && element.type === 'hidden';
   const isAriaHidden = element.closest('[aria-hidden="true"]') !== null;
   const isOutOfTabOrder = savedOrLiveTabindex(element) === '-1';
-  return !isDisabled && !isHiddenInput && !isAriaHidden && !isOutOfTabOrder && !isHidden(element);
+  const isReachable = !isDisabled && !isHiddenInput && !isAriaHidden && !isOutOfTabOrder;
+  return isReachable && !isHidden(element);
 }
 
 // Note: reads the `hidden` attribute and inline `display:none` only; a test DOM has no layout.
 function isHidden(element: Element): boolean {
   for (let current: Element | null = element; current !== null; current = current.parentElement) {
     if (current.hasAttribute('hidden')) return true;
-    if (current instanceof HTMLElement && current.style.display === 'none') return true;
+    const isDisplayNone = current instanceof HTMLElement && current.style.display === 'none';
+    if (isDisplayNone) return true;
   }
   return false;
 }
 
 function isSimpleWidget(element: Element): boolean {
-  if (element.closest('[contenteditable]:not([contenteditable="false"])') !== null) return false;
+  const isInsideEditableRegion =
+    element.closest('[contenteditable]:not([contenteditable="false"])') !== null;
+  if (isInsideEditableRegion) return false;
   if (element instanceof HTMLButtonElement) return true;
   if (element instanceof HTMLAnchorElement) return true;
   if (element instanceof HTMLInputElement) {
-    return element.type === 'checkbox' || element.type === 'radio';
+    const isToggleInput = element.type === 'checkbox' || element.type === 'radio';
+    return isToggleInput;
   }
   return false;
 }
