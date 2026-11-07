@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 
 import { NGP_TABLE_FOCUS_REGISTRY } from './focus-registry';
+import { isRowTarget } from './keyboard-nav.types';
 import { NGP_TABLE_ROW, NGP_TABLE_ROW_MOVE, NGP_TABLE_STORE } from './table.tokens';
 import type { RenderRow, RowId } from '../api/types';
 
@@ -62,8 +63,7 @@ export class NgpTableRowDirective<TRow = unknown> {
   protected readonly tabindex: Signal<0 | -1 | null> = computed((): 0 | -1 | null => {
     if (!this.isRowStop()) return null;
     const target = this.table?.activeTarget();
-    const isActiveRow =
-      target?.area === 'body' && target.columnId === null && target.rowId === this.rowId();
+    const isActiveRow = isRowTarget(target) && target.rowId === this.rowId();
     return isActiveRow ? 0 : -1;
   });
 

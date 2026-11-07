@@ -27,6 +27,13 @@ export type GridBodyCell = { readonly area: 'body' } & BodyCell;
 /** A whole body row as a focus target, used only under `treegrid`. */
 export type RowTarget = { readonly area: 'body'; readonly rowId: RowId; readonly columnId: null };
 
+/** Whether `target` addresses a whole body row rather than a cell. */
+export function isRowTarget(
+  target: { readonly area?: string; readonly columnId?: string | null } | null | undefined,
+): target is RowTarget {
+  return target?.area === 'body' && target.columnId === null;
+}
+
 /** Anything the focus registry can hold: a body cell, a header cell or a treegrid row. */
 export type RegistryCell = BodyCell | HeaderCell | RowTarget;
 
