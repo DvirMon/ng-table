@@ -94,7 +94,7 @@ No `*`-prefixed (Angular structural) directives anywhere in NGP Table — locked
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Role    | Root directive and **store anchor**. Takes the `createTable()` instance as its input and provides _itself_ under `NGP_TABLE_STORE` (see Store Connection Pattern above), so descendants resolve the store through DI without any consumer-authored providers. Also the anchor selector for `table[ngpTable]`-scoped styling. Instantiates nothing — the store's lifetime belongs to the component field that created it. |
 | Inputs  | `[ngpTable]="table"` — required, the `createTable()` instance                                                                                                                                                                                                                                                                                                                                                            |
-| ARIA    | `role="grid"`, `aria-rowcount`, `aria-colcount`. Keyboard model: see [Grid navigation](#grid-navigation).                                                                                                                                                                                                                                                                                                                |
+| ARIA    | `role="treegrid"` if and only if `withTree()` is composed, else `role="grid"`; `aria-rowcount`, `aria-colcount`. The role follows the table the host is bound to, never row data. Keyboard model: see [Grid navigation](#grid-navigation).                                                                                                                                                                                  |
 | Notes   | Coexists with `style="table-layout: fixed;"` when virtual scroll is in use (see `virtual-scroll.md`)                                                                                                                                                                                                                                                                                                                     |
 
 ---
@@ -172,7 +172,7 @@ export class NgpTableExpandToggleDirective {
 
 ## Grid navigation
 
-The body is a `grid` of `gridcell`s with one Tab stop ([ADR-0030](../../adr/0030-table-wide-keyboard-model.md)).
+The body is a `grid` (or, with `withTree()`, a `treegrid`) of `gridcell`s with one Tab stop ([ADR-0030](../../adr/0030-table-wide-keyboard-model.md)).
 
 - **Roving tabindex.** The cell at the stored position has `tabindex="0"`; every other data cell has `-1`. Group rows bind no `tabindex`.
 - **Entry.** With no stored position, the Tab stop is the first data row's first cell. Afterwards it is the last focused cell.
@@ -183,6 +183,23 @@ The body is a `grid` of `gridcell`s with one Tab stop ([ADR-0030](../../adr/0030
 - **Click.** Focus landing in a cell, by click or otherwise, moves the position to that cell.
 - **DOM focus.** The position always moves. DOM focus follows only while focus is already inside the grid, or when the move was made with `focus.moveTo(target, { focusElement: true })`. No focus is taken on load.
 - **Opt out.** A key whose `keydown` was already `preventDefault()`-ed (for example by an inner control) is ignored by the grid.
+
+### Treegrid row focus
+
+Under `role="treegrid"` (`withTree()` composed) a data row is a focus target of its own, stored as `{ area: 'body', rowId, columnId: null }`. Rows and cells both take part in the arrow order. Group rows and detail panels do not.
+
+- **Roving tabindex.** The row at the stored position has `tabindex="0"`; its cells then have `-1`. When a cell is the position, the row has `-1`. The table keeps one Tab stop.
+- **Entry.** With no stored position, the Tab stop is the first data row itself, not its first cell.
+- **Row keys.**
+  - `↑` / `↓` move to the previous / next row. `↑` from the first row goes to the first header cell, and `↓` from a header cell goes to the first row.
+  - `Home` / `End` go to the first / last row. `Page Up` / `Page Down` move by the visible row count. No wrap.
+  - `→` enters the row's first cell. On a collapsed expandable row, `ngpTableTreeRow` expands it first (see [`tree.md`](tree.md#keyboard)).
+  - `←` goes to the parent row, the nearest earlier row with a smaller depth. A top-level row stays put. On an expanded row, `ngpTableTreeRow` collapses it first.
+- **Cell keys.** As in a grid, except `←` on a row's first cell returns to its row.
+- **Feature keys.** A feature directive handles its key on its own element in the bubble phase and calls `preventDefault()`. Core navigation skips a prevented key. No registration API.
+- **Click.** Focus landing on a row moves the position to the row. Focus landing on a cell inside it moves the position to the cell.
+- **Tab on a row.** While the row is the position, the operable widgets in its cells get their original `tabindex` back, so Tab walks them and then leaves the grid. Cells that hold a nested `grid`, `treegrid`, `listbox` or `tree` stay out. Moving to a cell or another row, or focus leaving the grid, puts the widgets back to `-1`.
+- **Grid host.** In a `role="grid"` table a row registers no target and binds no `tabindex`.
 
 ### Widgets in cells
 

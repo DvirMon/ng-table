@@ -23,4 +23,4 @@ Parallel-safe: [S4] alongside S2 → S3 → S5 after S1; S2, S3, S5 share ngp-ta
 | 3    | [Tree row ARIA and keys](step-3-tree-row-aria-keys.plan.md)                  | ✅ done |
 | 4    | [Pointer-only toggle](step-4-pointer-only-toggle.plan.md)                    | ✅ done |
 | 5    | [Row Tab walk](step-5-row-tab-walk.plan.md)                                  | ✅ done |
-| 6    | [Treegrid row navigation docs](step-6-treegrid-row-navigation-docs.plan.md)  | ⬚ pending |
+| 6    | [Treegrid row navigation docs](step-6-treegrid-row-navigation-docs.plan.md)  | ✅ done |
