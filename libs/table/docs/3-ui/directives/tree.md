@@ -143,8 +143,9 @@ example, ignore events whose target is inside the button).
 
 Collapsible grouping (`withGrouping()` + `withTree()`) uses the same
 pair. A group collapses through `table.tree.toggle(groupId)`, and
-flattening stamps `hasChildren` / `isExpanded` on group rows, so both
-directives work on group headers unchanged:
+flattening stamps `hasChildren` / `isExpanded` on group rows, so the
+toggle still expands and collapses a group header. A click does not
+move focus: group rows are not treegrid stops until #240.
 
 ```html
 <tr [ngpTableRow]="row" ngpTableTreeRow>

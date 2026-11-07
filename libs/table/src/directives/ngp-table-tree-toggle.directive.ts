@@ -1,13 +1,8 @@
 import { computed, Directive, inject, type Signal } from '@angular/core';
 
+import { hasTree } from './has-tree';
 import { NgpTableCollapsibleTrigger } from './ngp-table-collapsible-trigger.directive';
 import { NGP_TABLE_ROW, NGP_TABLE_STORE } from './table.tokens';
-import type { TreeMembers } from '../api/features/with-tree/types';
-
-function hasTree(table: unknown): table is TreeMembers {
-  if (typeof table !== 'object' || table === null || !('tree' in table)) return false;
-  return typeof table.tree === 'function' && 'toggle' in table.tree;
-}
 
 function assertTreeComposed(readTable: () => unknown): void {
   if (typeof ngDevMode === 'undefined' || !ngDevMode) return;
@@ -23,12 +18,12 @@ function assertTreeComposed(readTable: () => unknown): void {
  * @remarks
  * The type is always `button`, out of the Tab order (`tabindex="-1"`) and hidden from assistive
  * technology (`aria-hidden="true"`); the row carries `aria-expanded`. Sets `data-expanded`; on a
- * leaf row the button is also disabled. A click toggles the row and moves focus to it. Note:
- * throws in dev mode unless the table composes `withTree()`.
+ * leaf row the button is also disabled. Pointer-only: keyboard users expand and collapse through
+ * the row. A click toggles the row and moves focus to it, except on a group header, which is not
+ * a focus stop. Note: throws in dev mode unless the table composes `withTree()`.
  *
  * @example
- * <button ngpTableTreeToggle
- *   [attr.aria-label]="'Children of ' + row.data.name">▸</button>
+ * <button ngpTableTreeToggle>▸</button>
  */
 @Directive({
   selector: 'button[ngpTableTreeToggle]',
@@ -58,8 +53,11 @@ export class NgpTableTreeToggleDirective extends NgpTableCollapsibleTrigger {
   protected override toggle(): void {
     const table = this.table.ngpTable();
     if (!hasTree(table)) return;
-    const rowId = this.row.ngpTableRow().id;
+    const { id: rowId, kind } = this.row.ngpTableRow();
     table.tree.toggle(rowId);
+    // Note: a group header registers no focus stop, so moving focus there would leave the grid
+    // with no `tabindex="0"`.
+    if (kind === 'group') return;
     table.focus.moveTo({ area: 'body', rowId, columnId: null }, { focusElement: true });
   }
 }

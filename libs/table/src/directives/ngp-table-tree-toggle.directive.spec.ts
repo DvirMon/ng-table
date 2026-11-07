@@ -229,6 +229,15 @@ describe('NgpTableTreeToggleDirective', () => {
     for (const id of memberIds) expect(visibleRowIds()).not.toContain(id);
   });
 
+  it('leaves exactly one tabindex="0" in the grid after toggling a group header', () => {
+    const { fixture, clickToggle } = setup(GroupedHost);
+
+    clickToggle(US_HEADER_ID);
+
+    const root: HTMLElement = fixture.nativeElement;
+    expect(root.querySelectorAll('[tabindex="0"]')).toHaveLength(1);
+  });
+
   it('lets the click bubble to the row without preventing default', () => {
     const { clickToggle, rowClicks } = setup(TreeHost);
 
