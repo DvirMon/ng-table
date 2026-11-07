@@ -1529,22 +1529,25 @@ describe('NgpTableDirective header cells', () => {
   });
 
   it('moves the single tabindex="0" to the header cell named by focus.moveTo', () => {
-    const { host, flush, headerCell, headerCells, tabStops } = setupHeader(HeaderGridHost);
+    const { host, flush, headerButton, headerCells, tabStops } = setupHeader(HeaderGridHost);
 
     host.table.focus.moveTo({ area: 'header', columnId: 'name' });
     flush();
 
-    expect(tabStops()).toEqual([headerCell(2)]);
-    expect(headerCells().map((cell) => cell.getAttribute('tabindex'))).toEqual(['-1', '0']);
+    // Note: each header cell holds one Sort button, so the button carries the Tab stop (K34).
+    expect(tabStops()).toEqual([headerButton(2)]);
+    expect(headerCells().map((cell) => cell.getAttribute('tabindex'))).toEqual(['-1', '-1']);
   });
 
   it("resolves a header cell's column through renderColumns() when the first declared column is hidden", () => {
-    const { host, flush, headerCell, tabStops } = setupHeader(HiddenFirstColumnHeaderHost);
+    const { host, flush, headerCell, headerButton, tabStops } = setupHeader(
+      HiddenFirstColumnHeaderHost,
+    );
 
     host.table.focus.moveTo({ area: 'header', columnId: 'category' });
     flush();
 
-    expect(tabStops()).toEqual([headerCell(1)]);
+    expect(tabStops()).toEqual([headerButton(1)]);
     expect(headerCell(1).getAttribute('aria-colindex')).toBe('1');
   });
 
@@ -1565,7 +1568,7 @@ describe('NgpTableDirective header cells', () => {
     flush();
 
     expect(host.table.focus()).toEqual({ area: 'header', columnId: 'name' });
-    expect(tabStops()).toEqual([headerCell(2)]);
+    expect(tabStops()).toEqual([headerButton(2)]);
     expect(document.activeElement).toBe(target);
   });
 });
