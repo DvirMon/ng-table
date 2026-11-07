@@ -475,7 +475,8 @@ describe('NgpTableDirective keyboard and DOM focus', () => {
     flush();
 
     expect(host.table.focus()).toEqual({ area: 'body', rowId: 2, columnId: 'name' });
-    expect(tabStops()).toEqual([cell(2, 'name')]);
+    // K34: row 2 `name` holds one button, so the button is the cell's Tab stop either way.
+    expect(tabStops()).toEqual([button]);
     expect(document.activeElement).toBe(target);
   });
 
@@ -575,11 +576,298 @@ describe('NgpTableDirective keyboard and DOM focus', () => {
 
     host.table.focus.moveTo({ area: 'body', rowId: 2, columnId: 'name' }, { focusElement: true });
     flush();
-    expect(document.activeElement).toBe(cell(2, 'name'));
+    // K34: row 2 `name` is a single-widget cell, so DOM focus lands on its button.
+    expect(document.activeElement).toBe(cell(2, 'name').querySelector('button'));
 
     outside().focus();
     host.table.focus.moveTo({ area: 'body', rowId: 1, columnId: 'id' });
     flush();
     expect(document.activeElement).toBe(outside());
+  });
+});
+
+@Component({
+  imports: IMPORTS,
+  template: `
+    <button type="button" id="outside">Outside</button>
+    <table [ngpTable]="table">
+      <tbody>
+        @for (row of table.renderRows(); track row.id) {
+          <tr [ngpTableRow]="row">
+            @for (column of table.renderColumns(); track column.id; let i = $index) {
+              <td [ngpTableCell]="i">
+                @if (column.id === 'name') {
+                  @if (showCheckbox()) {
+                    <input type="checkbox" [attr.aria-label]="'Select ' + row.id" />
+                  }
+                } @else if (row.id === 3) {
+                  <button type="button">Edit 3</button>
+                  <button type="button">Delete 3</button>
+                } @else {
+                  {{ column.id }}
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  `,
+})
+class WidgetGridHost {
+  readonly data = signal<MockRow[]>([...mockRows]);
+  readonly table = createGridTable(this.data);
+  readonly showCheckbox = signal(true);
+}
+
+describe('NgpTableDirective single-widget cells', () => {
+  function setupWidgetGrid() {
+    const fixture = TestBed.createComponent(WidgetGridHost);
+    const root: HTMLElement = fixture.nativeElement;
+    document.body.appendChild(root);
+    const flush = (): void => {
+      TestBed.tick();
+      fixture.detectChanges();
+    };
+    flush();
+
+    const cell = (rowId: number, columnId: 'id' | 'name'): HTMLElement => {
+      const colIndex = columnId === 'id' ? '1' : '2';
+      const found = root.querySelector<HTMLElement>(
+        `[aria-rowindex="${rowId}"] [aria-colindex="${colIndex}"]`,
+      );
+      if (found === null) throw new Error(`no cell ${rowId}/${columnId}`);
+      return found;
+    };
+    const widget = (label: string): HTMLElement => {
+      const found = Array.from(root.querySelectorAll<HTMLElement>('input, button')).find(
+        (el) => (el.getAttribute('aria-label') ?? el.textContent?.trim()) === label,
+      );
+      if (found === undefined) throw new Error(`no widget ${label}`);
+      return found;
+    };
+    const outside = (): HTMLElement => {
+      const found = root.querySelector<HTMLElement>('#outside');
+      if (found === null) throw new Error('no outside button');
+      return found;
+    };
+    const press = (target: HTMLElement, init: KeyboardEventInit): KeyboardEvent => {
+      const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init });
+      target.dispatchEvent(event);
+      return event;
+    };
+    const tabStops = (): HTMLElement[] =>
+      Array.from(root.querySelectorAll<HTMLElement>('[tabindex="0"]'));
+
+    return { host: fixture.componentInstance, flush, cell, widget, outside, press, tabStops };
+  }
+
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
+
+  it('puts the only tabindex="0" on the widget of a single-widget active cell', () => {
+    const { host, flush, cell, widget, outside, tabStops } = setupWidgetGrid();
+
+    outside().focus();
+    host.table.focus.moveTo({ area: 'body', rowId: 2, columnId: 'name' });
+    flush();
+
+    expect(widget('Select 2').getAttribute('tabindex')).toBe('0');
+    expect(cell(2, 'name').getAttribute('tabindex')).toBe('-1');
+    expect(tabStops()).toEqual([widget('Select 2')]);
+    expect(document.activeElement).toBe(outside());
+  });
+
+  it('focuses the widget when arrowing onto a single-widget cell', () => {
+    const { host, flush, cell, widget, press, tabStops } = setupWidgetGrid();
+    cell(1, 'id').focus();
+    flush();
+
+    const event = press(cell(1, 'id'), { key: 'ArrowRight' });
+    flush();
+
+    expect(document.activeElement).toBe(widget('Select 1'));
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 1, columnId: 'name' });
+    expect(tabStops()).toEqual([widget('Select 1')]);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('focuses a multi-widget cell itself when arrowed onto', () => {
+    const { flush, cell, widget, press, tabStops } = setupWidgetGrid();
+    cell(2, 'id').focus();
+    flush();
+
+    press(cell(2, 'id'), { key: 'ArrowDown' });
+    flush();
+
+    expect(document.activeElement).toBe(cell(3, 'id'));
+    expect(widget('Edit 3').getAttribute('tabindex')).toBe('-1');
+    expect(widget('Delete 3').getAttribute('tabindex')).toBe('-1');
+    expect(tabStops()).toEqual([cell(3, 'id')]);
+  });
+
+  it('navigates from a focused widget and returns it to tabindex="-1"', () => {
+    const { flush, cell, widget, press, tabStops } = setupWidgetGrid();
+    cell(1, 'id').focus();
+    flush();
+    press(cell(1, 'id'), { key: 'ArrowRight' });
+    flush();
+    expect(document.activeElement).toBe(widget('Select 1'));
+
+    press(widget('Select 1'), { key: 'ArrowLeft' });
+    flush();
+
+    expect(document.activeElement).toBe(cell(1, 'id'));
+    expect(widget('Select 1').getAttribute('tabindex')).toBe('-1');
+    expect(tabStops()).toEqual([cell(1, 'id')]);
+  });
+
+  it('moves the Tab stop back to the cell when its only widget is removed', () => {
+    const { host, flush, cell, outside, tabStops } = setupWidgetGrid();
+    outside().focus();
+    host.table.focus.moveTo({ area: 'body', rowId: 2, columnId: 'name' });
+    flush();
+
+    host.showCheckbox.set(false);
+    flush();
+
+    expect(tabStops()).toEqual([cell(2, 'name')]);
+  });
+});
+
+@Component({
+  imports: IMPORTS,
+  template: `
+    <table [ngpTable]="table">
+      <tbody>
+        @for (row of table.renderRows(); track row.id) {
+          <tr [ngpTableRow]="row">
+            @for (column of table.renderColumns(); track column.id; let i = $index) {
+              <td [ngpTableCell]="i">
+                @if (i === 0) {
+                  <button type="button">b</button>
+                  <a href="#">l</a>
+                  <input />
+                  <span tabindex="0">s</span>
+                } @else {
+                  {{ column.id }}
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  `,
+})
+class WidgetCellsHost {
+  readonly table = createFlatTable(mockGroupingRows, ALL_COLUMNS);
+}
+
+@Component({
+  imports: IMPORTS,
+  template: `
+    <table [ngpTable]="table">
+      <tbody>
+        @for (row of table.renderRows(); track row.id) {
+          <tr [ngpTableRow]="row">
+            @for (column of table.renderColumns(); track column.id; let i = $index) {
+              <td [ngpTableCell]="i">
+                @if (i === 0 && edit()) {
+                  <button type="button" class="added">b</button>
+                  <div><input class="nested" /></div>
+                } @else {
+                  {{ column.id }}
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  `,
+})
+class SwapCellsHost {
+  readonly edit = signal(false);
+  readonly table = createFlatTable(mockGroupingRows, ALL_COLUMNS);
+}
+
+@Component({
+  imports: IMPORTS,
+  template: `
+    <table [ngpTable]="table">
+      <thead>
+        <tr>
+          <th>
+            @if (show()) {
+              <button type="button" id="head-btn">sort</button>
+            }
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of table.renderRows(); track row.id) {
+          <tr [ngpTableRow]="row">
+            @for (column of table.renderColumns(); track column.id; let i = $index) {
+              <td [ngpTableCell]="i">
+                @if (i === 1 && show()) {
+                  <button type="button" class="cell-btn">b</button>
+                } @else {
+                  {{ column.id }}
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  `,
+})
+class HeaderAndCellHost {
+  readonly show = signal(false);
+  readonly table = createFlatTable(mockGroupingRows, ALL_COLUMNS);
+}
+
+describe('NgpTableDirective cell widgets tab order', () => {
+  const flushObserver = (): Promise<void> => new Promise<void>((resolve) => setTimeout(resolve));
+
+  it('marks every focusable already inside a cell as tabindex="-1" when the cell registers', () => {
+    const { root, tabStops } = setup(WidgetCellsHost);
+    const widgets = Array.from(
+      root.querySelectorAll<HTMLElement>('td button, td a, td input, td span'),
+    );
+
+    expect(widgets.length).toBeGreaterThan(0);
+    for (const widget of widgets) expect(widget.getAttribute('tabindex')).toBe('-1');
+    const stops = tabStops();
+    expect(stops).toHaveLength(1);
+    expect(stops[0].tagName).toBe('TD');
+    expect(stops[0].getAttribute('aria-colindex')).toBe('1');
+    expect(rowIndexOf(stops[0])).toBe('1');
+  });
+
+  it('marks a control added or swapped into a registered cell after the observer flushes', async () => {
+    const { fixture, root, host, tabStops } = setup(SwapCellsHost);
+
+    host.edit.set(true);
+    fixture.detectChanges();
+    await flushObserver();
+
+    const added = Array.from(root.querySelectorAll<HTMLElement>('.added, .nested'));
+    expect(added.length).toBeGreaterThan(0);
+    for (const el of added) expect(el.getAttribute('tabindex')).toBe('-1');
+    expect(tabStops()).toHaveLength(1);
+  });
+
+  it('leaves focusables outside registered cells untouched while marking the ones inside', async () => {
+    const { fixture, root, host } = setup(HeaderAndCellHost);
+
+    host.show.set(true);
+    fixture.detectChanges();
+    await flushObserver();
+
+    expect(root.querySelector('#head-btn')?.hasAttribute('tabindex')).toBe(false);
+    expect(root.querySelector('.cell-btn')?.getAttribute('tabindex')).toBe('-1');
   });
 });

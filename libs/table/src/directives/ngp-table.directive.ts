@@ -1,6 +1,8 @@
 import {
+  afterEveryRender,
   afterNextRender,
   computed,
+  DestroyRef,
   Directive,
   effect,
   ElementRef,
@@ -74,6 +76,7 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private readonly injector = inject(Injector);
   private readonly focusRegistry = inject(NGP_TABLE_FOCUS_REGISTRY);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Note: remembered rather than read from `document.activeElement`, because removing the
   // focused cell drops focus to `<body>` without a `focusout` inside the host.
@@ -82,6 +85,12 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
   private lastSeenTable: TableStore<TRow, TValues> | null = null;
 
   constructor() {
+    this.keepAddedWidgetsOutOfTabOrder();
+
+    // Cell bindings write the roving tabindex on the cell; this moves it onto a lone widget.
+    // Runs after every render because a widget can appear or vanish without any signal change.
+    afterEveryRender(() => this.focusRegistry.syncTabStop(this.activeBodyCell()));
+
     // Moves DOM focus to the stored position: always on a new `focusElement` request, otherwise
     // only while focus is already inside the grid. Else only the tabindex moves.
     effect(() => {
@@ -110,6 +119,24 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
       const cell: BodyCell = { rowId: focused.rowId, columnId: focused.columnId };
       afterNextRender(() => this.focusCellElement(cell), { injector: this.injector });
     });
+  }
+
+  // Controls rendered into a cell after it registered (an edit mode, a swapped widget) must not
+  // become Tab stops either.
+  private keepAddedWidgetsOutOfTabOrder(): void {
+    if (typeof MutationObserver === 'undefined') return;
+
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        for (const added of Array.from(record.addedNodes)) {
+          this.focusRegistry.refreshWidgets(added, this.host);
+        }
+        this.focusRegistry.refreshWidgets(record.target, this.host);
+      }
+      this.focusRegistry.syncTabStop(this.activeBodyCell());
+    });
+    observer.observe(this.host, { childList: true, subtree: true });
+    this.destroyRef.onDestroy(() => observer.disconnect());
   }
 
   protected navigateBodyOnKeydown(event: Event): void {
@@ -175,6 +202,6 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
 
     const isFocusAlreadyInCell = element.contains(document.activeElement);
     if (isFocusAlreadyInCell) return;
-    element.focus();
+    (this.focusRegistry.focusTargetOf(cell) ?? element).focus();
   }
 }
