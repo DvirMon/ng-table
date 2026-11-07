@@ -21,9 +21,10 @@ function assertTreeComposed(readTable: () => unknown): void {
  * Toggles its row's children open or closed through `table.tree.toggle()`.
  *
  * @remarks
- * The type is always `button`. Sets `aria-expanded` and `data-expanded`; on a leaf row the
- * button is disabled and `aria-hidden`, and shows `aria-expanded="false"`. Note: throws in dev
- * mode unless the table composes `withTree()`.
+ * The type is always `button`, out of the Tab order (`tabindex="-1"`) and hidden from assistive
+ * technology (`aria-hidden="true"`); the row carries `aria-expanded`. Sets `data-expanded`; on a
+ * leaf row the button is also disabled. A click toggles the row and moves focus to it. Note:
+ * throws in dev mode unless the table composes `withTree()`.
  *
  * @example
  * <button ngpTableTreeToggle
@@ -33,8 +34,9 @@ function assertTreeComposed(readTable: () => unknown): void {
   selector: 'button[ngpTableTreeToggle]',
   host: {
     '[attr.disabled]': 'isLeaf() ? "" : null',
-    '[attr.aria-hidden]': 'isLeaf() ? "true" : null',
     '[attr.data-disabled]': 'isLeaf() ? "" : null',
+    '[attr.tabindex]': '"-1"',
+    '[attr.aria-hidden]': '"true"',
   },
 })
 export class NgpTableTreeToggleDirective extends NgpTableCollapsibleTrigger {
@@ -55,6 +57,9 @@ export class NgpTableTreeToggleDirective extends NgpTableCollapsibleTrigger {
 
   protected override toggle(): void {
     const table = this.table.ngpTable();
-    if (hasTree(table)) table.tree.toggle(this.row.ngpTableRow().id);
+    if (!hasTree(table)) return;
+    const rowId = this.row.ngpTableRow().id;
+    table.tree.toggle(rowId);
+    table.focus.moveTo({ area: 'body', rowId, columnId: null }, { focusElement: true });
   }
 }
