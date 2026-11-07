@@ -18,7 +18,7 @@ Parallel-safe: [S2, S3, S4, S5] after S1 (no compile edge); S2, S3, S5 edit ngp-
 
 | Step | Title                                                                        | Status       |
 | ---- | ---------------------------------------------------------------------------- | ------------ |
-| 1    | [Treegrid role and row focus](step-1-treegrid-role-row-focus.plan.md)        | ⬚ pending |
+| 1    | [Treegrid role and row focus](step-1-treegrid-role-row-focus.plan.md)        | ✅ done |
 | 2    | [Treegrid key map](step-2-treegrid-key-map.plan.md)                          | ⬚ pending |
 | 3    | [Tree row ARIA and keys](step-3-tree-row-aria-keys.plan.md)                  | ⬚ pending |
 | 4    | [Pointer-only toggle](step-4-pointer-only-toggle.plan.md)                    | ⬚ pending |

@@ -11,15 +11,15 @@ import {
   setSavedTabindex,
   writeTabindex,
 } from './cell-widgets';
-import type { BodyCell, HeaderCell } from './keyboard-nav.types';
+import type { RegistryCell, RowTarget } from './keyboard-nav.types';
 
 /** One table's lookup between body cells and their rendered elements. */
 export interface FocusRegistry {
-  register(cell: BodyCell | HeaderCell, element: HTMLElement): void;
+  register(cell: RegistryCell, element: HTMLElement): void;
   unregister(element: HTMLElement): void;
-  elementOf(cell: BodyCell | HeaderCell): HTMLElement | null;
+  elementOf(cell: RegistryCell): HTMLElement | null;
   /** The registered cell at or above `node`, stopping at `boundary`. */
-  cellContaining(node: Node, boundary: HTMLElement): BodyCell | HeaderCell | null;
+  cellContaining(node: Node, boundary: HTMLElement): RegistryCell | null;
   /**
    * Takes controls added under `node` out of the Tab order. Does nothing when `node` is outside
    * every registered cell.
@@ -34,16 +34,16 @@ export interface FocusRegistry {
    * Keeps exactly one Tab stop: the active cell's lone widget when it has one, else the cell.
    * The previous widget drops back to `-1`.
    */
-  syncTabStop(active: BodyCell | HeaderCell | null): void;
+  syncTabStop(active: RegistryCell | null): void;
   /** The element focus should land on for `cell`: its lone widget, else the cell itself. */
-  focusTargetOf(cell: BodyCell | HeaderCell): HTMLElement | null;
+  focusTargetOf(cell: RegistryCell): HTMLElement | null;
   /** The element of the cell currently in entered mode, or `null` in navigation mode. */
   enteredElement(): HTMLElement | null;
   /**
    * Puts `cell`'s widgets back in the Tab order so Tab walks them natively.
    * Returns the first widget, for the caller to focus; `null` when there is none.
    */
-  enterCell(cell: BodyCell | HeaderCell): HTMLElement | null;
+  enterCell(cell: RegistryCell): HTMLElement | null;
   /**
    * Returns the entered cell to navigation mode and takes its widgets out of the Tab order again.
    * Returns the cell's element, or `null` when no cell was entered.
@@ -54,22 +54,30 @@ export interface FocusRegistry {
 /** Creates the registry one `ngpTable` host provides to its cells. */
 export function createFocusRegistry(): FocusRegistry {
   const elementByKey = new Map<string, HTMLElement>();
-  const cellByElement = new Map<HTMLElement, BodyCell | HeaderCell>();
+  const cellByElement = new Map<HTMLElement, RegistryCell>();
   let tabStopWidget: HTMLElement | null = null;
   let entered: HTMLElement | null = null;
 
+  // Note: a row has its own `row|` prefix, so a column whose id is `'null'` cannot collide with it.
+  function isRow(cell: RegistryCell): cell is RowTarget {
+    return 'area' in cell && cell.area === 'body';
+  }
+
   // Note: the key carries the id's type so row `1` and row `'1'` stay distinct. Header keys start
   // with `header|`, which no body key can (those start with a `typeof` name and `:`).
-  function keyOf(cell: BodyCell | HeaderCell): string {
+  function keyOf(cell: RegistryCell): string {
+    if (isRow(cell)) return `row|${typeof cell.rowId}:${String(cell.rowId)}`;
     if ('area' in cell) return `header|${cell.columnId}`;
     return `${typeof cell.rowId}:${String(cell.rowId)}|${cell.columnId}`;
   }
 
-  function register(cell: BodyCell | HeaderCell, element: HTMLElement): void {
+  function register(cell: RegistryCell, element: HTMLElement): void {
     unregister(element);
     elementByKey.set(keyOf(cell), element);
     cellByElement.set(element, cell);
-    markDescendants(element);
+    // Note: a row's children are cells with their own bindings; marking them would strip the
+    // active cell's tabindex.
+    if (!isRow(cell)) markDescendants(element);
   }
 
   // Note: never marks the cell element itself; it carries the roving tabindex.
@@ -87,11 +95,11 @@ export function createFocusRegistry(): FocusRegistry {
     if (isRegisteredElement) elementByKey.delete(key);
   }
 
-  function elementOf(cell: BodyCell | HeaderCell): HTMLElement | null {
+  function elementOf(cell: RegistryCell): HTMLElement | null {
     return elementByKey.get(keyOf(cell)) ?? null;
   }
 
-  function cellContaining(node: Node, boundary: HTMLElement): BodyCell | HeaderCell | null {
+  function cellContaining(node: Node, boundary: HTMLElement): RegistryCell | null {
     let current: Node | null = node;
     while (current !== null && current !== boundary) {
       const cell = current instanceof HTMLElement ? cellByElement.get(current) : undefined;
@@ -103,7 +111,7 @@ export function createFocusRegistry(): FocusRegistry {
 
   function refreshWidgets(node: Node, boundary: HTMLElement): void {
     const cell = cellContaining(node, boundary);
-    if (cell === null) return;
+    if (cell === null || isRow(cell)) return;
     const element = elementByKey.get(keyOf(cell));
     if (element === undefined) return;
 
@@ -122,7 +130,7 @@ export function createFocusRegistry(): FocusRegistry {
     if (isNotBindingElement) return;
 
     const cell = cellContaining(target, boundary);
-    if (cell === null) return;
+    if (cell === null || isRow(cell)) return;
     const cellElement = elementByKey.get(keyOf(cell));
     // Note: the cell element carries the roving tabindex; an entered cell keeps its controls live.
     const isIgnored =
@@ -132,15 +140,17 @@ export function createFocusRegistry(): FocusRegistry {
     saveBindingTabindex(target, record);
   }
 
-  function focusTargetOf(cell: BodyCell | HeaderCell): HTMLElement | null {
+  function focusTargetOf(cell: RegistryCell): HTMLElement | null {
     const element = elementByKey.get(keyOf(cell));
     if (element === undefined) return null;
+    if (isRow(cell)) return element;
     return findSingleWidget(element) ?? element;
   }
 
-  function syncTabStop(active: BodyCell | HeaderCell | null): void {
+  function syncTabStop(active: RegistryCell | null): void {
     const element = active === null ? undefined : elementByKey.get(keyOf(active));
-    const widget = element === undefined ? null : findSingleWidget(element);
+    const isRowStop = active !== null && isRow(active);
+    const widget = element === undefined || isRowStop ? null : findSingleWidget(element);
 
     const previousWidget = tabStopWidget;
     const hasStaleTabStop = previousWidget !== null && previousWidget !== widget;
@@ -167,7 +177,7 @@ export function createFocusRegistry(): FocusRegistry {
     return entered;
   }
 
-  function enterCell(cell: BodyCell | HeaderCell): HTMLElement | null {
+  function enterCell(cell: RegistryCell): HTMLElement | null {
     const element = elementByKey.get(keyOf(cell));
     if (element === undefined) return null;
     const isSwitchingCell = entered !== null && entered !== element;

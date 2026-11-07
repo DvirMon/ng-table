@@ -16,7 +16,7 @@ import {
 import { classifyCellWidgets, isEditableTarget } from './cell-widgets';
 import { createFocusRegistry, NGP_TABLE_FOCUS_REGISTRY } from './focus-registry';
 import { nextGridTarget } from './keyboard-nav';
-import type { BodyCell, GridCell, HeaderCell } from './keyboard-nav.types';
+import type { BodyCell, GridCell, RegistryCell, RowTarget } from './keyboard-nav.types';
 import { isRtlAt, pageStepOf } from './page-step';
 import { createPanelRegistry, NGP_TABLE_PANEL_REGISTRY } from './panel-registry';
 import { NGP_TABLE_STORE } from './table.tokens';
@@ -43,7 +43,7 @@ import type { ColumnValueMap, FocusTarget, TableStore } from '../api/types';
   host: {
     // Note: set even on native `<table>`. An explicit role matching the implicit native one is a
     // documented no-op, so one directive serves both host tags.
-    role: 'grid',
+    '[attr.role]': "isTreegrid() ? 'treegrid' : 'grid'",
     '[attr.aria-rowcount]': 'ariaRowCount()',
     '[attr.aria-colcount]': 'ariaColCount()',
     '(keydown)': 'navigateGridOnKeydown($event)',
@@ -55,6 +55,9 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
   /** The table store this host renders. */
   readonly ngpTable: InputSignal<TableStore<TRow, TValues>> =
     input.required<TableStore<TRow, TValues>>();
+
+  /** Whether the current store composes `withTree()`. Read from the store, never from row data. */
+  readonly isTreegrid: Signal<boolean> = computed(() => 'tree' in this.ngpTable());
 
   /** The total row count bound to `aria-rowcount`. */
   readonly ariaRowCount: Signal<number> = computed(() => this.ngpTable().totalRowCount());
@@ -75,6 +78,9 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     // Note: with no data row the header is the only place for the Tab stop; without it the grid
     // (and any sort control in the header) could not be reached by keyboard.
     if (firstDataRow === undefined) return { area: 'header', columnId: firstColumn.id };
+
+    // Note: in a treegrid the first entry is the row itself, not its first cell.
+    if (this.isTreegrid()) return { area: 'body', rowId: firstDataRow.id, columnId: null };
 
     return { area: 'body', rowId: firstDataRow.id, columnId: firstColumn.id };
   });
@@ -125,7 +131,7 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
 
       const shouldMoveDomFocus = hasNewRequest || this.hasFocusWithin;
       if (!shouldMoveDomFocus) return;
-      const cell = this.toGridCell(focused);
+      const cell = this.toFocusableCell(focused);
       if (cell === null) return;
 
       afterNextRender(() => this.focusCellElement(cell), { injector: this.injector });
@@ -249,6 +255,11 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     const cell = this.focusRegistry.cellContaining(event.target, this.host);
     if (cell === null) return;
 
+    if ('area' in cell && cell.area === 'body') {
+      this.writeRowTarget(cell);
+      return;
+    }
+
     // A pointer click straight into a composite cell's widget enters the cell.
     const cellElement = this.focusRegistry.elementOf(cell);
     const isWidgetOfComposite =
@@ -299,8 +310,8 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     return isLost || this.host.contains(active);
   }
 
-  private activeRegistryCell(): BodyCell | HeaderCell | null {
-    const cell = this.toGridCell(this.activeTarget());
+  private activeRegistryCell(): RegistryCell | null {
+    const cell = this.toFocusableCell(this.activeTarget());
     return cell === null ? null : this.registryCellOf(cell);
   }
 
@@ -316,9 +327,28 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     return { area: 'body', rowId: target.rowId, columnId: target.columnId };
   }
 
+  // Focus landing on the row the store already points at writes nothing.
+  private writeRowTarget(row: RowTarget): void {
+    const target = this.activeTarget();
+    const isAlreadyActive =
+      target?.area === 'body' && target.columnId === null && target.rowId === row.rowId;
+    if (isAlreadyActive) return;
+
+    this.ngpTable().focus.moveTo({ area: 'body', rowId: row.rowId, columnId: null });
+  }
+
+  // Like `toGridCell`, but a body target with no column resolves to its row. Key navigation keeps
+  // `toGridCell`: the key map for rows is a later step.
+  private toFocusableCell(target: FocusTarget | null): GridCell | RowTarget | null {
+    if (target?.area === 'body' && target.columnId === null) {
+      return { area: 'body', rowId: target.rowId, columnId: null };
+    }
+    return this.toGridCell(target);
+  }
+
   // Note: the registry tells header from body by an `area` key, so a body cell is passed without it.
-  private registryCellOf(cell: GridCell): BodyCell | HeaderCell {
-    if (cell.area === 'header') return cell;
+  private registryCellOf(cell: GridCell | RowTarget): RegistryCell {
+    if (cell.area === 'header' || cell.columnId === null) return cell;
     return { rowId: cell.rowId, columnId: cell.columnId };
   }
 
@@ -326,11 +356,15 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     return this.focusRegistry.elementOf(this.registryCellOf(cell));
   }
 
-  private focusCellElement(cell: GridCell): void {
-    const element = this.elementOfGridCell(cell);
+  private focusCellElement(cell: GridCell | RowTarget): void {
+    const element = this.focusRegistry.elementOf(this.registryCellOf(cell));
     if (element === null) return;
 
-    const isFocusAlreadyInCell = element.contains(document.activeElement);
+    // Note: a row contains its cells, so only the row itself counts as focus already there.
+    const isRow = cell.area === 'body' && cell.columnId === null;
+    const isFocusAlreadyInCell = isRow
+      ? element === document.activeElement
+      : element.contains(document.activeElement);
     if (isFocusAlreadyInCell) return;
     (this.focusRegistry.focusTargetOf(this.registryCellOf(cell)) ?? element).focus();
   }
