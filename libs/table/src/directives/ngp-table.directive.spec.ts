@@ -2138,3 +2138,311 @@ describe('NgpTableDirective treegrid row keys', () => {
     expect(event.defaultPrevented).toBe(true);
   });
 });
+
+const TREE_IMPORTS = [...IMPORTS, NgpTableTreeRowDirective];
+
+type RowExtra = 'none' | 'toggle' | 'aria-hidden' | 'hidden' | 'disabled';
+
+@Component({
+  imports: TREE_IMPORTS,
+  template: `
+    <button type="button" id="outside">Outside</button>
+    <div id="grid" [ngpTable]="table">
+      @for (row of table.renderRows(); track row.id) {
+        <div [ngpTableRow]="row" ngpTableTreeRow [attr.data-row]="row.id">
+          @for (column of table.renderColumns(); track column.id; let i = $index) {
+            <div [ngpTableCell]="i" [attr.data-col]="column.id">
+              @if (column.id === 'id') {
+                <button type="button" class="plain">Plain</button>
+                <button type="button" class="zero" tabindex="0">Zero</button>
+              } @else {
+                <input type="checkbox" class="check" aria-label="Done" />
+                @if (row.id === 't1') {
+                  @switch (extra()) {
+                    @case ('toggle') {
+                      <button type="button" class="extra" tabindex="-1" aria-hidden="true">
+                        T
+                      </button>
+                    }
+                    @case ('aria-hidden') {
+                      <button type="button" class="extra" aria-hidden="true">A</button>
+                    }
+                    @case ('hidden') {
+                      <button type="button" class="extra" hidden>H</button>
+                    }
+                    @case ('disabled') {
+                      <button type="button" class="extra" disabled>D</button>
+                    }
+                  }
+                }
+                @if (added()) {
+                  <button type="button" class="added">Added</button>
+                }
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  `,
+})
+class TreeRowWidgetsHost {
+  readonly extra = signal<RowExtra>('none');
+  readonly added = signal(false);
+  readonly table = createTable(
+    signal<TaskTreeMockRow[]>([...mockTaskTreeRows]),
+    {
+      trackBy: 'id',
+      columns: createColumns(noData<TaskTreeMockRow>(), (col) => [col('id'), col('status')]),
+    },
+    withTree({ parentId: (row) => row.parentId }),
+  );
+}
+
+@Component({
+  imports: TREE_IMPORTS,
+  template: `
+    <div id="grid" [ngpTable]="table">
+      @for (row of table.renderRows(); track row.id) {
+        <div [ngpTableRow]="row" ngpTableTreeRow [attr.data-row]="row.id">
+          @for (column of table.renderColumns(); track column.id; let i = $index) {
+            <div [ngpTableCell]="i" [attr.data-col]="column.id">
+              @if (row.id === 't2' && column.id === 'id') {
+                <button type="button" class="plain">Plain</button>
+              } @else if (row.id === 't2' && column.id === 'status') {
+                <table id="inner" [ngpTable]="inner">
+                  <tbody>
+                    @for (innerRow of inner.renderRows(); track innerRow.id) {
+                      <tr [ngpTableRow]="innerRow">
+                        @for (
+                          innerColumn of inner.renderColumns();
+                          track innerColumn.id;
+                          let j = $index
+                        ) {
+                          <td [ngpTableCell]="j">{{ innerColumn.id }}</td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              } @else {
+                {{ column.id }}
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  `,
+})
+class TreeRowNestedHost {
+  readonly table = createTable(
+    signal<TaskTreeMockRow[]>([...mockTaskTreeRows]),
+    {
+      trackBy: 'id',
+      columns: createColumns(noData<TaskTreeMockRow>(), (col) => [col('id'), col('status')]),
+    },
+    withTree({ parentId: (row) => row.parentId }),
+  );
+  readonly inner = createGridTable(signal<MockRow[]>([...mockRows]));
+}
+
+describe('NgpTableDirective treegrid row Tab walk', () => {
+  const flushObserver = (): Promise<void> => new Promise<void>((resolve) => setTimeout(resolve));
+
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
+
+  async function setupWalk(extra: RowExtra = 'none') {
+    const fixture = TestBed.createComponent(TreeRowWidgetsHost);
+    const root: HTMLElement = fixture.nativeElement;
+    document.body.appendChild(root);
+    const host = fixture.componentInstance;
+    host.extra.set(extra);
+    const flush = (): void => {
+      TestBed.tick();
+      fixture.detectChanges();
+    };
+    const settle = async (): Promise<void> => {
+      await fixture.whenStable();
+      await flushObserver();
+      flush();
+    };
+    flush();
+    await settle();
+
+    const q = (selector: string): HTMLElement => {
+      const found = root.querySelector<HTMLElement>(selector);
+      if (found === null) throw new Error(`no element ${selector}`);
+      return found;
+    };
+    const row = (id: string): HTMLElement => q(`[data-row="${id}"]`);
+    const cell = (id: string, columnId: string): HTMLElement =>
+      q(`[data-row="${id}"] [data-col="${columnId}"]`);
+    const within = (id: string, selector: string): HTMLElement =>
+      q(`[data-row="${id}"] ${selector}`);
+    const widgetsOf = (id: string): HTMLElement[] =>
+      Array.from(
+        root.querySelectorAll<HTMLElement>(`[data-row="${id}"] button, [data-row="${id}"] input`),
+      );
+    const tabStops = (): HTMLElement[] =>
+      Array.from(q('#grid').querySelectorAll<HTMLElement>('[tabindex="0"]'));
+    const toRow = async (id: string): Promise<void> => {
+      host.table.focus.moveTo({ area: 'body', rowId: id, columnId: null });
+      flush();
+      await settle();
+    };
+
+    return { host, root, flush, settle, q, row, cell, within, widgetsOf, tabStops, toRow };
+  }
+
+  it('restores the widgets of the focused row and keeps its cells out of the tab order', async () => {
+    const { toRow, row, cell, within, widgetsOf } = await setupWalk();
+
+    await toRow('t1');
+
+    expect(within('t1', '.plain').hasAttribute('tabindex')).toBe(false);
+    expect(within('t1', '.zero').getAttribute('tabindex')).toBe('0');
+    expect(within('t1', '.check').hasAttribute('tabindex')).toBe(false);
+    expect(cell('t1', 'id').getAttribute('tabindex')).toBe('-1');
+    expect(cell('t1', 'status').getAttribute('tabindex')).toBe('-1');
+    expect(row('t1').getAttribute('tabindex')).toBe('0');
+    for (const widget of widgetsOf('t2')) expect(widget.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it.each<[string, RowExtra]>([
+    ['tree toggle stand-in', 'toggle'],
+    ['aria-hidden', 'aria-hidden'],
+    ['hidden', 'hidden'],
+    ['disabled', 'disabled'],
+  ])('keeps a %s control out of the tab order while its row is focused', async (_name, extra) => {
+    const { toRow, within } = await setupWalk(extra);
+
+    await toRow('t1');
+
+    expect(within('t1', '.extra').getAttribute('tabindex')).toBe('-1');
+    expect(within('t1', '.check').hasAttribute('tabindex')).toBe(false);
+  });
+
+  it('keeps the row active while Tab walks onto its widgets', async () => {
+    const { host, toRow, settle, within } = await setupWalk();
+    await toRow('t1');
+
+    within('t1', '.plain').focus();
+    await settle();
+
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 't1', columnId: null });
+    expect(within('t1', '.check').hasAttribute('tabindex')).toBe(false);
+
+    within('t1', '.zero').focus();
+    await settle();
+
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 't1', columnId: null });
+    expect(within('t1', '.plain').hasAttribute('tabindex')).toBe(false);
+    expect(within('t1', '.zero').getAttribute('tabindex')).toBe('0');
+    expect(within('t1', '.check').hasAttribute('tabindex')).toBe(false);
+  });
+
+  it('returns the row widgets to tabindex="-1" when focus moves to a cell', async () => {
+    const { host, flush, settle, toRow, within, widgetsOf, tabStops } = await setupWalk();
+    await toRow('t1');
+    expect(within('t1', '.plain').hasAttribute('tabindex')).toBe(false);
+
+    host.table.focus.moveTo({ area: 'body', rowId: 't1', columnId: 'status' });
+    flush();
+    await settle();
+
+    expect(within('t1', '.plain').getAttribute('tabindex')).toBe('-1');
+    expect(within('t1', '.zero').getAttribute('tabindex')).toBe('-1');
+    expect(tabStops()).toEqual([within('t1', '.check')]);
+    for (const widget of widgetsOf('t2')) expect(widget.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('switches the restored widgets to the newly focused row', async () => {
+    const { toRow, within, widgetsOf, row } = await setupWalk();
+    await toRow('t1');
+    expect(within('t1', '.plain').hasAttribute('tabindex')).toBe(false);
+
+    await toRow('t2');
+
+    for (const widget of widgetsOf('t1')) expect(widget.getAttribute('tabindex')).toBe('-1');
+    expect(within('t2', '.plain').hasAttribute('tabindex')).toBe(false);
+    expect(within('t2', '.zero').getAttribute('tabindex')).toBe('0');
+    expect(within('t2', '.check').hasAttribute('tabindex')).toBe(false);
+    expect(row('t2').getAttribute('tabindex')).toBe('0');
+    expect(row('t1').getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('puts the row widgets back to tabindex="-1" when focus leaves the grid', async () => {
+    const { host, q, settle, toRow, within, widgetsOf, tabStops, row } = await setupWalk();
+    await toRow('t1');
+    within('t1', '.plain').focus();
+    await settle();
+    expect(within('t1', '.plain').hasAttribute('tabindex')).toBe(false);
+
+    const outside = q('#outside');
+    outside.focus();
+    within('t1', '.plain').dispatchEvent(
+      new FocusEvent('focusout', { bubbles: true, relatedTarget: outside }),
+    );
+    await settle();
+
+    for (const widget of widgetsOf('t1')) expect(widget.getAttribute('tabindex')).toBe('-1');
+    expect(tabStops()).toEqual([row('t1')]);
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 't1', columnId: null });
+  });
+
+  it('keeps the row widgets restored after the host observer runs', async () => {
+    const { toRow, settle, within } = await setupWalk();
+    await toRow('t1');
+    expect(within('t1', '.plain').hasAttribute('tabindex')).toBe(false);
+
+    await flushObserver();
+    await settle();
+
+    expect(within('t1', '.plain').hasAttribute('tabindex')).toBe(false);
+    expect(within('t1', '.zero').getAttribute('tabindex')).toBe('0');
+    expect(within('t1', '.check').hasAttribute('tabindex')).toBe(false);
+  });
+
+  it('leaves a control added to the focused row in the tab order', async () => {
+    const { host, toRow, settle, flush, within } = await setupWalk();
+    await toRow('t1');
+
+    host.added.set(true);
+    flush();
+    await settle();
+
+    expect(within('t1', '.added').hasAttribute('tabindex')).toBe(false);
+    expect(within('t2', '.added').getAttribute('tabindex')).toBe('-1');
+  });
+
+  it("keeps a nested grid's roving tabindex at -1 while the row is in row mode", async () => {
+    const fixture = TestBed.createComponent(TreeRowNestedHost);
+    const root: HTMLElement = fixture.nativeElement;
+    document.body.appendChild(root);
+    const flush = (): void => {
+      TestBed.tick();
+      fixture.detectChanges();
+    };
+    flush();
+    await fixture.whenStable();
+    await flushObserver();
+    flush();
+
+    fixture.componentInstance.table.focus.moveTo({ area: 'body', rowId: 't2', columnId: null });
+    flush();
+    await fixture.whenStable();
+    await flushObserver();
+    flush();
+
+    const button = root.querySelector<HTMLElement>('[data-row="t2"] .plain');
+    const innerActive = root.querySelector<HTMLElement>(
+      '#inner [aria-rowindex="1"] [aria-colindex="1"]',
+    );
+    if (button === null || innerActive === null) throw new Error('fixture not rendered');
+    expect(button.hasAttribute('tabindex')).toBe(false);
+    expect(innerActive.getAttribute('tabindex')).toBe('-1');
+  });
+});
