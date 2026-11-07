@@ -1325,3 +1325,105 @@ describe('NgpTableDirective nested grid in a cell', () => {
     expect(innerTabStops()).toEqual([innerCell(2, 'id')]);
   });
 });
+
+describe('NgpTableDirective entered cell recovery', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    document.body.replaceChildren();
+  });
+
+  function setupEntered() {
+    const grid = TestBed.createComponent(CompositeCellHost);
+    const root: HTMLElement = grid.nativeElement;
+    document.body.appendChild(root);
+    const flush = (): void => {
+      TestBed.tick();
+      grid.detectChanges();
+    };
+    flush();
+    const cell = (rowId: number, colIndex: number): HTMLElement => {
+      const found = root.querySelector<HTMLElement>(
+        `[aria-rowindex="${rowId}"] [aria-colindex="${colIndex}"]`,
+      );
+      if (found === null) throw new Error(`no cell ${rowId}/${colIndex}`);
+      return found;
+    };
+    const query = (selector: string): HTMLElement => {
+      const found = root.querySelector<HTMLElement>(selector);
+      if (found === null) throw new Error(`no element ${selector}`);
+      return found;
+    };
+    const press = (target: HTMLElement, init: KeyboardEventInit): KeyboardEvent => {
+      const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init });
+      target.dispatchEvent(event);
+      return event;
+    };
+    cell(1, 1).focus();
+    flush();
+    press(cell(1, 1), { key: 'ArrowRight' });
+    flush();
+    press(cell(1, 2), { key: 'Enter' });
+    flush();
+    return { grid, flush, cell, query, press };
+  }
+
+  it('navigates again after the focused widget is removed and focus returns to the cell', () => {
+    const { grid, flush, cell, query, press } = setupEntered();
+    expect(document.activeElement).toBe(query('input'));
+
+    query('input').remove();
+    query('td button').remove();
+    cell(1, 2).focus();
+    flush();
+    const event = press(cell(1, 2), { key: 'ArrowDown' });
+    flush();
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(grid.componentInstance.table.focus()).toEqual({
+      area: 'body',
+      rowId: 2,
+      columnId: 'name',
+    });
+  });
+
+  it('leaves the entered cell when focus moves from its first widget onto the cell itself', () => {
+    const { grid, flush, cell, query, press } = setupEntered();
+
+    cell(1, 2).focus();
+    flush();
+    const event = press(cell(1, 2), { key: 'ArrowDown' });
+    flush();
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(grid.componentInstance.table.focus()).toEqual({
+      area: 'body',
+      rowId: 2,
+      columnId: 'name',
+    });
+    expect(query('input').getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('keeps the cell entered when focusout has no related target and the document lost focus', () => {
+    const { flush, query } = setupEntered();
+    vi.spyOn(document, 'hasFocus').mockReturnValue(false);
+
+    query('input').dispatchEvent(
+      new FocusEvent('focusout', { bubbles: true, relatedTarget: null }),
+    );
+    flush();
+
+    expect(query('td button').getAttribute('tabindex')).toBe('0');
+  });
+
+  it('leaves the cell when focusout has no related target and the document has focus', () => {
+    const { flush, query } = setupEntered();
+    vi.spyOn(document, 'hasFocus').mockReturnValue(true);
+
+    query('input').dispatchEvent(
+      new FocusEvent('focusout', { bubbles: true, relatedTarget: null }),
+    );
+    flush();
+
+    expect(query('td button').getAttribute('tabindex')).toBe('-1');
+  });
+});
