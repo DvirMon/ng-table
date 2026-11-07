@@ -5,16 +5,16 @@
 ```mermaid
 graph LR
   S1 --> S2
-  S1 --> S3
   S1 --> S4
-  S1 --> S5
-  S2 --> S6
+  S2 --> S3
+  S3 --> S5
   S3 --> S6
+  S2 --> S6
   S4 --> S6
   S5 --> S6
 ```
 
-Parallel-safe: [S2, S3, S4, S5] after S1 (no compile edge); S2, S3, S5 edit ngp-table.directive.ts, so run them in order S2 → S3 → S5; S4 is independent of them; S6 after all.
+Parallel-safe: [S4] alongside S2 → S3 → S5 after S1; S2, S3, S5 share ngp-table.directive.ts, so they are chained; S6 after all.
 
 | Step | Title                                                                        | Status       |
 | ---- | ---------------------------------------------------------------------------- | ------------ |

@@ -2,7 +2,7 @@
 step: 5
 type: code
 commit: feat
-depends_on: [1]
+depends_on: [1, 3]
 files:
   - libs/table/src/directives/focus-registry.ts
   - libs/table/src/directives/cell-widgets.ts
