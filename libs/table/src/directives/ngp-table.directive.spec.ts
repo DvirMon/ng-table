@@ -11,18 +11,16 @@ import { NgpTableTreeRowDirective } from './ngp-table-tree-row.directive';
 import { createColumns } from '../api/create-columns';
 import { createTable } from '../api/create-table';
 import { withGrouping } from '../api/features/with-grouping/feature';
-import { withTree } from '../api/features/with-tree/feature';
 import {
   createMockRows,
+  createTaskTreeTable,
   mockGroupingRows,
   mockGroupingTrackBy,
   mockRows,
-  mockTaskTreeRows,
   mockTrackBy,
   noData,
   type GroupingMockRow,
   type MockRow,
-  type TaskTreeMockRow,
 } from '../table.mock';
 
 const US_HEADER_ID = 'group:>region:string:US';
@@ -2085,14 +2083,7 @@ describe('NgpTableDirective header Tab stop without data rows', () => {
   `,
 })
 class TreeKeysHost {
-  readonly table = createTable(
-    signal<TaskTreeMockRow[]>([...mockTaskTreeRows]),
-    {
-      trackBy: 'id',
-      columns: createColumns(noData<TaskTreeMockRow>(), (col) => [col('id'), col('status')]),
-    },
-    withTree({ parentId: (row) => row.parentId }),
-  );
+  readonly table = createTaskTreeTable();
 }
 
 describe('NgpTableDirective treegrid row keys', () => {
@@ -2189,14 +2180,7 @@ type RowExtra = 'none' | 'toggle' | 'aria-hidden' | 'hidden' | 'disabled';
 class TreeRowWidgetsHost {
   readonly extra = signal<RowExtra>('none');
   readonly added = signal(false);
-  readonly table = createTable(
-    signal<TaskTreeMockRow[]>([...mockTaskTreeRows]),
-    {
-      trackBy: 'id',
-      columns: createColumns(noData<TaskTreeMockRow>(), (col) => [col('id'), col('status')]),
-    },
-    withTree({ parentId: (row) => row.parentId }),
-  );
+  readonly table = createTaskTreeTable();
 }
 
 @Component({
@@ -2236,14 +2220,7 @@ class TreeRowWidgetsHost {
   `,
 })
 class TreeRowNestedHost {
-  readonly table = createTable(
-    signal<TaskTreeMockRow[]>([...mockTaskTreeRows]),
-    {
-      trackBy: 'id',
-      columns: createColumns(noData<TaskTreeMockRow>(), (col) => [col('id'), col('status')]),
-    },
-    withTree({ parentId: (row) => row.parentId }),
-  );
+  readonly table = createTaskTreeTable();
   readonly inner = createGridTable(signal<MockRow[]>([...mockRows]));
 }
 
@@ -2391,6 +2368,45 @@ describe('NgpTableDirective treegrid row Tab walk', () => {
     for (const widget of widgetsOf('t1')) expect(widget.getAttribute('tabindex')).toBe('-1');
     expect(tabStops()).toEqual([row('t1')]);
     expect(host.table.focus()).toEqual({ area: 'body', rowId: 't1', columnId: null });
+  });
+
+  it('restores the row widgets when focus returns to the same row after leaving the grid', async () => {
+    const { host, q, settle, toRow, row, within, widgetsOf } = await setupWalk();
+    await toRow('t1');
+    row('t1').focus();
+    await settle();
+    expect(within('t1', '.plain').hasAttribute('tabindex')).toBe(false);
+
+    const outside = q('#outside');
+    outside.focus();
+    row('t1').dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: outside }));
+    await settle();
+    for (const widget of widgetsOf('t1')) expect(widget.getAttribute('tabindex')).toBe('-1');
+
+    row('t1').focus();
+    await settle();
+
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 't1', columnId: null });
+    expect(within('t1', '.plain').hasAttribute('tabindex')).toBe(false);
+    expect(within('t1', '.zero').getAttribute('tabindex')).toBe('0');
+    expect(within('t1', '.check').hasAttribute('tabindex')).toBe(false);
+  });
+
+  it('does not enter a leaf row with several widgets on Enter or F2', async () => {
+    const { toRow, row, settle, within } = await setupWalk();
+    await toRow('t2');
+    row('t2').focus();
+    await settle();
+
+    for (const key of ['Enter', 'F2']) {
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+      row('t2').dispatchEvent(event);
+      await settle();
+
+      expect(event.defaultPrevented).toBe(false);
+      expect(within('t2', '.plain').hasAttribute('tabindex')).toBe(false);
+      expect(within('t2', '.zero').getAttribute('tabindex')).toBe('0');
+    }
   });
 
   it('keeps the row widgets restored after the host observer runs', async () => {

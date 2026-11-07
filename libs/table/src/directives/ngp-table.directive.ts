@@ -16,11 +16,34 @@ import {
 import { classifyCellWidgets, isEditableTarget } from './cell-widgets';
 import { createFocusRegistry, NGP_TABLE_FOCUS_REGISTRY } from './focus-registry';
 import { nextGridTarget, nextTreegridTarget } from './keyboard-nav';
-import type { BodyCell, GridCell, RegistryCell, RowTarget } from './keyboard-nav.types';
+import {
+  isRowTarget,
+  type BodyCell,
+  type GridCell,
+  type GridNavOptions,
+  type RegistryCell,
+  type RowTarget,
+  type TreegridNavOrder,
+  type TreegridTarget,
+} from './keyboard-nav.types';
 import { isRtlAt, pageStepOf } from './page-step';
 import { createPanelRegistry, NGP_TABLE_PANEL_REGISTRY } from './panel-registry';
 import { NGP_TABLE_STORE } from './table.tokens';
 import type { ColumnValueMap, FocusTarget, TableStore } from '../api/types';
+
+// Picks the key map for the host's role. A plain grid has no row target, so a row under it
+// goes nowhere.
+function nextNavTarget(
+  isTreegrid: boolean,
+  order: TreegridNavOrder,
+  current: GridCell | RowTarget,
+  event: KeyboardEvent,
+  options: GridNavOptions,
+): TreegridTarget | null {
+  if (isTreegrid) return nextTreegridTarget(order, current, event, options);
+  if (isRowTarget(current)) return null;
+  return nextGridTarget(order, current, event, options);
+}
 
 /**
  * Binds a `createTable()` store to a native `<table>` or `<div>` grid host.
@@ -180,8 +203,7 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
   // A focused row lets Tab walk its widgets; any other target puts them back to `-1`.
   private syncRowWalk(): void {
     const target = this.toFocusableCell(this.activeTarget());
-    const isRowActive = target?.area === 'body' && target.columnId === null;
-    if (isRowActive && !this.isRowWalkSuspended) this.focusRegistry.enterRow(target);
+    if (isRowTarget(target) && !this.isRowWalkSuspended) this.focusRegistry.enterRow(target);
     else this.focusRegistry.exitRow();
   }
 
@@ -216,16 +238,8 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
       isRtl: isRtlAt(this.host),
       pageSize: pageStepOf(this.host, focusedElement),
     };
-    const next = isTreegrid
-      ? nextTreegridTarget(
-          { ...order, rowDepths: dataRows.map((row) => row.depth) },
-          current,
-          event,
-          options,
-        )
-      : current.columnId === null
-        ? null
-        : nextGridTarget(order, current, event, options);
+    const rowDepths = dataRows.map((row) => row.depth);
+    const next = nextNavTarget(isTreegrid, { ...order, rowDepths }, current, event, options);
     if (next === null) return;
 
     // A header target with no registered header cell has no element to hold focus: stay put.
@@ -263,7 +277,8 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     const isEnterKey = event.key === 'Enter' || event.key === 'F2';
     if (!isEnterKey) return false;
     const cell = this.focusRegistry.cellContaining(target, this.host);
-    if (cell === null) return false;
+    // Note: a row is entered with Enter on its own handler, never as a composite cell.
+    if (cell === null || isRowTarget(cell)) return false;
     const element = this.focusRegistry.elementOf(cell);
     const isCellItself = element !== null && element === target;
     const isCompositeCell = isCellItself && classifyCellWidgets(element) === 'composite';
@@ -289,7 +304,7 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     const cell = this.focusRegistry.cellContaining(event.target, this.host);
     if (cell === null) return;
 
-    if ('area' in cell && cell.area === 'body') {
+    if (isRowTarget(cell)) {
       this.writeRowTarget(cell);
       return;
     }
@@ -330,15 +345,14 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     const isStillInside = next instanceof Node && this.host.contains(next);
     if (!isStillInside) this.hasFocusWithin = false;
 
-    const isGridBlur = next === null && !document.hasFocus();
-    if (!isStillInside && !isGridBlur) {
+    // Note: a null `relatedTarget` with the document unfocused is a window blur, not a focus move.
+    const isWindowBlur = next === null && !document.hasFocus();
+    if (!isStillInside && !isWindowBlur) {
       this.isRowWalkSuspended = true;
       this.focusRegistry.exitRow();
     }
 
     const entered = this.focusRegistry.enteredElement();
-    // Note: a null `relatedTarget` with the document unfocused is a window blur, not a focus move.
-    const isWindowBlur = next === null && !document.hasFocus();
     const isFocusInsideEntered = next instanceof Node && entered?.contains(next) === true;
     const hasLeftEnteredCell = entered !== null && !isWindowBlur && !isFocusInsideEntered;
     if (hasLeftEnteredCell) this.focusRegistry.exitCell();
@@ -370,8 +384,7 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
   // Focus landing on the row the store already points at writes nothing.
   private writeRowTarget(row: RowTarget): void {
     const target = this.activeTarget();
-    const isAlreadyActive =
-      target?.area === 'body' && target.columnId === null && target.rowId === row.rowId;
+    const isAlreadyActive = isRowTarget(target) && target.rowId === row.rowId;
     if (isAlreadyActive) return;
 
     this.ngpTable().focus.moveTo({ area: 'body', rowId: row.rowId, columnId: null });
@@ -379,15 +392,13 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
 
   // Like `toGridCell`, but a body target with no column resolves to its row.
   private toFocusableCell(target: FocusTarget | null): GridCell | RowTarget | null {
-    if (target?.area === 'body' && target.columnId === null) {
-      return { area: 'body', rowId: target.rowId, columnId: null };
-    }
+    if (isRowTarget(target)) return { area: 'body', rowId: target.rowId, columnId: null };
     return this.toGridCell(target);
   }
 
   // Note: the registry tells header from body by an `area` key, so a body cell is passed without it.
   private registryCellOf(cell: GridCell | RowTarget): RegistryCell {
-    if (cell.area === 'header' || cell.columnId === null) return cell;
+    if (cell.area === 'header' || isRowTarget(cell)) return cell;
     return { rowId: cell.rowId, columnId: cell.columnId };
   }
 
@@ -400,8 +411,7 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     if (element === null) return;
 
     // Note: a row contains its cells, so only the row itself counts as focus already there.
-    const isRow = cell.area === 'body' && cell.columnId === null;
-    const isFocusAlreadyInCell = isRow
+    const isFocusAlreadyInCell = isRowTarget(cell)
       ? element === document.activeElement
       : element.contains(document.activeElement);
     if (isFocusAlreadyInCell) return;
