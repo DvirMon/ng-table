@@ -2,7 +2,7 @@
 step: 3
 type: code
 commit: feat
-depends_on: [1]
+depends_on: [1, 2]
 files:
   - libs/table/src/directives/ngp-table-tree-row.directive.ts
   - libs/table/src/directives/ngp-table.directive.ts
