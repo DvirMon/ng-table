@@ -1120,3 +1120,208 @@ describe('NgpTableDirective composite cell modes', () => {
     expect(tabStops()).toEqual([cell(1, 'name')]);
   });
 });
+
+@Component({
+  imports: IMPORTS,
+  template: `
+    <table [ngpTable]="table">
+      <tbody>
+        @for (row of table.renderRows(); track row.id) {
+          <tr [ngpTableRow]="row">
+            @for (column of table.renderColumns(); track column.id; let i = $index) {
+              <td [ngpTableCell]="i">
+                @if (showInner() && row.id === 2 && column.id === 'name') {
+                  <table id="inner" [ngpTable]="inner">
+                    <tbody>
+                      @for (innerRow of inner.renderRows(); track innerRow.id) {
+                        <tr [ngpTableRow]="innerRow">
+                          @for (
+                            innerColumn of inner.renderColumns();
+                            track innerColumn.id;
+                            let j = $index
+                          ) {
+                            <td [ngpTableCell]="j">{{ innerColumn.id }}</td>
+                          }
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                } @else {
+                  {{ column.id }}
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  `,
+})
+class NestedInCellHost {
+  readonly data = signal<MockRow[]>([...mockRows]);
+  readonly table = createGridTable(this.data);
+  readonly inner = createGridTable(signal<MockRow[]>([...mockRows]));
+  readonly showInner = signal(true);
+}
+
+describe('NgpTableDirective nested grid in a cell', () => {
+  type GridColumn = 'id' | 'name';
+
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
+
+  function setupNested() {
+    const fixture = TestBed.createComponent(NestedInCellHost);
+    const root: HTMLElement = fixture.nativeElement;
+    document.body.appendChild(root);
+    const flush = (): void => {
+      TestBed.tick();
+      fixture.detectChanges();
+    };
+    flush();
+    const host = fixture.componentInstance;
+
+    const colIndex = (columnId: GridColumn): string => (columnId === 'id' ? '1' : '2');
+    const outerCell = (rowId: number, columnId: GridColumn): HTMLElement => {
+      const found = root.querySelector<HTMLElement>(
+        `:scope > table > tbody > [aria-rowindex="${rowId}"] > [aria-colindex="${colIndex(columnId)}"]`,
+      );
+      if (found === null) throw new Error(`no outer cell ${rowId}/${columnId}`);
+      return found;
+    };
+    const innerHost = (): HTMLElement => {
+      const found = root.querySelector<HTMLElement>('#inner');
+      if (found === null) throw new Error('no inner grid');
+      return found;
+    };
+    const innerCell = (rowId: number, columnId: GridColumn): HTMLElement => {
+      const found = innerHost().querySelector<HTMLElement>(
+        `[aria-rowindex="${rowId}"] [aria-colindex="${colIndex(columnId)}"]`,
+      );
+      if (found === null) throw new Error(`no inner cell ${rowId}/${columnId}`);
+      return found;
+    };
+    const press = (target: HTMLElement, init: KeyboardEventInit): KeyboardEvent => {
+      const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init });
+      target.dispatchEvent(event);
+      return event;
+    };
+    const tabStops = (): HTMLElement[] =>
+      Array.from(root.querySelectorAll<HTMLElement>('[tabindex="0"]'));
+    const innerTabStops = (): HTMLElement[] =>
+      Array.from(innerHost().querySelectorAll<HTMLElement>('[tabindex="0"]'));
+    const settle = async (): Promise<void> => {
+      await fixture.whenStable();
+      await Promise.resolve();
+      flush();
+    };
+
+    return {
+      host,
+      flush,
+      outerCell,
+      innerHost,
+      innerCell,
+      press,
+      tabStops,
+      innerTabStops,
+      settle,
+    };
+  }
+
+  it('treats a nested grid as the widgets of a multi-widget cell', async () => {
+    const { flush, settle, outerCell, innerHost, innerCell, press, tabStops, innerTabStops } =
+      setupNested();
+    await settle();
+    outerCell(2, 'id').focus();
+    flush();
+
+    press(outerCell(2, 'id'), { key: 'ArrowRight' });
+    flush();
+    await settle();
+
+    expect(document.activeElement).toBe(outerCell(2, 'name'));
+    expect(tabStops()).toEqual([outerCell(2, 'name')]);
+
+    press(outerCell(2, 'name'), { key: 'Enter' });
+    flush();
+    await settle();
+
+    expect(innerHost().contains(document.activeElement)).toBe(true);
+    expect(innerTabStops()).toEqual([innerCell(1, 'id')]);
+  });
+
+  it('keeps one tab stop when the nested grid moves its own tab stop while the outer cell is not entered', async () => {
+    const { host, flush, settle, outerCell, innerCell, tabStops } = setupNested();
+    await settle();
+
+    host.inner.focus.moveTo({ area: 'body', rowId: 2, columnId: 'id' });
+    flush();
+    await settle();
+
+    expect(tabStops()).toEqual([outerCell(1, 'id')]);
+    expect(innerCell(2, 'id').getAttribute('tabindex')).toBe('-1');
+  });
+
+  it("restores the nested grid's latest tab stop when the outer cell is entered", async () => {
+    const { host, flush, settle, outerCell, innerCell, press, innerTabStops } = setupNested();
+    await settle();
+    host.inner.focus.moveTo({ area: 'body', rowId: 2, columnId: 'id' });
+    flush();
+    await settle();
+
+    outerCell(2, 'name').focus();
+    flush();
+    press(outerCell(2, 'name'), { key: 'Enter' });
+    flush();
+    await settle();
+
+    expect(innerTabStops()).toEqual([innerCell(2, 'id')]);
+    expect(innerCell(1, 'id').getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('enters the outer cell when focus lands inside the nested grid', async () => {
+    const { host, flush, settle, innerCell, innerTabStops } = setupNested();
+    await settle();
+
+    innerCell(2, 'name').focus();
+    flush();
+    await settle();
+
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 2, columnId: 'name' });
+    expect(document.activeElement).toBe(innerCell(2, 'name'));
+    expect(innerTabStops()).toEqual([innerCell(2, 'name')]);
+  });
+
+  it('re-marks the nested grid on exit and restores its last tab stop on re-entry', async () => {
+    const { host, flush, settle, outerCell, innerCell, press, tabStops, innerTabStops } =
+      setupNested();
+    await settle();
+    outerCell(2, 'name').focus();
+    flush();
+    press(outerCell(2, 'name'), { key: 'Enter' });
+    flush();
+    await settle();
+
+    press(innerCell(1, 'id'), { key: 'ArrowDown' });
+    flush();
+    await settle();
+
+    expect(host.table.focus()).toEqual({ area: 'body', rowId: 2, columnId: 'name' });
+    expect(innerTabStops()).toEqual([innerCell(2, 'id')]);
+
+    press(innerCell(2, 'id'), { key: 'Escape' });
+    flush();
+    await settle();
+
+    expect(document.activeElement).toBe(outerCell(2, 'name'));
+    expect(tabStops()).toEqual([outerCell(2, 'name')]);
+
+    press(outerCell(2, 'name'), { key: 'Enter' });
+    flush();
+    await settle();
+
+    expect(innerTabStops()).toEqual([innerCell(2, 'id')]);
+  });
+});

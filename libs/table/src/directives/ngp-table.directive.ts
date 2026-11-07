@@ -135,6 +135,10 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
 
     const markAdded = (records: MutationRecord[]): void => {
       for (const record of records) {
+        if (record.type === 'attributes') {
+          this.focusRegistry.retrackTabindex(record, this.host);
+          continue;
+        }
         for (const added of Array.from(record.addedNodes)) {
           this.focusRegistry.refreshWidgets(added, this.host);
         }
@@ -145,7 +149,12 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
       markAdded(records);
       this.focusRegistry.syncTabStop(this.activeBodyCell());
     });
-    observer.observe(this.host, { childList: true, subtree: true });
+    observer.observe(this.host, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['tabindex'],
+    });
     this.destroyRef.onDestroy(() => observer.disconnect());
     return () => markAdded(observer.takeRecords());
   }

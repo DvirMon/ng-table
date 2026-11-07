@@ -4,8 +4,13 @@ import {
   classifyCellWidgets,
   findFirstWidget,
   findSingleWidget,
+  isOwnTabindexWrite,
+  isTakenOutOfTabOrder,
   removeFromTabOrder,
   restoreTabOrder,
+  retrackTabindex as saveBindingTabindex,
+  setSavedTabindex,
+  writeTabindex,
 } from './cell-widgets';
 import type { CellWidgetKind } from './cell-widgets.types';
 import type { BodyCell } from './keyboard-nav.types';
@@ -24,6 +29,11 @@ export interface FocusRegistry {
    * widget kind. Does nothing when `node` is outside every registered cell.
    */
   refreshWidgets(node: Node, boundary: HTMLElement): void;
+  /**
+   * Handles a `tabindex` attribute change under a registered cell that is not entered: saves the
+   * new value as the control's original and marks it `-1` again. Ignores the registry's own writes.
+   */
+  retrackTabindex(record: MutationRecord, boundary: HTMLElement): void;
   /**
    * Keeps exactly one Tab stop: the active cell's lone widget when it has one, else the cell.
    * The previous widget drops back to `-1`.
@@ -115,6 +125,23 @@ export function createFocusRegistry(): FocusRegistry {
     kindByElement.set(element, classifyCellWidgets(element));
   }
 
+  function retrackTabindex(record: MutationRecord, boundary: HTMLElement): void {
+    // Note: judged for every record, so the own-write count stays in step.
+    const isOwnWrite = isOwnTabindexWrite(record);
+    const target = record.target;
+    if (isOwnWrite || !(target instanceof HTMLElement)) return;
+
+    const cell = cellContaining(target, boundary);
+    if (cell === null) return;
+    const cellElement = elementByKey.get(keyOf(cell));
+    // Note: the cell element carries the roving tabindex; an entered cell keeps its controls live.
+    const isIgnored =
+      cellElement === undefined || cellElement === target || cellElement === entered;
+    if (isIgnored) return;
+
+    saveBindingTabindex(target, record);
+  }
+
   function focusTargetOf(cell: BodyCell): HTMLElement | null {
     const element = elementByKey.get(keyOf(cell));
     if (element === undefined) return null;
@@ -125,18 +152,24 @@ export function createFocusRegistry(): FocusRegistry {
     const element = active === null ? undefined : elementByKey.get(keyOf(active));
     const widget = element === undefined ? null : findSingleWidget(element);
 
-    if (tabStopWidget !== null && tabStopWidget !== widget)
-      tabStopWidget.setAttribute('tabindex', '-1');
+    if (tabStopWidget !== null && tabStopWidget !== widget) writeTabindex(tabStopWidget, '-1');
     tabStopWidget = widget;
     if (element === undefined) return;
 
     kindByElement.set(element, classifyCellWidgets(element));
     if (widget === null) {
-      element.setAttribute('tabindex', '0');
+      setCellTabindex(element, '0');
     } else {
-      element.setAttribute('tabindex', '-1');
-      widget.setAttribute('tabindex', '0');
+      setCellTabindex(element, '-1');
+      writeTabindex(widget, '0');
     }
+  }
+
+  // Note: a cell an outer grid took out of its Tab order only gets its saved original updated, so
+  // the outer grid's `-1` is not fought over; the value comes back when the outer cell is entered.
+  function setCellTabindex(element: HTMLElement, value: string): void {
+    if (isTakenOutOfTabOrder(element)) setSavedTabindex(element, value);
+    else if (element.getAttribute('tabindex') !== value) element.setAttribute('tabindex', value);
   }
 
   function enteredElement(): HTMLElement | null {
@@ -167,6 +200,7 @@ export function createFocusRegistry(): FocusRegistry {
     cellContaining,
     widgetKindOf,
     refreshWidgets,
+    retrackTabindex,
     syncTabStop,
     focusTargetOf,
     enteredElement,
