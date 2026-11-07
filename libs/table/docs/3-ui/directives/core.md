@@ -42,6 +42,7 @@ export class NgpTableDirective {
 }
 ```
 
+<!-- prettier-ignore -->
 ```ts
 // Consumer — no providers block, no store class, no token
 @Component({
