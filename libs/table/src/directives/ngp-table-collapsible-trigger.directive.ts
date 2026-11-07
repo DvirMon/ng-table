@@ -4,13 +4,13 @@ import { Directive, type Signal } from '@angular/core';
  * Shared trigger bindings for a button that opens and closes a region.
  *
  * @remarks
- * Internal base: concrete toggles extend it and supply `isOpen` and `toggle()`.
+ * Internal base: concrete toggles extend it and supply `isOpen` and `toggle()`. Binds
+ * `data-expanded` only; each toggle decides whether to bind `aria-expanded`.
  */
 @Directive({
   host: {
     '[attr.type]': '"button"',
     '(click)': 'toggle()',
-    '[attr.aria-expanded]': 'isOpen() ? "true" : "false"',
     '[attr.data-expanded]': 'isOpen() ? "" : null',
   },
 })

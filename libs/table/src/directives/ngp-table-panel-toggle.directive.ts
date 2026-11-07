@@ -27,7 +27,10 @@ function assertExpansionComposed(readTable: () => unknown): void {
  */
 @Directive({
   selector: 'button[ngpTablePanelToggle]',
-  host: { '[attr.aria-controls]': 'controlsId()' },
+  host: {
+    '[attr.aria-expanded]': 'isOpen() ? "true" : "false"',
+    '[attr.aria-controls]': 'controlsId()',
+  },
 })
 export class NgpTablePanelToggleDirective extends NgpTableCollapsibleTrigger {
   private readonly row = inject(NGP_TABLE_ROW);
