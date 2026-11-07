@@ -164,25 +164,23 @@ describe('NgpTableTreeToggleDirective dev checks', () => {
 });
 
 describe('NgpTableTreeToggleDirective', () => {
-  it('opens a collapsed parent on click: the child row renders and aria-expanded becomes "true"', () => {
+  it('opens a collapsed parent on click: the child row renders and data-expanded is set', () => {
     const { toggle, clickToggle, visibleRowIds } = setup(TreeHost);
     expect(visibleRowIds()).toEqual(['t1', 't2']);
 
     clickToggle('t1');
 
     expect(visibleRowIds()).toEqual(['t1', 't1a', 't2']);
-    expect(toggle('t1').getAttribute('aria-expanded')).toBe('true');
     expect(toggle('t1').getAttribute('data-expanded')).toBe('');
   });
 
-  it('closes an open parent on a second click: the child row is removed, aria-expanded is "false" and data-expanded is gone', () => {
+  it('closes an open parent on a second click: the child row is removed and data-expanded is gone', () => {
     const { toggle, clickToggle, visibleRowIds } = setup(TreeHost);
 
     clickToggle('t1');
     clickToggle('t1');
 
     expect(visibleRowIds()).toEqual(['t1', 't2']);
-    expect(toggle('t1').getAttribute('aria-expanded')).toBe('false');
     expect(toggle('t1').hasAttribute('data-expanded')).toBe(false);
   });
 
@@ -203,24 +201,21 @@ describe('NgpTableTreeToggleDirective', () => {
     for (const button of buttons) expect(button.getAttribute('type')).toBe('button');
   });
 
-  it('disables and hides the toggle on a row without children, with aria-expanded="false"', () => {
+  it('disables the toggle on a row without children', () => {
     const { toggle } = setup(TreeHost);
     const leaf = toggle('t2');
     const parent = toggle('t1');
 
     expect(leaf.disabled).toBe(true);
-    expect(leaf.getAttribute('aria-hidden')).toBe('true');
     expect(leaf.getAttribute('data-disabled')).toBe('');
-    expect(leaf.getAttribute('aria-expanded')).toBe('false');
     expect(leaf.hasAttribute('data-expanded')).toBe(false);
 
     expect(parent.disabled).toBe(false);
-    expect(parent.hasAttribute('aria-hidden')).toBe(false);
     expect(parent.hasAttribute('data-disabled')).toBe(false);
   });
 
   it('opens and collapses a group header under withGrouping() + withTree()', () => {
-    const { toggle, clickToggle, visibleRowIds } = setup(GroupedHost);
+    const { clickToggle, visibleRowIds } = setup(GroupedHost);
     const memberIds = ['1', '2', '3'];
     expect(visibleRowIds()).toHaveLength(2);
     expect(visibleRowIds()).not.toEqual(expect.arrayContaining(memberIds));
@@ -228,12 +223,10 @@ describe('NgpTableTreeToggleDirective', () => {
     clickToggle(US_HEADER_ID);
 
     expect(visibleRowIds()).toEqual(expect.arrayContaining(memberIds));
-    expect(toggle(US_HEADER_ID).getAttribute('aria-expanded')).toBe('true');
 
     clickToggle(US_HEADER_ID);
 
     for (const id of memberIds) expect(visibleRowIds()).not.toContain(id);
-    expect(toggle(US_HEADER_ID).getAttribute('aria-expanded')).toBe('false');
   });
 
   it('lets the click bubble to the row without preventing default', () => {
@@ -243,5 +236,63 @@ describe('NgpTableTreeToggleDirective', () => {
 
     expect(rowClicks).toHaveLength(1);
     expect(rowClicks[0].defaultPrevented).toBe(false);
+  });
+});
+
+describe('NgpTableTreeToggleDirective pointer-only contract', () => {
+  function setupAttached() {
+    const base = setup(TreeHost);
+    const root: HTMLElement = base.fixture.nativeElement;
+    document.body.appendChild(root);
+    const flush = (): void => {
+      TestBed.tick();
+      base.fixture.detectChanges();
+    };
+    flush();
+    const row = (id: string): HTMLElement => {
+      const found = Array.from(root.querySelectorAll<HTMLElement>('[role="row"]')).find(
+        (candidate) => candidate.textContent!.trim() === id,
+      );
+      if (found === undefined) throw new Error(`no row ${id}`);
+      return found;
+    };
+    return { ...base, flush, row };
+  }
+
+  it('binds no aria-expanded on the tree toggle, collapsed, open or leaf, while data-expanded follows the row', () => {
+    const { toggle, clickToggle } = setup(TreeHost);
+
+    expect(toggle('t1').hasAttribute('aria-expanded')).toBe(false);
+    expect(toggle('t2').hasAttribute('aria-expanded')).toBe(false);
+
+    clickToggle('t1');
+
+    expect(toggle('t1').hasAttribute('aria-expanded')).toBe(false);
+    expect(toggle('t1').getAttribute('data-expanded')).toBe('');
+  });
+
+  it('binds tabindex="-1" and aria-hidden="true" on parent and leaf toggles, and keeps the leaf disabled', () => {
+    const { toggle } = setup(TreeHost);
+    const parent = toggle('t1');
+    const leaf = toggle('t2');
+
+    for (const button of [parent, leaf]) {
+      expect(button.getAttribute('tabindex')).toBe('-1');
+      expect(button.getAttribute('aria-hidden')).toBe('true');
+    }
+    expect(leaf.disabled).toBe(true);
+    expect(leaf.getAttribute('data-disabled')).toBe('');
+    expect(parent.disabled).toBe(false);
+  });
+
+  it('moves focus to its row when the toggle is clicked, even with focus outside the grid', () => {
+    const { toggle, flush, row, visibleRowIds } = setupAttached();
+    expect(document.activeElement).toBe(document.body);
+
+    toggle('t1').click();
+    flush();
+
+    expect(visibleRowIds()).toContain('t1a');
+    expect(document.activeElement).toBe(row('t1'));
   });
 });
