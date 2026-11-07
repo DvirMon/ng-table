@@ -24,6 +24,12 @@ export type HeaderCell = { readonly area: 'header'; readonly columnId: string };
 /** A body cell tagged with its grid area. */
 export type GridBodyCell = { readonly area: 'body' } & BodyCell;
 
+/** A whole body row as a focus target, used only under `treegrid`. */
+export type RowTarget = { readonly area: 'body'; readonly rowId: RowId; readonly columnId: null };
+
+/** Anything the focus registry can hold: a body cell, a header cell or a treegrid row. */
+export type RegistryCell = BodyCell | HeaderCell | RowTarget;
+
 /** Any cell grid navigation can address: a header cell or a body cell. */
 export type GridCell = HeaderCell | GridBodyCell;
 
