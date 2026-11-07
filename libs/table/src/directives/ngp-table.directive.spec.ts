@@ -1959,3 +1959,101 @@ describe('NgpTableDirective header widgets', () => {
     expect(fixture.componentInstance.table.focus()).toEqual({ area: 'header', columnId: 'name' });
   });
 });
+
+@Component({ imports: HEADER_IMPORTS, template: HEADER_WIDGETS_TEMPLATE })
+class HeaderWidgetsEmptyHost {
+  readonly data = signal<MockRow[]>([]);
+  readonly table = createGridTable(this.data);
+}
+
+describe('NgpTableDirective header Tab stop without data rows', () => {
+  function setupHeaders<THost extends { table: ReturnType<typeof createGridTable> }>(
+    hostType: Type<THost>,
+  ) {
+    const fixture = TestBed.createComponent(hostType);
+    const root: HTMLElement = fixture.nativeElement;
+    document.body.appendChild(root);
+    const flush = (): void => {
+      TestBed.tick();
+      fixture.detectChanges();
+    };
+    flush();
+
+    const query = (selector: string): HTMLElement => {
+      const found = root.querySelector<HTMLElement>(selector);
+      if (found === null) throw new Error(`no element ${selector}`);
+      return found;
+    };
+    return {
+      fixture,
+      host: fixture.componentInstance,
+      flush,
+      headerCell: (colIndex: 1 | 2): HTMLElement =>
+        query(`[role="columnheader"][aria-colindex="${colIndex}"]`),
+      firstBodyCell: (): HTMLElement => query('[aria-rowindex="1"] [aria-colindex="1"]'),
+      sortButton: (): HTMLElement => query('th button'),
+      filterInput: (): HTMLElement => query('input[aria-label="Filter id"]'),
+      tabStops: (): HTMLElement[] =>
+        Array.from(root.querySelectorAll<HTMLElement>('[tabindex="0"]')),
+      directive: (): NgpTableDirective =>
+        fixture.debugElement.query(By.directive(NgpTableDirective)).injector.get(NgpTableDirective),
+    };
+  }
+
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
+
+  it('falls back to the first rendered column header when the table has no data row', () => {
+    const { directive } = setupHeaders(HeaderWidgetsEmptyHost);
+
+    expect(directive().activeTarget()).toEqual({ area: 'header', columnId: 'id' });
+  });
+
+  it('leaves exactly one Tab stop on the first header when the table is empty', () => {
+    const { headerCell, sortButton, filterInput, tabStops } = setupHeaders(HeaderWidgetsEmptyHost);
+
+    expect(tabStops()).toEqual([headerCell(1)]);
+    expect(filterInput().getAttribute('tabindex')).toBe('-1');
+    expect(headerCell(2).getAttribute('tabindex')).toBe('-1');
+    expect(sortButton().getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('keeps the lone Sort button as the Tab stop of an explicitly focused header when the table is empty', () => {
+    const { host, flush, headerCell, sortButton, tabStops } = setupHeaders(HeaderWidgetsEmptyHost);
+    host.table.focus.moveTo({ area: 'header', columnId: 'name' });
+    flush();
+    expect(tabStops()).toEqual([sortButton()]);
+    expect(headerCell(2).getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('lets an explicit focus win over the header fallback when the table is empty', () => {
+    const { host, flush, directive, headerCell, tabStops } = setupHeaders(HeaderWidgetsEmptyHost);
+    host.table.focus.moveTo({ area: 'header', columnId: 'name' });
+    flush();
+
+    expect(directive().activeTarget()).toEqual({ area: 'header', columnId: 'name' });
+    expect(headerCell(1).getAttribute('tabindex')).toBe('-1');
+    expect(tabStops()).toHaveLength(1);
+  });
+
+  it('keeps the first body cell as the Tab stop when rows exist and nothing is focused', () => {
+    const { directive, firstBodyCell, headerCell, tabStops } = setupHeaders(HeaderWidgetsHost);
+
+    expect(directive().activeTarget()).toEqual({ area: 'body', rowId: 1, columnId: 'id' });
+    expect(tabStops()).toEqual([firstBodyCell()]);
+    expect(headerCell(1).getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('moves the Tab stop from the header to the first body cell once rows arrive', () => {
+    const { host, flush, headerCell, firstBodyCell, tabStops } =
+      setupHeaders(HeaderWidgetsEmptyHost);
+    expect(tabStops()).toEqual([headerCell(1)]);
+
+    host.data.set([...mockRows]);
+    flush();
+
+    expect(tabStops()).toEqual([firstBodyCell()]);
+    expect(headerCell(1).getAttribute('tabindex')).toBe('-1');
+  });
+});
