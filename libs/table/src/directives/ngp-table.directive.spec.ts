@@ -7,18 +7,22 @@ import { NGP_TABLE_STORE } from './table.tokens';
 import { NgpTableCellDirective } from './ngp-table-cell.directive';
 import { NgpTableHeaderCellDirective } from './ngp-table-header-cell.directive';
 import { NgpTableRowDirective } from './ngp-table-row.directive';
+import { NgpTableTreeRowDirective } from './ngp-table-tree-row.directive';
 import { createColumns } from '../api/create-columns';
 import { createTable } from '../api/create-table';
 import { withGrouping } from '../api/features/with-grouping/feature';
+import { withTree } from '../api/features/with-tree/feature';
 import {
   createMockRows,
   mockGroupingRows,
   mockGroupingTrackBy,
   mockRows,
+  mockTaskTreeRows,
   mockTrackBy,
   noData,
   type GroupingMockRow,
   type MockRow,
+  type TaskTreeMockRow,
 } from '../table.mock';
 
 const US_HEADER_ID = 'group:>region:string:US';
@@ -2058,5 +2062,79 @@ describe('NgpTableDirective header Tab stop without data rows', () => {
 
     expect(tabStops()).toEqual([firstBodyCell()]);
     expect(headerCell(1).getAttribute('tabindex')).toBe('-1');
+  });
+});
+
+@Component({
+  imports: [
+    NgpTableDirective,
+    NgpTableRowDirective,
+    NgpTableTreeRowDirective,
+    NgpTableCellDirective,
+  ],
+  template: `
+    <div [ngpTable]="table">
+      @for (row of table.renderRows(); track row.id) {
+        <div [ngpTableRow]="row" ngpTableTreeRow>
+          @for (column of table.renderColumns(); track column.id; let i = $index) {
+            <div [ngpTableCell]="i">{{ row.id }}</div>
+          }
+        </div>
+      }
+    </div>
+  `,
+})
+class TreeKeysHost {
+  readonly table = createTable(
+    signal<TaskTreeMockRow[]>([...mockTaskTreeRows]),
+    {
+      trackBy: 'id',
+      columns: createColumns(noData<TaskTreeMockRow>(), (col) => [col('id'), col('status')]),
+    },
+    withTree({ parentId: (row) => row.parentId }),
+  );
+}
+
+describe('NgpTableDirective treegrid row keys', () => {
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
+
+  it('moves DOM focus to the parent row on ArrowLeft from a focused tree row', () => {
+    const fixture = TestBed.createComponent(TreeKeysHost);
+    const root: HTMLElement = fixture.nativeElement;
+    document.body.appendChild(root);
+    const flush = (): void => {
+      TestBed.tick();
+      fixture.detectChanges();
+    };
+    flush();
+    fixture.componentInstance.table.tree.expand(['t1', 't1a']);
+    flush();
+    const rowOf = (id: string): HTMLElement => {
+      const found = Array.from(root.querySelectorAll<HTMLElement>('[role="row"]')).find(
+        (candidate) => candidate.querySelector('[role="gridcell"]')?.textContent === id,
+      );
+      if (found === undefined) throw new Error(`no row ${id}`);
+      return found;
+    };
+
+    rowOf('t1a1').focus();
+    flush();
+    const event = new KeyboardEvent('keydown', {
+      key: 'ArrowLeft',
+      bubbles: true,
+      cancelable: true,
+    });
+    rowOf('t1a1').dispatchEvent(event);
+    flush();
+
+    expect(fixture.componentInstance.table.focus()).toEqual({
+      area: 'body',
+      rowId: 't1a',
+      columnId: null,
+    });
+    expect(document.activeElement).toBe(rowOf('t1a'));
+    expect(event.defaultPrevented).toBe(true);
   });
 });
