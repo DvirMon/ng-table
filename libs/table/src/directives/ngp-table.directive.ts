@@ -15,7 +15,7 @@ import {
 
 import { classifyCellWidgets, isEditableTarget } from './cell-widgets';
 import { createFocusRegistry, NGP_TABLE_FOCUS_REGISTRY } from './focus-registry';
-import { nextGridTarget } from './keyboard-nav';
+import { nextGridTarget, nextTreegridTarget } from './keyboard-nav';
 import type { BodyCell, GridCell, RegistryCell, RowTarget } from './keyboard-nav.types';
 import { isRtlAt, pageStepOf } from './page-step';
 import { createPanelRegistry, NGP_TABLE_PANEL_REGISTRY } from './panel-registry';
@@ -175,27 +175,38 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     if (!(event instanceof KeyboardEvent)) return;
     if (event.defaultPrevented) return;
 
-    const current = this.toGridCell(this.activeTarget());
+    const isTreegrid = this.isTreegrid();
+    const current = isTreegrid
+      ? this.toFocusableCell(this.activeTarget())
+      : this.toGridCell(this.activeTarget());
     if (current === null) return;
 
     if (this.handleCompositeCellKey(event)) return;
     if (isEditableTarget(event.target)) return;
 
     const table = this.ngpTable();
+    const dataRows = table.renderRows().filter((row) => row.kind !== 'group');
     const order = {
-      rowIds: table
-        .renderRows()
-        .filter((row) => row.kind !== 'group')
-        .map((row) => row.id),
+      rowIds: dataRows.map((row) => row.id),
       columnIds: table.renderColumns().map((column) => column.id),
     };
     // Note: direction and page step are read here, per keypress, so a host that changes either
     // between presses is followed.
     const focusedElement = this.elementOfGridCell(current) ?? this.host;
-    const next = nextGridTarget(order, current, event, {
+    const options = {
       isRtl: isRtlAt(this.host),
       pageSize: pageStepOf(this.host, focusedElement),
-    });
+    };
+    const next = isTreegrid
+      ? nextTreegridTarget(
+          { ...order, rowDepths: dataRows.map((row) => row.depth) },
+          current,
+          event,
+          options,
+        )
+      : current.columnId === null
+        ? null
+        : nextGridTarget(order, current, event, options);
     if (next === null) return;
 
     // A header target with no registered header cell has no element to hold focus: stay put.
@@ -337,8 +348,7 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     this.ngpTable().focus.moveTo({ area: 'body', rowId: row.rowId, columnId: null });
   }
 
-  // Like `toGridCell`, but a body target with no column resolves to its row. Key navigation keeps
-  // `toGridCell`: the key map for rows is a later step.
+  // Like `toGridCell`, but a body target with no column resolves to its row.
   private toFocusableCell(target: FocusTarget | null): GridCell | RowTarget | null {
     if (target?.area === 'body' && target.columnId === null) {
       return { area: 'body', rowId: target.rowId, columnId: null };
@@ -352,7 +362,7 @@ export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = 
     return { rowId: cell.rowId, columnId: cell.columnId };
   }
 
-  private elementOfGridCell(cell: GridCell): HTMLElement | null {
+  private elementOfGridCell(cell: GridCell | RowTarget): HTMLElement | null {
     return this.focusRegistry.elementOf(this.registryCellOf(cell));
   }
 

@@ -35,3 +35,9 @@ export type GridCell = HeaderCell | GridBodyCell;
 
 /** Inputs grid navigation needs beyond the key press: text direction and rows per page. */
 export type GridNavOptions = { readonly isRtl: boolean; readonly pageSize: number };
+
+/** Any target treegrid navigation can address: a header cell, a body cell or a whole row. */
+export type TreegridTarget = GridCell | RowTarget;
+
+/** `NavOrder` plus each row's depth, at the same index as `rowIds`, for parent-row lookups. */
+export type TreegridNavOrder = NavOrder & { readonly rowDepths: readonly number[] };

@@ -6,6 +6,9 @@ import type {
   HeaderCell,
   NavKey,
   NavOrder,
+  RowTarget,
+  TreegridNavOrder,
+  TreegridTarget,
 } from './keyboard-nav.types';
 
 /**
@@ -162,4 +165,93 @@ function headerAt(order: NavOrder, columnIndex: number): HeaderCell {
 
 function cellAt(order: NavOrder, rowIndex: number, columnIndex: number): BodyCell {
   return { rowId: order.rowIds[rowIndex], columnId: order.columnIds[columnIndex] };
+}
+
+/**
+ * Returns the treegrid target a navigation key press moves to, adding row focus to the grid map.
+ *
+ * @remarks
+ * A row is a focus target of its own: up/down/Home/End/paging move between rows, right enters
+ * the row's first cell and left goes to the parent row. Every cell key behaves as in grid,
+ * except left on a row's first cell (back to the row), up from the first row and down from a
+ * header (both cross the header boundary by row). At an edge it returns the current target.
+ * Returns `null` for an unhandled key, a Ctrl/Cmd + Arrow, an Alt/Shift combination, or a
+ * current target not in the order.
+ */
+export function nextTreegridTarget(
+  order: TreegridNavOrder,
+  current: TreegridTarget,
+  event: NavKey,
+  options: GridNavOptions,
+): TreegridTarget | null {
+  const hasUnhandledModifier = event.altKey === true || event.shiftKey === true;
+  if (hasUnhandledModifier) return null;
+
+  const isCtrl = event.ctrlKey || event.metaKey === true;
+  if (isCtrl && event.key.startsWith('Arrow')) return null;
+
+  const key = options.isRtl ? swapHorizontal(event.key) : event.key;
+  // Note: the key is already swapped for RTL, so the grid map must not swap it again.
+  const gridOptions: GridNavOptions = { isRtl: false, pageSize: options.pageSize };
+
+  if (current.area === 'header') {
+    const isHeaderKnown = order.columnIds.includes(current.columnId);
+    const hasRows = order.rowIds.length > 0;
+    if (key === 'ArrowDown' && isHeaderKnown && hasRows) return rowAt(order, 0);
+    return nextGridTarget(order, current, withKey(event, key), gridOptions);
+  }
+
+  if (current.columnId === null) return nextFromRow(order, current, key, options.pageSize);
+
+  const rowIndex = order.rowIds.indexOf(current.rowId);
+  const isFirstColumn = order.columnIds[0] === current.columnId;
+  if (key === 'ArrowLeft' && isFirstColumn && rowIndex !== -1) return rowAt(order, rowIndex);
+  return nextGridTarget(order, current, withKey(event, key), gridOptions);
+}
+
+function nextFromRow(
+  order: TreegridNavOrder,
+  current: RowTarget,
+  key: string,
+  pageSize: number,
+): TreegridTarget | null {
+  const rowIndex = order.rowIds.indexOf(current.rowId);
+  if (rowIndex === -1) return null;
+
+  const lastRow = order.rowIds.length - 1;
+  const hasColumns = order.columnIds.length > 0;
+  switch (key) {
+    case 'ArrowUp':
+      if (rowIndex > 0) return rowAt(order, rowIndex - 1);
+      return hasColumns ? headerAt(order, 0) : current;
+    case 'ArrowDown':
+      return rowAt(order, Math.min(rowIndex + 1, lastRow));
+    case 'Home':
+      return rowAt(order, 0);
+    case 'End':
+      return rowAt(order, lastRow);
+    case 'PageUp':
+      return rowAt(order, Math.max(rowIndex - pageSize, 0));
+    case 'PageDown':
+      return rowAt(order, Math.min(rowIndex + pageSize, lastRow));
+    case 'ArrowRight':
+      return hasColumns ? { area: 'body', ...cellAt(order, rowIndex, 0) } : current;
+    case 'ArrowLeft':
+      return rowAt(order, parentIndexOf(order, rowIndex));
+    default:
+      return null;
+  }
+}
+
+// The parent is the nearest earlier row with a smaller depth; a top-level row has none and stays.
+function parentIndexOf(order: TreegridNavOrder, rowIndex: number): number {
+  const depth = order.rowDepths[rowIndex];
+  for (let index = rowIndex - 1; index >= 0; index--) {
+    if (order.rowDepths[index] < depth) return index;
+  }
+  return rowIndex;
+}
+
+function rowAt(order: NavOrder, rowIndex: number): RowTarget {
+  return { area: 'body', rowId: order.rowIds[rowIndex], columnId: null };
 }
