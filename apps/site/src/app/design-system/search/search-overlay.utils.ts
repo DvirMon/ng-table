@@ -44,16 +44,59 @@ export function wrapIndex(index: number, length: number): number {
 
 const MAX_RESULTS = 5;
 
+/** Strips diacritics so `é` matches `e` (`Search Index.md` § Matching). Keeps case. */
+function foldDiacritics(text: string): string {
+  return text.normalize('NFKD').replace(/\p{M}/gu, '');
+}
+
+const WORD_CHAR = /[\p{L}\p{N}]/u;
+const LOWER_OR_DIGIT = /[\p{Ll}\p{N}]/u;
+const UPPER = /\p{Lu}/u;
+
+/**
+ * A word starts at the text's start, after a non-letter/digit, or at a camelCase hump
+ * (`ngpTableSort` has word starts at `ngp`, `Table`, `Sort`). Needs the original case.
+ */
+function isWordStart(text: string, index: number): boolean {
+  if (index === 0) {
+    return true;
+  }
+  const previous = text[index - 1];
+  const isAfterSeparator = !WORD_CHAR.test(previous);
+  const isCamelHump = LOWER_OR_DIGIT.test(previous) && UPPER.test(text[index]);
+  return isAfterSeparator || isCamelHump;
+}
+
+/**
+ * Index of the first match of `needle` that begins at a word start, or -1. Matches never start
+ * mid-word — `row` finds `Row Editing` and `rows`, not `arrow` (decided 2026-11-27, as Algolia's
+ * prefix matching does). `needle` must already be folded and lowercased.
+ */
+function findWordStartMatch(text: string, needle: string): number {
+  const folded = foldDiacritics(text);
+  const lowered = folded.toLowerCase();
+  for (
+    let index = lowered.indexOf(needle);
+    index !== -1;
+    index = lowered.indexOf(needle, index + 1)
+  ) {
+    if (isWordStart(folded, index)) {
+      return index;
+    }
+  }
+  return -1;
+}
+
 /** Lower is better. `null` means no match. Title beats body; start-of-title beats inside-title. */
 function matchTier(record: SearchResultRecord, needle: string): number | null {
-  const title = record.title.toLowerCase();
-  if (title.startsWith(needle)) {
+  const titleMatch = findWordStartMatch(record.title, needle);
+  if (titleMatch === 0) {
     return 0;
   }
-  if (title.includes(needle)) {
+  if (titleMatch > 0) {
     return 1;
   }
-  if (record.body.toLowerCase().includes(needle)) {
+  if (findWordStartMatch(record.body, needle) !== -1) {
     return 2;
   }
   return null;
@@ -77,7 +120,7 @@ export function groupSearchResults(
   records: readonly SearchResultRecord[],
   query: string,
 ): readonly SearchResultGroup[] {
-  const needle = query.trim().toLowerCase();
+  const needle = foldDiacritics(query.trim()).toLowerCase();
   if (!needle) {
     return [];
   }
