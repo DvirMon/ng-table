@@ -1,0 +1,13 @@
+<ng-container *ngTemplateOutlet="list; context: { $implicit: blocks() }" />
+
+<ng-template #list let-items>
+  @for (block of items; track $index) { @switch (block.kind) { @case ('html') {
+  <div class="markdown-html" [innerHTML]="block.html"></div>
+  } @case ('code') {
+  <ngpt-code-block [code]="block.code" [language]="block.language" />
+  } @case ('callout') {
+  <aside ngptCallout [kind]="block.variant">
+    <ng-container *ngTemplateOutlet="list; context: { $implicit: block.blocks }" />
+  </aside>
+  } } }
+</ng-template>
