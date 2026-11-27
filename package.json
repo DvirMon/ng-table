@@ -20,7 +20,9 @@
     "table:overloads": "node --experimental-strip-types libs/table/tools/generate-overloads.ts",
     "table:overloads:check": "node --experimental-strip-types libs/table/tools/generate-overloads.ts --check",
     "llms": "node --experimental-strip-types tools/generate-llms-txt.mts",
-    "llms:check": "node --experimental-strip-types tools/generate-llms-txt.mts --check"
+    "llms:check": "node --experimental-strip-types tools/generate-llms-txt.mts --check",
+    "site:content": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON apps/site/tools/generate-content.mts",
+    "site:content:check": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON apps/site/tools/generate-content.mts --check"
   },
   "dependencies": {
     "@angular/common": "22.2.2",
