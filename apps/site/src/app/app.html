@@ -1,2 +1,7 @@
 <router-outlet></router-outlet>
-<ngpt-search-overlay [open]="search.open()" (closed)="search.hide()" />
+<ngpt-search-overlay
+  [open]="search.open()"
+  [records]="search.records()"
+  [suggestions]="search.suggestions"
+  (closed)="search.hide()"
+/>

@@ -28,7 +28,7 @@ import { closeFocusLock, openFocusLock, type FocusLockState } from './search-ove
 import { groupSearchResults, getTreeConnector, wrapIndex } from './search-overlay.utils';
 import { SearchRecentRow } from './search-recent-row';
 import { SearchResultRow } from './search-result-row';
-import { RECENT_SEARCHES_MOCK, SEARCH_INDEX_MOCK, SEARCH_SUGGESTIONS_MOCK } from './search.mock';
+import { RECENT_SEARCHES_MOCK } from './search.mock';
 import type { RecentSearchEntry, SearchResultGroup, SearchResultRecord } from './search.types';
 
 /**
@@ -37,10 +37,9 @@ import type { RecentSearchEntry, SearchResultGroup, SearchResultRecord } from '.
  * (Wave 2) wires the shortcut and flips `open`; this component only renders correctly for
  * either value and handles Escape / scrim-click / focus trap+restore internally.
  *
- * Index is stubbed this round (`search.mock.ts`): the index is always empty, so
- * `resultGroups` never actually populates. No matching/ranking logic is implemented — that's
- * `Search Index.md`'s job once Content Model.md is wired. The render paths for "results" and
- * "no results" both exist so a populated index needs no rework here.
+ * Doesn't load the index either: the caller passes `records` (the generated search index,
+ * fetched by `SearchStore` on first open) and `suggestions`. Matching and ranking are
+ * `groupSearchResults` in `search-overlay.utils.ts`, per `Search Index.md`.
  */
 @Component({
   selector: 'ngpt-search-overlay',
@@ -67,21 +66,20 @@ export class SearchOverlay {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly open = input<boolean>(false);
+  /** The search index (`search-index.json`); empty until it loads. */
+  readonly records = input<readonly SearchResultRecord[]>([]);
+  /** Prefill chips for the no-results state — the nav tree's section labels. */
+  readonly suggestions = input<readonly string[]>([]);
   readonly closed = output<void>();
 
   private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
-  /**
-   * Grouped results for the current query, matched/ranked against `SEARCH_INDEX_MOCK` (a
-   * fixture, not real doc content — see `search.mock.ts`). Real indexing is still deferred to
-   * `Search Index.md` until Content Model.md is wired.
-   */
+  /** Grouped results for the current query, matched and ranked against `records`. */
   readonly resultGroups = computed<readonly SearchResultGroup[]>(() =>
-    groupSearchResults(SEARCH_INDEX_MOCK, this.query()),
+    groupSearchResults(this.records(), this.query()),
   );
   readonly recentSearches = signal<readonly RecentSearchEntry[]>(RECENT_SEARCHES_MOCK);
   protected readonly getTreeConnector = getTreeConnector;
-  readonly suggestions: readonly string[] = SEARCH_SUGGESTIONS_MOCK;
 
   readonly query = signal('');
   private readonly activeResultIndex = signal(0);
