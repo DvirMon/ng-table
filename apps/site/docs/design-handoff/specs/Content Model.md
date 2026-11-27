@@ -72,7 +72,7 @@ relied on.
 | `slug`      | yes      | Absolute, leading slash, no trailing slash, lowercase, hyphenated. No `/docs` prefix — see the prefix rule above (resolved 2026-08-25, dropped). The route, and the anchor-free part of every link to this page. |
 | `archetype` | yes      | Must name a file in `specs/pages/`. Determines the page's slot composition.                                                                                                                                      |
 | `eyebrow`   | no       | Overrides the `category-badge` text. Defaults to the parent section's label — see `pages/Doc Article.md`.                                                                                                        |
-| `hidden`    | no       | Excluded from the sidebar but still routable and still indexed. Use sparingly.                                                                                                                                   |
+| `hidden`    | no       | Excluded from the sidebar and from search, but still routable (search exclusion decided 2026-11-27). Use sparingly.                                                                                              |
 
 `Not Found` is an archetype but never an entry — it has no slug and no place in the order.
 
@@ -175,7 +175,7 @@ re-introduces exactly the drift this file exists to prevent. See `Pagination Foo
 
 ## Open
 
-- Where the tree physically lives (a JSON/YAML file, front-matter across content files, or a generated manifest) is an implementation choice this spec does not make. It only requires that there be exactly one.
+- ~~Where the tree physically lives~~ **resolved 2026-11-27:** order and sections in `apps/site/content/nav.yml`, entry fields in each page's frontmatter, generated into `src/app/content/content.manifest.ts` by `npm run site:content`. The manifest is never hand-edited.
 - ~~The seed tree is inconsistent about prefixes~~ **resolved 2026-08-21, superseded 2026-08-25:** the
   `/docs` prefix was dropped — see the prefix rule above.
 - ~~Whether the home page is `/` with the `Section Landing` archetype, or a separate marketing page~~ **resolved 2026-08-21:** `/` is a marketing page with no sidebar — see `pages/Home.md`. It is **not** in the tree, so the first tree entry is the docs root (`/overview`, "Overview"). Home never appears in prev/next and is never the active nav item.
