@@ -1,0 +1,14 @@
+# The docs tree: section order and entry order. The only place order is written.
+# Each entry is a page slug; the page itself is the Markdown file whose frontmatter `slug`
+# matches. `npm run site:content` fails when a slug here has no page, or a page is missing here.
+# Spec: apps/site/docs/design-handoff/specs/Content Model.md
+
+- entry: /overview
+
+- section: 0. Getting Started
+  entries:
+    - /getting-started/introduction
+
+- section: 1. State Layer
+  entries:
+    - /state-layer/sorting

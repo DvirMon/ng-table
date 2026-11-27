@@ -1,0 +1,101 @@
+[
+  {
+    "id": "/overview",
+    "kind": "page",
+    "title": "Overview",
+    "section": "Overview",
+    "breadcrumb": "Overview",
+    "body": "NGP Table is a headless data table for Angular. You bring the markup and the styles; the table brings the state: sorting, filtering, grouping, selection, expansion and row editing, all as signals.",
+    "entryOrder": 0
+  },
+  {
+    "id": "/overview#how-the-docs-are-organized",
+    "kind": "heading",
+    "title": "How the docs are organized",
+    "section": "Overview",
+    "breadcrumb": "Overview › How the docs are organized",
+    "body": "Getting Started — what the table is and how a first table fits together. State Layer — createTable() and the with*() features that add behavior to it.",
+    "entryOrder": 0
+  },
+  {
+    "id": "/getting-started/introduction",
+    "kind": "page",
+    "title": "Introduction",
+    "section": "0. Getting Started",
+    "breadcrumb": "0. Getting Started › Introduction",
+    "body": "NGP Table separates what a table knows from what it shows.",
+    "entryOrder": 1
+  },
+  {
+    "id": "/getting-started/introduction#three-layers",
+    "kind": "heading",
+    "title": "Three layers",
+    "section": "0. Getting Started",
+    "breadcrumb": "0. Getting Started › Introduction › Three layers",
+    "body": "State layer. createTable() returns a table instance that owns rows, columns and every feature's state as signals. Columns layer. columnSchema() declares per-column rules such as visibility. UI layer. Attribute directives like ngpTable and ngpTableCell connect your own markup to the state. They never insert, remove or reorder DOM.",
+    "entryOrder": 1
+  },
+  {
+    "id": "/getting-started/introduction#features-compose-as-arguments",
+    "kind": "heading",
+    "title": "Features compose as arguments",
+    "section": "0. Getting Started",
+    "breadcrumb": "0. Getting Started › Introduction › Features compose as arguments",
+    "body": "Each behavior is an opt-in feature passed to createTable() after the options object: A feature you do not pass is not in your bundle.",
+    "entryOrder": 1
+  },
+  {
+    "id": "/state-layer/sorting",
+    "kind": "page",
+    "title": "Sorting",
+    "section": "1. State Layer",
+    "breadcrumb": "1. State Layer › Sorting",
+    "body": "withSorting() adds sorting to a table. The sort state is an ordered array of rules; an earlier rule takes priority over a later one.",
+    "entryOrder": 2
+  },
+  {
+    "id": "/state-layer/sorting#sort-state",
+    "kind": "heading",
+    "title": "Sort state",
+    "section": "1. State Layer",
+    "breadcrumb": "1. State Layer › Sorting › Sort state",
+    "body": "Each rule names a column and a direction, 'asc' or 'desc':",
+    "entryOrder": 2
+  },
+  {
+    "id": "/state-layer/sorting#methods",
+    "kind": "heading",
+    "title": "Methods",
+    "section": "1. State Layer",
+    "breadcrumb": "1. State Layer › Sorting › Methods",
+    "body": "Method What it does toggleSort(id) Moves the column through ascending → descending → unsorted. setSorting(rules) Replaces the whole sort state. clearSorting() Removes every rule.",
+    "entryOrder": 2
+  },
+  {
+    "id": "/state-layer/sorting#multi-column-sort",
+    "kind": "heading",
+    "title": "Multi-column sort",
+    "section": "1. State Layer",
+    "breadcrumb": "1. State Layer › Sorting › Methods › Multi-column sort",
+    "body": "By default, toggleSort() on another column replaces the sort with that column alone. Pass multi: true to add each clicked column to the rules instead, in click order: setSorting() accepts any list of rules either way.",
+    "entryOrder": 2
+  },
+  {
+    "id": "/state-layer/sorting#server-side-sorting",
+    "kind": "heading",
+    "title": "Server-side sorting",
+    "section": "1. State Layer",
+    "breadcrumb": "1. State Layer › Sorting › Server-side sorting",
+    "body": "With manual: true, the table updates its sort state but does not sort rows itself. React to sortChanged with your own effect(), fetch sorted data, and write it to your data signal.",
+    "entryOrder": 2
+  },
+  {
+    "id": "/state-layer/sorting#per-column-rules",
+    "kind": "heading",
+    "title": "Per-column rules",
+    "section": "1. State Layer",
+    "breadcrumb": "1. State Layer › Sorting › Per-column rules",
+    "body": "Column-specific behavior goes in the schema option: sortFn sets the column's comparator. Without one, strings, numbers and dates compare automatically. sortable decides whether toggleSort() affects the column. Columns are sortable by default. sortNulls places null and empty values first or last.",
+    "entryOrder": 2
+  }
+]
