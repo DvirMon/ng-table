@@ -10,9 +10,9 @@
 .search-row__surface {
   display: flex;
   align-items: center;
-  gap: var(--ngpt-sys-space-150);
-  padding: var(--ngpt-sys-space-250) var(--ngpt-sys-space-300);
-  min-height: var(--ngpt-comp-search-input-height);
+  gap: var(--ngpt-sys-space-200);
+  padding: 0 var(--ngpt-sys-space-300);
+  height: var(--ngpt-comp-search-row-height);
   border-radius: var(--ngpt-sys-shape-corner-extra-small);
   cursor: pointer;
   background: var(--ngpt-bg-active);

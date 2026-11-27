@@ -24,6 +24,12 @@ export interface SearchResultRecord {
   readonly entryOrder: number;
 }
 
+/**
+ * Tree connector drawn left of a heading row: `none` for a standalone heading (its page isn't in
+ * the list), `continue` when another heading of the same page follows, `close` for the last one.
+ */
+export type SearchTreeConnector = 'none' | 'continue' | 'close';
+
 /** Records grouped by nav section, in tree order. `Search Index.md` § Groups. */
 export interface SearchResultGroup {
   readonly label: string;

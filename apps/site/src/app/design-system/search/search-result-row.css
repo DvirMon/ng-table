@@ -12,12 +12,16 @@
 
 /* The painted box — background, radius, shadow, and the reference-measured 56px row height all
    live here (docs/gaps-ngp-reference.md item 15), shorter than :host's padded box above. */
+.search-row__tree {
+  overflow: visible;
+}
+
 .search-row__surface {
   display: flex;
   align-items: center;
-  gap: var(--ngpt-sys-space-150);
-  padding: var(--ngpt-sys-space-250) var(--ngpt-sys-space-300);
-  min-height: var(--ngpt-comp-search-input-height);
+  gap: var(--ngpt-sys-space-200);
+  padding: 0 var(--ngpt-sys-space-300);
+  height: var(--ngpt-comp-search-row-height);
   border-radius: var(--ngpt-sys-shape-corner-extra-small);
   cursor: pointer;
   background: var(--ngpt-bg-active);
@@ -33,7 +37,6 @@
 .search-row__content {
   display: flex;
   flex-direction: column;
-  gap: var(--ngpt-sys-space-050);
   flex: 1;
   min-width: 0;
 }
@@ -54,11 +57,6 @@
   color: var(--ngpt-text-secondary);
 }
 
-.search-row__path {
-  font: var(--ngpt-sys-typescale-label-small-2);
-  color: var(--ngpt-text-muted);
-}
-
 /* Highlight driven only by [data-active] (JS active-index state), never raw :hover — the
    mouseenter/mousemove handlers already promote the hovered row to active, but a bare :hover
    rule here would keep painting a row the cursor is merely resting on after keyboard nav moved
@@ -68,7 +66,6 @@
 }
 
 :host([data-active]) .search-row__title,
-:host([data-active]) .search-row__path,
 :host([data-active]) .search-row__tree,
 :host([data-active]) .search-row__icon,
 :host([data-active]) .search-row__action {

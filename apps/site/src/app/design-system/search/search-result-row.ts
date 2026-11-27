@@ -9,7 +9,7 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCornerDownLeft, lucideFile, lucideHash } from '@ng-icons/lucide';
 import { createTrackedPointer } from './search-overlay.utils';
-import type { SearchResultRecord } from './search.types';
+import type { SearchResultRecord, SearchTreeConnector } from './search.types';
 
 /**
  * One `role="option"` row in the results listbox. Host IS the `<li>` (ADR-0005 attribute-hosted
@@ -26,6 +26,7 @@ import type { SearchResultRecord } from './search.types';
     role: 'option',
     '[attr.id]': 'rowId()',
     '[attr.aria-selected]': 'active()',
+    '[attr.title]': 'result().breadcrumb',
     '[attr.data-active]': "active() ? '' : null",
     '(mouseenter)': 'onPointerEnter($event)',
     '(mousemove)': 'onPointerMove($event)',
@@ -35,16 +36,19 @@ import type { SearchResultRecord } from './search.types';
 export class SearchResultRow {
   readonly result = input.required<SearchResultRecord>();
   readonly active = input(false, { transform: booleanAttribute });
-  /** Last heading in its consecutive run — closes the tree connector's trunk instead of continuing it. */
-  readonly last = input(false, { transform: booleanAttribute });
+  readonly tree = input<SearchTreeConnector>('none');
 
   readonly activate = output<string>();
   readonly selectResult = output<SearchResultRecord>();
 
   protected readonly rowId = computed(() => `search-result-${this.result().id}`);
-  /** DocSearch reference paths (verified live): trunk continues past the branch unless closing. */
+
+  /**
+   * Branch sits at the row's vertical middle (y=28 of 56). The trunk starts above the row and,
+   * unless closing, runs past its bottom so it meets the next row across the gap.
+   */
   protected readonly treePath = computed(() =>
-    this.last() ? 'M8 6v21M20 27H8.3' : 'M8 6v42M20 27H8.3',
+    this.tree() === 'close' ? 'M8 -4v32M20 28H8.3' : 'M8 -4v64M20 28H8.3',
   );
 
   private readonly pointer = createTrackedPointer();

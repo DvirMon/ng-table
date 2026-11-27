@@ -25,7 +25,7 @@ import { IconButton } from '../icon-button/icon-button';
 import { Kbd } from '../kbd/kbd';
 import { PillButton } from '../pill-button/pill-button';
 import { closeFocusLock, openFocusLock, type FocusLockState } from './search-overlay.focus-lock';
-import { groupSearchResults, isLastHeadingInRun, wrapIndex } from './search-overlay.utils';
+import { groupSearchResults, getTreeConnector, wrapIndex } from './search-overlay.utils';
 import { SearchRecentRow } from './search-recent-row';
 import { SearchResultRow } from './search-result-row';
 import { RECENT_SEARCHES_MOCK, SEARCH_INDEX_MOCK, SEARCH_SUGGESTIONS_MOCK } from './search.mock';
@@ -80,7 +80,7 @@ export class SearchOverlay {
     groupSearchResults(SEARCH_INDEX_MOCK, this.query()),
   );
   readonly recentSearches = signal<readonly RecentSearchEntry[]>(RECENT_SEARCHES_MOCK);
-  protected readonly isLastHeadingInRun = isLastHeadingInRun;
+  protected readonly getTreeConnector = getTreeConnector;
   readonly suggestions: readonly string[] = SEARCH_SUGGESTIONS_MOCK;
 
   readonly query = signal('');
