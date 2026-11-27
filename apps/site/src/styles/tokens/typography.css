@@ -1,14 +1,14 @@
 :root {
-  --ngpt-sys-typescale-display-large: 700 64px/1.05 Inter, sans-serif;
-  --ngpt-sys-typescale-headline-marketing: 700 36px/1.15 Inter, sans-serif;
-  --ngpt-sys-typescale-headline-large: 700 32px/1.2 Inter, sans-serif;
-  --ngpt-sys-typescale-title-large: 600 19px/1.35 Inter, sans-serif;
+  --ngpt-sys-typescale-display-large: 700 52px/1.05 Inter, sans-serif;
+  --ngpt-sys-typescale-headline-marketing: 700 32px/1.15 Inter, sans-serif;
+  --ngpt-sys-typescale-headline-large: 700 28px/1.2 Inter, sans-serif;
+  --ngpt-sys-typescale-title-large: 600 18px/1.35 Inter, sans-serif;
   --ngpt-sys-typescale-title-nav: 600 15px/1.2 Inter, sans-serif;
-  --ngpt-sys-typescale-title-medium: 600 16px/1.4 Inter, sans-serif;
-  --ngpt-sys-typescale-title-small: 600 14.5px/1.4 Inter, sans-serif;
-  --ngpt-sys-typescale-body-large: 400 15px/1.7 Inter, sans-serif;
-  --ngpt-sys-typescale-body-medium: 400 14.5px/1.65 Inter, sans-serif;
-  --ngpt-sys-typescale-label-large: 400 13.5px/1.4 Inter, sans-serif;
+  --ngpt-sys-typescale-title-medium: 600 15px/1.4 Inter, sans-serif;
+  --ngpt-sys-typescale-title-small: 600 14px/1.4 Inter, sans-serif;
+  --ngpt-sys-typescale-body-large: 400 14.5px/1.7 Inter, sans-serif;
+  --ngpt-sys-typescale-body-medium: 400 14px/1.65 Inter, sans-serif;
+  --ngpt-sys-typescale-label-large: 400 13px/1.4 Inter, sans-serif;
   --ngpt-sys-typescale-label-large-sm: 400 13px/1.4 Inter, sans-serif;
   --ngpt-sys-typescale-label-large-medium: 500 13px/1.4 Inter, sans-serif;
   --ngpt-sys-typescale-label-large-strong: 600 13px/1.4 Inter, sans-serif;
