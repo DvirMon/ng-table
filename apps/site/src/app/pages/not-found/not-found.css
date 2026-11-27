@@ -1,0 +1,9 @@
+:host {
+  display: block;
+}
+
+.not-found {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 4rem 1rem;
+}

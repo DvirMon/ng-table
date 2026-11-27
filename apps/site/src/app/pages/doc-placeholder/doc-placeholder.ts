@@ -1,14 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs';
 import { SidebarNavigation } from '../../layout/sidebar-navigation/sidebar-navigation';
 import {
   DOCS_NAV_ROOT,
   DOCS_NAV_SECTIONS,
 } from '../../layout/sidebar-navigation/sidebar-navigation.mock';
 import { TocColumn } from '../../layout/toc-column/toc-column';
-import { findNavLabel } from './doc-placeholder.utils';
+import type { PageState } from '../../content/page-state.types';
 
 /**
  * Stand-in for the real Doc Article / Section Landing archetypes (`docs/design-handoff/specs/pages/`,
@@ -25,16 +24,13 @@ import { findNavLabel } from './doc-placeholder.utils';
 export class DocPlaceholder {
   private readonly route = inject(ActivatedRoute);
 
-  private readonly slug = toSignal(
-    this.route.url.pipe(map((segments) => '/' + segments.map((segment) => segment.path).join('/'))),
-    { initialValue: '/' + this.route.snapshot.url.map((segment) => segment.path).join('/') },
-  );
+  private readonly data = toSignal(this.route.data, { initialValue: this.route.snapshot.data });
+
+  private readonly pageState = computed(() => this.data()['pageState'] as PageState);
 
   protected readonly root = DOCS_NAV_ROOT;
   protected readonly sections = DOCS_NAV_SECTIONS;
-  protected readonly activeSlug = this.slug;
+  protected readonly activeSlug = computed(() => this.pageState().entry?.slug ?? '');
 
-  protected readonly label = computed(
-    () => findNavLabel(this.slug(), this.root, this.sections) ?? this.slug(),
-  );
+  protected readonly label = computed(() => this.pageState().h1);
 }
