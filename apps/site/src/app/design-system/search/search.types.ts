@@ -3,9 +3,8 @@ export type SearchFieldVariant = 'default' | 'on-band';
 
 /**
  * One indexed unit: a heading and the prose beneath it, or a page record itself.
- * Shape per `docs/design-handoff/specs/Search Index.md` § Record shape — this app doesn't
- * populate it yet (see `search.mock.ts`), but the shape is fixed now so the overlay can render
- * against it once indexing lands.
+ * Shape per `docs/design-handoff/specs/Search Index.md` § Record shape. Records are generated
+ * into `public/search-index.json` by `npm run site:content` (`apps/site/tools/generate-content.mts`).
  */
 export interface SearchResultRecord {
   /** `slug#anchor`, or `slug` for a page record — the row key and navigation target. */

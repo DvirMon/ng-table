@@ -77,10 +77,10 @@
       />
       <p class="search-empty-state__title">No results for &ldquo;{{ query() }}&rdquo;</p>
       <p class="search-empty-state__hint">Try a shorter or different query.</p>
-      @if (suggestions.length > 0) {
+      @if (suggestions().length > 0) {
       <p class="search-empty-state__suggest-label">Try searching for:</p>
       <div class="search-empty-state__suggestions">
-        @for (suggestion of suggestions; track suggestion) {
+        @for (suggestion of suggestions(); track suggestion) {
         <button ngptPillButton type="button" (click)="selectSuggestion(suggestion)">
           {{ suggestion }}
         </button>
