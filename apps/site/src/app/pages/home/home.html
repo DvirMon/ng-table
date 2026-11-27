@@ -1,4 +1,4 @@
-<ngpt-navbar variant="band" [searchOpen]="searchOpen()" (openSearch)="openSearch()" />
+<ngpt-navbar variant="band" [searchOpen]="search.open()" (openSearch)="search.show()" />
 
 <ngpt-home-hero-band
   [announcement]="content.hero.announcement"
@@ -60,5 +60,3 @@
   </nav>
   <p>{{ content.footerCopyright }}</p>
 </footer>
-
-<ngpt-search-overlay [open]="searchOpen()" (closed)="closeSearch()" />

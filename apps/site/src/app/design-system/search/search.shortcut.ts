@@ -21,3 +21,8 @@ export function injectGlobalShortcut(
     destroyRef.onDestroy(() => document.removeEventListener('keydown', onKeydown));
   });
 }
+
+/** ⌘K on macOS, Ctrl+K elsewhere. */
+export function isSearchShortcut(event: KeyboardEvent): boolean {
+  return (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k';
+}

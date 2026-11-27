@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideBlocks,
@@ -10,7 +10,7 @@ import {
 } from '@ng-icons/lucide';
 import { CategoryBadge } from '../../design-system/category-badge/category-badge';
 import { Prose } from '../../design-system/prose/prose';
-import { SearchOverlay } from '../../design-system/search/search-overlay';
+import { SearchStore } from '../../design-system/search/search.store';
 import { Navbar } from '../../layout/navbar/navbar';
 import { PageFooter } from '../../layout/page-footer/page-footer';
 import { PageFooterLink } from '../../layout/page-footer/page-footer-link';
@@ -18,7 +18,6 @@ import { FeatureGrid } from './feature-grid/feature-grid';
 import { FeatureGridText } from './feature-grid/feature-grid-text';
 import { FeatureGridTitle } from './feature-grid/feature-grid-title';
 import { HOME_CONTENT } from './home.content';
-import { injectGlobalShortcut } from './home.utils';
 import { HomeHeroBand } from './hero-band/hero-band';
 import { InstallRow } from './install-row/install-row';
 
@@ -33,7 +32,6 @@ import { InstallRow } from './install-row/install-row';
   imports: [
     HomeHeroBand,
     Navbar,
-    SearchOverlay,
     CategoryBadge,
     Prose,
     FeatureGrid,
@@ -61,22 +59,7 @@ import { InstallRow } from './install-row/install-row';
 export class Home {
   protected readonly content = HOME_CONTENT;
 
-  protected readonly searchOpen = signal(false);
-
-  constructor() {
-    const isSearchShortcut = (event: KeyboardEvent): boolean =>
-      (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k';
-
-    injectGlobalShortcut(isSearchShortcut, () => this.searchOpen.set(true));
-  }
-
-  protected openSearch(): void {
-    this.searchOpen.set(true);
-  }
-
-  protected closeSearch(): void {
-    this.searchOpen.set(false);
-  }
+  protected readonly search = inject(SearchStore);
 
   protected scrollToInstall(): void {
     document.getElementById('install')?.scrollIntoView();
