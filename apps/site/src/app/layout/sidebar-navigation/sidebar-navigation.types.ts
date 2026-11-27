@@ -1,7 +1,6 @@
 export interface NavEntry {
   label: string;
   slug: string;
-  hidden?: boolean;
 }
 
 export interface NavSection {

@@ -1,12 +1,12 @@
 <div class="toc__label">On this page</div>
 <div class="toc__list">
-  @for (heading of headings(); track heading.id) {
+  @for (heading of headings(); track heading.anchor) {
   <a
     class="toc__item"
-    [href]="'#' + heading.id"
+    [href]="'#' + heading.anchor"
     [attr.data-nested]="heading.level === 3 ? '' : null"
-    [attr.data-active]="heading.id === activeId() ? '' : null"
-    [attr.aria-current]="heading.id === activeId() ? 'location' : null"
+    [attr.data-active]="heading.anchor === activeId() ? '' : null"
+    [attr.aria-current]="heading.anchor === activeId() ? 'location' : null"
   >
     {{ heading.text }}
   </a>

@@ -1,0 +1,23 @@
+<ngpt-navbar variant="docs" [searchOpen]="search.open()" (openSearch)="search.show()" />
+
+<div class="docs-shell__grid">
+  <ngpt-sidebar-navigation [root]="navRoot" [sections]="navSections" [activeSlug]="activeSlug()" />
+
+  <main class="docs-shell__content">
+    <ng-content />
+
+    @let prev = pageState().prev; @let next = pageState().next; @if (prev || next) {
+    <nav ngptPagination class="docs-shell__pagination">
+      @if (prev) {
+      <a ngptPaginationLink side="prev" [routerLink]="prev.slug">{{ prev.label }}</a>
+      } @if (next) {
+      <a ngptPaginationLink side="next" [routerLink]="next.slug">{{ next.label }}</a>
+      }
+    </nav>
+    }
+  </main>
+
+  @if (pageState().headings.length > 0) {
+  <ngpt-toc-column [headings]="pageState().headings" />
+  }
+</div>

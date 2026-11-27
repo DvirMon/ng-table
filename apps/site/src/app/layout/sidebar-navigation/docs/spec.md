@@ -88,11 +88,11 @@ group, no gap. Enforced by the component's `visibleSections` computed, not by te
 
 ## Public API
 
-| Input        | Default                    | Notes                                                                             |
-| ------------ | -------------------------- | --------------------------------------------------------------------------------- |
-| `root`       | `DOCS_NAV_ROOT` (mock)     | The single entry rendered above any section                                       |
-| `sections`   | `DOCS_NAV_SECTIONS` (mock) | Reusable-organism shape — same precedent as `tab-switcher`'s `tabs` input         |
-| `activeSlug` | `null`                     | Caller-supplied; no router wiring yet, so no default assumption about current URL |
+| Input        | Default             | Notes                                                                             |
+| ------------ | ------------------- | --------------------------------------------------------------------------------- |
+| `root`       | required (manifest) | The single entry rendered above any section                                       |
+| `sections`   | required (manifest) | Reusable-organism shape — same precedent as `tab-switcher`'s `tabs` input         |
+| `activeSlug` | `null`              | Caller-supplied; no router wiring yet, so no default assumption about current URL |
 
 ## Out of scope this pass
 
