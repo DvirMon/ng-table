@@ -41,26 +41,31 @@ returns the article, and the reader has to find the passage again by eye. Headin
 them on the passage.
 
 H2 and H3 only, matching the TOC. H4 is not indexed — `layout/TOC Column.md` already excludes it as too
-deep to label, and it is too granular to rank meaningfully.
+deep to label, and it is too granular to rank meaningfully. An H4's text and the prose under it stay in
+the enclosing H2/H3 record's `body`, so they are still searchable.
+
+Heading anchors come from `toHeadingAnchor` / `createPageAnchors` in
+`apps/site/src/app/content/heading-anchor.ts`. The page renderer uses the same functions, so a record's
+`#anchor` always exists on its page.
 
 ## Record shape
 
-| Field        | Source                                                                     | Used for                       |
-| ------------ | -------------------------------------------------------------------------- | ------------------------------ |
-| `id`         | `slug` + `#anchor`, or `slug` for a page record                            | Row key; the navigation target |
-| `title`      | The heading text, or `entry.label` for a page record                       | Result row title               |
-| `section`    | The entry's parent section label                                           | Group assignment               |
-| `breadcrumb` | `section.label › entry.label › heading` — heading omitted on a page record | The row's second line          |
-| `body`       | Prose under the heading, down to the next heading of any level             | Matching only, never displayed |
-| `entryOrder` | The entry's flattened tree position                                        | Tie-breaking                   |
+| Field        | Source                                                                                                                                      | Used for                       |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `id`         | `slug` + `#anchor`, or `slug` for a page record                                                                                             | Row key; the navigation target |
+| `title`      | The heading text, or `entry.label` for a page record                                                                                        | Result row title               |
+| `section`    | The entry's parent section label                                                                                                            | Group assignment               |
+| `breadcrumb` | `section.label › entry.label › heading` — heading omitted on a page record; an H3 also includes its parent H2 (`section › entry › H2 › H3`) | The row's second line          |
+| `body`       | Prose under the heading, down to the next heading of any level                                                                              | Matching only, never displayed |
+| `entryOrder` | The entry's flattened tree position                                                                                                         | Tie-breaking                   |
 
 ## What is indexed
 
 **Indexed:** headings, body prose, list items, table cell text, callout body, and inline code spans —
 an identifier like `ngpTableSort` is often exactly what someone searches for.
 
-**Not indexed:** code block contents, `Preview Window` demo markup, the nav tree's own labels, and the
-marketing page. Code blocks are the sharpest call: they are mostly boilerplate and imports, and
+**Not indexed:** code block contents, `Preview Window` demo markup, the nav tree's own labels, pages
+marked `hidden: true` (decided 2026-11-27), and the marketing page. Code blocks are the sharpest call: they are mostly boilerplate and imports, and
 indexing them buries prose results under near-identical snippets. Inline code carries the identifiers
 worth finding.
 
@@ -77,7 +82,9 @@ Groups with no matches are omitted entirely rather than shown empty.
 
 ## Matching and ranking
 
-Prefix and substring matching on whole words, case-insensitive, diacritic-insensitive. No fuzzy
+Matches start only at a word start: the start of the text, after a non-letter/digit, or at a camelCase
+hump (`sort` finds `ngpTableSort`). Never mid-word — `row` finds `rows`, not `arrow` — the same as
+Algolia's prefix matching (decided 2026-11-27). Case-insensitive, diacritic-insensitive. No fuzzy
 matching: on a corpus this small it produces confident wrong answers, and the reader cannot tell why a
 result appeared.
 
@@ -108,8 +115,8 @@ a rebuilt index and point at anchors that no longer exist.
 
 ## Open
 
-- Whether the index is built at compile time or assembled in the browser is an implementation choice.
-  This spec only requires that the record count is knowable before first render, so the live region can
-  announce it.
+- ~~Whether the index is built at compile time or assembled in the browser~~ **resolved 2026-11-27:**
+  built by `npm run site:content` into `apps/site/public/search-index.json`, fetched the first time the
+  overlay opens.
 - Whether a synonym list is worth it for a few known pairs (e.g. "a11y" / "accessibility"). Deferred
   until the page list is complete.
