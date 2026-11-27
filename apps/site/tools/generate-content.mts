@@ -21,6 +21,7 @@ import { join, relative, resolve } from 'node:path';
 import type { Token, Tokens } from 'marked';
 import { parse as parseYaml } from 'yaml';
 import { createPageAnchors } from '../src/app/content/heading-anchor.ts';
+import { decodeEntities, hasChildTokens, inlineText } from '../src/app/content/inline-text.ts';
 import type {
   ContentArchetype,
   ContentHeading,
@@ -208,44 +209,6 @@ function checkTreeMatchesPages(tree: readonly ContentSection[], pages: Map<strin
 // ── Lexing one page ─────────────────────────────────────────────────────────────────────
 
 const markdown = createMarkdown();
-
-const ENTITIES: Record<string, string> = {
-  '&amp;': '&',
-  '&lt;': '<',
-  '&gt;': '>',
-  '&quot;': '"',
-  '&#39;': "'",
-};
-
-function decodeEntities(text: string): string {
-  return text.replace(/&(amp|lt|gt|quot|#39);/g, (entity) => ENTITIES[entity] ?? entity);
-}
-
-function hasChildTokens(token: Token): token is Token & { tokens: Token[] } {
-  return 'tokens' in token && Array.isArray(token.tokens);
-}
-
-/** Inline tokens → plain text. Inline code keeps its identifier; HTML and images are dropped. */
-function inlineText(tokens: readonly Token[]): string {
-  return tokens
-    .map((token) => {
-      switch (token.type) {
-        case 'html':
-        case 'image':
-          return '';
-        case 'br':
-          return ' ';
-        case 'codespan':
-        case 'escape':
-          return decodeEntities(token.text);
-        case 'text':
-          return hasChildTokens(token) ? inlineText(token.tokens) : decodeEntities(token.text);
-        default:
-          return hasChildTokens(token) ? inlineText(token.tokens) : '';
-      }
-    })
-    .join('');
-}
 
 /**
  * Block tokens → the searchable prose they hold: paragraphs, list items, table cells, quote and
