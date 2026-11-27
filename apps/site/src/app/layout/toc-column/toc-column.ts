@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { TOC_MOCK_HEADINGS } from './toc-column.mock';
-import type { TocHeading } from './toc-column.types';
+import type { ContentHeading } from '../../content/content.types';
 
 /**
  * Right column of the page grid — "On this page" (`specs/layout/TOC Column.md`). Desktop-only,
- * scroll-spy not wired: there's no real scrollable article yet to observe, only mock headings.
+ * scroll-spy not wired. Headings come from `PageState.headings` (the manifest), never authored here.
  */
 @Component({
   selector: 'ngpt-toc-column',
@@ -16,6 +15,6 @@ import type { TocHeading } from './toc-column.types';
   },
 })
 export class TocColumn {
-  readonly headings = input<readonly TocHeading[]>(TOC_MOCK_HEADINGS);
+  readonly headings = input.required<readonly ContentHeading[]>();
   readonly activeId = input<string | null>(null);
 }

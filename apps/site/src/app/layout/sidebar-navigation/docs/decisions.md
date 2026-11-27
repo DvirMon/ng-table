@@ -40,3 +40,8 @@ between the marketing zone and the docs zone). Docs root moved from `/docs` to `
 colliding with Home's `/`. `Content Model.md` § Slug prefix now documents the trade-off: zone resolution
 needs an explicit tree lookup instead of a prefix check — `Routing and Page State.md` isn't updated yet to
 reflect that, flag before relying on it.
+
+**Manifest-driven, mock removed (#281).** `root`/`sections` are required inputs built from
+`content/nav-tree.ts` (generated manifest tree, hidden pages dropped). `NavEntry.hidden` is gone.
+`DocsShell` (`layout/docs-shell/`) owns the wiring; the mobile drawer is still not built, so below
+`md` the sidebar is hidden.

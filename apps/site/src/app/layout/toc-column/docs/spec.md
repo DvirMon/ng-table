@@ -44,7 +44,7 @@ tokens:
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
-> Distributed here from the design handoff bundle (`apps/site/docs/design-handoff/specs/layout/TOC Column.md`) — spec wins over the reference frame there. Built desktop-only this pass, mock headings, no scroll-spy; see `decisions.md`.
+> Distributed here from the design handoff bundle (`apps/site/docs/design-handoff/specs/layout/TOC Column.md`) — spec wins over the reference frame there. Built desktop-only this pass, no scroll-spy; see `decisions.md`.
 
 # Layout — TOC Column ("On this page")
 
@@ -62,10 +62,10 @@ article instead of navigating pages.
 
 ## Public API
 
-| Input      | Default                    | Notes                                                                                  |
-| ---------- | -------------------------- | -------------------------------------------------------------------------------------- |
-| `headings` | `TOC_MOCK_HEADINGS` (mock) | Real data is always derived from the current article's own H2/H3 — never hand-authored |
-| `activeId` | `null`                     | Caller-supplied; scroll-spy (`IntersectionObserver`) not implemented this pass         |
+| Input      | Default                | Notes                                                                                  |
+| ---------- | ---------------------- | -------------------------------------------------------------------------------------- |
+| `headings` | required (`PageState`) | Real data is always derived from the current article's own H2/H3 — never hand-authored |
+| `activeId` | `null`                 | Caller-supplied; scroll-spy (`IntersectionObserver`) not implemented this pass         |
 
 ## Out of scope this pass
 

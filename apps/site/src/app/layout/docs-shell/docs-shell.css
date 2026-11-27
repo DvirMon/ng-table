@@ -1,0 +1,44 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--ngpt-bg-app);
+  color: var(--ngpt-text-base);
+  font-family: var(--ngpt-sys-font-family-base);
+}
+
+.docs-shell__grid {
+  display: grid;
+  grid-template-columns: var(--ngpt-sys-layout-grid-columns);
+  max-width: var(--ngpt-sys-breakpoint-lg);
+  margin: 0 auto;
+}
+
+/* Spec cap, not a width: the track takes what the grid gives it (`Content Column.md`). */
+.docs-shell__content {
+  min-width: 0;
+  max-width: var(--ngpt-sys-layout-content-max-width);
+  padding: var(--ngpt-sys-space-900) var(--ngpt-sys-space-1000);
+}
+
+.docs-shell__pagination {
+  margin-block-start: var(--ngpt-sys-space-600);
+  padding-block-start: var(--ngpt-sys-space-600);
+  border-block-start: 1px solid var(--ngpt-comp-row-divider);
+}
+
+/* Below `md` the TOC drops and the sidebar leaves the grid (`Responsive and Breakpoints.md`). */
+@media (max-width: 1023px) {
+  .docs-shell__grid {
+    grid-template-columns: 1fr;
+  }
+
+  ngpt-sidebar-navigation,
+  ngpt-toc-column {
+    display: none;
+  }
+
+  .docs-shell__content {
+    max-width: none;
+    padding-inline: var(--ngpt-sys-space-600);
+  }
+}
