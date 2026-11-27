@@ -1,4 +1,4 @@
-import type { SearchResultGroup, SearchResultRecord } from './search.types';
+import type { SearchResultGroup, SearchResultRecord, SearchTreeConnector } from './search.types';
 
 export interface TrackedPointer {
   /** True once the pointer has genuinely moved in screen space since the last `update`/check. */
@@ -42,17 +42,36 @@ export function wrapIndex(index: number, length: number): number {
   return ((index % length) + length) % length;
 }
 
-const MAX_RESULTS_PER_GROUP = 5;
+const MAX_RESULTS = 5;
 
-/** Case-insensitive substring match against title/body — matching only, `body` never renders. */
-function matchesQuery(record: SearchResultRecord, needle: string): boolean {
-  return record.title.toLowerCase().includes(needle) || record.body.toLowerCase().includes(needle);
+/** Lower is better. `null` means no match. Title beats body; start-of-title beats inside-title. */
+function matchTier(record: SearchResultRecord, needle: string): number | null {
+  const title = record.title.toLowerCase();
+  if (title.startsWith(needle)) {
+    return 0;
+  }
+  if (title.includes(needle)) {
+    return 1;
+  }
+  if (record.body.toLowerCase().includes(needle)) {
+    return 2;
+  }
+  return null;
+}
+
+function compareRank(
+  a: { record: SearchResultRecord; tier: number },
+  b: { record: SearchResultRecord; tier: number },
+): number {
+  const isPageA = a.record.kind === 'page' ? 0 : 1;
+  const isPageB = b.record.kind === 'page' ? 0 : 1;
+  return a.tier - b.tier || isPageA - isPageB || a.record.entryOrder - b.record.entryOrder;
 }
 
 /**
- * Filters `records` against `query`, groups by section in tree order (`entryOrder`), and caps
- * each group at `MAX_RESULTS_PER_GROUP` — no scroll-to-fit, matching the DocSearch reference
- * (gaps-ngp-reference.md #6).
+ * Ranks matches (title start > title inside > body; page > heading; `entryOrder`), keeps the
+ * best `MAX_RESULTS` overall, then shows them under their section groups in tree order
+ * (`Search Index.md` § Groups). Rows inside a group keep rank order.
  */
 export function groupSearchResults(
   records: readonly SearchResultRecord[],
@@ -63,29 +82,66 @@ export function groupSearchResults(
     return [];
   }
 
-  const matches = records
-    .filter((record) => matchesQuery(record, needle))
-    .slice()
-    .sort((a, b) => a.entryOrder - b.entryOrder);
+  const ranked = records
+    .flatMap((record) => {
+      const tier = matchTier(record, needle);
+      return tier === null ? [] : [{ record, tier }];
+    })
+    .sort(compareRank)
+    .slice(0, MAX_RESULTS)
+    .map(({ record }) => record);
 
   const resultsBySection = new Map<string, SearchResultRecord[]>();
-  for (const record of matches) {
+  for (const record of ranked) {
     const sectionResults = resultsBySection.get(record.section) ?? [];
     sectionResults.push(record);
     resultsBySection.set(record.section, sectionResults);
   }
 
+  const firstEntryOrder = (group: SearchResultGroup): number =>
+    Math.min(...group.results.map((result) => result.entryOrder));
+
   return Array.from(resultsBySection, ([label, results]) => ({
     label,
-    results: results.slice(0, MAX_RESULTS_PER_GROUP),
-  }));
+    results: nestHeadingsUnderPages(results),
+  })).sort((a, b) => firstEntryOrder(a) - firstEntryOrder(b));
+}
+
+/** The page a record belongs to: `slug` for a page record, the part before `#` for a heading. */
+function getPageId(record: SearchResultRecord): string {
+  return record.id.split('#')[0];
 }
 
 /**
- * True when `results[index]` is the last `heading` in its consecutive run — the tree connector's
- * closing corner instead of the continuing trunk (DocSearch reference: `M8 6v21…` vs `M8 6v42…`,
- * verified live via chrome-devtools against angularprimitives.com's search dropdown).
+ * Puts each page record directly before the headings of that page, so a heading sits under its
+ * parent. Families keep the order of their best-ranked member; standalone headings stay alone.
  */
-export function isLastHeadingInRun(results: readonly SearchResultRecord[], index: number): boolean {
-  return results[index + 1]?.kind !== 'heading';
+function nestHeadingsUnderPages(results: readonly SearchResultRecord[]): SearchResultRecord[] {
+  const families = new Map<string, SearchResultRecord[]>();
+  for (const record of results) {
+    const family = families.get(getPageId(record)) ?? [];
+    family.push(record);
+    families.set(getPageId(record), family);
+  }
+  return Array.from(families.values()).flatMap((family) =>
+    family.slice().sort((a, b) => Number(a.kind === 'heading') - Number(b.kind === 'heading')),
+  );
+}
+
+/**
+ * Connector for `results[index]`. Only a heading whose own page record is in `results` is a
+ * child; any other heading is a standalone result and gets no tree.
+ */
+export function getTreeConnector(
+  results: readonly SearchResultRecord[],
+  index: number,
+): SearchTreeConnector {
+  const record = results[index];
+  const pageId = getPageId(record);
+  const hasParentPage = results.some((other) => other.kind === 'page' && other.id === pageId);
+  if (record.kind !== 'heading' || !hasParentPage) {
+    return 'none';
+  }
+  const next = results[index + 1];
+  return next?.kind === 'heading' && getPageId(next) === pageId ? 'continue' : 'close';
 }

@@ -81,30 +81,30 @@ occupies" is wrong — the two values are independent and only this file relates
 
 ## Component sizes
 
-| Token                               | Value  | Usage                                                                                           |
-| ----------------------------------- | ------ | ----------------------------------------------------------------------------------------------- |
-| --ngpt-sys-comp-eyebrow-gap         | 6px    | Category badge → H1                                                                             |
-| --ngpt-sys-comp-nav-section-gap     | 18px   | Sidebar section label top margin                                                                |
-| --ngpt-comp-navbar-height           | 56px   | Top navbar                                                                                      |
-| --ngpt-comp-navbar-logo-size        | 22px   | Logo mark, square                                                                               |
-| --ngpt-comp-navbar-dot-size         | 16px   | Navbar status dot                                                                               |
-| --ngpt-comp-navbar-dot-border       | 1.5px  | Navbar status dot border width                                                                  |
-| --ngpt-comp-nav-border-width        | 2px    | Nav item / TOC item left border                                                                 |
-| --ngpt-comp-toc-nested-indent       | 22px   | H3 TOC item padding-left                                                                        |
-| --ngpt-comp-list-indent             | 22px   | Prose list padding-left                                                                         |
-| --ngpt-comp-icon-btn-size           | 30px   | Icon button, square                                                                             |
-| --ngpt-comp-icon-btn-confirm-hold   | 1400ms | Copy confirmation hold before revert — the single value for every copy affordance in the system |
-| --ngpt-comp-code-gutter-width       | 40px   | Code block line-number gutter                                                                   |
-| --ngpt-comp-tab-item-px             | 14px   | Tab switcher item horizontal padding                                                            |
-| --ngpt-comp-select-px               | 18px   | Select trigger horizontal padding                                                               |
-| --ngpt-comp-search-field-width      | 220px  | Navbar search field                                                                             |
-| --ngpt-comp-search-field-height     | 32px   | Navbar search field                                                                             |
-| --ngpt-comp-search-panel-width      | 560px  | ⌘K panel                                                                                        |
-| --ngpt-comp-search-panel-max-height | 60vh   | ⌘K panel                                                                                        |
-| --ngpt-comp-search-input-height     | 52px   | ⌘K input row                                                                                    |
-| --ngpt-comp-menu-min-width          | 180px  | Dropdown menu floor                                                                             |
-| --ngpt-comp-menu-max-height         | 320px  | Dropdown menu, then scrolls                                                                     |
-| --ngpt-comp-pagination-arrow-shift  | 3px    | Pagination arrow nudge distance                                                                 |
+| Token                               | Value              | Usage                                                                                           |
+| ----------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------- |
+| --ngpt-sys-comp-eyebrow-gap         | 6px                | Category badge → H1                                                                             |
+| --ngpt-sys-comp-nav-section-gap     | 18px               | Sidebar section label top margin                                                                |
+| --ngpt-comp-navbar-height           | 56px               | Top navbar                                                                                      |
+| --ngpt-comp-navbar-logo-size        | 22px               | Logo mark, square                                                                               |
+| --ngpt-comp-navbar-dot-size         | 16px               | Navbar status dot                                                                               |
+| --ngpt-comp-navbar-dot-border       | 1.5px              | Navbar status dot border width                                                                  |
+| --ngpt-comp-nav-border-width        | 2px                | Nav item / TOC item left border                                                                 |
+| --ngpt-comp-toc-nested-indent       | 22px               | H3 TOC item padding-left                                                                        |
+| --ngpt-comp-list-indent             | 22px               | Prose list padding-left                                                                         |
+| --ngpt-comp-icon-btn-size           | 30px               | Icon button, square                                                                             |
+| --ngpt-comp-icon-btn-confirm-hold   | 1400ms             | Copy confirmation hold before revert — the single value for every copy affordance in the system |
+| --ngpt-comp-code-gutter-width       | 40px               | Code block line-number gutter                                                                   |
+| --ngpt-comp-tab-item-px             | 14px               | Tab switcher item horizontal padding                                                            |
+| --ngpt-comp-select-px               | 18px               | Select trigger horizontal padding                                                               |
+| --ngpt-comp-search-field-width      | 220px              | Navbar search field                                                                             |
+| --ngpt-comp-search-field-height     | 32px               | Navbar search field                                                                             |
+| --ngpt-comp-search-panel-width      | 560px              | ⌘K panel                                                                                        |
+| --ngpt-comp-search-panel-max-height | calc(92dvh - 24px) | ⌘K panel                                                                                        |
+| --ngpt-comp-search-input-height     | 52px               | ⌘K input row                                                                                    |
+| --ngpt-comp-menu-min-width          | 180px              | Dropdown menu floor                                                                             |
+| --ngpt-comp-menu-max-height         | 320px              | Dropdown menu, then scrolls                                                                     |
+| --ngpt-comp-pagination-arrow-shift  | 3px                | Pagination arrow nudge distance                                                                 |
 
 ```css
 :root {
@@ -134,7 +134,7 @@ occupies" is wrong — the two values are independent and only this file relates
   --ngpt-comp-search-field-width: 220px;
   --ngpt-comp-search-field-height: 32px;
   --ngpt-comp-search-panel-width: 560px;
-  --ngpt-comp-search-panel-max-height: 60vh;
+  --ngpt-comp-search-panel-max-height: calc(92dvh - 24px);
   --ngpt-comp-search-input-height: 52px;
   --ngpt-comp-menu-min-width: 180px;
   --ngpt-comp-menu-max-height: 320px;

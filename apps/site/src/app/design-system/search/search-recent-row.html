@@ -1,7 +1,7 @@
 <span class="search-row__surface">
   <ng-icon
     name="lucideHistory"
-    size="20px"
+    size="var(--ngpt-sys-icon-size-md)"
     color="currentColor"
     class="search-row__icon"
     aria-hidden="true"
@@ -19,7 +19,12 @@
       title="Save this search"
       (click)="onSaveButtonClick($event)"
     >
-      <ng-icon name="lucideStar" size="22px" color="currentColor" aria-hidden="true" />
+      <ng-icon
+        name="lucideStar"
+        size="var(--ngpt-sys-icon-size-md)"
+        color="currentColor"
+        aria-hidden="true"
+      />
     </button>
     <button
       ngptIconButton
@@ -29,7 +34,12 @@
       title="Remove this search from history"
       (click)="onRemoveButtonClick($event)"
     >
-      <ng-icon name="lucideX" size="22px" color="currentColor" aria-hidden="true" />
+      <ng-icon
+        name="lucideX"
+        size="var(--ngpt-sys-icon-size-md)"
+        color="currentColor"
+        aria-hidden="true"
+      />
     </button>
   </div>
 </span>

@@ -19,7 +19,7 @@
 
 .search-panel {
   position: fixed;
-  top: 15vh;
+  top: 8vh;
   left: 50%;
   z-index: var(--ngpt-sys-z-modal);
   display: flex;
@@ -121,6 +121,17 @@
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+/* Gap between the hits and .search-footer. Sticky to the bottom of the scroll area with the panel
+   background, so the gap stays visible while rows scroll beneath it (not only at the end). */
+.search-hits-footer {
+  position: sticky;
+  inset-block-end: 0;
+  flex-shrink: 0;
+  height: var(--ngpt-sys-space-600);
+  margin-inline: calc(-1 * var(--ngpt-sys-space-300));
+  background: var(--ngpt-bg-elevated);
 }
 
 .search-group-label {

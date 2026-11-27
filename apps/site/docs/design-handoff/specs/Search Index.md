@@ -91,7 +91,7 @@ Rank within a group:
 Highlight only the matched run, in the title, using the color-only treatment in `Search.md`. Body text
 is never shown, so it is never highlighted.
 
-Cap at 8 results per group and 30 overall. Beyond that the list stops being scannable, and a query that
+Cap at 5 results overall, best-ranked first, shown under their section groups. Beyond that the list stops being scannable, and a query that
 broad needs refining rather than paging.
 
 ## Selecting a result

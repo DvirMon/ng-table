@@ -8,6 +8,9 @@
 
 html {
   scroll-behavior: smooth;
+  /* Keeps the scrollbar's width reserved when the search overlay locks body scroll
+     (`overflow: hidden`), so the page doesn't shift sideways while it is open. */
+  scrollbar-gutter: stable;
 }
 
 body {
