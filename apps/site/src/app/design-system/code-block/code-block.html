@@ -7,7 +7,7 @@
   [class.code-block--panel-radius]="radius() === 'panel'"
   tabindex="0"
   [attr.aria-label]="accessibleName()"
-><code [attr.data-language]="language()">@for (line of lines(); track $index) {<span class="line">{{ line }}</span>}</code></pre>
+><code [attr.data-language]="language()">@for (line of lines(); track $index) {<span class="line">@for (token of line; track $index) {<span [style.color]="token.color">{{ token.content }}</span>}</span>}</code></pre>
 @if (showCopyButton()) {
 <button
   ngptIconButton
