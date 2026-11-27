@@ -78,6 +78,7 @@
     "nx": "23.3.0",
     "playwright": "^1.64.0",
     "prettier": "~3.9.10",
+    "shiki": "^4.6.0",
     "storybook": "10.6.1",
     "tslib": "^2.3.0",
     "typescript": "6.0.3",
